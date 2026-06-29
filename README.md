@@ -23,7 +23,7 @@ npm install
 npm start
 
 # Android emulator or device
-git remote add origin https://github.com/ManojPatidar10/Gurukul_rn.git
+npm run android
 
 # iOS simulator (macOS only)
 npm run ios
