@@ -1,6 +1,24 @@
 # Gurukul_rn
 
-A minimal React Native dummy app built with [Expo](https://expo.dev) and TypeScript.
+A React Native (Expo) app for **Digital School** — starting with the Trustee / Principal analytical dashboard.
+
+## Principal Dashboard Features
+
+| Module | Description |
+|--------|-------------|
+| **Attendance** | Live student & faculty tracking, class-wise breakdown |
+| **Payments** | Fee collection, salary processing, automated reminders |
+| **Progress Cards** | Class-wise and subject-wise performance reports |
+| **Notice Board** | Separate broadcast channels for parents and teachers |
+| **Admissions** | End-to-end enrollment pipeline |
+| **AI Chatbot** | Natural-language queries for instant data lookup |
+| **Schedule** | Centralized timetable with conflict detection |
+| **Inventory** | School supplies and assets with low-stock alerts |
+
+## Design
+
+- Figma spec: [`design/figma/principal-dashboard-spec.md`](design/figma/principal-dashboard-spec.md)
+- UI mockup: [`assets/principal-dashboard-mockup.png`](assets/principal-dashboard-mockup.png)
 
 ## Prerequisites
 
@@ -24,7 +42,7 @@ npm start
 
 # Android emulator or device
 npm run android
-
+c
 # iOS simulator (macOS only)
 npm run ios
 
