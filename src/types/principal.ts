@@ -1,6 +1,14 @@
-import type { Employee, FeeAssessment, FeeStructure, PayrollLine, Student, Vendor } from '../api/types';
+import type {
+  Employee,
+  FeeAssessment,
+  FeeStructure,
+  InfraExpenseRequest,
+  PayrollLine,
+  Student,
+  Vendor,
+} from '../api/types';
 
-export type FeatureId = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll';
+export type FeatureId = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll' | 'infraExpenses';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -34,4 +42,7 @@ export type PrincipalStackParamList = {
   SalaryStructureForm: undefined;
   PayrollRun: undefined;
   PayslipDetail: { payrollLine: PayrollLine };
+  InfraExpensesList: undefined;
+  InfraExpenseDetail: { request: InfraExpenseRequest };
+  InfraExpenseForm: undefined;
 };
