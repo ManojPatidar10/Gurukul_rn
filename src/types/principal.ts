@@ -1,4 +1,4 @@
-import type { Employee, Student, Vendor } from '../api/types';
+import type { Employee, FeeAssessment, FeeStructure, Student, Vendor } from '../api/types';
 
 export type FeatureId =
   | 'attendance'
@@ -9,6 +9,7 @@ export type FeatureId =
   | 'students'
   | 'employees'
   | 'vendors'
+  | 'fees'
   | 'aiChatbot'
   | 'schedule'
   | 'inventory';
@@ -126,6 +127,14 @@ export type PrincipalStackParamList = {
   VendorsList: undefined;
   VendorDetail: { vendor: Vendor };
   VendorForm: { vendor?: Vendor };
+  FeesHub: undefined;
+  FeeCategoriesList: undefined;
+  FeeStructuresList: undefined;
+  FeeStructureForm: undefined;
+  FeeStructureDetail: { feeStructure: FeeStructure };
+  FeeAssessmentsList: undefined;
+  FeeAssessmentDetail: { assessment: FeeAssessment };
+  FeePaymentForm: { assessment: FeeAssessment };
   AIChatbot: undefined;
   Schedule: undefined;
   Inventory: undefined;

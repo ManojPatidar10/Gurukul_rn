@@ -130,3 +130,89 @@ export interface VendorRequest {
   upiId?: string;
   address?: string;
 }
+
+export interface FeeCategory {
+  id: string;
+  schoolId: string;
+  code: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeeCategoryRequest {
+  code: string;
+  name: string;
+}
+
+export interface FeeStructureLine {
+  id: string;
+  feeCategoryId: string;
+  feeCategoryCode: string;
+  feeCategoryName: string;
+  amount: number;
+}
+
+export interface FeeStructureLineRequest {
+  feeCategoryId: string;
+  amount: number;
+}
+
+export interface FeeStructure {
+  id: string;
+  schoolId: string;
+  classSectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  lines: FeeStructureLine[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeeStructureRequest {
+  classSectionId: string;
+  academicYear: string;
+  lines: FeeStructureLineRequest[];
+}
+
+export interface FeeAssessment {
+  id: string;
+  schoolId: string;
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  academicYear: string;
+  totalDue: number;
+  totalPaid: number;
+  remainingDue: number;
+  status: string;
+  dueDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeePaymentRequest {
+  assessmentId: string;
+  amount: number;
+  paymentMethod: string;
+  paymentReference?: string;
+  transactionDate?: string;
+}
+
+export interface FeePayment {
+  id: string;
+  schoolId: string;
+  assessmentId: string;
+  studentId: string;
+  amount: number;
+  transactionId: string;
+  receiptNumber: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DuesReport {
+  overdueAssessments: FeeAssessment[];
+  totalOverdue: number;
+}
