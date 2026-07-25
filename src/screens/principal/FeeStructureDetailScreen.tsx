@@ -6,7 +6,7 @@ import { generateAssessments } from '../../api/feeStructures';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructureDetail'>;
@@ -73,19 +73,22 @@ export function FeeStructureDetailScreen({ route, navigation }: Props) {
   );
 }
 
+const accent = accents.fees;
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.sm },
+  label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
   lineRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
+    ...softShadow,
   },
   lineName: { fontSize: 14, color: colors.textPrimary },
-  lineAmount: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  lineAmount: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -96,14 +99,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   totalLabel: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  totalAmount: { fontSize: 15, fontWeight: '700', color: colors.accent },
+  totalAmount: { fontSize: 15, fontWeight: '800', color: accent.base },
   error: { color: colors.error, marginBottom: spacing.md },
   success: { color: colors.success, marginBottom: spacing.md },
   generateButton: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
+    ...softShadow,
   },
   generateText: { color: colors.white, fontWeight: '700' },
 });

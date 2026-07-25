@@ -3,10 +3,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import { colors, radius, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayrollHub'>;
+
+const accent = accents.payroll;
 
 const items: { route: keyof PrincipalStackParamList; title: string; description: string }[] = [
   {
@@ -32,8 +34,12 @@ export function PayrollHubScreen({ navigation }: Props) {
             style={styles.row}
             onPress={() => navigation.navigate(item.route as never)}
           >
-            <Text style={styles.rowTitle}>{item.title}</Text>
-            <Text style={styles.rowDescription}>{item.description}</Text>
+            <View style={styles.accentBar} />
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>{item.title}</Text>
+              <Text style={styles.rowDescription}>{item.description}</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
           </Pressable>
         ))}
       </ScreenContainer>
@@ -44,11 +50,24 @@ export function PayrollHubScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   row: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     padding: spacing.lg,
     marginBottom: spacing.md,
+    overflow: 'hidden',
+    ...softShadow,
   },
+  accentBar: {
+    width: 4,
+    alignSelf: 'stretch',
+    borderRadius: radius.pill,
+    backgroundColor: accent.base,
+    marginRight: spacing.md,
+  },
+  rowText: { flex: 1 },
   rowTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowDescription: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  chevron: { fontSize: 22, color: colors.textMuted, marginLeft: spacing.sm },
 });

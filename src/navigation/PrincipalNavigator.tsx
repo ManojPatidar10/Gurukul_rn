@@ -1,8 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { AdmissionsScreen } from '../screens/principal/AdmissionsScreen';
-import { AIChatbotScreen } from '../screens/principal/AIChatbotScreen';
-import { AttendanceScreen } from '../screens/principal/AttendanceScreen';
 import { EmployeeDetailScreen } from '../screens/principal/EmployeeDetailScreen';
 import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
@@ -14,18 +11,13 @@ import { FeeStructureDetailScreen } from '../screens/principal/FeeStructureDetai
 import { FeeStructureFormScreen } from '../screens/principal/FeeStructureFormScreen';
 import { FeeStructuresListScreen } from '../screens/principal/FeeStructuresListScreen';
 import { FeesHubScreen } from '../screens/principal/FeesHubScreen';
-import { InventoryScreen } from '../screens/principal/InventoryScreen';
-import { NoticeBoardScreen } from '../screens/principal/NoticeBoardScreen';
 import { PayrollHubScreen } from '../screens/principal/PayrollHubScreen';
 import { PayrollRunScreen } from '../screens/principal/PayrollRunScreen';
 import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
-import { PaymentsScreen } from '../screens/principal/PaymentsScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
-import { ProgressCardsScreen } from '../screens/principal/ProgressCardsScreen';
 import { SalaryHistoryScreen } from '../screens/principal/SalaryHistoryScreen';
 import { SalaryStructureFormScreen } from '../screens/principal/SalaryStructureFormScreen';
 import { SalaryStructuresListScreen } from '../screens/principal/SalaryStructuresListScreen';
-import { ScheduleScreen } from '../screens/principal/ScheduleScreen';
 import { StudentDetailScreen } from '../screens/principal/StudentDetailScreen';
 import { StudentFormScreen } from '../screens/principal/StudentFormScreen';
 import { StudentsListScreen } from '../screens/principal/StudentsListScreen';
@@ -47,11 +39,6 @@ export function PrincipalNavigator() {
       }}
     >
         <Stack.Screen name="PrincipalDashboard" component={PrincipalDashboardScreen} />
-        <Stack.Screen name="Attendance" component={AttendanceScreen} />
-        <Stack.Screen name="Payments" component={PaymentsScreen} />
-        <Stack.Screen name="ProgressCards" component={ProgressCardsScreen} />
-        <Stack.Screen name="NoticeBoard" component={NoticeBoardScreen} />
-        <Stack.Screen name="Admissions" component={AdmissionsScreen} />
         <Stack.Screen name="StudentsList" component={StudentsListScreen} />
         <Stack.Screen name="StudentDetail" component={StudentDetailScreen} />
         <Stack.Screen name="StudentForm" component={StudentFormScreen} />
@@ -75,9 +62,6 @@ export function PrincipalNavigator() {
         <Stack.Screen name="SalaryStructureForm" component={SalaryStructureFormScreen} />
         <Stack.Screen name="PayrollRun" component={PayrollRunScreen} />
         <Stack.Screen name="PayslipDetail" component={PayslipDetailScreen} />
-        <Stack.Screen name="AIChatbot" component={AIChatbotScreen} />
-        <Stack.Screen name="Schedule" component={ScheduleScreen} />
-        <Stack.Screen name="Inventory" component={InventoryScreen} />
       </Stack.Navigator>
   );
 }

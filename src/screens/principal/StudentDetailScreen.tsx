@@ -4,12 +4,13 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { deleteStudent, transferStudentClassSection } from '../../api/students';
 import type { Student } from '../../api/types';
+import { AvatarBadge } from '../../components/AvatarBadge';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentDetail'>;
@@ -70,17 +71,23 @@ export function StudentDetailScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={student.name} subtitle={`Roll ${student.rollNumber}`} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <View style={styles.statusRow}>
-          <StatusChip label={student.status} variant={student.status === 'ACTIVE' ? 'success' : 'neutral'} />
+        <View style={styles.heroRow}>
+          <AvatarBadge name={student.name} accentKey="students" size={56} />
+          <View style={styles.heroText}>
+            <Text style={styles.heroName}>{student.name}</Text>
+            <StatusChip label={student.status} variant={student.status === 'ACTIVE' ? 'success' : 'neutral'} />
+          </View>
         </View>
 
-        <Field label="Class-section" value={student.classSectionLabel} />
-        <Field label="Date of birth" value={student.dob} />
-        <Field label="Gender" value={student.gender} />
-        <Field label="Address" value={student.address} />
-        <Field label="Parent name" value={student.parentName} />
-        <Field label="Parent contact" value={student.parentContact} />
-        <Field label="Admission date" value={student.admissionDate} />
+        <View style={styles.card}>
+          <Field label="Class-section" value={student.classSectionLabel} />
+          <Field label="Date of birth" value={student.dob} />
+          <Field label="Gender" value={student.gender} />
+          <Field label="Address" value={student.address} />
+          <Field label="Parent name" value={student.parentName} />
+          <Field label="Parent contact" value={student.parentContact} />
+          <Field label="Admission date" value={student.admissionDate} />
+        </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
 
@@ -112,25 +119,35 @@ export function StudentDetailScreen({ route, navigation }: Props) {
   );
 }
 
+const accent = accents.students;
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  statusRow: { marginBottom: spacing.lg },
+  heroRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
+  heroText: { marginLeft: spacing.md, gap: spacing.xs },
+  heroName: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    ...softShadow,
+  },
   field: { marginBottom: spacing.md },
-  fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
-  error: { color: colors.error, marginTop: spacing.sm },
-  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg, flexWrap: 'wrap' },
+  error: { color: colors.error, marginBottom: spacing.sm },
+  actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   actionButton: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radius.md,
+    backgroundColor: accent.light,
+    borderRadius: radius.pill,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
   },
-  actionText: { color: colors.primary, fontWeight: '600' },
-  deleteButton: { borderColor: colors.error },
-  deleteText: { color: colors.error, fontWeight: '600' },
+  actionText: { color: accent.base, fontWeight: '700' },
+  deleteButton: { backgroundColor: '#FFEBEE' },
+  deleteText: { color: colors.error, fontWeight: '700' },
   transferPanel: { marginTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.lg },
-  transferTitle: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: spacing.md },
+  transferTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.md },
   transferring: { color: colors.textMuted, marginTop: spacing.sm },
 });

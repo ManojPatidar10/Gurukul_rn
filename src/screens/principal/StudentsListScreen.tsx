@@ -4,9 +4,11 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'rea
 
 import { listStudents } from '../../api/students';
 import type { Student } from '../../api/types';
+import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import { colors, radius, spacing } from '../../theme/colors';
+import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
+import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentsList'>;
@@ -64,13 +66,14 @@ export function StudentsListScreen({ navigation }: Props) {
               style={styles.row}
               onPress={() => navigation.navigate('StudentDetail', { student: item })}
             >
-              <View>
+              <AvatarBadge name={item.name} accentKey="students" />
+              <View style={styles.rowMain}>
                 <Text style={styles.rowName}>{item.name}</Text>
                 <Text style={styles.rowMeta}>
                   Roll {item.rollNumber} · {item.classSectionLabel || 'Unassigned'}
                 </Text>
               </View>
-              <Text style={styles.rowStatus}>{item.status}</Text>
+              <StatusChip label={item.status} variant={item.status === 'ACTIVE' ? 'success' : 'neutral'} />
             </Pressable>
           )}
         />
@@ -84,25 +87,26 @@ const styles = StyleSheet.create({
   body: { flex: 1, paddingHorizontal: spacing.lg },
   addButton: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.lg,
     marginBottom: spacing.md,
+    ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
+    ...softShadow,
   },
-  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  rowMain: { flex: 1, marginLeft: spacing.md, marginRight: spacing.sm },
+  rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  rowStatus: { fontSize: 12, color: colors.accent, fontWeight: '600' },
 });

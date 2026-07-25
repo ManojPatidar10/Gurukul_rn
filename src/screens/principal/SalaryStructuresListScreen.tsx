@@ -6,7 +6,7 @@ import { listSalaryStructures } from '../../api/salaryStructures';
 import type { SalaryStructure } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SalaryStructuresList'>;
@@ -88,11 +88,12 @@ const styles = StyleSheet.create({
   body: { flex: 1, paddingHorizontal: spacing.lg },
   addButton: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.lg,
     marginBottom: spacing.md,
+    ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
   error: { color: colors.error, marginBottom: spacing.md },
@@ -102,11 +103,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
+    ...softShadow,
   },
-  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  rowNet: { fontSize: 14, color: colors.accent, fontWeight: '700' },
+  rowNet: { fontSize: 14, color: accents.payroll.base, fontWeight: '800' },
 });

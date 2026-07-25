@@ -1,56 +1,83 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { listEmployees } from '../../api/employees';
+import { getSchool } from '../../api/schools';
+import { listStudents } from '../../api/students';
+import type { School } from '../../api/types';
+import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
-import { MiniBarChart } from '../../components/MiniBarChart';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import { SectionTitle } from '../../components/SectionTitle';
-import { StatCard } from '../../components/StatCard';
-import {
-  dashboardStats,
-  featureActions,
-  principalProfile,
-  recentAlerts,
-  weeklyAttendanceTrend,
-} from '../../data/mockPrincipalDashboard';
-import { colors, radius, spacing } from '../../theme/colors';
-import type { FeatureId, PrincipalStackParamList } from '../../types/principal';
+import { StatSummaryCard } from '../../components/StatSummaryCard';
+import { useSchoolId } from '../../context/SchoolContext';
+import { colors, spacing } from '../../theme/colors';
+import type { FeatureAction, FeatureId, PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard'>;
 
+const featureActions: FeatureAction[] = [
+  { id: 'students', title: 'Students', icon: 'user-graduate', description: 'Manage student records and class-sections' },
+  { id: 'employees', title: 'Employees', icon: 'id-badge', description: 'Manage staff records' },
+  { id: 'vendors', title: 'Vendors', icon: 'truck', description: 'Manage vendor directory' },
+  { id: 'fees', title: 'Fees', icon: 'file-invoice-dollar', description: 'Fee structures, dues, and payments' },
+  { id: 'payroll', title: 'Payroll', icon: 'money-check-alt', description: 'Salary structures and payroll runs' },
+];
+
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
-  attendance: 'Attendance',
-  payments: 'Payments',
-  progressCards: 'ProgressCards',
-  noticeBoard: 'NoticeBoard',
-  admissions: 'Admissions',
   students: 'StudentsList',
   employees: 'EmployeesList',
   vendors: 'VendorsList',
   fees: 'FeesHub',
   payroll: 'PayrollHub',
-  aiChatbot: 'AIChatbot',
-  schedule: 'Schedule',
-  inventory: 'Inventory',
 };
 
+interface Counts {
+  students: number | null;
+  employees: number | null;
+  vendors: number | null;
+}
+
 export function PrincipalDashboardScreen({ navigation }: Props) {
+  const schoolId = useSchoolId();
+  const [school, setSchool] = useState<School | null>(null);
+  const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
+
+  useEffect(() => {
+    getSchool(schoolId)
+      .then(setSchool)
+      .catch(() => setSchool(null));
+  }, [schoolId]);
+
+  useEffect(() => {
+    const load = () => {
+      listStudents(schoolId)
+        .then((rows) => setCounts((prev) => ({ ...prev, students: rows.length })))
+        .catch(() => setCounts((prev) => ({ ...prev, students: null })));
+      listEmployees(schoolId)
+        .then((rows) => setCounts((prev) => ({ ...prev, employees: rows.length })))
+        .catch(() => setCounts((prev) => ({ ...prev, employees: null })));
+      listVendors(schoolId)
+        .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
+        .catch(() => setCounts((prev) => ({ ...prev, vendors: null })));
+    };
+    const unsubscribe = navigation.addListener('focus', load);
+    load();
+    return unsubscribe;
+  }, [schoolId, navigation]);
+
   return (
     <View style={styles.root}>
-      <ScreenHeader
-        title={principalProfile.school}
-        subtitle={`Welcome, ${principalProfile.name}`}
-        showNotification
-      />
+      <ScreenHeader title={school?.name ?? 'Gurukul'} subtitle={school ? `Welcome, ${school.principalName}` : undefined} />
       <ScreenContainer>
-        <View style={styles.statGrid}>
-          {dashboardStats.map((stat) => (
-            <StatCard key={stat.id} stat={stat} />
-          ))}
+        <View style={styles.statRow}>
+          <StatSummaryCard accentKey="students" icon="user-graduate" label="Students" value={counts.students} />
+          <StatSummaryCard accentKey="employees" icon="id-badge" label="Employees" value={counts.employees} />
+          <StatSummaryCard accentKey="vendors" icon="truck" label="Vendors" value={counts.vendors} />
         </View>
 
-        <SectionTitle title="Quick Actions" />
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.tileGrid}>
           {featureActions.map((feature) => (
             <FeatureTile
@@ -60,69 +87,27 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
             />
           ))}
         </View>
-
-        <SectionTitle title="Weekly Attendance Trend" />
-        <MiniBarChart data={weeklyAttendanceTrend} />
-
-        <SectionTitle title="Recent Alerts" />
-        {recentAlerts.map((alert) => (
-          <View key={alert.id} style={styles.alertRow}>
-            <View
-              style={[
-                styles.alertDot,
-                alert.type === 'warning' && styles.alertDotWarning,
-                alert.type === 'success' && styles.alertDotSuccess,
-              ]}
-            />
-            <Text style={styles.alertText}>{alert.message}</Text>
-          </View>
-        ))}
       </ScreenContainer>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  statGrid: {
+  root: { flex: 1, backgroundColor: colors.background },
+  statRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
   },
   tileGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-  },
-  alertRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  alertDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.accent,
-    marginRight: spacing.md,
-  },
-  alertDotWarning: {
-    backgroundColor: colors.warning,
-  },
-  alertDotSuccess: {
-    backgroundColor: colors.success,
-  },
-  alertText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.textPrimary,
   },
 });

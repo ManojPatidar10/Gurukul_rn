@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeAssessmentDetail'>;
@@ -34,10 +34,12 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
           <StatusChip label={assessment.status} variant={fullyPaid ? 'success' : 'warning'} />
         </View>
 
-        <Field label="Total due" value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
-        <Field label="Total paid" value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
-        <Field label="Remaining due" value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
-        <Field label="Due date" value={assessment.dueDate} />
+        <View style={styles.card}>
+          <Field label="Total due" value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
+          <Field label="Total paid" value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
+          <Field label="Remaining due" value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
+          <Field label="Due date" value={assessment.dueDate} />
+        </View>
 
         {!fullyPaid && (
           <Pressable
@@ -55,15 +57,22 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   statusRow: { marginBottom: spacing.lg },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    ...softShadow,
+  },
   field: { marginBottom: spacing.md },
-  fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
   payButton: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.lg,
+    ...softShadow,
   },
   payButtonText: { color: colors.white, fontWeight: '700' },
 });

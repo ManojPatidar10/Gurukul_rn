@@ -9,7 +9,7 @@ import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentForm'>;
@@ -122,10 +122,11 @@ const styles = StyleSheet.create({
   error: { color: colors.error, marginTop: spacing.md },
   submit: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.lg,
+    ...softShadow,
   },
   submitDisabled: { opacity: 0.5 },
   submitText: { color: colors.white, fontWeight: '700' },

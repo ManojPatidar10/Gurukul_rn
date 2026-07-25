@@ -1,104 +1,93 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '../theme/colors';
+import { gradients, radius, shadow, spacing } from '../theme/colors';
 
 interface ScreenHeaderProps {
   title: string;
   subtitle?: string;
   onBack?: () => void;
-  showNotification?: boolean;
 }
 
-export function ScreenHeader({
-  title,
-  subtitle,
-  onBack,
-  showNotification = false,
-}: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, onBack }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
+  const initial = title.trim().charAt(0).toUpperCase() || '?';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+    <LinearGradient
+      colors={gradients.header}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.container, { paddingTop: insets.top + spacing.md }]}
+    >
       <View style={styles.row}>
         {onBack ? (
-          <TouchableOpacity onPress={onBack} style={styles.backButton} accessibilityRole="button">
+          <TouchableOpacity onPress={onBack} style={styles.badge} accessibilityRole="button">
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
         ) : (
-          <View style={styles.backPlaceholder} />
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{initial}</Text>
+          </View>
         )}
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {subtitle}
+            </Text>
+          ) : null}
         </View>
-        {showNotification ? (
-          <View style={styles.bell}>
-            <Text style={styles.bellText}>🔔</Text>
-            <View style={styles.badge} />
-          </View>
-        ) : (
-          <View style={styles.backPlaceholder} />
-        )}
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
+    ...shadow,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  backButton: {
-    width: 36,
-    height: 36,
+  badge: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backPlaceholder: {
-    width: 36,
+    marginRight: spacing.md,
   },
   backText: {
-    color: colors.white,
-    fontSize: 22,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
   },
   titleBlock: {
     flex: 1,
-    alignItems: 'center',
   },
   title: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
   },
   subtitle: {
     color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 2,
-  },
-  bell: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellText: {
-    fontSize: 18,
-  },
-  badge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.error,
   },
 });

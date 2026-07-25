@@ -7,7 +7,7 @@ import type { FeeCategory } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeCategoriesList'>;
@@ -97,7 +97,9 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Text style={styles.rowName}>{item.name}</Text>
-              <Text style={styles.rowMeta}>{item.code}</Text>
+              <View style={styles.codeChip}>
+                <Text style={styles.codeChipText}>{item.code}</Text>
+              </View>
             </View>
           )}
         />
@@ -112,11 +114,12 @@ const styles = StyleSheet.create({
   createForm: { marginTop: spacing.lg, marginBottom: spacing.md },
   addButton: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.lg,
     marginBottom: spacing.md,
+    ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
   cancel: { color: colors.textMuted, textAlign: 'center', marginBottom: spacing.md },
@@ -127,10 +130,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
+    ...softShadow,
   },
-  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  rowMeta: { fontSize: 13, color: colors.textMuted },
+  rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  codeChip: {
+    backgroundColor: accents.fees.light,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  codeChipText: { fontSize: 12, fontWeight: '700', color: accents.fees.base },
 });

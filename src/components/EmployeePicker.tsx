@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { createEmployee, listEmployees } from '../api/employees';
 import type { Employee } from '../api/types';
-import { colors, radius, spacing } from '../theme/colors';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 
 interface Props {
@@ -105,23 +105,25 @@ const styles = StyleSheet.create({
   empty: { color: colors.textMuted, marginBottom: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
   },
   chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: 13, color: colors.textPrimary },
+  chipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   chipTextSelected: { color: colors.white },
-  addNew: { color: colors.primary, fontWeight: '600', marginTop: spacing.xs },
+  addNew: { color: colors.primary, fontWeight: '700', marginTop: spacing.xs },
   createForm: { marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md },
   createButton: {
     backgroundColor: colors.primary,
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md,
     alignItems: 'center',
     marginBottom: spacing.sm,
+    ...softShadow,
   },
   createButtonText: { color: colors.white, fontWeight: '600' },
   cancel: { color: colors.textMuted, textAlign: 'center' },

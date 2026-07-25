@@ -9,7 +9,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayrollRun'>;
@@ -194,10 +194,11 @@ const styles = StyleSheet.create({
   success: { color: colors.success, marginBottom: spacing.md, fontWeight: '600' },
   button: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.sm,
+    ...softShadow,
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: colors.white, fontWeight: '700' },
@@ -207,19 +208,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
-  runTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary },
+  runTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
   linesSection: { marginTop: spacing.lg },
   empty: { color: colors.textMuted },
   lineRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
+    ...softShadow,
   },
   lineName: { fontSize: 14, color: colors.textPrimary },
-  lineNet: { fontSize: 14, fontWeight: '700', color: colors.accent },
+  lineNet: { fontSize: 14, fontWeight: '800', color: accents.payroll.base },
   paySection: { marginTop: spacing.xl, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.lg },
   resetLink: { marginTop: spacing.xl, alignItems: 'center' },
   resetText: { color: colors.primary, fontWeight: '600' },
