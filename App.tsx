@@ -1,30 +1,72 @@
+import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+
+import { PrincipalNavigator } from './src/navigation/PrincipalNavigator';
+import { TeacherNavigator } from './src/navigation/TeacherNavigator';
+import { colors } from './src/theme/colors';
 
 export default function App() {
+  const [userRole, setUserRole] = useState<'principal' | 'teacher'>('principal');
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Gurukul RN</Text>
-      <Text style={styles.subtitle}>Dummy app — setup OK</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <View style={styles.container}>
+          {userRole === 'principal' ? <PrincipalNavigator /> : <TeacherNavigator />}
+
+          {/* Role Switcher for Demo Purposes */}
+          <View style={styles.roleSwitcher}>
+            <TouchableOpacity
+              style={[styles.roleBtn, userRole === 'principal' && styles.roleBtnActive]}
+              onPress={() => setUserRole('principal')}
+            >
+              <Text style={[styles.roleText, userRole === 'principal' && styles.roleTextActive]}>Principal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.roleBtn, userRole === 'teacher' && styles.roleBtnActive]}
+              onPress={() => setUserRole('teacher')}
+            >
+              <Text style={[styles.roleText, userRole === 'teacher' && styles.roleTextActive]}>Teacher</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </NavigationContainer>
+      <StatusBar style="light" />
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  title: {
-    fontSize: 24,
+  roleSwitcher: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 25,
+    padding: 4,
+    zIndex: 1000,
+  },
+  roleBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  roleBtnActive: {
+    backgroundColor: colors.primary,
+  },
+  roleText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  roleTextActive: {
     fontWeight: '700',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 8,
   },
 });
