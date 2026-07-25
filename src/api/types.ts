@@ -216,3 +216,64 @@ export interface DuesReport {
   overdueAssessments: FeeAssessment[];
   totalOverdue: number;
 }
+
+export interface SalaryStructure {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  basic: number;
+  allowances: number;
+  deductions: number;
+  effectiveFrom: string;
+}
+
+export interface SalaryStructureRequest {
+  employeeId: string;
+  basic: number;
+  allowances: number;
+  deductions: number;
+  effectiveFrom: string;
+}
+
+export interface PayrollRun {
+  id: string;
+  month: number;
+  year: number;
+  status: string;
+}
+
+export interface PayrollRunRequest {
+  month: number;
+  year: number;
+}
+
+export interface PayrollPayRequest {
+  paymentMethod: string;
+  paymentReference?: string;
+  transactionDate?: string;
+}
+
+export interface PayrollLine {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  gross: number;
+  deductions: number;
+  net: number;
+}
+
+export interface Payslip {
+  payrollLineId: string;
+  employeeId: string;
+  employeeName: string;
+  net: number;
+  documentRef: string;
+}
+
+export interface SalaryHistoryEntry {
+  payrollLineId: string;
+  month: number;
+  year: number;
+  net: number;
+  runStatus: string;
+}

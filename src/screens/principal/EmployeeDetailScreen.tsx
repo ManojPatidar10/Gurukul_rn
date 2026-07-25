@@ -34,12 +34,20 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
         <Field label="Bank account" value={employee.bankAccount} />
         <Field label="Contact phone" value={employee.contactPhone} />
 
-        <Pressable
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('EmployeeForm', { employee })}
-        >
-          <Text style={styles.actionText}>Edit</Text>
-        </Pressable>
+        <View style={styles.actions}>
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('EmployeeForm', { employee })}
+          >
+            <Text style={styles.actionText}>Edit</Text>
+          </Pressable>
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('SalaryHistory', { employee })}
+          >
+            <Text style={styles.actionText}>Salary history</Text>
+          </Pressable>
+        </View>
       </ScreenContainer>
     </View>
   );
@@ -51,14 +59,13 @@ const styles = StyleSheet.create({
   field: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
+  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg, flexWrap: 'wrap' },
   actionButton: {
     borderWidth: 1,
     borderColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    alignSelf: 'flex-start',
-    marginTop: spacing.lg,
   },
   actionText: { color: colors.primary, fontWeight: '600' },
 });
