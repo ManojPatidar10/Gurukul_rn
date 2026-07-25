@@ -1,7 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { colors, spacing } from '../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../theme/colors';
 import type { FeatureAction } from '../types/principal';
 
 interface FeatureTileProps {
@@ -10,13 +10,18 @@ interface FeatureTileProps {
 }
 
 export function FeatureTile({ feature, onPress }: FeatureTileProps) {
+  const accent = accents[feature.id];
+
   return (
-    <TouchableOpacity style={styles.tile} onPress={onPress} accessibilityRole="button">
-      <View style={styles.iconCircle}>
-        <FontAwesome5 name={feature.icon} size={20} color={colors.primary} />
+    <TouchableOpacity style={styles.tile} onPress={onPress} activeOpacity={0.75} accessibilityRole="button">
+      <View style={[styles.iconCircle, { backgroundColor: accent.light }]}>
+        <FontAwesome5 name={feature.icon} size={18} color={accent.base} />
       </View>
-      <Text style={styles.label} numberOfLines={2}>
+      <Text style={styles.title} numberOfLines={1}>
         {feature.title}
+      </Text>
+      <Text style={styles.description} numberOfLines={2}>
+        {feature.description}
       </Text>
     </TouchableOpacity>
   );
@@ -24,22 +29,30 @@ export function FeatureTile({ feature, onPress }: FeatureTileProps) {
 
 const styles = StyleSheet.create({
   tile: {
-    width: '23%',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+    width: '48%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    ...softShadow,
   },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primaryLight,
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: spacing.md,
   },
-  label: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.sm,
+  title: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  description: {
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 16,
   },
 });

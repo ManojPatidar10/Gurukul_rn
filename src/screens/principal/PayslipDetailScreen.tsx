@@ -7,7 +7,7 @@ import type { Payslip } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, spacing } from '../../theme/colors';
+import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayslipDetail'>;
@@ -42,12 +42,12 @@ export function PayslipDetailScreen({ route, navigation }: Props) {
         {loading && <ActivityIndicator style={styles.loading} />}
         {error && <Text style={styles.error}>{error}</Text>}
         {payslip && (
-          <>
+          <View style={styles.card}>
             <Field label="Gross" value={`₹${payrollLine.gross.toLocaleString('en-IN')}`} />
             <Field label="Deductions" value={`₹${payrollLine.deductions.toLocaleString('en-IN')}`} />
             <Field label="Net pay" value={`₹${payslip.net.toLocaleString('en-IN')}`} />
             <Field label="Document reference" value={payslip.documentRef} />
-          </>
+          </View>
         )}
       </ScreenContainer>
     </View>
@@ -58,6 +58,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: 40 },
   error: { color: colors.error },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    ...softShadow,
+  },
   field: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
   fieldValue: { fontSize: 18, color: colors.textPrimary, marginTop: 2, fontWeight: '600' },

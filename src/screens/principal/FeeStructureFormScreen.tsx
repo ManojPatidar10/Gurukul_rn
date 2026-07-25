@@ -10,7 +10,7 @@ import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
-import { colors, radius, spacing } from '../../theme/colors';
+import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructureForm'>;
@@ -161,9 +161,10 @@ const styles = StyleSheet.create({
   selectedHint: { fontSize: 12, color: colors.textMuted, marginTop: -spacing.xs, marginBottom: spacing.sm },
   lineCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     padding: spacing.md,
     marginBottom: spacing.md,
+    ...softShadow,
   },
   lineHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   lineTitle: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, flex: 1 },
@@ -187,9 +188,10 @@ const styles = StyleSheet.create({
   error: { color: colors.error, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
+    ...softShadow,
   },
   submitDisabled: { opacity: 0.5 },
   submitText: { color: colors.white, fontWeight: '700' },

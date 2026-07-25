@@ -1,9 +1,10 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import { colors, radius, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'VendorDetail'>;
@@ -24,16 +25,20 @@ export function VendorDetailScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={vendor.name} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <Field label="Contact phone" value={vendor.contactPhone} />
-        <Field label="Contact email" value={vendor.contactEmail} />
-        <Field label="Bank account" value={vendor.bankAccount} />
-        <Field label="UPI ID" value={vendor.upiId} />
-        <Field label="Address" value={vendor.address} />
+        <View style={styles.heroRow}>
+          <AvatarBadge name={vendor.name} accentKey="vendors" size={56} />
+          <Text style={styles.heroName}>{vendor.name}</Text>
+        </View>
 
-        <Pressable
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('VendorForm', { vendor })}
-        >
+        <View style={styles.card}>
+          <Field label="Contact phone" value={vendor.contactPhone} />
+          <Field label="Contact email" value={vendor.contactEmail} />
+          <Field label="Bank account" value={vendor.bankAccount} />
+          <Field label="UPI ID" value={vendor.upiId} />
+          <Field label="Address" value={vendor.address} />
+        </View>
+
+        <Pressable style={styles.actionButton} onPress={() => navigation.navigate('VendorForm', { vendor })}>
           <Text style={styles.actionText}>Edit</Text>
         </Pressable>
       </ScreenContainer>
@@ -41,19 +46,28 @@ export function VendorDetailScreen({ route, navigation }: Props) {
   );
 }
 
+const accent = accents.vendors;
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  heroRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
+  heroName: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginLeft: spacing.md },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    ...softShadow,
+  },
   field: { marginBottom: spacing.md },
-  fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
   actionButton: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radius.md,
+    backgroundColor: accent.light,
+    borderRadius: radius.pill,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     alignSelf: 'flex-start',
-    marginTop: spacing.lg,
   },
-  actionText: { color: colors.primary, fontWeight: '600' },
+  actionText: { color: accent.base, fontWeight: '700' },
 });

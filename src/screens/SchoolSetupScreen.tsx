@@ -5,7 +5,7 @@ import { setStoredSchoolId } from '../api/schoolStorage';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
 import LabeledInput from '../components/LabeledInput';
-import { colors, radius, spacing } from '../theme/colors';
+import { colors, radius, softShadow, spacing } from '../theme/colors';
 
 interface Props {
   onRegistered: (schoolId: string) => void;
@@ -101,10 +101,11 @@ const styles = StyleSheet.create({
   error: { color: colors.error, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.sm,
+    ...softShadow,
   },
   submitDisabled: { opacity: 0.5 },
   submitText: { color: colors.white, fontWeight: '700', fontSize: 16 },

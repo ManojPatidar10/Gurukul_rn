@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../theme/colors';
+import { accents, colors, radius, spacing } from '../theme/colors';
 
 type ChipVariant = 'success' | 'warning' | 'error' | 'neutral' | 'info';
 
@@ -14,7 +14,7 @@ const variantStyles: Record<ChipVariant, { bg: string; text: string }> = {
   warning: { bg: '#FFF3E0', text: colors.warning },
   error: { bg: '#FFEBEE', text: colors.error },
   neutral: { bg: colors.primaryLight, text: colors.textSecondary },
-  info: { bg: '#E3F2FD', text: colors.accent },
+  info: { bg: accents.payroll.light, text: accents.payroll.base },
 };
 
 export function StatusChip({ label, variant = 'neutral' }: StatusChipProps) {
@@ -29,12 +29,12 @@ export function StatusChip({ label, variant = 'neutral' }: StatusChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
   },
   text: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

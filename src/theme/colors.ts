@@ -1,17 +1,22 @@
 export const colors = {
-  primary: '#1F4E79',
-  primaryLight: '#E8F0F8',
-  background: '#F5F7FA',
+  primary: '#7C3AED',
+  primaryLight: '#EFE8FC',
+  background: '#F6F3FC',
   surface: '#FFFFFF',
-  textPrimary: '#1A1A2E',
-  textSecondary: '#555555',
-  textMuted: '#999999',
+  surfaceMuted: '#F0EAFA',
+  textPrimary: '#201A2B',
+  textSecondary: '#5B5468',
+  textMuted: '#9A93A8',
   success: '#2E7D32',
-  warning: '#F57C00',
+  warning: '#B45309',
   error: '#C62828',
-  accent: '#1565C0',
-  border: '#E0E4EA',
+  accent: '#7C3AED',
+  border: '#E5DEF5',
   white: '#FFFFFF',
+} as const;
+
+export const gradients = {
+  header: ['#7C3AED', '#C026D3'] as const,
 } as const;
 
 export const spacing = {
@@ -27,4 +32,32 @@ export const radius = {
   sm: 8,
   md: 12,
   lg: 16,
+  xl: 22,
+  pill: 999,
 } as const;
+
+export const shadow = {
+  shadowColor: '#0F1E3D',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  elevation: 3,
+} as const;
+
+export const softShadow = {
+  shadowColor: '#0F1E3D',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.05,
+  shadowRadius: 6,
+  elevation: 1,
+} as const;
+
+export type AccentKey = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll';
+
+export const accents: Record<AccentKey, { base: string; light: string }> = {
+  students: { base: '#2563EB', light: '#E3ECFD' },
+  employees: { base: '#7C3AED', light: '#EDE7FC' },
+  vendors: { base: '#EA580C', light: '#FDEBE0' },
+  fees: { base: '#059669', light: '#DFF5EC' },
+  payroll: { base: '#DB2777', light: '#FBE5EF' },
+};
