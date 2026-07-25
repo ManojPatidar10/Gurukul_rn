@@ -1,0 +1,108 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+
+import { listStudents } from '../../api/students';
+import type { Student } from '../../api/types';
+import { ScreenHeader } from '../../components/ScreenHeader';
+import { colors, radius, spacing } from '../../theme/colors';
+import { useSchoolId } from '../../context/SchoolContext';
+import type { PrincipalStackParamList } from '../../types/principal';
+
+type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentsList'>;
+
+export function StudentsListScreen({ navigation }: Props) {
+  const schoolId = useSchoolId();
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    setError(null);
+    return listStudents(schoolId)
+      .then(setStudents)
+      .catch((e) => setError(e.message));
+  }, [schoolId]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      setLoading(true);
+      load().finally(() => setLoading(false));
+    });
+    return unsubscribe;
+  }, [navigation, load]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    load().finally(() => setRefreshing(false));
+  };
+
+  return (
+    <View style={styles.root}>
+      <ScreenHeader title="Students" onBack={() => navigation.goBack()} />
+      <View style={styles.body}>
+        <Pressable style={styles.addButton} onPress={() => navigation.navigate('StudentForm', {})}>
+          <Text style={styles.addButtonText}>+ Enroll student</Text>
+        </Pressable>
+
+        {error && <Text style={styles.error}>{error}</Text>}
+
+        <FlatList
+          data={students}
+          keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          ListEmptyComponent={
+            !loading ? (
+              <Text style={styles.empty}>
+                {error ? 'Could not load students.' : '0 students yet — enroll the first one.'}
+              </Text>
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.row}
+              onPress={() => navigation.navigate('StudentDetail', { student: item })}
+            >
+              <View>
+                <Text style={styles.rowName}>{item.name}</Text>
+                <Text style={styles.rowMeta}>
+                  Roll {item.rollNumber} · {item.classSectionLabel || 'Unassigned'}
+                </Text>
+              </View>
+              <Text style={styles.rowStatus}>{item.status}</Text>
+            </Pressable>
+          )}
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  body: { flex: 1, paddingHorizontal: spacing.lg },
+  addButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  addButtonText: { color: colors.white, fontWeight: '700' },
+  error: { color: colors.error, marginBottom: spacing.md },
+  empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  rowName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  rowStatus: { fontSize: 12, color: colors.accent, fontWeight: '600' },
+});

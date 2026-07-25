@@ -34,6 +34,7 @@ export const featureActions: FeatureAction[] = [
   { id: 'progressCards', title: 'Progress Cards', icon: 'chart-bar', description: 'Class-wise and subject-wise reports' },
   { id: 'noticeBoard', title: 'Notice Board', icon: 'bullhorn', description: 'Broadcast to parents and teachers' },
   { id: 'admissions', title: 'Admissions', icon: 'user-plus', description: 'End-to-end enrollment workflow' },
+  { id: 'students', title: 'Students', icon: 'user-graduate', description: 'Manage student records and class-sections' },
   { id: 'aiChatbot', title: 'AI Chatbot', icon: 'robot', description: 'Natural-language data lookup' },
   { id: 'schedule', title: 'Schedule', icon: 'calendar-alt', description: 'Centralized timetable coordination' },
   { id: 'inventory', title: 'Inventory', icon: 'boxes', description: 'Track supplies and assets' },

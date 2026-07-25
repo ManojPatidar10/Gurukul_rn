@@ -25,6 +25,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   progressCards: 'ProgressCards',
   noticeBoard: 'NoticeBoard',
   admissions: 'Admissions',
+  students: 'StudentsList',
   aiChatbot: 'AIChatbot',
   schedule: 'Schedule',
   inventory: 'Inventory',

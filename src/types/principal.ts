@@ -1,9 +1,12 @@
+import type { Student } from '../api/types';
+
 export type FeatureId =
   | 'attendance'
   | 'payments'
   | 'progressCards'
   | 'noticeBoard'
   | 'admissions'
+  | 'students'
   | 'aiChatbot'
   | 'schedule'
   | 'inventory';
@@ -112,6 +115,9 @@ export type PrincipalStackParamList = {
   ProgressCards: undefined;
   NoticeBoard: undefined;
   Admissions: undefined;
+  StudentsList: undefined;
+  StudentDetail: { student: Student };
+  StudentForm: { student?: Student };
   AIChatbot: undefined;
   Schedule: undefined;
   Inventory: undefined;
