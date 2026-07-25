@@ -23,6 +23,12 @@ const featureActions: FeatureAction[] = [
   { id: 'vendors', title: 'Vendors', icon: 'truck', description: 'Manage vendor directory' },
   { id: 'fees', title: 'Fees', icon: 'file-invoice-dollar', description: 'Fee structures, dues, and payments' },
   { id: 'payroll', title: 'Payroll', icon: 'money-check-alt', description: 'Salary structures and payroll runs' },
+  {
+    id: 'infraExpenses',
+    title: 'Infra Expenses',
+    icon: 'tools',
+    description: 'Submit, approve, purchase, and pay infrastructure requests',
+  },
 ];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
@@ -31,6 +37,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   vendors: 'VendorsList',
   fees: 'FeesHub',
   payroll: 'PayrollHub',
+  infraExpenses: 'InfraExpensesList',
 };
 
 interface Counts {
