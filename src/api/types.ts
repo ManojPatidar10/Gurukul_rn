@@ -86,3 +86,47 @@ export interface StudentRequest {
 export interface StudentClassSectionUpdateRequest {
   classSectionId: string;
 }
+
+export interface Employee {
+  id: string;
+  schoolId: string;
+  name: string;
+  designation: string;
+  joinDate: string;
+  bankAccount: string;
+  contactPhone: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployeeRequest {
+  name: string;
+  designation: string;
+  joinDate: string;
+  bankAccount?: string;
+  contactPhone?: string;
+  status?: string;
+}
+
+export interface Vendor {
+  id: string;
+  schoolId: string;
+  name: string;
+  contactPhone: string;
+  contactEmail: string;
+  bankAccount: string;
+  upiId: string;
+  address: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorRequest {
+  name: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  bankAccount?: string;
+  upiId?: string;
+  address?: string;
+}
