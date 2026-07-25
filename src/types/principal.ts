@@ -1,4 +1,4 @@
-import type { Student } from '../api/types';
+import type { Employee, Student, Vendor } from '../api/types';
 
 export type FeatureId =
   | 'attendance'
@@ -7,6 +7,8 @@ export type FeatureId =
   | 'noticeBoard'
   | 'admissions'
   | 'students'
+  | 'employees'
+  | 'vendors'
   | 'aiChatbot'
   | 'schedule'
   | 'inventory';
@@ -118,6 +120,12 @@ export type PrincipalStackParamList = {
   StudentsList: undefined;
   StudentDetail: { student: Student };
   StudentForm: { student?: Student };
+  EmployeesList: undefined;
+  EmployeeDetail: { employee: Employee };
+  EmployeeForm: { employee?: Employee };
+  VendorsList: undefined;
+  VendorDetail: { vendor: Vendor };
+  VendorForm: { vendor?: Vendor };
   AIChatbot: undefined;
   Schedule: undefined;
   Inventory: undefined;
