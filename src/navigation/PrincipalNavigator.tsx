@@ -16,9 +16,15 @@ import { FeeStructuresListScreen } from '../screens/principal/FeeStructuresListS
 import { FeesHubScreen } from '../screens/principal/FeesHubScreen';
 import { InventoryScreen } from '../screens/principal/InventoryScreen';
 import { NoticeBoardScreen } from '../screens/principal/NoticeBoardScreen';
+import { PayrollHubScreen } from '../screens/principal/PayrollHubScreen';
+import { PayrollRunScreen } from '../screens/principal/PayrollRunScreen';
+import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
 import { PaymentsScreen } from '../screens/principal/PaymentsScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
 import { ProgressCardsScreen } from '../screens/principal/ProgressCardsScreen';
+import { SalaryHistoryScreen } from '../screens/principal/SalaryHistoryScreen';
+import { SalaryStructureFormScreen } from '../screens/principal/SalaryStructureFormScreen';
+import { SalaryStructuresListScreen } from '../screens/principal/SalaryStructuresListScreen';
 import { ScheduleScreen } from '../screens/principal/ScheduleScreen';
 import { StudentDetailScreen } from '../screens/principal/StudentDetailScreen';
 import { StudentFormScreen } from '../screens/principal/StudentFormScreen';
@@ -52,6 +58,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="EmployeesList" component={EmployeesListScreen} />
         <Stack.Screen name="EmployeeDetail" component={EmployeeDetailScreen} />
         <Stack.Screen name="EmployeeForm" component={EmployeeFormScreen} />
+        <Stack.Screen name="SalaryHistory" component={SalaryHistoryScreen} />
         <Stack.Screen name="VendorsList" component={VendorsListScreen} />
         <Stack.Screen name="VendorDetail" component={VendorDetailScreen} />
         <Stack.Screen name="VendorForm" component={VendorFormScreen} />
@@ -63,6 +70,11 @@ export function PrincipalNavigator() {
         <Stack.Screen name="FeeAssessmentsList" component={FeeAssessmentsListScreen} />
         <Stack.Screen name="FeeAssessmentDetail" component={FeeAssessmentDetailScreen} />
         <Stack.Screen name="FeePaymentForm" component={FeePaymentFormScreen} />
+        <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />
+        <Stack.Screen name="SalaryStructuresList" component={SalaryStructuresListScreen} />
+        <Stack.Screen name="SalaryStructureForm" component={SalaryStructureFormScreen} />
+        <Stack.Screen name="PayrollRun" component={PayrollRunScreen} />
+        <Stack.Screen name="PayslipDetail" component={PayslipDetailScreen} />
         <Stack.Screen name="AIChatbot" component={AIChatbotScreen} />
         <Stack.Screen name="Schedule" component={ScheduleScreen} />
         <Stack.Screen name="Inventory" component={InventoryScreen} />

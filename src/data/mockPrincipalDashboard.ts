@@ -38,6 +38,7 @@ export const featureActions: FeatureAction[] = [
   { id: 'employees', title: 'Employees', icon: 'id-badge', description: 'Manage staff records' },
   { id: 'vendors', title: 'Vendors', icon: 'truck', description: 'Manage vendor directory' },
   { id: 'fees', title: 'Fees', icon: 'file-invoice-dollar', description: 'Fee structures, dues, and payments' },
+  { id: 'payroll', title: 'Payroll', icon: 'money-check-alt', description: 'Salary structures and payroll runs' },
   { id: 'aiChatbot', title: 'AI Chatbot', icon: 'robot', description: 'Natural-language data lookup' },
   { id: 'schedule', title: 'Schedule', icon: 'calendar-alt', description: 'Centralized timetable coordination' },
   { id: 'inventory', title: 'Inventory', icon: 'boxes', description: 'Track supplies and assets' },

@@ -29,6 +29,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   employees: 'EmployeesList',
   vendors: 'VendorsList',
   fees: 'FeesHub',
+  payroll: 'PayrollHub',
   aiChatbot: 'AIChatbot',
   schedule: 'Schedule',
   inventory: 'Inventory',
