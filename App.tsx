@@ -1,39 +1,57 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 
 import { PrincipalNavigator } from './src/navigation/PrincipalNavigator';
 import { TeacherNavigator } from './src/navigation/TeacherNavigator';
 import { colors } from './src/theme/colors';
+import { SchoolContext } from './src/context/SchoolContext';
+import { getStoredSchoolId } from './src/api/schoolStorage';
+import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
 
 export default function App() {
   const [userRole, setUserRole] = useState<'principal' | 'teacher'>('principal');
+  const [schoolId, setSchoolId] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    getStoredSchoolId().then(setSchoolId);
+  }, []);
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <View style={styles.container}>
-          {userRole === 'principal' ? <PrincipalNavigator /> : <TeacherNavigator />}
-
-          {/* Role Switcher for Demo Purposes */}
-          <View style={styles.roleSwitcher}>
-            <TouchableOpacity
-              style={[styles.roleBtn, userRole === 'principal' && styles.roleBtnActive]}
-              onPress={() => setUserRole('principal')}
-            >
-              <Text style={[styles.roleText, userRole === 'principal' && styles.roleTextActive]}>Principal</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.roleBtn, userRole === 'teacher' && styles.roleBtnActive]}
-              onPress={() => setUserRole('teacher')}
-            >
-              <Text style={[styles.roleText, userRole === 'teacher' && styles.roleTextActive]}>Teacher</Text>
-            </TouchableOpacity>
-          </View>
+      {schoolId === undefined ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </NavigationContainer>
+      ) : schoolId === null ? (
+        <SchoolSetupScreen onRegistered={setSchoolId} />
+      ) : (
+        <SchoolContext.Provider value={schoolId}>
+          <NavigationContainer>
+            <View style={styles.container}>
+              {userRole === 'principal' ? <PrincipalNavigator /> : <TeacherNavigator />}
+
+              {/* Role Switcher for Demo Purposes */}
+              <View style={styles.roleSwitcher} pointerEvents="box-none">
+                <TouchableOpacity
+                  style={[styles.roleBtn, userRole === 'principal' && styles.roleBtnActive]}
+                  onPress={() => setUserRole('principal')}
+                >
+                  <Text style={[styles.roleText, userRole === 'principal' && styles.roleTextActive]}>Principal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.roleBtn, userRole === 'teacher' && styles.roleBtnActive]}
+                  onPress={() => setUserRole('teacher')}
+                >
+                  <Text style={[styles.roleText, userRole === 'teacher' && styles.roleTextActive]}>Teacher</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </NavigationContainer>
+        </SchoolContext.Provider>
+      )}
       <StatusBar style="light" />
     </SafeAreaProvider>
   );
@@ -42,6 +60,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
   },
   roleSwitcher: {
     flexDirection: 'row',
