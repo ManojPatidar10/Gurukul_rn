@@ -98,6 +98,9 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           <Pressable style={styles.actionButton} onPress={() => setShowTransfer((v) => !v)}>
             <Text style={styles.actionText}>{showTransfer ? 'Cancel transfer' : 'Transfer class'}</Text>
           </Pressable>
+          <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
+            <Text style={styles.actionText}>Attendance</Text>
+          </Pressable>
           <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
             <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
           </Pressable>
