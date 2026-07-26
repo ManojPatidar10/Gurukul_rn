@@ -29,6 +29,12 @@ const featureActions: FeatureAction[] = [
     icon: 'tools',
     description: 'Submit, approve, purchase, and pay infrastructure requests',
   },
+  {
+    id: 'classes',
+    title: 'Classes',
+    icon: 'chalkboard-teacher',
+    description: 'Sections, subjects, assessments, and attendance',
+  },
 ];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
@@ -38,6 +44,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   fees: 'FeesHub',
   payroll: 'PayrollHub',
   infraExpenses: 'InfraExpensesList',
+  classes: 'ClassesList',
 };
 
 interface Counts {

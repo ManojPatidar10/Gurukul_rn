@@ -315,3 +315,118 @@ export interface InfraPayRequest {
   paymentReference?: string;
   transactionDate?: string;
 }
+
+export interface Subject {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+}
+
+export interface SubjectRequest {
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface SubjectAssignment {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  teacherId: string;
+  teacherName: string;
+}
+
+export interface SectionSubjectRequest {
+  subjectId: string;
+  teacherId: string;
+}
+
+export type AssessmentType = 'ASSIGNMENT' | 'QUIZ' | 'TEST' | 'EXAM';
+
+export interface Assessment {
+  id: string;
+  schoolId: string;
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  type: AssessmentType;
+  title: string;
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  assessmentDate: string;
+  maxMarks: number;
+  description: string;
+  createdByTeacherId: string;
+  createdByTeacherName: string;
+}
+
+export interface AssessmentRequest {
+  title: string;
+  type: AssessmentType;
+  subjectId: string;
+  assessmentDate: string;
+  maxMarks: number;
+  description?: string;
+  teacherId: string;
+}
+
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
+
+export interface AttendanceEntryRequest {
+  studentId: string;
+  status: AttendanceStatus;
+  remarks?: string;
+}
+
+export interface BulkAttendanceRequest {
+  date: string;
+  teacherId: string;
+  records: AttendanceEntryRequest[];
+}
+
+export interface StudentAttendanceEntry {
+  studentId: string;
+  rollNumber: string;
+  studentName: string;
+  status: AttendanceStatus;
+  remarks: string;
+}
+
+export interface SectionAttendance {
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  date: string;
+  entries: StudentAttendanceEntry[];
+}
+
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  sectionId: string;
+  attendanceDate: string;
+  status: AttendanceStatus;
+  markedByTeacherId: string;
+  markedByTeacherName: string;
+  remarks: string;
+}
+
+export interface StudentAttendanceHistory {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  from: string;
+  to: string;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+  records: AttendanceRecord[];
+}

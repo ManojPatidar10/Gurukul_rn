@@ -1,5 +1,10 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { AssessmentDetailScreen } from '../screens/principal/AssessmentDetailScreen';
+import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen';
+import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
+import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
+import { ClassesListScreen } from '../screens/principal/ClassesListScreen';
 import { EmployeeDetailScreen } from '../screens/principal/EmployeeDetailScreen';
 import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
@@ -21,6 +26,11 @@ import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboar
 import { SalaryHistoryScreen } from '../screens/principal/SalaryHistoryScreen';
 import { SalaryStructureFormScreen } from '../screens/principal/SalaryStructureFormScreen';
 import { SalaryStructuresListScreen } from '../screens/principal/SalaryStructuresListScreen';
+import { SectionAssessmentsListScreen } from '../screens/principal/SectionAssessmentsListScreen';
+import { SectionDetailScreen } from '../screens/principal/SectionDetailScreen';
+import { SectionStudentsListScreen } from '../screens/principal/SectionStudentsListScreen';
+import { SectionSubjectsListScreen } from '../screens/principal/SectionSubjectsListScreen';
+import { SectionsListScreen } from '../screens/principal/SectionsListScreen';
 import { StudentDetailScreen } from '../screens/principal/StudentDetailScreen';
 import { StudentFormScreen } from '../screens/principal/StudentFormScreen';
 import { StudentsListScreen } from '../screens/principal/StudentsListScreen';
@@ -68,6 +78,16 @@ export function PrincipalNavigator() {
         <Stack.Screen name="InfraExpensesList" component={InfraExpensesListScreen} />
         <Stack.Screen name="InfraExpenseDetail" component={InfraExpenseDetailScreen} />
         <Stack.Screen name="InfraExpenseForm" component={InfraExpenseFormScreen} />
+        <Stack.Screen name="ClassesList" component={ClassesListScreen} />
+        <Stack.Screen name="SectionsList" component={SectionsListScreen} />
+        <Stack.Screen name="SectionDetail" component={SectionDetailScreen} />
+        <Stack.Screen name="SectionStudentsList" component={SectionStudentsListScreen} />
+        <Stack.Screen name="SectionSubjectsList" component={SectionSubjectsListScreen} />
+        <Stack.Screen name="SectionAssessmentsList" component={SectionAssessmentsListScreen} />
+        <Stack.Screen name="AssessmentForm" component={AssessmentFormScreen} />
+        <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
+        <Stack.Screen name="AttendanceTake" component={AttendanceTakeScreen} />
+        <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
       </Stack.Navigator>
   );
 }

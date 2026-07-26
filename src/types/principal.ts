@@ -1,4 +1,6 @@
 import type {
+  Assessment,
+  ClassSection,
   Employee,
   FeeAssessment,
   FeeStructure,
@@ -8,7 +10,14 @@ import type {
   Vendor,
 } from '../api/types';
 
-export type FeatureId = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll' | 'infraExpenses';
+export type FeatureId =
+  | 'students'
+  | 'employees'
+  | 'vendors'
+  | 'fees'
+  | 'payroll'
+  | 'infraExpenses'
+  | 'classes';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -45,4 +54,14 @@ export type PrincipalStackParamList = {
   InfraExpensesList: undefined;
   InfraExpenseDetail: { request: InfraExpenseRequest };
   InfraExpenseForm: undefined;
+  ClassesList: undefined;
+  SectionsList: { className: string };
+  SectionDetail: { classSection: ClassSection };
+  SectionStudentsList: { classSection: ClassSection };
+  SectionSubjectsList: { classSection: ClassSection };
+  SectionAssessmentsList: { classSection: ClassSection };
+  AssessmentForm: { classSection: ClassSection; assessment?: Assessment };
+  AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
+  AttendanceTake: { classSection: ClassSection };
+  AttendanceHistory: { student: Student };
 };
