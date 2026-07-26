@@ -6,9 +6,11 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
 import LabeledInput from '../components/LabeledInput';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
+import type { Session } from '../api/authStorage';
 
 interface Props {
-  onRegistered: (schoolId: string) => void;
+  onBack?: () => void;
+  onRegistered: (schoolId: string, session: Session) => void;
 }
 
 const emptyForm = {
@@ -21,9 +23,10 @@ const emptyForm = {
   contactPhone: '',
   principalName: '',
   directorName: '',
+  adminPhone: '',
 };
 
-export default function SchoolSetupScreen({ onRegistered }: Props) {
+export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +40,9 @@ export default function SchoolSetupScreen({ onRegistered }: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      const school = await registerSchool(form);
+      const { school, admin } = await registerSchool(form);
       await setStoredSchoolId(school.id);
-      onRegistered(school.id);
+      onRegistered(school.id, admin);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -49,10 +52,11 @@ export default function SchoolSetupScreen({ onRegistered }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Register your school" subtitle="One-time setup for this device" />
+      <ScreenHeader title="Register your school" subtitle="One-time setup for this device" onBack={onBack} />
       <ScreenContainer>
         <Text style={styles.subtitle}>
-          Every request to the backend is scoped to a school, so we need to create one first.
+          You'll be signed in as the school admin right after registering — your phone number below is used to
+          sign in with an OTP afterwards.
         </Text>
 
         <LabeledInput label="School name" value={form.name} onChangeText={set('name')} />
@@ -80,6 +84,12 @@ export default function SchoolSetupScreen({ onRegistered }: Props) {
         />
         <LabeledInput label="Principal name" value={form.principalName} onChangeText={set('principalName')} />
         <LabeledInput label="Director name" value={form.directorName} onChangeText={set('directorName')} />
+        <LabeledInput
+          label="Your phone number (for admin login)"
+          value={form.adminPhone}
+          onChangeText={set('adminPhone')}
+          keyboardType="phone-pad"
+        />
 
         {error && <Text style={styles.error}>{error}</Text>}
 

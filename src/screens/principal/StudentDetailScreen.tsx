@@ -2,10 +2,12 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { createStudentCredential } from '../../api/credentials';
 import { deleteStudent, transferStudentClassSection } from '../../api/students';
 import type { Student } from '../../api/types';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
+import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
@@ -31,6 +33,27 @@ export function StudentDetailScreen({ route, navigation }: Props) {
   const [transferring, setTransferring] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [creatingCredential, setCreatingCredential] = useState(false);
+  const [createdCredential, setCreatedCredential] = useState<{ username: string; password: string } | null>(null);
+  const [credentialError, setCredentialError] = useState<string | null>(null);
+
+  const handleCreateCredential = async () => {
+    setCreatingCredential(true);
+    setCredentialError(null);
+    setCreatedCredential(null);
+    try {
+      await createStudentCredential(schoolId, student.id, { username, password, role: 'STUDENT' });
+      setCreatedCredential({ username, password });
+    } catch (e) {
+      setCredentialError((e as Error).message);
+    } finally {
+      setCreatingCredential(false);
+    }
+  };
 
   const handleTransfer = async (classSectionId: string) => {
     setTransferring(true);
@@ -101,10 +124,56 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
             <Text style={styles.actionText}>Attendance</Text>
           </Pressable>
+          <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
+            <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
+          </Pressable>
           <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
             <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
           </Pressable>
         </View>
+
+        {showCredentials && (
+          <View style={styles.transferPanel}>
+            <Text style={styles.transferTitle}>Create student login</Text>
+            {createdCredential ? (
+              <View>
+                <Text style={styles.success}>
+                  Credential created. Share these with {student.name} — they won't be shown again:
+                </Text>
+                <View style={styles.credentialBox}>
+                  <Text style={styles.credentialLabel}>Username</Text>
+                  <Text style={styles.credentialValue}>{createdCredential.username}</Text>
+                  <Text style={[styles.credentialLabel, { marginTop: spacing.sm }]}>Password</Text>
+                  <Text style={styles.credentialValue}>{createdCredential.password}</Text>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    setCreatedCredential(null);
+                    setUsername('');
+                    setPassword('');
+                  }}
+                >
+                  <Text style={styles.doneLink}>Done</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
+                <LabeledInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+                {credentialError && <Text style={styles.error}>{credentialError}</Text>}
+                <Pressable
+                  style={[styles.credentialSubmit, (!username || !password || creatingCredential) && styles.disabled]}
+                  onPress={handleCreateCredential}
+                  disabled={!username || !password || creatingCredential}
+                >
+                  <Text style={styles.credentialSubmitText}>
+                    {creatingCredential ? 'Creating…' : 'Create credential'}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+        )}
 
         {showTransfer && (
           <View style={styles.transferPanel}>
@@ -153,4 +222,23 @@ const styles = StyleSheet.create({
   transferPanel: { marginTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.lg },
   transferTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.md },
   transferring: { color: colors.textMuted, marginTop: spacing.sm },
+  success: { color: colors.success, marginBottom: spacing.md, lineHeight: 20 },
+  credentialBox: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  credentialLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '700', textTransform: 'uppercase' },
+  credentialValue: { fontSize: 16, color: colors.textPrimary, fontWeight: '700', marginTop: 2 },
+  doneLink: { color: colors.primary, fontWeight: '700', textAlign: 'center' },
+  credentialSubmit: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    ...softShadow,
+  },
+  disabled: { opacity: 0.5 },
+  credentialSubmitText: { color: colors.white, fontWeight: '700' },
 });
