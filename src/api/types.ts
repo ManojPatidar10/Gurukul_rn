@@ -32,6 +32,33 @@ export interface SchoolRegistrationRequest {
   contactPhone: string;
   principalName: string;
   directorName: string;
+  adminPhone: string;
+  adminUsername?: string;
+  adminPassword?: string;
+}
+
+export interface SchoolUpdateRequest {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  contactEmail: string;
+  contactPhone: string;
+  principalName: string;
+  directorName: string;
+}
+
+export interface SchoolSearchResult {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+}
+
+export interface SchoolRegistrationResponse {
+  school: School;
+  admin: LoginResponse;
 }
 
 export interface ClassSection {
@@ -429,4 +456,45 @@ export interface StudentAttendanceHistory {
   lateCount: number;
   halfDayCount: number;
   records: AttendanceRecord[];
+}
+
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
+export type OwnerType = 'EMPLOYEE' | 'STUDENT';
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  tokenType: string;
+  ownerType: OwnerType;
+  ownerId: string;
+  role: UserRole;
+  schoolId: string;
+  username: string;
+}
+
+export interface OtpRequest {
+  phone: string;
+}
+
+export interface OtpVerifyRequest {
+  phone: string;
+  otp: string;
+}
+
+export interface CredentialRequest {
+  username: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface Credential {
+  id: string;
+  ownerType: OwnerType;
+  ownerId: string;
+  username: string;
+  role: UserRole;
 }

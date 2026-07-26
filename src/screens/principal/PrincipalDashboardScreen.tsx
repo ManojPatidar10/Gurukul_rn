@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { listEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
@@ -11,6 +11,7 @@ import { FeatureTile } from '../../components/FeatureTile';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatSummaryCard } from '../../components/StatSummaryCard';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, spacing } from '../../theme/colors';
 import type { FeatureAction, FeatureId, PrincipalStackParamList } from '../../types/principal';
@@ -55,6 +56,7 @@ interface Counts {
 
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session, logout } = useAuth();
   const [school, setSchool] = useState<School | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
 
@@ -85,6 +87,15 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={school?.name ?? 'Gurukul'} subtitle={school ? `Welcome, ${school.principalName}` : undefined} />
       <ScreenContainer>
+        <View style={styles.sessionRow}>
+          <Text style={styles.sessionText}>
+            {session.username} · {session.role}
+          </Text>
+          <Pressable onPress={logout}>
+            <Text style={styles.logoutText}>Log out</Text>
+          </Pressable>
+        </View>
+
         <View style={styles.statRow}>
           <StatSummaryCard accentKey="students" icon="user-graduate" label="Students" value={counts.students} />
           <StatSummaryCard accentKey="employees" icon="id-badge" label="Employees" value={counts.employees} />
@@ -108,6 +119,14 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  sessionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  sessionText: { fontSize: 13, color: colors.textMuted },
+  logoutText: { fontSize: 13, color: colors.error, fontWeight: '700' },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

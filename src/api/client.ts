@@ -4,6 +4,12 @@ export const BASE_URL = 'http://13.60.11.238:8080';
 
 export class ApiError extends Error {}
 
+let currentToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  currentToken = token;
+}
+
 async function request<T>(
   path: string,
   options: { method?: string; schoolId?: string; body?: unknown } = {}
@@ -13,6 +19,7 @@ async function request<T>(
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (schoolId) headers['X-School-Id'] = schoolId;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
