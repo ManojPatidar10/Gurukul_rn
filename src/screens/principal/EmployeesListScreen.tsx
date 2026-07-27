@@ -2,12 +2,14 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
-import { listEmployees } from '../../api/employees';
+import { listEmployees, searchEmployees } from '../../api/employees';
 import type { Employee } from '../../api/types';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { SearchBar } from '../../components/SearchBar';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -19,13 +21,15 @@ export function EmployeesListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query.trim());
 
   const load = useCallback(() => {
     setError(null);
-    return listEmployees(schoolId)
+    return (debouncedQuery ? searchEmployees(schoolId, debouncedQuery) : listEmployees(schoolId))
       .then(setEmployees)
       .catch((e) => setError(e.message));
-  }, [schoolId]);
+  }, [schoolId, debouncedQuery]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -34,6 +38,10 @@ export function EmployeesListScreen({ navigation }: Props) {
     });
     return unsubscribe;
   }, [navigation, load]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -48,6 +56,8 @@ export function EmployeesListScreen({ navigation }: Props) {
           <Text style={styles.addButtonText}>+ Add employee</Text>
         </Pressable>
 
+        <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name" />
+
         {error && <Text style={styles.error}>{error}</Text>}
 
         <FlatList
@@ -57,7 +67,11 @@ export function EmployeesListScreen({ navigation }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
-                {error ? 'Could not load employees.' : '0 employees yet — add the first one.'}
+                {error
+                  ? 'Could not load employees.'
+                  : debouncedQuery
+                    ? 'No employees match your search.'
+                    : '0 employees yet — add the first one.'}
               </Text>
             ) : null
           }

@@ -36,3 +36,14 @@ export function listStudentsByClassSection(
   const query = new URLSearchParams(params).toString();
   return api.get<Student[]>(`/api/v1/students/by-class-section?${query}`, schoolId);
 }
+
+export function searchStudents(schoolId: string, q: string) {
+  return api.get<Student[]>(`/api/v1/students/search?${new URLSearchParams({ q }).toString()}`, schoolId);
+}
+
+export function searchParents(schoolId: string, q: string) {
+  return api.get<Student[]>(
+    `/api/v1/students/search-parents?${new URLSearchParams({ q }).toString()}`,
+    schoolId
+  );
+}
