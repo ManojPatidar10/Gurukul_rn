@@ -1,3 +1,4 @@
+import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -40,7 +41,7 @@ const featureActions: FeatureAction[] = [
     id: 'chat',
     title: 'Messages',
     icon: 'comments',
-    description: 'Chat with staff and students, and the helpdesk bot',
+    description: 'Chat with staff and students',
   },
 ];
 
@@ -120,12 +121,31 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           ))}
         </View>
       </ScreenContainer>
+      <Pressable style={styles.fab} onPress={() => navigation.navigate('HelpdeskBot')} accessibilityLabel="Helpdesk Bot">
+        <FontAwesome5 name="robot" size={22} color={colors.white} />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing.xl,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0F1E3D',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   sessionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

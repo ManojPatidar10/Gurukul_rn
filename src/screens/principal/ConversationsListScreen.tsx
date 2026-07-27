@@ -58,9 +58,6 @@ export function ConversationsListScreen({ navigation }: Props) {
           <Pressable style={styles.newButton} onPress={() => navigation.navigate('NewConversation')}>
             <Text style={styles.newButtonText}>+ New Conversation</Text>
           </Pressable>
-          <Pressable style={styles.botButton} onPress={() => navigation.navigate('HelpdeskBot')}>
-            <Text style={styles.botButtonText}>Helpdesk Bot</Text>
-          </Pressable>
         </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -96,14 +93,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   newButtonText: { color: colors.white, fontWeight: '700' },
-  botButton: {
-    flex: 1,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  botButtonText: { color: colors.primary, fontWeight: '700' },
   loading: { marginTop: spacing.xl },
   error: { color: colors.error, paddingHorizontal: spacing.lg, fontSize: 13 },
   empty: { color: colors.textMuted, paddingHorizontal: spacing.lg },
