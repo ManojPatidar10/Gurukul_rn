@@ -11,6 +11,7 @@ import { AuthContext } from './src/context/AuthContext';
 import { getStoredSchoolId } from './src/api/schoolStorage';
 import { getStoredSession, setStoredSession, clearStoredSession, type Session } from './src/api/authStorage';
 import { setAuthToken } from './src/api/client';
+import { disconnectChatSocket } from './src/api/chatSocket';
 import type { SchoolSearchResult } from './src/api/types';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
@@ -46,12 +47,17 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    setAuthToken(session?.token ?? null);
+  }, [session]);
+
   const handleLoggedIn = (next: Session) => {
     setStoredSession(next);
     setSession(next);
   };
 
   const handleLogout = () => {
+    disconnectChatSocket();
     setAuthToken(null);
     clearStoredSession();
     setSession(null);

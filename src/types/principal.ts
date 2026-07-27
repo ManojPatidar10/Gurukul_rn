@@ -17,7 +17,8 @@ export type FeatureId =
   | 'fees'
   | 'payroll'
   | 'infraExpenses'
-  | 'classes';
+  | 'classes'
+  | 'chat';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -64,4 +65,8 @@ export type PrincipalStackParamList = {
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
   AttendanceTake: { classSection: ClassSection };
   AttendanceHistory: { student: Student };
+  ConversationsList: undefined;
+  NewConversation: undefined;
+  ConversationThread: { conversationId: string; title: string };
+  HelpdeskBot: undefined;
 };

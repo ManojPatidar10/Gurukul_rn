@@ -5,6 +5,10 @@ import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen'
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
 import { ClassesListScreen } from '../screens/principal/ClassesListScreen';
+import { ConversationThreadScreen } from '../screens/principal/ConversationThreadScreen';
+import { ConversationsListScreen } from '../screens/principal/ConversationsListScreen';
+import { NewConversationScreen } from '../screens/principal/NewConversationScreen';
+import { HelpdeskBotScreen } from '../screens/principal/HelpdeskBotScreen';
 import { EmployeeDetailScreen } from '../screens/principal/EmployeeDetailScreen';
 import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
@@ -88,6 +92,10 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
         <Stack.Screen name="AttendanceTake" component={AttendanceTakeScreen} />
         <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+        <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
+        <Stack.Screen name="NewConversation" component={NewConversationScreen} />
+        <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />
+        <Stack.Screen name="HelpdeskBot" component={HelpdeskBotScreen} />
       </Stack.Navigator>
   );
 }
