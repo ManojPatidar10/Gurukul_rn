@@ -55,7 +55,7 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
       <ScreenHeader title="Register your school" subtitle="One-time setup for this device" onBack={onBack} />
       <ScreenContainer>
         <Text style={styles.subtitle}>
-          You'll be signed in as the school admin right after registering — your phone number below is used to
+          You&apos;ll be signed in as the school admin right after registering — your phone number below is used to
           sign in with an OTP afterwards.
         </Text>
 
