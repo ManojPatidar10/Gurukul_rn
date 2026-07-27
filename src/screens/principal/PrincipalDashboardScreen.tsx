@@ -108,7 +108,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
             <FeatureTile
               key={feature.id}
               feature={feature}
-              onPress={() => navigation.navigate(featureRoutes[feature.id])}
+              onPress={() => navigation.navigate(featureRoutes[feature.id] as never)}
             />
           ))}
         </View>

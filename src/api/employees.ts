@@ -20,3 +20,7 @@ export function updateEmployee(schoolId: string, id: string, req: EmployeeReques
 export function getSalaryHistory(schoolId: string, employeeId: string) {
   return api.get<SalaryHistoryEntry[]>(`/api/v1/employees/${employeeId}/salary-history`, schoolId);
 }
+
+export function searchEmployees(schoolId: string, q: string) {
+  return api.get<Employee[]>(`/api/v1/employees/search?${new URLSearchParams({ q }).toString()}`, schoolId);
+}

@@ -138,7 +138,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
             {createdCredential ? (
               <View>
                 <Text style={styles.success}>
-                  Credential created. Share these with {student.name} — they won't be shown again:
+                  Credential created. Share these with {student.name} — they won&apos;t be shown again:
                 </Text>
                 <View style={styles.credentialBox}>
                   <Text style={styles.credentialLabel}>Username</Text>
