@@ -36,6 +36,12 @@ const featureActions: FeatureAction[] = [
     icon: 'chalkboard-teacher',
     description: 'Sections, subjects, assessments, and attendance',
   },
+  {
+    id: 'chat',
+    title: 'Messages',
+    icon: 'comments',
+    description: 'Chat with staff and students, and the helpdesk bot',
+  },
 ];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
@@ -46,6 +52,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   payroll: 'PayrollHub',
   infraExpenses: 'InfraExpensesList',
   classes: 'ClassesList',
+  chat: 'ConversationsList',
 };
 
 interface Counts {

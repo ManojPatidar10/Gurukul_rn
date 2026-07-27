@@ -498,3 +498,55 @@ export interface Credential {
   username: string;
   role: UserRole;
 }
+
+export type ConversationType = 'DIRECT' | 'BOT';
+
+export interface ConversationParticipant {
+  ownerType: OwnerType;
+  ownerId: string;
+}
+
+export interface Conversation {
+  id: string;
+  type: ConversationType;
+  participants: ConversationParticipant[];
+}
+
+export interface CreateConversationRequest {
+  otherPartyOwnerType: OwnerType;
+  otherPartyOwnerId: string;
+}
+
+export type SenderKind = 'USER' | 'BOT';
+
+export interface Message {
+  id: string;
+  senderKind: SenderKind;
+  senderOwnerType: OwnerType | null;
+  senderOwnerId: string | null;
+  content: string;
+  sentAt: string;
+}
+
+export interface MessageHistoryResponse {
+  messages: Message[];
+  hasMore: boolean;
+}
+
+export type AnnouncementScope = 'SCHOOL' | 'CLASS';
+
+export interface Announcement {
+  id: string;
+  scope: AnnouncementScope;
+  sectionId: string | null;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface CreateAnnouncementRequest {
+  scope: AnnouncementScope;
+  sectionId?: string;
+  title: string;
+  body: string;
+}
