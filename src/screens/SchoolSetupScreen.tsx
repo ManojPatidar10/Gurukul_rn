@@ -22,6 +22,7 @@ const emptyForm = {
   contactEmail: '',
   contactPhone: '',
   principalName: '',
+  principalPhone: '',
   directorName: '',
   adminPhone: '',
 };
@@ -83,6 +84,12 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
           keyboardType="phone-pad"
         />
         <LabeledInput label="Principal name" value={form.principalName} onChangeText={set('principalName')} />
+        <LabeledInput
+          label="Principal phone"
+          value={form.principalPhone}
+          onChangeText={set('principalPhone')}
+          keyboardType="phone-pad"
+        />
         <LabeledInput label="Director name" value={form.directorName} onChangeText={set('directorName')} />
         <LabeledInput
           label="Your phone number (for admin login)"

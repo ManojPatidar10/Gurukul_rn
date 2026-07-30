@@ -31,6 +31,7 @@ export interface SchoolRegistrationRequest {
   contactEmail: string;
   contactPhone: string;
   principalName: string;
+  principalPhone: string;
   directorName: string;
   adminPhone: string;
   adminUsername?: string;
