@@ -9,7 +9,8 @@ let client: Client | null = null;
 let connecting: Promise<Client> | null = null;
 const subscriptions = new Map<string, StompSubscription>();
 
-function ensureClient(token: string, schoolId: string): Promise<Client> {
+/** Exported so callSocket.ts can share this one connection instead of opening a second WebSocket. */
+export function ensureClient(token: string, schoolId: string): Promise<Client> {
   if (client && client.active) return Promise.resolve(client);
   if (connecting) return connecting;
 

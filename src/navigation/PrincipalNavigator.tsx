@@ -9,6 +9,12 @@ import { ConversationThreadScreen } from '../screens/principal/ConversationThrea
 import { ConversationsListScreen } from '../screens/principal/ConversationsListScreen';
 import { NewConversationScreen } from '../screens/principal/NewConversationScreen';
 import { HelpdeskBotScreen } from '../screens/principal/HelpdeskBotScreen';
+import { CallHistoryScreen } from '../screens/principal/CallHistoryScreen';
+import { InCallScreen } from '../screens/principal/InCallScreen';
+import { PickCallTargetScreen } from '../screens/principal/PickCallTargetScreen';
+import { ScheduleCallScreen } from '../screens/principal/ScheduleCallScreen';
+import { ScheduledCallsScreen } from '../screens/principal/ScheduledCallsScreen';
+import { VideoCallHubScreen } from '../screens/principal/VideoCallHubScreen';
 import { EmployeeDetailScreen } from '../screens/principal/EmployeeDetailScreen';
 import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
@@ -96,6 +102,12 @@ export function PrincipalNavigator() {
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
         <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />
         <Stack.Screen name="HelpdeskBot" component={HelpdeskBotScreen} />
+        <Stack.Screen name="VideoCallHub" component={VideoCallHubScreen} />
+        <Stack.Screen name="PickCallTarget" component={PickCallTargetScreen} />
+        <Stack.Screen name="ScheduleCall" component={ScheduleCallScreen} />
+        <Stack.Screen name="ScheduledCalls" component={ScheduledCallsScreen} />
+        <Stack.Screen name="CallHistory" component={CallHistoryScreen} />
+        <Stack.Screen name="InCall" component={InCallScreen} options={{ presentation: 'fullScreenModal' }} />
       </Stack.Navigator>
   );
 }

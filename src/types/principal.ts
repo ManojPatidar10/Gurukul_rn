@@ -18,7 +18,8 @@ export type FeatureId =
   | 'payroll'
   | 'infraExpenses'
   | 'classes'
-  | 'chat';
+  | 'chat'
+  | 'calls';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -69,4 +70,10 @@ export type PrincipalStackParamList = {
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };
   HelpdeskBot: undefined;
+  VideoCallHub: undefined;
+  PickCallTarget: undefined;
+  ScheduleCall: undefined;
+  ScheduledCalls: undefined;
+  CallHistory: undefined;
+  InCall: { roomName: string; displayName: string; callLogId?: string; scheduledCallId?: string };
 };

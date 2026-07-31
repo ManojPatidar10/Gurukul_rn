@@ -43,6 +43,12 @@ const featureActions: FeatureAction[] = [
     icon: 'comments',
     description: 'Chat with staff and students',
   },
+  {
+    id: 'calls',
+    title: 'Video Calls',
+    icon: 'video',
+    description: 'Start or schedule a video call',
+  },
 ];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
@@ -54,6 +60,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   infraExpenses: 'InfraExpensesList',
   classes: 'ClassesList',
   chat: 'ConversationsList',
+  calls: 'VideoCallHub',
 };
 
 interface Counts {
