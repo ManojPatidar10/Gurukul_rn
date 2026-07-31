@@ -564,6 +564,25 @@ export interface GameProfileResponse {
   longestStreakDays: number;
 }
 
+export type LeagueTier = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'GURUKUL_MASTER';
+
+export interface LeaderboardEntryResponse {
+  rank: number;
+  studentId: string;
+  name: string;
+  weeklyXp: number;
+  isYou: boolean;
+}
+
+export interface LeaderboardResponse {
+  tier: LeagueTier;
+  classSectionLabel: string;
+  entries: LeaderboardEntryResponse[];
+  yourRank: number;
+  currentStreakDays: number;
+  longestStreakDays: number;
+}
+
 export type CallStatus = 'SCHEDULED' | 'STARTED' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 export type RsvpStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type CallOutcome = 'IN_PROGRESS' | 'COMPLETED' | 'MISSED' | 'DECLINED' | 'BUSY' | 'CANCELLED';

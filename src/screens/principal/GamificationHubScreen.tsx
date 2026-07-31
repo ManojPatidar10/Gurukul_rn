@@ -1,7 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getMyGameProfile } from '../../api/gamification';
 import type { GameProfileResponse } from '../../api/types';
@@ -102,9 +102,13 @@ export function GamificationHubScreen({ navigation }: Props) {
           </View>
         )}
 
-        <Text style={styles.comingSoon}>
-          League leaderboards, house wars, badges, and quiz battles are coming in the next update.
-        </Text>
+        <Pressable style={styles.leaderboardButton} onPress={() => navigation.navigate('Leaderboard')}>
+          <FontAwesome5 name="trophy" size={16} color={gameColors.gold} />
+          <Text style={styles.leaderboardButtonText}>View my league leaderboard</Text>
+          <FontAwesome5 name="chevron-right" size={13} color={colors.textMuted} />
+        </Pressable>
+
+        <Text style={styles.comingSoon}>House wars, badges, and quiz battles are coming in the next update.</Text>
       </ScreenContainer>
     </View>
   );
@@ -177,4 +181,16 @@ const styles = StyleSheet.create({
   statValue: { color: '#fff', fontWeight: '800', fontSize: 16 },
   statLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 10.5 },
   comingSoon: { fontSize: 12.5, color: colors.textMuted, textAlign: 'center', paddingHorizontal: spacing.md },
+  leaderboardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    ...softShadow,
+  },
+  leaderboardButtonText: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary },
 });
