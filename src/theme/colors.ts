@@ -52,7 +52,7 @@ export const softShadow = {
   elevation: 1,
 } as const;
 
-export type AccentKey = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll' | 'infraExpenses' | 'classes' | 'chat' | 'calls';
+export type AccentKey = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll' | 'infraExpenses' | 'classes' | 'chat' | 'calls' | 'gamification';
 
 export const accents: Record<AccentKey, { base: string; light: string }> = {
   students: { base: '#2563EB', light: '#E3ECFD' },
@@ -64,4 +64,20 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   classes: { base: '#CA8A04', light: '#FBF1D2' },
   chat: { base: '#0D9488', light: '#DAF3F0' },
   calls: { base: '#4338CA', light: '#E5E3FB' },
+  gamification: { base: '#FFB020', light: '#FFF1D6' },
 };
+
+/**
+ * The "game accent" set used only by the gamification screens - deliberately distinct from the
+ * app's violet brand color rather than reusing it, so XP/streak/level feel like a game surface
+ * (gold currency, ember streak fire, jade success) instead of another purple dashboard card. See
+ * specs/gamification/execution-plan.md and the UI prototype it links for the design rationale.
+ */
+export const gameColors = {
+  ink: '#171334',
+  inkSoft: '#2A2350',
+  gold: '#FFB020',
+  goldSoft: '#FFD685',
+  ember: '#FF5A3C',
+  jade: '#2FE0A0',
+} as const;

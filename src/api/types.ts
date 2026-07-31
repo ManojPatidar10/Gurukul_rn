@@ -555,6 +555,15 @@ export interface CreateAnnouncementRequest {
   body: string;
 }
 
+export interface GameProfileResponse {
+  totalXp: number;
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+  currentStreakDays: number;
+  longestStreakDays: number;
+}
+
 export type CallStatus = 'SCHEDULED' | 'STARTED' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 export type RsvpStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type CallOutcome = 'IN_PROGRESS' | 'COMPLETED' | 'MISSED' | 'DECLINED' | 'BUSY' | 'CANCELLED';
