@@ -583,6 +583,45 @@ export interface LeaderboardResponse {
   longestStreakDays: number;
 }
 
+export interface HouseResponse {
+  id: string;
+  name: string;
+  colorHex: string;
+}
+
+export interface CreateHouseRequest {
+  name: string;
+  colorHex: string;
+}
+
+export interface AwardSpotRecognitionRequest {
+  studentId: string;
+  amount: number;
+  reason: string;
+}
+
+export interface HouseStandingResponse {
+  houseId: string;
+  name: string;
+  colorHex: string;
+  totalPoints: number;
+  memberCount: number;
+}
+
+export interface SpotRecognitionFeedItem {
+  studentName: string;
+  houseName: string;
+  amount: number;
+  reason: string;
+  occurredAt: string;
+}
+
+export interface HouseWarsResponse {
+  standings: HouseStandingResponse[];
+  recentFeed: SpotRecognitionFeedItem[];
+  yourHouseId: string | null;
+}
+
 export type CallStatus = 'SCHEDULED' | 'STARTED' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 export type RsvpStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type CallOutcome = 'IN_PROGRESS' | 'COMPLETED' | 'MISSED' | 'DECLINED' | 'BUSY' | 'CANCELLED';

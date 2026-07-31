@@ -10,7 +10,9 @@ import { ConversationsListScreen } from '../screens/principal/ConversationsListS
 import { NewConversationScreen } from '../screens/principal/NewConversationScreen';
 import { HelpdeskBotScreen } from '../screens/principal/HelpdeskBotScreen';
 import { CallHistoryScreen } from '../screens/principal/CallHistoryScreen';
+import { AwardRecognitionScreen } from '../screens/principal/AwardRecognitionScreen';
 import { GamificationHubScreen } from '../screens/principal/GamificationHubScreen';
+import { HouseWarsScreen } from '../screens/principal/HouseWarsScreen';
 import { InCallScreen } from '../screens/principal/InCallScreen';
 import { LeaderboardScreen } from '../screens/principal/LeaderboardScreen';
 import { PickCallTargetScreen } from '../screens/principal/PickCallTargetScreen';
@@ -112,6 +114,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="InCall" component={InCallScreen} options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="GamificationHub" component={GamificationHubScreen} />
         <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
+        <Stack.Screen name="HouseWars" component={HouseWarsScreen} />
+        <Stack.Screen name="AwardRecognition" component={AwardRecognitionScreen} />
       </Stack.Navigator>
   );
 }

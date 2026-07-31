@@ -108,7 +108,13 @@ export function GamificationHubScreen({ navigation }: Props) {
           <FontAwesome5 name="chevron-right" size={13} color={colors.textMuted} />
         </Pressable>
 
-        <Text style={styles.comingSoon}>House wars, badges, and quiz battles are coming in the next update.</Text>
+        <Pressable style={styles.leaderboardButton} onPress={() => navigation.navigate('HouseWars')}>
+          <FontAwesome5 name="shield-alt" size={16} color={gameColors.ember} />
+          <Text style={styles.leaderboardButtonText}>See House Wars standings</Text>
+          <FontAwesome5 name="chevron-right" size={13} color={colors.textMuted} />
+        </Pressable>
+
+        <Text style={styles.comingSoon}>Badges and quiz battles are coming in the next update.</Text>
       </ScreenContainer>
     </View>
   );
