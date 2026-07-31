@@ -49,7 +49,17 @@ const featureActions: FeatureAction[] = [
     icon: 'video',
     description: 'Start or schedule a video call',
   },
+  {
+    id: 'gamification',
+    title: 'Game Hub',
+    icon: 'trophy',
+    description: 'XP, streaks, and levels',
+  },
 ];
+
+// Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
+// filtered out of the grid below rather than being one more tile everyone sees but can't use.
+const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -61,6 +71,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   classes: 'ClassesList',
   chat: 'ConversationsList',
   calls: 'VideoCallHub',
+  gamification: 'GamificationHub',
 };
 
 interface Counts {
@@ -72,6 +83,9 @@ interface Counts {
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
+  const visibleFeatures = featureActions.filter(
+    (feature) => session.ownerType === 'STUDENT' || !STUDENT_ONLY_FEATURES.includes(feature.id)
+  );
   const [school, setSchool] = useState<School | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
 
@@ -119,7 +133,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.tileGrid}>
-          {featureActions.map((feature) => (
+          {visibleFeatures.map((feature) => (
             <FeatureTile
               key={feature.id}
               feature={feature}

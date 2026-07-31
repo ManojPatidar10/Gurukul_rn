@@ -19,7 +19,8 @@ export type FeatureId =
   | 'infraExpenses'
   | 'classes'
   | 'chat'
-  | 'calls';
+  | 'calls'
+  | 'gamification';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -76,4 +77,5 @@ export type PrincipalStackParamList = {
   ScheduledCalls: undefined;
   CallHistory: undefined;
   InCall: { roomName: string; displayName: string; callLogId?: string; scheduledCallId?: string };
+  GamificationHub: undefined;
 };
