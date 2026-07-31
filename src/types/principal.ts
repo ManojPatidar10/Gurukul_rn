@@ -20,7 +20,8 @@ export type FeatureId =
   | 'classes'
   | 'chat'
   | 'calls'
-  | 'gamification';
+  | 'gamification'
+  | 'houses';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -79,4 +80,6 @@ export type PrincipalStackParamList = {
   InCall: { roomName: string; displayName: string; callLogId?: string; scheduledCallId?: string };
   GamificationHub: undefined;
   Leaderboard: undefined;
+  HouseWars: undefined;
+  AwardRecognition: undefined;
 };

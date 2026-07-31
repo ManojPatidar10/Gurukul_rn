@@ -55,6 +55,12 @@ const featureActions: FeatureAction[] = [
     icon: 'trophy',
     description: 'XP, streaks, and levels',
   },
+  {
+    id: 'houses',
+    title: 'House Wars',
+    icon: 'shield-alt',
+    description: 'School-wide house standings',
+  },
 ];
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
@@ -72,6 +78,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   chat: 'ConversationsList',
   calls: 'VideoCallHub',
   gamification: 'GamificationHub',
+  houses: 'HouseWars',
 };
 
 interface Counts {
