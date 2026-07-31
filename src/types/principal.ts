@@ -78,4 +78,5 @@ export type PrincipalStackParamList = {
   CallHistory: undefined;
   InCall: { roomName: string; displayName: string; callLogId?: string; scheduledCallId?: string };
   GamificationHub: undefined;
+  Leaderboard: undefined;
 };

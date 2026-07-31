@@ -12,6 +12,7 @@ import { HelpdeskBotScreen } from '../screens/principal/HelpdeskBotScreen';
 import { CallHistoryScreen } from '../screens/principal/CallHistoryScreen';
 import { GamificationHubScreen } from '../screens/principal/GamificationHubScreen';
 import { InCallScreen } from '../screens/principal/InCallScreen';
+import { LeaderboardScreen } from '../screens/principal/LeaderboardScreen';
 import { PickCallTargetScreen } from '../screens/principal/PickCallTargetScreen';
 import { ScheduleCallScreen } from '../screens/principal/ScheduleCallScreen';
 import { ScheduledCallsScreen } from '../screens/principal/ScheduledCallsScreen';
@@ -110,6 +111,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="CallHistory" component={CallHistoryScreen} />
         <Stack.Screen name="InCall" component={InCallScreen} options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="GamificationHub" component={GamificationHubScreen} />
+        <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
       </Stack.Navigator>
   );
 }
