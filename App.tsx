@@ -5,6 +5,7 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 
 import { PrincipalNavigator } from './src/navigation/PrincipalNavigator';
+import { navigationRef } from './src/navigation/navigationRef';
 import { colors } from './src/theme/colors';
 import { SchoolContext } from './src/context/SchoolContext';
 import { AuthContext } from './src/context/AuthContext';
@@ -12,6 +13,7 @@ import { getStoredSchoolId } from './src/api/schoolStorage';
 import { getStoredSession, setStoredSession, clearStoredSession, type Session } from './src/api/authStorage';
 import { setAuthToken } from './src/api/client';
 import { disconnectChatSocket } from './src/api/chatSocket';
+import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
 import type { SchoolSearchResult } from './src/api/types';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
@@ -143,9 +145,10 @@ export default function App() {
       ) : (
         <SchoolContext.Provider value={schoolId}>
           <AuthContext.Provider value={{ session, logout: handleLogout }}>
-            <NavigationContainer>
+            <NavigationContainer ref={navigationRef}>
               <PrincipalNavigator />
             </NavigationContainer>
+            <IncomingCallOverlay session={session} schoolId={schoolId} />
           </AuthContext.Provider>
         </SchoolContext.Provider>
       )}

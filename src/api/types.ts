@@ -92,6 +92,8 @@ export interface Student {
   section: string;
   academicYear: string;
   classSectionLabel: string;
+  classTeacherId: string | null;
+  classTeacherName: string | null;
   admissionDate: string;
   status: string;
   createdAt: string;
@@ -124,6 +126,7 @@ export interface Employee {
   bankAccount: string;
   contactPhone: string;
   status: string;
+  role: UserRole | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -550,4 +553,92 @@ export interface CreateAnnouncementRequest {
   sectionId?: string;
   title: string;
   body: string;
+}
+
+export type CallStatus = 'SCHEDULED' | 'STARTED' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
+export type RsvpStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+export type CallOutcome = 'IN_PROGRESS' | 'COMPLETED' | 'MISSED' | 'DECLINED' | 'BUSY' | 'CANCELLED';
+
+export interface ScheduleCallRequest {
+  title: string;
+  inviteeOwnerType: OwnerType;
+  inviteeOwnerIds: string[];
+  scheduledAt: string;
+}
+
+export interface RsvpRequest {
+  status: RsvpStatus;
+}
+
+export interface StartImmediateCallRequest {
+  calleeOwnerType: OwnerType;
+  calleeOwnerId: string;
+}
+
+export interface CallInviteeResponse {
+  ownerType: OwnerType;
+  ownerId: string;
+  rsvpStatus: RsvpStatus;
+}
+
+export interface ScheduledCallResponse {
+  id: string;
+  title: string;
+  hostOwnerType: OwnerType;
+  hostOwnerId: string;
+  scheduledAt: string;
+  roomName: string;
+  status: CallStatus;
+  invitees: CallInviteeResponse[];
+}
+
+export interface MyInviteResponse {
+  scheduledCallId: string;
+  title: string;
+  hostOwnerType: OwnerType;
+  hostOwnerId: string;
+  scheduledAt: string;
+  status: CallStatus;
+  myRsvpStatus: RsvpStatus;
+}
+
+export interface CallSessionResponse {
+  callLogId: string;
+  roomName: string;
+  outcome: CallOutcome;
+}
+
+export interface CallLogResponse {
+  id: string;
+  scheduledCallId: string | null;
+  callerOwnerType: OwnerType;
+  callerOwnerId: string;
+  calleeOwnerType: OwnerType | null;
+  calleeOwnerId: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number | null;
+  outcome: CallOutcome;
+}
+
+export type CallEventType =
+  | 'INCOMING_CALL'
+  | 'CALL_ACCEPTED'
+  | 'CALL_DECLINED'
+  | 'CALL_BUSY'
+  | 'CALL_MISSED'
+  | 'CALL_CANCELLED'
+  | 'CALL_ENDED'
+  | 'SCHEDULED_CALL_STARTED'
+  | 'SCHEDULED_CALL_REMINDER';
+
+export interface CallEvent {
+  type: CallEventType;
+  callLogId: string | null;
+  scheduledCallId: string | null;
+  roomName: string | null;
+  counterpartOwnerType: OwnerType | null;
+  counterpartOwnerId: string | null;
+  title: string | null;
+  scheduledAt: string | null;
 }
