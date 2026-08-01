@@ -5,6 +5,7 @@ import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable,
 import { getConversationMessages } from '../../api/chat';
 import { sendMessage, subscribeToConversation } from '../../api/chatSocket';
 import type { Message } from '../../api/types';
+import { markConversationRead } from '../../api/unreadStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -47,6 +48,11 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       unsubscribe?.();
     };
   }, [schoolId, conversationId, session.token]);
+
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (last) markConversationRead(conversationId, last.sentAt);
+  }, [messages, conversationId]);
 
   const handleSend = async () => {
     const content = draft.trim();

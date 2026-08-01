@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,9 +9,10 @@ interface ScreenHeaderProps {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  rightAction?: ReactNode;
 }
 
-export function ScreenHeader({ title, subtitle, onBack }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, onBack, rightAction }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const initial = title.trim().charAt(0).toUpperCase() || '?';
 
@@ -41,6 +43,7 @@ export function ScreenHeader({ title, subtitle, onBack }: ScreenHeaderProps) {
             </Text>
           ) : null}
         </View>
+        {rightAction}
       </View>
     </LinearGradient>
   );

@@ -38,12 +38,6 @@ const featureActions: FeatureAction[] = [
     description: 'Sections, subjects, assessments, and attendance',
   },
   {
-    id: 'chat',
-    title: 'Messages',
-    icon: 'comments',
-    description: 'Chat with staff and students',
-  },
-  {
     id: 'calls',
     title: 'Video Calls',
     icon: 'video',
@@ -75,7 +69,6 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   payroll: 'PayrollHub',
   infraExpenses: 'InfraExpensesList',
   classes: 'ClassesList',
-  chat: 'ConversationsList',
   calls: 'VideoCallHub',
   gamification: 'GamificationHub',
   houses: 'HouseWars',
@@ -121,7 +114,19 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={school?.name ?? 'Gurukul'} subtitle={school ? `Welcome, ${school.principalName}` : undefined} />
+      <ScreenHeader
+        title={school?.name ?? 'Gurukul'}
+        subtitle={school ? `Welcome, ${school.principalName}` : undefined}
+        rightAction={
+          <Pressable
+            style={styles.headerChatButton}
+            onPress={() => navigation.navigate('ConversationsList')}
+            accessibilityLabel="Messages"
+          >
+            <FontAwesome5 name="comment-dots" size={18} color={colors.white} />
+          </Pressable>
+        }
+      />
       <ScreenContainer>
         <View style={styles.sessionRow}>
           <Text style={styles.sessionText}>
@@ -158,6 +163,14 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  headerChatButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   fab: {
     position: 'absolute',
     right: spacing.lg,
