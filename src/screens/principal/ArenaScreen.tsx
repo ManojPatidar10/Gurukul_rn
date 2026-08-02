@@ -41,13 +41,23 @@ export function ArenaScreen({ navigation }: Props) {
   }, [navigation, load]);
 
   if (session.ownerType !== 'STUDENT') {
+    if (session.role !== 'TEACHER') {
+      return (
+        <View style={styles.root}>
+          <ScreenHeader title="Gurukul Arena" onBack={() => navigation.goBack()} />
+          <ScreenContainer>
+            <Text style={styles.teacherIntro}>Quiz question authoring is managed by teachers.</Text>
+          </ScreenContainer>
+        </View>
+      );
+    }
     return (
       <View style={styles.root}>
         <ScreenHeader title="Gurukul Arena" onBack={() => navigation.goBack()} />
         <ScreenContainer>
           <Text style={styles.teacherIntro}>
-            Students challenge each other to 1v1 quizzes here. As a teacher or admin, you can build
-            the question bank each subject draws from.
+            Students challenge each other to 1v1 quizzes here. Build the question bank each subject
+            draws from below.
           </Text>
           <Pressable style={styles.primaryButton} onPress={() => navigation.navigate('QuestionAuthor')}>
             <FontAwesome5 name="plus" size={14} color={colors.white} />

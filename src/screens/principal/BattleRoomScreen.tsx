@@ -1,11 +1,12 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getBattleRoom } from '../../api/battleRooms';
 import { sendBattleAnswer, sendBuzz, subscribeToBattleRoom } from '../../api/battleRoomSocket';
 import type { BattleRoomState, QuizOption } from '../../api/types';
+import { CircularCountdown } from '../../components/CircularCountdown';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
@@ -29,6 +30,8 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   const [room, setRoom] = useState<BattleRoomState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const countdownStartedForRoomId = useRef<string | null>(null);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -52,6 +55,21 @@ export function BattleRoomScreen({ route, navigation }: Props) {
       unsubscribe?.();
     };
   }, [schoolId, roomId, session.token]);
+
+  useEffect(() => {
+    if (!room || room.status !== 'WAITING') {
+      countdownStartedForRoomId.current = null;
+      return;
+    }
+    if (countdownStartedForRoomId.current === room.id) return;
+    countdownStartedForRoomId.current = room.id;
+    setRemainingSeconds(room.joinWindowSeconds);
+
+    const interval = setInterval(() => {
+      setRemainingSeconds((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [room?.id, room?.status, room?.joinWindowSeconds]);
 
   const myStudentId = session.ownerId;
   const iWonBuzz = room?.currentBuzzWinnerStudentId === myStudentId;
@@ -87,11 +105,22 @@ export function BattleRoomScreen({ route, navigation }: Props) {
       <ScreenContainer>
         {room.status === 'WAITING' && (
           <View style={styles.card}>
-            <FontAwesome5 name="hourglass-half" size={20} color={gameColors.gold} />
+            <CircularCountdown
+              totalSeconds={room.joinWindowSeconds}
+              remainingSeconds={remainingSeconds}
+              color={gameColors.gold}
+              trackColor={colors.border}
+            />
             <Text style={styles.waitingTitle}>Waiting for players…</Text>
             <Text style={styles.waitingSubtitle}>
               {room.participants.length}/{room.maxPlayers} joined · needs {room.minPlayers} to start
             </Text>
+            <View style={styles.roomCodeChip}>
+              <Text style={styles.roomCodeLabel}>Room code — share to invite</Text>
+              <Text style={styles.roomCodeValue} selectable>
+                {room.id}
+              </Text>
+            </View>
             {room.participants.map((p) => (
               <Text key={p.studentId} style={styles.participantRow}>
                 {p.name}
@@ -177,6 +206,16 @@ const styles = StyleSheet.create({
   },
   waitingTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginTop: spacing.sm },
   waitingSubtitle: { fontSize: 13, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.md },
+  roomCodeChip: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  roomCodeLabel: { fontSize: 11, color: colors.textMuted },
+  roomCodeValue: { fontSize: 13, color: colors.textPrimary, fontWeight: '700', marginTop: 2 },
   participantRow: { fontSize: 14, color: colors.textPrimary, paddingVertical: spacing.xs },
   questionIndex: { fontSize: 12, color: colors.textMuted, alignSelf: 'flex-start' },
   questionText: {

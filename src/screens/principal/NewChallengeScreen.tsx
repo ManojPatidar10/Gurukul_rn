@@ -98,17 +98,20 @@ export function NewChallengeScreen({ navigation }: Props) {
                 <Text style={styles.studentName}>{student.name}</Text>
               </Pressable>
             ))}
-
-            <Pressable
-              style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}
-              onPress={handleSubmit}
-              disabled={!canSubmit || submitting}
-            >
-              {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>Send challenge</Text>}
-            </Pressable>
           </>
         )}
       </ScreenContainer>
+      {!loading && (
+        <View style={styles.footer}>
+          <Pressable
+            style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}
+            onPress={handleSubmit}
+            disabled={!canSubmit || submitting}
+          >
+            {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>Send challenge</Text>}
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -148,12 +151,17 @@ const styles = StyleSheet.create({
   },
   studentRowSelected: { borderColor: colors.primary },
   studentName: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  footer: {
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
+  },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
-    marginTop: spacing.md,
     ...softShadow,
   },
   submitDisabled: { opacity: 0.5 },

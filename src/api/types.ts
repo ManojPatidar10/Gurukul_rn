@@ -627,6 +627,7 @@ export type ChallengeStatus = 'ACTIVE' | 'COMPLETED' | 'EXPIRED';
 
 export interface CreateQuizQuestionRequest {
   subjectId: string;
+  className: string;
   questionText: string;
   optionA: string;
   optionB: string;
@@ -637,6 +638,7 @@ export interface CreateQuizQuestionRequest {
 
 export interface QuizQuestionResponse {
   id: string;
+  className: string;
   questionText: string;
   optionA: string;
   optionB: string;

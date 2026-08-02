@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createQuizQuestion } from '../../api/arena';
+import { listClassNames } from '../../api/classSections';
 import { listSubjects } from '../../api/subjects';
 import type { QuizOption, Subject } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
@@ -20,6 +21,8 @@ export function QuestionAuthorScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [subjectId, setSubjectId] = useState<string | null>(null);
+  const [classNames, setClassNames] = useState<string[]>([]);
+  const [className, setClassName] = useState<string | null>(null);
   const [questionText, setQuestionText] = useState('');
   const [options, setOptions] = useState({ A: '', B: '', C: '', D: '' });
   const [correctOption, setCorrectOption] = useState<QuizOption>('A');
@@ -29,10 +32,14 @@ export function QuestionAuthorScreen({ navigation }: Props) {
 
   useEffect(() => {
     listSubjects(schoolId).then(setSubjects).catch(() => setSubjects([]));
+    listClassNames(schoolId).then(setClassNames).catch(() => setClassNames([]));
   }, [schoolId]);
 
   const canSubmit =
-    subjectId !== null && questionText.trim().length > 0 && OPTION_KEYS.every((k) => options[k].trim().length > 0);
+    subjectId !== null &&
+    className !== null &&
+    questionText.trim().length > 0 &&
+    OPTION_KEYS.every((k) => options[k].trim().length > 0);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -41,6 +48,7 @@ export function QuestionAuthorScreen({ navigation }: Props) {
     try {
       await createQuizQuestion(schoolId, {
         subjectId: subjectId!,
+        className: className!,
         questionText: questionText.trim(),
         optionA: options.A.trim(),
         optionB: options.B.trim(),
@@ -76,6 +84,20 @@ export function QuestionAuthorScreen({ navigation }: Props) {
               <Text style={[styles.chipText, subjectId === subject.id && styles.chipTextSelected]}>{subject.name}</Text>
             </Pressable>
           ))}
+        </View>
+
+        <Text style={styles.fieldLabel}>Class</Text>
+        <View style={styles.chips}>
+          {classNames.map((name) => (
+            <Pressable
+              key={name}
+              style={[styles.chip, className === name && styles.chipSelected]}
+              onPress={() => setClassName(name)}
+            >
+              <Text style={[styles.chipText, className === name && styles.chipTextSelected]}>{name}</Text>
+            </Pressable>
+          ))}
+          {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
         </View>
 
         <LabeledInput label="Question" value={questionText} onChangeText={setQuestionText} multiline placeholder="e.g. What is the capital of India?" />
@@ -132,6 +154,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+  empty: { color: colors.textMuted, fontSize: 13 },
   chip: {
     borderWidth: 1.5,
     borderColor: colors.border,
