@@ -19,7 +19,11 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS"]
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -28,12 +32,15 @@
       "@react-native-community/datetimepicker",
       [
         "expo-camera",
-        { "cameraPermission": "Gurukul uses your camera for video calls." }
+        {
+          "cameraPermission": "Gurukul uses your camera for video calls."
+        }
       ],
       [
         "expo-av",
         { "microphonePermission": "Gurukul uses your microphone for video calls." }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
