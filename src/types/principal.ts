@@ -31,6 +31,7 @@ export interface FeatureAction {
 
 export type PrincipalStackParamList = {
   PrincipalDashboard: undefined;
+  Profile: undefined;
   StudentsList: undefined;
   StudentDetail: { student: Student };
   StudentForm: { student?: Student };

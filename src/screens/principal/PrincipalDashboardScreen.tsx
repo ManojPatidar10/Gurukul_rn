@@ -118,13 +118,22 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         title={school?.name ?? 'Gurukul'}
         subtitle={school ? `Welcome, ${school.principalName}` : undefined}
         rightAction={
-          <Pressable
-            style={styles.headerChatButton}
-            onPress={() => navigation.navigate('ConversationsList')}
-            accessibilityLabel="Messages"
-          >
-            <FontAwesome5 name="comment-dots" size={18} color={colors.white} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.headerChatButton}
+              onPress={() => navigation.navigate('ConversationsList')}
+              accessibilityLabel="Messages"
+            >
+              <FontAwesome5 name="comment-dots" size={18} color={colors.white} />
+            </Pressable>
+            <Pressable
+              style={styles.headerChatButton}
+              onPress={() => navigation.navigate('Profile')}
+              accessibilityLabel="Profile"
+            >
+              <FontAwesome5 name="user" size={18} color={colors.white} />
+            </Pressable>
+          </View>
         }
       />
       <ScreenContainer>
@@ -163,6 +172,10 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
   headerChatButton: {
     width: 40,
     height: 40,
