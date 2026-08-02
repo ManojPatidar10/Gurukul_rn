@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getEmployee } from '../../api/employees';
 import { getStudent } from '../../api/students';
@@ -20,7 +20,7 @@ interface ProfileField {
 
 export function ProfileScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const [name, setName] = useState<string | null>(null);
   const [fields, setFields] = useState<ProfileField[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +81,10 @@ export function ProfileScreen({ navigation }: Props) {
                 </View>
               ))}
             </View>
+
+            <Pressable style={styles.logoutButton} onPress={logout}>
+              <Text style={styles.logoutButtonText}>Log out</Text>
+            </Pressable>
           </View>
         )}
       </ScreenContainer>
@@ -126,4 +130,13 @@ const styles = StyleSheet.create({
   },
   fieldLabel: { fontSize: 13, color: colors.textMuted },
   fieldValue: { fontSize: 14, color: colors.textPrimary, fontWeight: '600', maxWidth: '60%', textAlign: 'right' },
+  logoutButton: {
+    width: '100%',
+    marginTop: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+  },
+  logoutButtonText: { color: colors.white, fontWeight: '700', fontSize: 15 },
 });
