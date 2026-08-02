@@ -1,6 +1,6 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getBattleRoom } from '../../api/battleRooms';
@@ -31,13 +31,6 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const countdownStartedForRoomId = useRef<string | null>(null);
-  // The backend doesn't send a room start timestamp, so a countdown is only trustworthy for
-  // whoever was present when the room had just 1 participant (i.e. the creator/first arrival) -
-  // for them, "when I first observed WAITING" genuinely is the start time. Anyone joining after
-  // that has already missed an unknown chunk of the window, so showing them a countdown that
-  // restarts from the full duration would just be wrong, not merely imprecise.
-  const isLikelyCreatorForRoomId = useRef<string | null>(null);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -63,27 +56,16 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   }, [schoolId, roomId, session.token]);
 
   useEffect(() => {
-    if (!room) return;
-    if (isLikelyCreatorForRoomId.current !== null) return;
-    isLikelyCreatorForRoomId.current = room.participants.length <= 1 ? room.id : 'not-' + room.id;
-  }, [room]);
+    if (!room || room.status !== 'WAITING') return;
 
-  const isLikelyCreator = !!room && isLikelyCreatorForRoomId.current === room.id;
-
-  useEffect(() => {
-    if (!room || room.status !== 'WAITING' || !isLikelyCreator) {
-      countdownStartedForRoomId.current = null;
-      return;
-    }
-    if (countdownStartedForRoomId.current === room.id) return;
-    countdownStartedForRoomId.current = room.id;
-    setRemainingSeconds(room.joinWindowSeconds);
-
-    const interval = setInterval(() => {
-      setRemainingSeconds((prev) => Math.max(0, prev - 1));
-    }, 1000);
+    const tick = () => {
+      const secondsLeft = (new Date(room.joinWindowEndsAt).getTime() - Date.now()) / 1000;
+      setRemainingSeconds(Math.max(0, secondsLeft));
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [room?.id, room?.status, room?.joinWindowSeconds, isLikelyCreator]);
+  }, [room?.status, room?.joinWindowEndsAt]);
 
   const myStudentId = session.ownerId;
   const iWonBuzz = room?.currentBuzzWinnerStudentId === myStudentId;
@@ -119,16 +101,12 @@ export function BattleRoomScreen({ route, navigation }: Props) {
       <ScreenContainer>
         {room.status === 'WAITING' && (
           <View style={styles.card}>
-            {isLikelyCreator ? (
-              <CircularCountdown
-                totalSeconds={room.joinWindowSeconds}
-                remainingSeconds={remainingSeconds}
-                color={gameColors.gold}
-                trackColor={colors.border}
-              />
-            ) : (
-              <ActivityIndicator color={gameColors.gold} size="large" />
-            )}
+            <CircularCountdown
+              totalSeconds={room.joinWindowSeconds}
+              remainingSeconds={remainingSeconds}
+              color={gameColors.gold}
+              trackColor={colors.border}
+            />
             <Text style={styles.waitingTitle}>Waiting for players…</Text>
             <Text style={styles.waitingSubtitle}>
               {room.participants.length}/{room.maxPlayers} joined · needs {room.minPlayers} to start

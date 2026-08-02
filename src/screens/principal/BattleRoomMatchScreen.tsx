@@ -1,10 +1,10 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { createBattleRoom, joinBattleRoomByCode, matchBattleRoom } from '../../api/battleRooms';
-import type { Subject } from '../../api/types';
+import { createBattleRoom, joinBattleRoom, joinBattleRoomByCode, listBattleRooms, matchBattleRoom } from '../../api/battleRooms';
+import type { BattleRoomSummary, Subject } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -21,6 +21,40 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
   const [roomCode, setRoomCode] = useState('');
   const [busy, setBusy] = useState<'match' | 'create' | 'join' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [openRooms, setOpenRooms] = useState<BattleRoomSummary[]>([]);
+  const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      listBattleRooms(schoolId, subject?.id)
+        .then((rooms) => {
+          if (!cancelled) setOpenRooms(rooms);
+        })
+        .catch(() => {
+          if (!cancelled) setOpenRooms([]);
+        });
+    };
+    load();
+    const interval = setInterval(load, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [schoolId, subject?.id]);
+
+  const handleJoinRoom = async (roomId: string) => {
+    setJoiningRoomId(roomId);
+    setError(null);
+    try {
+      const room = await joinBattleRoom(schoolId, roomId);
+      navigation.replace('BattleRoom', { roomId: room.id });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setJoiningRoomId(null);
+    }
+  };
 
   const start = async (mode: 'match' | 'create') => {
     if (!subject) return;
@@ -66,6 +100,38 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
         <SubjectPicker schoolId={schoolId} selectedId={subject?.id ?? null} onSelect={setSubject} />
 
         {error && <Text style={styles.error}>{error}</Text>}
+
+        <Text style={styles.fieldLabel}>Open battles in your class</Text>
+        {openRooms.length === 0 && <Text style={styles.empty}>No open battles right now — start one below.</Text>}
+        {openRooms.map((room) => {
+          const isWaiting = room.status === 'WAITING';
+          return (
+            <Pressable
+              key={room.id}
+              style={[styles.roomRow, !isWaiting && styles.roomRowDisabled]}
+              onPress={() => isWaiting && handleJoinRoom(room.id)}
+              disabled={!isWaiting || joiningRoomId !== null}
+            >
+              <View style={styles.roomRowInfo}>
+                <Text style={styles.roomRowTitle}>
+                  {room.subjectName} · {room.className}
+                </Text>
+                <Text style={styles.roomRowMeta}>
+                  {room.participantCount}/{room.maxPlayers} players · {room.roomCode}
+                </Text>
+              </View>
+              {joiningRoomId === room.id ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : isWaiting ? (
+                <Text style={styles.roomRowJoin}>Join</Text>
+              ) : (
+                <Text style={styles.roomRowActive}>In progress</Text>
+              )}
+            </Pressable>
+          );
+        })}
+
+        <Text style={styles.orDivider}>— or start your own —</Text>
 
         <Pressable
           style={[styles.actionButton, styles.matchButton, !subject && styles.disabled]}
@@ -147,4 +213,31 @@ const styles = StyleSheet.create({
   orDivider: { textAlign: 'center', color: colors.textMuted, fontSize: 12, marginTop: spacing.xl, marginBottom: spacing.md },
   joinButton: { backgroundColor: gameColors.inkSoft },
   disabled: { opacity: 0.5 },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  empty: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm },
+  roomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  roomRowDisabled: { opacity: 0.6 },
+  roomRowInfo: { flex: 1 },
+  roomRowTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  roomRowMeta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  roomRowJoin: { color: colors.primary, fontWeight: '800', fontSize: 13 },
+  roomRowActive: { color: gameColors.ember, fontWeight: '700', fontSize: 12 },
 });
