@@ -3,7 +3,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { createBattleRoom, joinBattleRoom, matchBattleRoom } from '../../api/battleRooms';
+import { createBattleRoom, joinBattleRoomByCode, matchBattleRoom } from '../../api/battleRooms';
 import type { Subject } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -45,7 +45,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
     setBusy('join');
     setError(null);
     try {
-      const room = await joinBattleRoom(schoolId, code);
+      const room = await joinBattleRoomByCode(schoolId, code);
       navigation.replace('BattleRoom', { roomId: room.id });
     } catch (e) {
       setError((e as Error).message);
@@ -103,8 +103,8 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
           label="Room Code"
           value={roomCode}
           onChangeText={setRoomCode}
-          placeholder="Paste the room code"
-          autoCapitalize="none"
+          placeholder="e.g. UZX4VM"
+          autoCapitalize="characters"
         />
 
         <Pressable

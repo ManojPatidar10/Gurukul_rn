@@ -13,6 +13,10 @@ export function joinBattleRoom(schoolId: string, roomId: string) {
   return api.post<BattleRoomState>(`/api/v1/gamification/battle-rooms/${roomId}/join`, {}, schoolId);
 }
 
+export function joinBattleRoomByCode(schoolId: string, code: string) {
+  return api.post<BattleRoomState>('/api/v1/gamification/battle-rooms/join-by-code', { code }, schoolId);
+}
+
 export function getBattleRoom(schoolId: string, roomId: string) {
   return api.get<BattleRoomState>(`/api/v1/gamification/battle-rooms/${roomId}`, schoolId);
 }
