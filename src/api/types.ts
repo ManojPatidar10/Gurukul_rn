@@ -687,6 +687,49 @@ export interface ChallengeDetailResponse {
   myAnsweredQuestionIds: string[];
 }
 
+export type BattleRoomStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+
+export interface BattleRoomParticipant {
+  studentId: string;
+  name: string;
+  correctCount: number;
+}
+
+export interface BattleRoomQuestion {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+}
+
+export interface BattleRoomState {
+  id: string;
+  className: string;
+  subjectName: string;
+  status: BattleRoomStatus;
+  minPlayers: number;
+  maxPlayers: number;
+  joinWindowSeconds: number;
+  questionCount: number;
+  currentQuestionIndex: number;
+  participants: BattleRoomParticipant[];
+  currentQuestion: BattleRoomQuestion | null;
+  currentBuzzWinnerStudentId: string | null;
+  lastAnswerCorrect: boolean | null;
+  winnerStudentId: string | null;
+  winnerName: string | null;
+}
+
+export interface CreateBattleRoomRequest {
+  subjectId: string;
+}
+
+export interface SubmitBattleAnswerRequest {
+  selectedOption: QuizOption;
+}
+
 export type CallStatus = 'SCHEDULED' | 'STARTED' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 export type RsvpStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type CallOutcome = 'IN_PROGRESS' | 'COMPLETED' | 'MISSED' | 'DECLINED' | 'BUSY' | 'CANCELLED';

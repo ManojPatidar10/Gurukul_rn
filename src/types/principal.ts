@@ -88,4 +88,6 @@ export type PrincipalStackParamList = {
   NewChallenge: undefined;
   ChallengeDetail: { challengeId: string };
   QuestionAuthor: undefined;
+  BattleRoomMatch: undefined;
+  BattleRoom: { roomId: string };
 };
