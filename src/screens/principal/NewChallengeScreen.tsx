@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createChallenge } from '../../api/arena';
-import { getStudent, listStudentsByClassSection } from '../../api/students';
+import { getStudent, listStudents } from '../../api/students';
 import { listSubjects } from '../../api/subjects';
 import type { Student, Subject } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { SearchBar } from '../../components/SearchBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
@@ -22,6 +23,7 @@ export function NewChallengeScreen({ navigation }: Props) {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [opponentId, setOpponentId] = useState<string | null>(null);
   const [subjectId, setSubjectId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,23 +32,20 @@ export function NewChallengeScreen({ navigation }: Props) {
     setLoading(true);
     setError(null);
     getStudent(schoolId, session.ownerId)
-      .then((me) =>
-        Promise.all([
-          listStudentsByClassSection(schoolId, {
-            className: me.className,
-            section: me.section,
-            academicYear: me.academicYear,
-          }),
-          listSubjects(schoolId),
-        ])
-      )
-      .then(([students, subs]) => {
-        setClassmates(students.filter((s) => s.id !== session.ownerId));
+      .then((me) => Promise.all([listStudents(schoolId), listSubjects(schoolId)]).then(([students, subs]) => ({ me, students, subs })))
+      .then(({ me, students, subs }) => {
+        setClassmates(
+          students.filter(
+            (s) => s.id !== session.ownerId && s.className === me.className && s.academicYear === me.academicYear
+          )
+        );
         setSubjects(subs);
       })
       .catch((e) => setError((e as Error).message))
       .finally(() => setLoading(false));
   }, [schoolId, session.ownerId]);
+
+  const visibleClassmates = classmates.filter((s) => s.name.toLowerCase().includes(query.trim().toLowerCase()));
 
   const canSubmit = opponentId !== null && subjectId !== null;
 
@@ -88,14 +87,19 @@ export function NewChallengeScreen({ navigation }: Props) {
             </View>
 
             <Text style={styles.fieldLabel}>Opponent</Text>
+            <SearchBar value={query} onChangeText={setQuery} placeholder="Search classmates by name…" />
             {classmates.length === 0 && <Text style={styles.empty}>No classmates found.</Text>}
-            {classmates.map((student) => (
+            {classmates.length > 0 && visibleClassmates.length === 0 && (
+              <Text style={styles.empty}>No match for "{query}".</Text>
+            )}
+            {visibleClassmates.map((student) => (
               <Pressable
                 key={student.id}
                 style={[styles.studentRow, opponentId === student.id && styles.studentRowSelected]}
                 onPress={() => setOpponentId(student.id)}
               >
                 <Text style={styles.studentName}>{student.name}</Text>
+                <Text style={styles.studentMeta}>Section {student.section}</Text>
               </Pressable>
             ))}
           </>
@@ -142,6 +146,9 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   chipTextSelected: { color: colors.white },
   studentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
@@ -151,6 +158,7 @@ const styles = StyleSheet.create({
   },
   studentRowSelected: { borderColor: colors.primary },
   studentName: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  studentMeta: { fontSize: 12, color: colors.textMuted },
   footer: {
     padding: spacing.md,
     borderTopWidth: 1,
