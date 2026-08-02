@@ -37,6 +37,7 @@ import { PayrollHubScreen } from '../screens/principal/PayrollHubScreen';
 import { PayrollRunScreen } from '../screens/principal/PayrollRunScreen';
 import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
+import { ProfileScreen } from '../screens/principal/ProfileScreen';
 import { SalaryHistoryScreen } from '../screens/principal/SalaryHistoryScreen';
 import { SalaryStructureFormScreen } from '../screens/principal/SalaryStructureFormScreen';
 import { SalaryStructuresListScreen } from '../screens/principal/SalaryStructuresListScreen';
@@ -66,6 +67,7 @@ export function PrincipalNavigator() {
       }}
     >
         <Stack.Screen name="PrincipalDashboard" component={PrincipalDashboardScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="StudentsList" component={StudentsListScreen} />
         <Stack.Screen name="StudentDetail" component={StudentDetailScreen} />
         <Stack.Screen name="StudentForm" component={StudentFormScreen} />
