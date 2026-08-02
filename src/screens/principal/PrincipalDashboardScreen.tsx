@@ -68,7 +68,9 @@ const featureActions: FeatureAction[] = [
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
 // needed for teachers/admins, who use it to author quiz questions rather than play.
 const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification'];
-const NON_STUDENT_ONLY_FEATURES: FeatureId[] = ['arena'];
+// Arena (question authoring) is teacher-only - a principal/admin has no need to write quiz
+// questions, so this doesn't fall into the general non-student bucket above.
+const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -95,7 +97,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const { session, logout } = useAuth();
   const visibleFeatures = featureActions.filter((feature) => {
     if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
-    if (NON_STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType !== 'STUDENT';
+    if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';
     return true;
   });
   const [school, setSchool] = useState<School | null>(null);
