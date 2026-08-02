@@ -90,4 +90,6 @@ export type PrincipalStackParamList = {
   QuestionAuthor: undefined;
   BattleRoomMatch: undefined;
   BattleRoom: { roomId: string };
+  PracticeStart: undefined;
+  PracticeSession: { sessionId: string };
 };

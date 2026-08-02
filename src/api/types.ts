@@ -689,6 +689,33 @@ export interface ChallengeDetailResponse {
   myAnsweredQuestionIds: string[];
 }
 
+export type PracticeSessionStatus = 'ACTIVE' | 'COMPLETED';
+
+export interface CreatePracticeSessionRequest {
+  subjectId: string;
+}
+
+export interface PracticeSessionResponse {
+  id: string;
+  subjectName: string;
+  status: PracticeSessionStatus;
+  totalQuestions: number;
+  answeredCount: number;
+  correctCount: number;
+  questions: PublicQuizQuestionResponse[];
+  myAnsweredQuestionIds: string[];
+}
+
+export interface SubmitPracticeAnswerRequest {
+  questionId: string;
+  selectedOption: QuizOption;
+}
+
+export interface SubmitPracticeAnswerResponse {
+  correct: boolean;
+  sessionCompleted: boolean;
+}
+
 export type BattleRoomStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
 export interface BattleRoomParticipant {
