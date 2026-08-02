@@ -77,6 +77,11 @@ export function ArenaScreen({ navigation }: Props) {
           <Text style={styles.primaryButtonText}>Challenge a classmate</Text>
         </Pressable>
 
+        <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('PracticeStart')}>
+          <FontAwesome5 name="graduation-cap" size={14} color={colors.primary} />
+          <Text style={styles.secondaryButtonText}>Practice solo (no opponent)</Text>
+        </Pressable>
+
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && <Text style={styles.error}>{error}</Text>}
         {!loading && challenges.length === 0 && <Text style={styles.empty}>No challenges yet — start one above.</Text>}
@@ -128,6 +133,17 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   primaryButtonText: { color: colors.white, fontWeight: '700', fontSize: 14 },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  secondaryButtonText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
