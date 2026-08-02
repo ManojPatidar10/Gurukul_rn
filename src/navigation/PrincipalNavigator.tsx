@@ -10,11 +10,15 @@ import { ConversationsListScreen } from '../screens/principal/ConversationsListS
 import { NewConversationScreen } from '../screens/principal/NewConversationScreen';
 import { HelpdeskBotScreen } from '../screens/principal/HelpdeskBotScreen';
 import { CallHistoryScreen } from '../screens/principal/CallHistoryScreen';
+import { ArenaScreen } from '../screens/principal/ArenaScreen';
 import { AwardRecognitionScreen } from '../screens/principal/AwardRecognitionScreen';
+import { ChallengeDetailScreen } from '../screens/principal/ChallengeDetailScreen';
 import { GamificationHubScreen } from '../screens/principal/GamificationHubScreen';
 import { HouseWarsScreen } from '../screens/principal/HouseWarsScreen';
 import { InCallScreen } from '../screens/principal/InCallScreen';
 import { LeaderboardScreen } from '../screens/principal/LeaderboardScreen';
+import { NewChallengeScreen } from '../screens/principal/NewChallengeScreen';
+import { QuestionAuthorScreen } from '../screens/principal/QuestionAuthorScreen';
 import { PickCallTargetScreen } from '../screens/principal/PickCallTargetScreen';
 import { ScheduleCallScreen } from '../screens/principal/ScheduleCallScreen';
 import { ScheduledCallsScreen } from '../screens/principal/ScheduledCallsScreen';
@@ -116,6 +120,10 @@ export function PrincipalNavigator() {
         <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
         <Stack.Screen name="HouseWars" component={HouseWarsScreen} />
         <Stack.Screen name="AwardRecognition" component={AwardRecognitionScreen} />
+        <Stack.Screen name="Arena" component={ArenaScreen} />
+        <Stack.Screen name="NewChallenge" component={NewChallengeScreen} />
+        <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
+        <Stack.Screen name="QuestionAuthor" component={QuestionAuthorScreen} />
       </Stack.Navigator>
   );
 }
