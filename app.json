@@ -38,11 +38,15 @@
       ],
       [
         "expo-av",
-        {
-          "microphonePermission": "Gurukul uses your microphone for video calls."
-        }
+        { "microphonePermission": "Gurukul uses your microphone for video calls." }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f610c224-f96d-4706-a22c-38f27170b00c"
+      }
+    },
+    "owner": "yashcodes105"
   }
 }
