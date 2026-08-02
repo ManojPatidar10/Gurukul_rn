@@ -3,8 +3,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { createBattleRoom, matchBattleRoom } from '../../api/battleRooms';
+import { createBattleRoom, joinBattleRoom, matchBattleRoom } from '../../api/battleRooms';
 import type { Subject } from '../../api/types';
+import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import SubjectPicker from '../../components/SubjectPicker';
@@ -17,7 +18,8 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'BattleRoomMatch'>;
 export function BattleRoomMatchScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const [subject, setSubject] = useState<Subject | null>(null);
-  const [busy, setBusy] = useState<'match' | 'create' | null>(null);
+  const [roomCode, setRoomCode] = useState('');
+  const [busy, setBusy] = useState<'match' | 'create' | 'join' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const start = async (mode: 'match' | 'create') => {
@@ -29,6 +31,21 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
         mode === 'match'
           ? await matchBattleRoom(schoolId, { subjectId: subject.id })
           : await createBattleRoom(schoolId, { subjectId: subject.id });
+      navigation.replace('BattleRoom', { roomId: room.id });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleJoin = async () => {
+    const code = roomCode.trim();
+    if (!code) return;
+    setBusy('join');
+    setError(null);
+    try {
+      const room = await joinBattleRoom(schoolId, code);
       navigation.replace('BattleRoom', { roomId: room.id });
     } catch (e) {
       setError((e as Error).message);
@@ -79,6 +96,31 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
             </>
           )}
         </Pressable>
+
+        <Text style={styles.orDivider}>— or join a room a classmate created —</Text>
+
+        <LabeledInput
+          label="Room Code"
+          value={roomCode}
+          onChangeText={setRoomCode}
+          placeholder="Paste the room code"
+          autoCapitalize="none"
+        />
+
+        <Pressable
+          style={[styles.actionButton, styles.joinButton, !roomCode.trim() && styles.disabled]}
+          onPress={handleJoin}
+          disabled={!roomCode.trim() || busy !== null}
+        >
+          {busy === 'join' ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <>
+              <FontAwesome5 name="door-open" size={16} color={colors.white} />
+              <Text style={styles.actionButtonText}>Join Room</Text>
+            </>
+          )}
+        </Pressable>
       </ScreenContainer>
     </View>
   );
@@ -102,5 +144,7 @@ const styles = StyleSheet.create({
   actionButtonText: { color: colors.white, fontWeight: '800', fontSize: 15 },
   createButton: { backgroundColor: gameColors.goldSoft },
   createButtonText: { color: gameColors.ink, fontWeight: '800', fontSize: 15 },
+  orDivider: { textAlign: 'center', color: colors.textMuted, fontSize: 12, marginTop: spacing.xl, marginBottom: spacing.md },
+  joinButton: { backgroundColor: gameColors.inkSoft },
   disabled: { opacity: 0.5 },
 });

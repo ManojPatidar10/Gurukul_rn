@@ -120,6 +120,12 @@ export function GamificationHubScreen({ navigation }: Props) {
           <FontAwesome5 name="chevron-right" size={13} color={colors.textMuted} />
         </Pressable>
 
+        <Pressable style={styles.leaderboardButton} onPress={() => navigation.navigate('Arena')}>
+          <FontAwesome5 name="gamepad" size={16} color={gameColors.gold} />
+          <Text style={styles.leaderboardButtonText}>Gurukul Arena — challenge a classmate</Text>
+          <FontAwesome5 name="chevron-right" size={13} color={colors.textMuted} />
+        </Pressable>
+
         <Text style={styles.comingSoon}>Badges are coming in the next update.</Text>
       </ScreenContainer>
     </View>

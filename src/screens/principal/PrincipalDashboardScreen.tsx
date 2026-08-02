@@ -59,13 +59,16 @@ const featureActions: FeatureAction[] = [
     id: 'arena',
     title: 'Gurukul Arena',
     icon: 'gamepad',
-    description: 'Quiz battles with classmates',
+    description: 'Build the quiz question bank for student challenges',
   },
 ];
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
+// Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
+// needed for teachers/admins, who use it to author quiz questions rather than play.
 const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification'];
+const NON_STUDENT_ONLY_FEATURES: FeatureId[] = ['arena'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -90,9 +93,11 @@ interface Counts {
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
-  const visibleFeatures = featureActions.filter(
-    (feature) => session.ownerType === 'STUDENT' || !STUDENT_ONLY_FEATURES.includes(feature.id)
-  );
+  const visibleFeatures = featureActions.filter((feature) => {
+    if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
+    if (NON_STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType !== 'STUDENT';
+    return true;
+  });
   const [school, setSchool] = useState<School | null>(null);
   const [myName, setMyName] = useState<string | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
