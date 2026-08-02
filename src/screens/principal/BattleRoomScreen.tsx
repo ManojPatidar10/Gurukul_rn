@@ -147,44 +147,65 @@ export function BattleRoomScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {room.status === 'ACTIVE' && room.currentQuestion && (
-          <View style={styles.card}>
-            <Text style={styles.questionIndex}>
-              Question {room.currentQuestionIndex + 1} of {room.questionCount}
-            </Text>
-            <Text style={styles.questionText}>{room.currentQuestion.questionText}</Text>
+        {room.status === 'ACTIVE' && (
+          <>
+            <View style={styles.table}>
+              {room.participants.map((p) => {
+                const isMe = p.studentId === myStudentId;
+                const hasBuzz = p.studentId === room.currentBuzzWinnerStudentId;
+                return (
+                  <View key={p.studentId} style={[styles.seat, hasBuzz && styles.seatBuzzed]}>
+                    <View style={[styles.seatAvatar, hasBuzz && styles.seatAvatarBuzzed]}>
+                      <Text style={styles.seatAvatarText}>{p.name.trim().charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <Text style={styles.seatName} numberOfLines={1}>
+                      {isMe ? 'You' : p.name}
+                    </Text>
+                    <Text style={styles.seatScore}>{p.correctCount} pts</Text>
+                    {hasBuzz && <Text style={styles.seatBuzzLabel}>BUZZED</Text>}
+                  </View>
+                );
+              })}
+            </View>
 
-            {room.lastAnswerCorrect !== null && (
-              <Text style={room.lastAnswerCorrect ? styles.resultCorrect : styles.resultWrong}>
-                {room.lastAnswerCorrect ? '✅ Correct!' : '❌ Not quite.'}
-              </Text>
-            )}
+            {room.currentQuestion ? (
+              <View style={styles.card}>
+                <Text style={styles.questionIndex}>
+                  Question {room.currentQuestionIndex + 1} of {room.questionCount}
+                </Text>
+                <Text style={styles.questionText}>{room.currentQuestion.questionText}</Text>
 
-            {!room.currentBuzzWinnerStudentId ? (
-              <Pressable style={styles.buzzButton} onPress={handleBuzz}>
-                <Text style={styles.buzzButtonText}>BUZZ IN</Text>
-              </Pressable>
-            ) : iWonBuzz ? (
-              <View style={styles.optionsList}>
-                {OPTIONS.map(({ key, field }) => (
-                  <Pressable key={key} style={styles.optionButton} onPress={() => handleAnswer(key)}>
-                    <Text style={styles.optionKey}>{key}</Text>
-                    <Text style={styles.optionText}>{room.currentQuestion![field]}</Text>
+                {room.lastAnswerCorrect !== null && (
+                  <Text style={room.lastAnswerCorrect ? styles.resultCorrect : styles.resultWrong}>
+                    {room.lastAnswerCorrect ? '✅ Correct!' : '❌ Not quite.'}
+                  </Text>
+                )}
+
+                {!room.currentBuzzWinnerStudentId ? (
+                  <Pressable style={styles.buzzButton} onPress={handleBuzz}>
+                    <Text style={styles.buzzButtonText}>BUZZ IN</Text>
                   </Pressable>
-                ))}
+                ) : iWonBuzz ? (
+                  <View style={styles.optionsList}>
+                    {OPTIONS.map(({ key, field }) => (
+                      <Pressable key={key} style={styles.optionButton} onPress={() => handleAnswer(key)}>
+                        <Text style={styles.optionKey}>{key}</Text>
+                        <Text style={styles.optionText}>{room.currentQuestion![field]}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : (
+                  someoneElseBuzzed && <Text style={styles.buzzWinnerText}>{buzzWinnerName} is answering…</Text>
+                )}
               </View>
             ) : (
-              someoneElseBuzzed && <Text style={styles.buzzWinnerText}>{buzzWinnerName} is answering…</Text>
+              <View style={styles.card}>
+                <ActivityIndicator color={gameColors.ember} />
+                <Text style={styles.waitingTitle}>Get ready…</Text>
+                <Text style={styles.waitingSubtitle}>Next question is on its way.</Text>
+              </View>
             )}
-
-            <View style={styles.scoreList}>
-              {room.participants.map((p) => (
-                <Text key={p.studentId} style={styles.scoreRow}>
-                  {p.name}: {p.correctCount}
-                </Text>
-              ))}
-            </View>
-          </View>
+          </>
         )}
 
         {room.status === 'COMPLETED' && (
@@ -266,6 +287,41 @@ const styles = StyleSheet.create({
   },
   optionKey: { fontWeight: '800', color: gameColors.ember, width: 20 },
   optionText: { color: colors.textPrimary, fontSize: 14, flex: 1 },
-  scoreList: { width: '100%', marginTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md },
-  scoreRow: { fontSize: 13, color: colors.textMuted, paddingVertical: 2 },
+  table: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  seat: {
+    flexGrow: 1,
+    minWidth: 90,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  seatBuzzed: { borderColor: gameColors.ember, backgroundColor: '#FFF1EC' },
+  seatAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  seatAvatarBuzzed: { backgroundColor: gameColors.ember },
+  seatAvatarText: { color: colors.primary, fontWeight: '800', fontSize: 14 },
+  seatName: { fontSize: 12.5, fontWeight: '700', color: colors.textPrimary, maxWidth: 84 },
+  seatScore: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  seatBuzzLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: gameColors.ember,
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
 });
