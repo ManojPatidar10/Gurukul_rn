@@ -23,7 +23,8 @@
         "CAMERA",
         "RECORD_AUDIO",
         "MODIFY_AUDIO_SETTINGS"
-      ]
+      ],
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
