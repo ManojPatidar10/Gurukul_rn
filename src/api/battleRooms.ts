@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { BattleRoomState, CreateBattleRoomRequest } from './types';
+import type { BattleRoomState, BattleRoomSummary, CreateBattleRoomRequest } from './types';
 
 export function createBattleRoom(schoolId: string, req: CreateBattleRoomRequest) {
   return api.post<BattleRoomState>('/api/v1/gamification/battle-rooms', req, schoolId);
@@ -19,4 +19,9 @@ export function joinBattleRoomByCode(schoolId: string, code: string) {
 
 export function getBattleRoom(schoolId: string, roomId: string) {
   return api.get<BattleRoomState>(`/api/v1/gamification/battle-rooms/${roomId}`, schoolId);
+}
+
+export function listBattleRooms(schoolId: string, subjectId?: string) {
+  const query = subjectId ? `?subjectId=${subjectId}` : '';
+  return api.get<BattleRoomSummary[]>(`/api/v1/gamification/battle-rooms${query}`, schoolId);
 }

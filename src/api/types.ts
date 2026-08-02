@@ -744,6 +744,7 @@ export interface BattleRoomState {
   minPlayers: number;
   maxPlayers: number;
   joinWindowSeconds: number;
+  joinWindowEndsAt: string;
   questionCount: number;
   currentQuestionIndex: number;
   participants: BattleRoomParticipant[];
@@ -752,6 +753,16 @@ export interface BattleRoomState {
   lastAnswerCorrect: boolean | null;
   winnerStudentId: string | null;
   winnerName: string | null;
+}
+
+export interface BattleRoomSummary {
+  id: string;
+  roomCode: string;
+  subjectName: string;
+  className: string;
+  status: 'WAITING' | 'ACTIVE';
+  participantCount: number;
+  maxPlayers: number;
 }
 
 export interface CreateBattleRoomRequest {
