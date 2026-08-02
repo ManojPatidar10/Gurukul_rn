@@ -59,7 +59,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} />}
         {error && <Text style={styles.error}>{error}</Text>}
         {!loading && debouncedQuery && results.length === 0 && !error && (
-          <Text style={styles.empty}>No results for "{debouncedQuery}".</Text>
+          <Text style={styles.empty}>No results for &quot;{debouncedQuery}&quot;.</Text>
         )}
         {!debouncedQuery && <Text style={styles.empty}>Start typing to search across students and staff.</Text>}
         <FlatList
