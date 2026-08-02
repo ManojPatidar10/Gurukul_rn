@@ -27,7 +27,10 @@ export function createAnnouncement(schoolId: string, req: CreateAnnouncementRequ
   return api.post<Announcement>('/api/v1/chat/announcements', req, schoolId);
 }
 
-export function listAnnouncements(schoolId: string, sectionId?: string) {
-  const query = sectionId ? `?sectionId=${sectionId}` : '';
+export function listAnnouncements(schoolId: string, sectionId?: string, className?: string) {
+  const params = new URLSearchParams();
+  if (sectionId) params.set('sectionId', sectionId);
+  if (className) params.set('className', className);
+  const query = params.toString() ? `?${params.toString()}` : '';
   return api.get<Announcement[]>(`/api/v1/chat/announcements${query}`, schoolId);
 }

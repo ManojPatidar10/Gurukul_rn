@@ -118,7 +118,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
             <View style={styles.roomCodeChip}>
               <Text style={styles.roomCodeLabel}>Room code — share to invite</Text>
               <Text style={styles.roomCodeValue} selectable>
-                {room.id}
+                {room.roomCode}
               </Text>
             </View>
             {room.participants.map((p) => (

@@ -537,12 +537,13 @@ export interface MessageHistoryResponse {
   hasMore: boolean;
 }
 
-export type AnnouncementScope = 'SCHOOL' | 'CLASS';
+export type AnnouncementScope = 'SCHOOL' | 'CLASS' | 'GRADE';
 
 export interface Announcement {
   id: string;
   scope: AnnouncementScope;
   sectionId: string | null;
+  className: string | null;
   title: string;
   body: string;
   createdAt: string;
@@ -551,6 +552,7 @@ export interface Announcement {
 export interface CreateAnnouncementRequest {
   scope: AnnouncementScope;
   sectionId?: string;
+  className?: string;
   title: string;
   body: string;
 }
@@ -735,6 +737,7 @@ export interface BattleRoomQuestion {
 
 export interface BattleRoomState {
   id: string;
+  roomCode: string;
   className: string;
   subjectName: string;
   status: BattleRoomStatus;
