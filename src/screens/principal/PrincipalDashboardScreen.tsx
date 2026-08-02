@@ -3,9 +3,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { listEmployees } from '../../api/employees';
+import { getEmployee, listEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
-import { listStudents } from '../../api/students';
+import { getStudent, listStudents } from '../../api/students';
 import type { School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
@@ -36,12 +36,6 @@ const featureActions: FeatureAction[] = [
     title: 'Classes',
     icon: 'chalkboard-teacher',
     description: 'Sections, subjects, assessments, and attendance',
-  },
-  {
-    id: 'chat',
-    title: 'Messages',
-    icon: 'comments',
-    description: 'Chat with staff and students',
   },
   {
     id: 'calls',
@@ -81,7 +75,6 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   payroll: 'PayrollHub',
   infraExpenses: 'InfraExpensesList',
   classes: 'ClassesList',
-  chat: 'ConversationsList',
   calls: 'VideoCallHub',
   gamification: 'GamificationHub',
   houses: 'HouseWars',
@@ -101,6 +94,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     (feature) => session.ownerType === 'STUDENT' || !STUDENT_ONLY_FEATURES.includes(feature.id)
   );
   const [school, setSchool] = useState<School | null>(null);
+  const [myName, setMyName] = useState<string | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
 
   useEffect(() => {
@@ -108,6 +102,14 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       .then(setSchool)
       .catch(() => setSchool(null));
   }, [schoolId]);
+
+  useEffect(() => {
+    const load =
+      session.ownerType === 'EMPLOYEE'
+        ? getEmployee(schoolId, session.ownerId)
+        : getStudent(schoolId, session.ownerId);
+    load.then((owner) => setMyName(owner.name)).catch(() => setMyName(null));
+  }, [schoolId, session.ownerId, session.ownerType]);
 
   useEffect(() => {
     const load = () => {
@@ -128,7 +130,35 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={school?.name ?? 'Gurukul'} subtitle={school ? `Welcome, ${school.principalName}` : undefined} />
+      <ScreenHeader
+        title={school?.name ?? 'Gurukul'}
+        subtitle={`Welcome, ${myName ?? session.username}`}
+        rightAction={
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.headerChatButton}
+              onPress={() => navigation.navigate('GlobalSearch')}
+              accessibilityLabel="Search"
+            >
+              <FontAwesome5 name="search" size={18} color={colors.white} />
+            </Pressable>
+            <Pressable
+              style={styles.headerChatButton}
+              onPress={() => navigation.navigate('ConversationsList')}
+              accessibilityLabel="Messages"
+            >
+              <FontAwesome5 name="comment-dots" size={18} color={colors.white} />
+            </Pressable>
+            <Pressable
+              style={styles.headerChatButton}
+              onPress={() => navigation.navigate('Profile')}
+              accessibilityLabel="Profile"
+            >
+              <FontAwesome5 name="user" size={18} color={colors.white} />
+            </Pressable>
+          </View>
+        }
+      />
       <ScreenContainer>
         <View style={styles.sessionRow}>
           <Text style={styles.sessionText}>
@@ -165,6 +195,18 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  headerChatButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   fab: {
     position: 'absolute',
     right: spacing.lg,

@@ -31,8 +31,8 @@ jobs:
       - name: Build iOS (simulator)
         run: |
           xcodebuild \
-            -workspace ios/Gurukul_rn.xcworkspace \
-            -scheme Gurukul_rn \
+            -workspace ios/Gurukulrn.xcworkspace \
+            -scheme Gurukulrn \
             -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath ios/build \

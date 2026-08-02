@@ -18,7 +18,6 @@ export type FeatureId =
   | 'payroll'
   | 'infraExpenses'
   | 'classes'
-  | 'chat'
   | 'calls'
   | 'gamification'
   | 'houses'
@@ -33,6 +32,8 @@ export interface FeatureAction {
 
 export type PrincipalStackParamList = {
   PrincipalDashboard: undefined;
+  Profile: undefined;
+  GlobalSearch: undefined;
   StudentsList: undefined;
   StudentDetail: { student: Student };
   StudentForm: { student?: Student };
