@@ -3,9 +3,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { listEmployees } from '../../api/employees';
+import { getEmployee, listEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
-import { listStudents } from '../../api/students';
+import { getStudent, listStudents } from '../../api/students';
 import type { School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
@@ -87,6 +87,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     (feature) => session.ownerType === 'STUDENT' || !STUDENT_ONLY_FEATURES.includes(feature.id)
   );
   const [school, setSchool] = useState<School | null>(null);
+  const [myName, setMyName] = useState<string | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
 
   useEffect(() => {
@@ -94,6 +95,14 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       .then(setSchool)
       .catch(() => setSchool(null));
   }, [schoolId]);
+
+  useEffect(() => {
+    const load =
+      session.ownerType === 'EMPLOYEE'
+        ? getEmployee(schoolId, session.ownerId)
+        : getStudent(schoolId, session.ownerId);
+    load.then((owner) => setMyName(owner.name)).catch(() => setMyName(null));
+  }, [schoolId, session.ownerId, session.ownerType]);
 
   useEffect(() => {
     const load = () => {
@@ -116,7 +125,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={school?.name ?? 'Gurukul'}
-        subtitle={school ? `Welcome, ${school.principalName}` : undefined}
+        subtitle={`Welcome, ${myName ?? session.username}`}
         rightAction={
           <View style={styles.headerActions}>
             <Pressable
