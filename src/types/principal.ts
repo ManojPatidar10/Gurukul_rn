@@ -20,7 +20,8 @@ export type FeatureId =
   | 'classes'
   | 'calls'
   | 'gamification'
-  | 'houses';
+  | 'houses'
+  | 'arena';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -83,4 +84,8 @@ export type PrincipalStackParamList = {
   Leaderboard: undefined;
   HouseWars: undefined;
   AwardRecognition: undefined;
+  Arena: undefined;
+  NewChallenge: undefined;
+  ChallengeDetail: { challengeId: string };
+  QuestionAuthor: undefined;
 };

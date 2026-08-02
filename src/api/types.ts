@@ -622,6 +622,71 @@ export interface HouseWarsResponse {
   yourHouseId: string | null;
 }
 
+export type QuizOption = 'A' | 'B' | 'C' | 'D';
+export type ChallengeStatus = 'ACTIVE' | 'COMPLETED' | 'EXPIRED';
+
+export interface CreateQuizQuestionRequest {
+  subjectId: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: QuizOption;
+}
+
+export interface QuizQuestionResponse {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: QuizOption;
+}
+
+export interface PublicQuizQuestionResponse {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+}
+
+export interface CreateChallengeRequest {
+  opponentStudentId: string;
+  subjectId: string;
+}
+
+export interface SubmitAnswerRequest {
+  questionId: string;
+  selectedOption: QuizOption;
+}
+
+export interface SubmitAnswerResponse {
+  correct: boolean;
+  challengeCompleted: boolean;
+}
+
+export interface ChallengeSummaryResponse {
+  id: string;
+  subjectName: string;
+  opponentName: string;
+  status: ChallengeStatus;
+  totalQuestions: number;
+  myAnsweredCount: number;
+  opponentAnsweredCount: number;
+  youWon: boolean | null;
+  draw: boolean;
+}
+
+export interface ChallengeDetailResponse {
+  summary: ChallengeSummaryResponse;
+  questions: PublicQuizQuestionResponse[];
+  myAnsweredQuestionIds: string[];
+}
+
 export type CallStatus = 'SCHEDULED' | 'STARTED' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 export type RsvpStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 export type CallOutcome = 'IN_PROGRESS' | 'COMPLETED' | 'MISSED' | 'DECLINED' | 'BUSY' | 'CANCELLED';
