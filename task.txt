@@ -1,2 +1,3 @@
 [Task]: edit profile option ..... [DONE] - editable name/phone (staff) or name/address/parent contact (student), via existing PUT endpoints. PR: fix/edit-profile-option
+[Task]: do the padding/margin corrections in Chat box.... [DONE] - safe-area bottom padding on input row, removed double gap+marginBottom stacking between message bubbles. PR: fix/chat-padding-margins
 [Task]:

@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getConversationMessages } from '../../api/chat';
 import { sendMessage, subscribeToConversation } from '../../api/chatSocket';
@@ -18,6 +19,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const { conversationId, title } = route.params;
   const schoolId = useSchoolId();
   const { session } = useAuth();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState('');
@@ -97,7 +99,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         />
       )}
       {error && <Text style={styles.error}>{error}</Text>}
-      <View style={styles.inputRow}>
+      <View style={[styles.inputRow, { paddingBottom: spacing.md + insets.bottom }]}>
         <TextInput
           style={styles.input}
           placeholder="Message..."
@@ -125,7 +127,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.lg,
-    marginBottom: spacing.xs,
   },
   bubbleTheirs: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   bubbleBot: { backgroundColor: colors.primaryLight },
