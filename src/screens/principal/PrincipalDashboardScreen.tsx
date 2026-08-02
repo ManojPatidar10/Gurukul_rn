@@ -130,6 +130,13 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           <View style={styles.headerActions}>
             <Pressable
               style={styles.headerChatButton}
+              onPress={() => navigation.navigate('GlobalSearch')}
+              accessibilityLabel="Search"
+            >
+              <FontAwesome5 name="search" size={18} color={colors.white} />
+            </Pressable>
+            <Pressable
+              style={styles.headerChatButton}
               onPress={() => navigation.navigate('ConversationsList')}
               accessibilityLabel="Messages"
             >
