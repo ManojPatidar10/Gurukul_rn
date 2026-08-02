@@ -1,7 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getBattleRoom } from '../../api/battleRooms';
 import { sendBattleAnswer, sendBuzz, subscribeToBattleRoom } from '../../api/battleRoomSocket';
@@ -31,6 +31,9 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const prevQuestionIndexRef = useRef<number | undefined>(undefined);
+  const questionFade = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -66,6 +69,31 @@ export function BattleRoomScreen({ route, navigation }: Props) {
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [room?.status, room?.joinWindowEndsAt]);
+
+  // The backend's lastAnswerCorrect flag doesn't say which question it was for, and can still be
+  // set to the previous result even after currentQuestionIndex has already advanced. If the index
+  // just changed, that result belongs to the question we're leaving - never show it for the new
+  // one. Also fades the question card so moving to the next question reads as a clear transition
+  // instead of the text just silently swapping.
+  useEffect(() => {
+    if (!room) return;
+    const indexChanged =
+      prevQuestionIndexRef.current !== undefined && prevQuestionIndexRef.current !== room.currentQuestionIndex;
+    prevQuestionIndexRef.current = room.currentQuestionIndex;
+
+    if (indexChanged) {
+      setShowFeedback(false);
+      questionFade.setValue(0);
+      Animated.timing(questionFade, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+      return;
+    }
+
+    if (room.lastAnswerCorrect !== null) {
+      setShowFeedback(true);
+      const timeout = setTimeout(() => setShowFeedback(false), 2200);
+      return () => clearTimeout(timeout);
+    }
+  }, [room?.currentQuestionIndex, room?.lastAnswerCorrect, questionFade]);
 
   const myStudentId = session.ownerId;
   const iWonBuzz = room?.currentBuzzWinnerStudentId === myStudentId;
@@ -147,13 +175,13 @@ export function BattleRoomScreen({ route, navigation }: Props) {
             </View>
 
             {room.currentQuestion ? (
-              <View style={styles.card}>
+              <Animated.View style={[styles.card, { opacity: questionFade }]}>
                 <Text style={styles.questionIndex}>
                   Question {room.currentQuestionIndex + 1} of {room.questionCount}
                 </Text>
                 <Text style={styles.questionText}>{room.currentQuestion.questionText}</Text>
 
-                {room.lastAnswerCorrect !== null && (
+                {showFeedback && room.lastAnswerCorrect !== null && (
                   <Text style={room.lastAnswerCorrect ? styles.resultCorrect : styles.resultWrong}>
                     {room.lastAnswerCorrect ? '✅ Correct!' : '❌ Not quite.'}
                   </Text>
@@ -175,7 +203,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                 ) : (
                   someoneElseBuzzed && <Text style={styles.buzzWinnerText}>{buzzWinnerName} is answering…</Text>
                 )}
-              </View>
+              </Animated.View>
             ) : (
               <View style={styles.card}>
                 <ActivityIndicator color={gameColors.ember} />
