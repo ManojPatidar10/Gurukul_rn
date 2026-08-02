@@ -23,8 +23,7 @@
         "CAMERA",
         "RECORD_AUDIO",
         "MODIFY_AUDIO_SETTINGS"
-      ],
-      "usesCleartextTraffic": true
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -41,7 +40,8 @@
         "expo-av",
         { "microphonePermission": "Gurukul uses your microphone for video calls." }
       ],
-      "expo-font"
+      "expo-font",
+      "./plugins/withCleartextTraffic.js"
     ],
     "extra": {
       "eas": {
