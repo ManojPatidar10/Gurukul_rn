@@ -13,9 +13,9 @@ export function createQuizQuestion(schoolId: string, req: CreateQuizQuestionRequ
   return api.post<QuizQuestionResponse>('/api/v1/gamification/arena/questions', req, schoolId);
 }
 
-export function listQuizQuestions(schoolId: string, subjectId: string) {
+export function listQuizQuestions(schoolId: string, subjectId: string, className: string) {
   return api.get<QuizQuestionResponse[]>(
-    `/api/v1/gamification/arena/questions?subjectId=${subjectId}`,
+    `/api/v1/gamification/arena/questions?${new URLSearchParams({ subjectId, className }).toString()}`,
     schoolId
   );
 }
