@@ -114,7 +114,13 @@ export function GamificationHubScreen({ navigation }: Props) {
           <FontAwesome5 name="chevron-right" size={13} color={colors.textMuted} />
         </Pressable>
 
-        <Text style={styles.comingSoon}>Badges and quiz battles are coming in the next update.</Text>
+        <Pressable style={styles.leaderboardButton} onPress={() => navigation.navigate('BattleRoomMatch')}>
+          <FontAwesome5 name="bolt" size={16} color={gameColors.jade} />
+          <Text style={styles.leaderboardButtonText}>Join a live Battle Room</Text>
+          <FontAwesome5 name="chevron-right" size={13} color={colors.textMuted} />
+        </Pressable>
+
+        <Text style={styles.comingSoon}>Badges are coming in the next update.</Text>
       </ScreenContainer>
     </View>
   );

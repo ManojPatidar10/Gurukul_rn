@@ -11,6 +11,8 @@ import { NewConversationScreen } from '../screens/principal/NewConversationScree
 import { HelpdeskBotScreen } from '../screens/principal/HelpdeskBotScreen';
 import { CallHistoryScreen } from '../screens/principal/CallHistoryScreen';
 import { ArenaScreen } from '../screens/principal/ArenaScreen';
+import { BattleRoomMatchScreen } from '../screens/principal/BattleRoomMatchScreen';
+import { BattleRoomScreen } from '../screens/principal/BattleRoomScreen';
 import { AwardRecognitionScreen } from '../screens/principal/AwardRecognitionScreen';
 import { ChallengeDetailScreen } from '../screens/principal/ChallengeDetailScreen';
 import { GamificationHubScreen } from '../screens/principal/GamificationHubScreen';
@@ -125,6 +127,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="HouseWars" component={HouseWarsScreen} />
         <Stack.Screen name="AwardRecognition" component={AwardRecognitionScreen} />
         <Stack.Screen name="Arena" component={ArenaScreen} />
+        <Stack.Screen name="BattleRoomMatch" component={BattleRoomMatchScreen} />
+        <Stack.Screen name="BattleRoom" component={BattleRoomScreen} />
         <Stack.Screen name="NewChallenge" component={NewChallengeScreen} />
         <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
         <Stack.Screen name="QuestionAuthor" component={QuestionAuthorScreen} />
