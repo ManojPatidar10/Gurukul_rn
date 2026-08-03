@@ -69,7 +69,8 @@ export type PrincipalStackParamList = {
   AssessmentForm: { classSection: ClassSection; assessment?: Assessment };
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
   AttendanceTake: { classSection: ClassSection };
-  AttendanceHistory: { student: Student };
+  SectionAttendanceHistory: { classSection: ClassSection };
+  AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };

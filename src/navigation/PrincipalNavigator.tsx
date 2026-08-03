@@ -4,6 +4,7 @@ import { AssessmentDetailScreen } from '../screens/principal/AssessmentDetailScr
 import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
+import { SectionAttendanceHistoryScreen } from '../screens/principal/SectionAttendanceHistoryScreen';
 import { ClassesListScreen } from '../screens/principal/ClassesListScreen';
 import { ConversationThreadScreen } from '../screens/principal/ConversationThreadScreen';
 import { ConversationsListScreen } from '../screens/principal/ConversationsListScreen';
@@ -113,6 +114,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AssessmentForm" component={AssessmentFormScreen} />
         <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
         <Stack.Screen name="AttendanceTake" component={AttendanceTakeScreen} />
+        <Stack.Screen name="SectionAttendanceHistory" component={SectionAttendanceHistoryScreen} />
         <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
         <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
