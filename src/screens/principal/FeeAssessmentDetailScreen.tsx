@@ -21,6 +21,9 @@ function Field({ label, value }: { label: string; value: string }) {
 export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const assessment = route.params.assessment;
   const fullyPaid = assessment.remainingDue <= 0;
+  const paidPercent = assessment.totalDue > 0
+    ? Math.min(100, Math.round((assessment.totalPaid / assessment.totalDue) * 100))
+    : 0;
 
   return (
     <View style={styles.root}>
@@ -35,6 +38,14 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
         </View>
 
         <View style={styles.card}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>Paid</Text>
+            <Text style={styles.progressPercent}>{paidPercent}%</Text>
+          </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${paidPercent}%` }, fullyPaid && styles.progressFillComplete]} />
+          </View>
+
           <Field label="Total due" value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
           <Field label="Total paid" value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
           <Field label="Remaining due" value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
@@ -63,6 +74,26 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...softShadow,
   },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  progressLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
+  progressPercent: { fontSize: 12, color: colors.textPrimary, fontWeight: '800' },
+  progressTrack: {
+    height: 8,
+    borderRadius: radius.pill,
+    backgroundColor: colors.background,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+  },
+  progressFillComplete: { backgroundColor: colors.success },
   field: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
