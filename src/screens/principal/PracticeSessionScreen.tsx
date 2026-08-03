@@ -84,7 +84,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
       <ScreenContainer>
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <Text style={styles.noXpNote}>Practice doesn't earn XP — it's just for prep.</Text>
+        <Text style={styles.noXpNote}>Practice doesn&apos;t earn XP — it&apos;s just for prep.</Text>
 
         {session.status === 'COMPLETED' && (
           <View style={styles.resultBanner}>
