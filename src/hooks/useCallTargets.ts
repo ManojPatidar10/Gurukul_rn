@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { listEmployees } from '../api/employees';
-import { getStudent } from '../api/students';
+import { getStudent, searchParents } from '../api/students';
 import type { OwnerType } from '../api/types';
 import { useAuth } from '../context/AuthContext';
 import { useSchoolId } from '../context/SchoolContext';
@@ -11,6 +11,9 @@ export interface CallTarget {
   ownerId: string;
   name: string;
 }
+
+const SEARCH_DEBOUNCE_MS = 300;
+const MIN_QUERY_LENGTH = 2;
 
 /**
  * Who the current session is allowed to call/invite, mirroring the backend's
@@ -56,5 +59,52 @@ export function useCallTargets() {
       .finally(() => setLoading(false));
   }, [schoolId, session.ownerType, session.ownerId, session.role]);
 
-  return { targets, loading, error };
+  const canSearchStudents = session.ownerType === 'EMPLOYEE';
+  const [studentQuery, setStudentQuery] = useState('');
+  const [studentResults, setStudentResults] = useState<CallTarget[]>([]);
+  const [searchingStudents, setSearchingStudents] = useState(false);
+
+  useEffect(() => {
+    if (!canSearchStudents || studentQuery.trim().length < MIN_QUERY_LENGTH) {
+      setStudentResults([]);
+      return;
+    }
+    let cancelled = false;
+    setSearchingStudents(true);
+    const handle = setTimeout(() => {
+      searchParents(schoolId, studentQuery.trim())
+        .then((students) => {
+          if (cancelled) return;
+          // The backend only actually permits an employee to call a student who's in their own
+          // class-section (CallAuthorizationService.isClassTeacherOf) - narrow to that here too,
+          // same "backend is the real enforcement point, this just narrows the picker" spirit as
+          // the static employee-target list above.
+          const myStudents = students.filter((s) => s.classTeacherId === session.ownerId);
+          setStudentResults(
+            myStudents.map((s) => ({
+              ownerType: 'STUDENT' as const,
+              ownerId: s.id,
+              name: s.parentName ? `${s.name} (${s.parentName})` : s.name,
+            }))
+          );
+        })
+        .catch(() => !cancelled && setStudentResults([]))
+        .finally(() => !cancelled && setSearchingStudents(false));
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [canSearchStudents, studentQuery, schoolId, session.ownerId]);
+
+  return {
+    targets,
+    loading,
+    error,
+    canSearchStudents,
+    studentQuery,
+    setStudentQuery,
+    studentResults,
+    searchingStudents,
+  };
 }
