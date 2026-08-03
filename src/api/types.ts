@@ -464,6 +464,27 @@ export interface StudentAttendanceHistory {
   records: AttendanceRecord[];
 }
 
+export interface SectionStudentAttendanceSummary {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+}
+
+export interface SectionAttendanceHistory {
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  from: string | null;
+  to: string | null;
+  students: SectionStudentAttendanceSummary[];
+}
+
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 export type OwnerType = 'EMPLOYEE' | 'STUDENT';
 
