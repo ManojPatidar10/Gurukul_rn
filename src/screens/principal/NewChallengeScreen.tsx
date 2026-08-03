@@ -90,7 +90,7 @@ export function NewChallengeScreen({ navigation }: Props) {
             <SearchBar value={query} onChangeText={setQuery} placeholder="Search classmates by name…" />
             {classmates.length === 0 && <Text style={styles.empty}>No classmates found.</Text>}
             {classmates.length > 0 && visibleClassmates.length === 0 && (
-              <Text style={styles.empty}>No match for "{query}".</Text>
+              <Text style={styles.empty}>No match for &quot;{query}&quot;.</Text>
             )}
             {visibleClassmates.map((student) => (
               <Pressable

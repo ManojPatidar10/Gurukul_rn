@@ -69,6 +69,8 @@ export interface ClassSection {
   section: string;
   academicYear: string;
   displayLabel: string;
+  classTeacherId: string | null;
+  classTeacherName: string | null;
 }
 
 export interface ClassSectionRequest {

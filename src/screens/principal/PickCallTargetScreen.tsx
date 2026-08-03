@@ -5,6 +5,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { startImmediateCall } from '../../api/calls';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { SearchBar } from '../../components/SearchBar';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useCallTargets, type CallTarget } from '../../hooks/useCallTargets';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -14,7 +15,16 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'PickCallTarget'>;
 
 export function PickCallTargetScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
-  const { targets, loading, error } = useCallTargets();
+  const {
+    targets,
+    loading,
+    error,
+    canSearchStudents,
+    studentQuery,
+    setStudentQuery,
+    studentResults,
+    searchingStudents,
+  } = useCallTargets();
   const [callingId, setCallingId] = useState<string | null>(null);
   const [callError, setCallError] = useState<string | null>(null);
 
@@ -44,7 +54,37 @@ export function PickCallTargetScreen({ navigation }: Props) {
       <ScreenContainer padded={false}>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {(error || callError) && <Text style={styles.error}>{error ?? callError}</Text>}
-        {!loading && targets.length === 0 && !error && (
+
+        {canSearchStudents && (
+          <View style={styles.searchSection}>
+            <SearchBar value={studentQuery} onChangeText={setStudentQuery} placeholder="Search the student directory…" />
+            {searchingStudents && <ActivityIndicator color={colors.primary} style={styles.searchLoading} />}
+            {!searchingStudents && studentQuery.trim().length >= 2 && studentResults.length === 0 && (
+              <Text style={styles.empty}>No students of yours match that search.</Text>
+            )}
+          </View>
+        )}
+        <FlatList
+          data={studentResults}
+          scrollEnabled={false}
+          keyExtractor={(item) => `${item.ownerType}:${item.ownerId}`}
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.row}
+              onPress={() => handleCall(item)}
+              disabled={callingId === item.ownerId}
+            >
+              <Text style={styles.rowTitle}>{item.name}</Text>
+              {callingId === item.ownerId ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Text style={styles.callLabel}>Call</Text>
+              )}
+            </Pressable>
+          )}
+        />
+
+        {!loading && targets.length === 0 && !error && studentResults.length === 0 && (
           <Text style={styles.empty}>No one available to call right now.</Text>
         )}
         <FlatList
@@ -76,6 +116,8 @@ const styles = StyleSheet.create({
   loading: { marginTop: spacing.xl },
   error: { color: colors.error, padding: spacing.lg, fontSize: 13 },
   empty: { color: colors.textMuted, padding: spacing.lg },
+  searchSection: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  searchLoading: { marginBottom: spacing.md },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

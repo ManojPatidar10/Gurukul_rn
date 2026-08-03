@@ -77,7 +77,7 @@ export function InCallScreen({ route, navigation }: Props) {
     );
   }
 
-  const url = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.disableDeepLinking=true&userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`;
+  const url = `https://meet.jit.si/${roomName}#config.prejoinConfig.enabled=false&config.disableDeepLinking=true&userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`;
 
   return (
     <View style={styles.root}>

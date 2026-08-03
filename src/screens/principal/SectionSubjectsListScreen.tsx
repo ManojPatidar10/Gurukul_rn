@@ -5,6 +5,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { assignSectionSubject, listSectionSubjects } from '../../api/sectionSubjects';
 import type { Employee, Subject, SubjectAssignment } from '../../api/types';
 import EmployeePicker from '../../components/EmployeePicker';
+import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import SubjectPicker from '../../components/SubjectPicker';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -68,7 +69,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
         subtitle="Subjects"
         onBack={() => navigation.goBack()}
       />
-      <View style={styles.body}>
+      <ScreenContainer>
         {showAssign ? (
           <View style={styles.assignForm}>
             <Text style={styles.label}>Subject</Text>
@@ -114,6 +115,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
 
         <FlatList
           data={assignments}
+          scrollEnabled={false}
           keyExtractor={(item) => item.subjectId}
           ListEmptyComponent={
             !loading ? <Text style={styles.empty}>No subjects assigned to this section yet.</Text> : null
@@ -129,14 +131,13 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
             </View>
           )}
         />
-      </View>
+      </ScreenContainer>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  body: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
   selectedHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, marginBottom: spacing.sm },
   assignForm: {
