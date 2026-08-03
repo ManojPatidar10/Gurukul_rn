@@ -36,7 +36,6 @@ export function AttendanceTakeScreen({ route, navigation }: Props) {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [roster, setRoster] = useState<Student[]>([]);
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
-  const [remarks, setRemarks] = useState<Record<string, string>>({});
   const [teacherId, setTeacherId] = useState<string | null>(isAdmin ? classSection.classTeacherId : session.ownerId);
   const [teacherLabel, setTeacherLabel] = useState(isAdmin ? (classSection.classTeacherName ?? '') : '');
 
@@ -94,17 +93,13 @@ export function AttendanceTakeScreen({ route, navigation }: Props) {
     getSectionAttendance(schoolId, classSection.id, date)
       .then((res) => {
         const nextStatuses: Record<string, AttendanceStatus> = {};
-        const nextRemarks: Record<string, string> = {};
         res.entries.forEach((entry) => {
           nextStatuses[entry.studentId] = entry.status;
-          nextRemarks[entry.studentId] = entry.remarks ?? '';
         });
         setStatuses(nextStatuses);
-        setRemarks(nextRemarks);
       })
       .catch(() => {
         setStatuses({});
-        setRemarks({});
       })
       .finally(() => setLoadingDate(false));
   };
@@ -144,7 +139,6 @@ export function AttendanceTakeScreen({ route, navigation }: Props) {
         records: roster.map((s) => ({
           studentId: s.id,
           status: statuses[s.id] ?? 'PRESENT',
-          remarks: remarks[s.id] || undefined,
         })),
       });
       setSuccess(true);
@@ -269,11 +263,6 @@ export function AttendanceTakeScreen({ route, navigation }: Props) {
                 );
               })}
             </View>
-            <LabeledInput
-              label="Remarks (optional)"
-              value={remarks[student.id] ?? ''}
-              onChangeText={(v) => setRemarks((prev) => ({ ...prev, [student.id]: v }))}
-            />
           </View>
         ))}
 
