@@ -10,9 +10,11 @@ import {
   respondToInvite,
   startScheduledCall,
 } from '../../api/calls';
+import { subscribeToMyCallEvents } from '../../api/callSocket';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { MyInviteResponse, ScheduledCallResponse } from '../../api/types';
@@ -22,6 +24,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'ScheduledCalls'>;
 
 export function ScheduledCallsScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
   const [hosted, setHosted] = useState<ScheduledCallResponse[]>([]);
   const [invites, setInvites] = useState<MyInviteResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,25 @@ export function ScheduledCallsScreen({ navigation }: Props) {
     load().finally(() => setLoading(false));
     return unsubscribe;
   }, [navigation, load]);
+
+  // Live update as soon as a host taps "Start now" - without this, an invitee (or the host's own
+  // other device) only finds out on the next screen-focus poll, which can be a while for a screen
+  // left open in the background.
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    subscribeToMyCallEvents(session.token, schoolId, session.ownerType, session.ownerId, (event) => {
+      if (event.type !== 'SCHEDULED_CALL_STARTED' || !event.scheduledCallId) return;
+      setHosted((prev) =>
+        prev.map((call) => (call.id === event.scheduledCallId ? { ...call, status: 'STARTED' } : call))
+      );
+      setInvites((prev) =>
+        prev.map((invite) =>
+          invite.scheduledCallId === event.scheduledCallId ? { ...invite, status: 'STARTED' } : invite
+        )
+      );
+    }).then((unsub) => (unsubscribe = unsub));
+    return () => unsubscribe?.();
+  }, [session.token, session.ownerType, session.ownerId, schoolId]);
 
   const withBusy = async (id: string, action: () => Promise<unknown>) => {
     setBusyId(id);
