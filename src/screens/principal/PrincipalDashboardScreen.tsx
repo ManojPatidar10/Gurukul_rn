@@ -3,10 +3,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { getClassSection, listClassSections } from '../../api/classSections';
 import { getEmployee, listEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
 import { getStudent, listStudents } from '../../api/students';
-import type { School } from '../../api/types';
+import type { ClassSection, Employee, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -38,6 +39,12 @@ const featureActions: FeatureAction[] = [
     description: 'Sections, subjects, assessments, and attendance',
   },
   {
+    id: 'myClassSection',
+    title: 'My Class Section',
+    icon: 'door-open',
+    description: 'Attendance and assessments for your homeroom class',
+  },
+  {
     id: 'calls',
     title: 'Video Calls',
     icon: 'video',
@@ -50,16 +57,16 @@ const featureActions: FeatureAction[] = [
     description: 'XP, streaks, and levels',
   },
   {
-    id: 'houses',
-    title: 'House Wars',
-    icon: 'shield-alt',
-    description: 'School-wide house standings',
-  },
-  {
     id: 'arena',
     title: 'Gurukul Arena',
     icon: 'gamepad',
     description: 'Build the quiz question bank for student challenges',
+  },
+  {
+    id: 'events',
+    title: 'School Events',
+    icon: 'calendar-alt',
+    description: 'Annual function, sports meet, competitions, and more',
   },
 ];
 
@@ -71,6 +78,12 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification'];
 // Arena (question authoring) is teacher-only - a principal/admin has no need to write quiz
 // questions, so this doesn't fall into the general non-student bucket above.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena'];
+// Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
+// has no legitimate use for any of them, so they're hidden outright rather than scoped down.
+const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses'];
+// Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
+// no business in - Payroll stays visible but is rerouted to just their own payslip history below.
+const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -80,11 +93,34 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   payroll: 'PayrollHub',
   infraExpenses: 'InfraExpensesList',
   classes: 'ClassesList',
+  myClassSection: 'SectionDetail',
   calls: 'VideoCallHub',
   gamification: 'GamificationHub',
   houses: 'HouseWars',
   arena: 'Arena',
+  events: 'EventsList',
 };
+
+// Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
+// class-section - the copy needs to reflect that scope instead of the school-wide admin framing.
+const STUDENT_COPY: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>> = {
+  students: { title: 'My Classmates', description: 'Students in your class' },
+  employees: { title: 'My Teachers', description: 'Teachers assigned to your class' },
+  classes: { title: 'My Class', description: 'Subjects, assessments, and attendance for your class' },
+  fees: { title: 'My Fees', description: 'Your fee dues and payment history' },
+};
+
+// Students/Payroll route to the same screens admins use, but scoped to the classes a teacher
+// teaches / their own payslips - the copy needs to reflect that instead of the school-wide framing.
+const TEACHER_COPY: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>> = {
+  students: { title: 'My Students', description: 'Students in classes you teach' },
+  payroll: { title: 'My Payslips', description: 'Your own salary history' },
+};
+
+function applyRoleCopy(feature: FeatureAction, copy: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>>): FeatureAction {
+  const override = copy[feature.id];
+  return override ? { ...feature, ...override } : feature;
+}
 
 interface Counts {
   students: number | null;
@@ -95,14 +131,33 @@ interface Counts {
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
-  const visibleFeatures = featureActions.filter((feature) => {
-    if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
-    if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';
-    return true;
-  });
+  const isStudent = session.ownerType === 'STUDENT';
+  const isTeacher = session.role === 'TEACHER';
   const [school, setSchool] = useState<School | null>(null);
   const [myName, setMyName] = useState<string | null>(null);
+  const [myEmployee, setMyEmployee] = useState<Employee | null>(null);
+  const [myClassSection, setMyClassSection] = useState<ClassSection | null>(null);
+  const [myHomeroomSection, setMyHomeroomSection] = useState<ClassSection | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
+
+  const visibleFeatures = featureActions
+    .filter((feature) => {
+      if (feature.id === 'myClassSection') return isTeacher && !!myHomeroomSection;
+      if (session.role === 'ADMIN') return true;
+      if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
+      if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';
+      if (isStudent && STUDENT_HIDDEN_FEATURES.includes(feature.id)) return false;
+      if (isTeacher && TEACHER_HIDDEN_FEATURES.includes(feature.id)) return false;
+      return true;
+    })
+    // Employees/Classes are only scoped to the student's own class-section once it's loaded -
+    // rather than briefly showing a tile that would route somewhere before we know where.
+    .filter((feature) => !(isStudent && (feature.id === 'employees' || feature.id === 'classes') && !myClassSection))
+    .map((feature) => {
+      if (isStudent) return applyRoleCopy(feature, STUDENT_COPY);
+      if (isTeacher) return applyRoleCopy(feature, TEACHER_COPY);
+      return feature;
+    });
 
   useEffect(() => {
     getSchool(schoolId)
@@ -111,12 +166,30 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   }, [schoolId]);
 
   useEffect(() => {
-    const load =
-      session.ownerType === 'EMPLOYEE'
-        ? getEmployee(schoolId, session.ownerId)
-        : getStudent(schoolId, session.ownerId);
-    load.then((owner) => setMyName(owner.name)).catch(() => setMyName(null));
-  }, [schoolId, session.ownerId, session.ownerType]);
+    if (session.ownerType === 'EMPLOYEE') {
+      getEmployee(schoolId, session.ownerId)
+        .then((owner) => {
+          setMyName(owner.name);
+          setMyEmployee(owner);
+        })
+        .catch(() => setMyName(null));
+      if (session.role === 'TEACHER') {
+        listClassSections(schoolId)
+          .then((sections) => setMyHomeroomSection(sections.find((cs) => cs.classTeacherId === session.ownerId) ?? null))
+          .catch(() => setMyHomeroomSection(null));
+      }
+      return;
+    }
+    getStudent(schoolId, session.ownerId)
+      .then((student) => {
+        setMyName(student.name);
+        if (!student.classSectionId) return;
+        getClassSection(schoolId, student.classSectionId)
+          .then(setMyClassSection)
+          .catch(() => setMyClassSection(null));
+      })
+      .catch(() => setMyName(null));
+  }, [schoolId, session.ownerId, session.ownerType, session.role]);
 
   useEffect(() => {
     const load = () => {
@@ -176,11 +249,13 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           </Pressable>
         </View>
 
-        <View style={styles.statRow}>
-          <StatSummaryCard accentKey="students" icon="user-graduate" label="Students" value={counts.students} />
-          <StatSummaryCard accentKey="employees" icon="id-badge" label="Employees" value={counts.employees} />
-          <StatSummaryCard accentKey="vendors" icon="truck" label="Vendors" value={counts.vendors} />
-        </View>
+        {!isStudent && !isTeacher && (
+          <View style={styles.statRow}>
+            <StatSummaryCard accentKey="students" icon="user-graduate" label="Students" value={counts.students} />
+            <StatSummaryCard accentKey="employees" icon="id-badge" label="Employees" value={counts.employees} />
+            <StatSummaryCard accentKey="vendors" icon="truck" label="Vendors" value={counts.vendors} />
+          </View>
+        )}
 
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.tileGrid}>
@@ -188,7 +263,37 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
             <FeatureTile
               key={feature.id}
               feature={feature}
-              onPress={() => navigation.navigate(featureRoutes[feature.id] as never)}
+              onPress={() => {
+                if (isStudent && feature.id === 'students') {
+                  navigation.navigate('Classmates');
+                  return;
+                }
+                if (isStudent && myClassSection && feature.id === 'employees') {
+                  navigation.navigate('SectionSubjectsList', { classSection: myClassSection });
+                  return;
+                }
+                if (isStudent && myClassSection && feature.id === 'classes') {
+                  navigation.navigate('SectionDetail', { classSection: myClassSection });
+                  return;
+                }
+                if (isStudent && feature.id === 'fees') {
+                  navigation.navigate('MyFees');
+                  return;
+                }
+                if (isTeacher && feature.id === 'students') {
+                  navigation.navigate('MyStudents');
+                  return;
+                }
+                if (isTeacher && myEmployee && feature.id === 'payroll') {
+                  navigation.navigate('SalaryHistory', { employee: myEmployee });
+                  return;
+                }
+                if (isTeacher && myHomeroomSection && feature.id === 'myClassSection') {
+                  navigation.navigate('SectionDetail', { classSection: myHomeroomSection });
+                  return;
+                }
+                navigation.navigate(featureRoutes[feature.id] as never);
+              }}
             />
           ))}
         </View>

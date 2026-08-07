@@ -28,7 +28,6 @@ export function QuestionAuthorScreen({ navigation }: Props) {
   const [correctOption, setCorrectOption] = useState<QuizOption>('A');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
     listSubjects(schoolId).then(setSubjects).catch(() => setSubjects([]));
@@ -56,10 +55,7 @@ export function QuestionAuthorScreen({ navigation }: Props) {
         optionD: options.D.trim(),
         correctOption,
       });
-      setQuestionText('');
-      setOptions({ A: '', B: '', C: '', D: '' });
-      setCorrectOption('A');
-      setSavedCount((c) => c + 1);
+      navigation.goBack();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -71,8 +67,6 @@ export function QuestionAuthorScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title="Add a quiz question" onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        {savedCount > 0 && <Text style={styles.savedBanner}>{savedCount} question{savedCount === 1 ? '' : 's'} added this session</Text>}
-
         <Text style={styles.fieldLabel}>Subject</Text>
         <View style={styles.chips}>
           {subjects.map((subject) => (
@@ -136,15 +130,6 @@ export function QuestionAuthorScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  savedBanner: {
-    backgroundColor: colors.surfaceMuted,
-    color: colors.textSecondary,
-    fontSize: 12,
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
   fieldLabel: {
     fontSize: 12,
     fontWeight: '700',

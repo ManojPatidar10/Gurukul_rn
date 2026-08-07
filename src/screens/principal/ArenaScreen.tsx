@@ -41,16 +41,6 @@ export function ArenaScreen({ navigation }: Props) {
   }, [navigation, load]);
 
   if (session.ownerType !== 'STUDENT') {
-    if (session.role !== 'TEACHER') {
-      return (
-        <View style={styles.root}>
-          <ScreenHeader title="Gurukul Arena" onBack={() => navigation.goBack()} />
-          <ScreenContainer>
-            <Text style={styles.teacherIntro}>Quiz question authoring is managed by teachers.</Text>
-          </ScreenContainer>
-        </View>
-      );
-    }
     return (
       <View style={styles.root}>
         <ScreenHeader title="Gurukul Arena" onBack={() => navigation.goBack()} />
@@ -62,6 +52,10 @@ export function ArenaScreen({ navigation }: Props) {
           <Pressable style={styles.primaryButton} onPress={() => navigation.navigate('QuestionAuthor')}>
             <FontAwesome5 name="plus" size={14} color={colors.white} />
             <Text style={styles.primaryButtonText}>Add a quiz question</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('MyQuestions')}>
+            <FontAwesome5 name="list" size={14} color={colors.primary} />
+            <Text style={styles.secondaryButtonText}>My questions</Text>
           </Pressable>
         </ScreenContainer>
       </View>
@@ -75,11 +69,6 @@ export function ArenaScreen({ navigation }: Props) {
         <Pressable style={styles.primaryButton} onPress={() => navigation.navigate('NewChallenge')}>
           <FontAwesome5 name="bolt" size={14} color={colors.white} />
           <Text style={styles.primaryButtonText}>Challenge a classmate</Text>
-        </Pressable>
-
-        <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('PracticeStart')}>
-          <FontAwesome5 name="graduation-cap" size={14} color={colors.primary} />
-          <Text style={styles.secondaryButtonText}>Practice solo (no opponent)</Text>
         </Pressable>
 
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}

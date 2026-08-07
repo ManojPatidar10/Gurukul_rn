@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -19,8 +20,10 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
+  const { session } = useAuth();
   const assessment = route.params.assessment;
   const fullyPaid = assessment.remainingDue <= 0;
+  const canRecordPayment = session.ownerType === 'EMPLOYEE';
 
   return (
     <View style={styles.root}>
@@ -41,7 +44,7 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
           <Field label="Due date" value={assessment.dueDate} />
         </View>
 
-        {!fullyPaid && (
+        {!fullyPaid && canRecordPayment && (
           <Pressable
             style={styles.payButton}
             onPress={() => navigation.navigate('FeePaymentForm', { assessment })}

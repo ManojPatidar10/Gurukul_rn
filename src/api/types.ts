@@ -670,6 +670,8 @@ export interface QuizQuestionResponse {
   optionC: string;
   optionD: string;
   correctOption: QuizOption;
+  createdByEmployeeId: string;
+  createdByEmployeeName: string;
 }
 
 export interface PublicQuizQuestionResponse {
@@ -694,6 +696,7 @@ export interface SubmitAnswerRequest {
 export interface SubmitAnswerResponse {
   correct: boolean;
   challengeCompleted: boolean;
+  correctOption: QuizOption;
 }
 
 export interface ChallengeSummaryResponse {
@@ -739,6 +742,7 @@ export interface SubmitPracticeAnswerRequest {
 export interface SubmitPracticeAnswerResponse {
   correct: boolean;
   sessionCompleted: boolean;
+  correctOption: QuizOption;
 }
 
 export type BattleRoomStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
@@ -882,4 +886,103 @@ export interface CallEvent {
   counterpartOwnerId: string | null;
   title: string | null;
   scheduledAt: string | null;
+}
+
+export type EventCategory = 'SPORTS' | 'CULTURAL' | 'ACADEMIC' | 'OTHER';
+export type EventScope = 'SCHOOL' | 'CLASS' | 'GRADE';
+// Old finance lifecycle - unrelated to participation, kept separate per backend's note.
+export type EventFinanceStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED';
+export type EventParticipationStatus = 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+export type EventParticipationType = 'RSVP' | 'REGISTRATION' | 'POLL' | 'NONE';
+export type EventRsvpStatus = 'ACCEPTED' | 'DECLINED' | 'MAYBE';
+
+export interface EventRegistrationField {
+  key: string;
+  label: string;
+  required: boolean;
+}
+
+export interface SchoolEvent {
+  id: string;
+  schoolId: string;
+  name: string;
+  description: string;
+  eventDate: string;
+  status: EventFinanceStatus;
+  inflowEnabled: boolean;
+  outflowEnabled: boolean;
+  category: EventCategory | null;
+  scope: EventScope | null;
+  sectionId: string | null;
+  className: string | null;
+  venue: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  participationStatus: EventParticipationStatus | null;
+  participationType: EventParticipationType | null;
+  registrationFields: EventRegistrationField[] | null;
+  myRsvpStatus: EventRsvpStatus | null;
+  myRegistrationAnswers: Record<string, string> | null;
+  createdByEmployeeId: string;
+  createdByEmployeeName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEventRequest {
+  name: string;
+  description: string;
+  eventDate: string;
+  category?: EventCategory;
+  scope?: EventScope;
+  sectionId?: string;
+  className?: string;
+  venue?: string;
+  startAt?: string;
+  endAt?: string;
+  participationType?: EventParticipationType;
+  registrationFields?: EventRegistrationField[];
+}
+
+export interface EventRsvpRequest {
+  status: EventRsvpStatus;
+}
+
+export interface EventRsvpEntry {
+  ownerType: OwnerType;
+  ownerId: string;
+  name: string;
+  status: EventRsvpStatus;
+}
+
+export interface EventRegistrationRequest {
+  answers: Record<string, string>;
+}
+
+export interface EventRegistrationEntry {
+  id: string;
+  ownerType: OwnerType;
+  ownerId: string;
+  name: string;
+  answers: Record<string, string>;
+  submittedAt: string;
+}
+
+export interface CreateEventPollOptionsRequest {
+  options: string[];
+}
+
+export interface EventPollOption {
+  id: string;
+  label: string;
+  voteCount: number;
+}
+
+export interface EventPollResponse {
+  options: EventPollOption[];
+  myVoteOptionId: string | null;
+}
+
+export interface EventPollVoteRequest {
+  optionId: string;
 }

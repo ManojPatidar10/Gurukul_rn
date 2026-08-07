@@ -18,10 +18,12 @@ export type FeatureId =
   | 'payroll'
   | 'infraExpenses'
   | 'classes'
+  | 'myClassSection'
   | 'calls'
   | 'gamification'
   | 'houses'
-  | 'arena';
+  | 'arena'
+  | 'events';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -35,6 +37,8 @@ export type PrincipalStackParamList = {
   Profile: undefined;
   GlobalSearch: undefined;
   StudentsList: undefined;
+  Classmates: undefined;
+  MyStudents: undefined;
   StudentDetail: { student: Student };
   StudentForm: { student?: Student };
   EmployeesList: undefined;
@@ -50,6 +54,7 @@ export type PrincipalStackParamList = {
   FeeStructureForm: undefined;
   FeeStructureDetail: { feeStructure: FeeStructure };
   FeeAssessmentsList: undefined;
+  MyFees: undefined;
   FeeAssessmentDetail: { assessment: FeeAssessment };
   FeePaymentForm: { assessment: FeeAssessment };
   PayrollHub: undefined;
@@ -89,8 +94,12 @@ export type PrincipalStackParamList = {
   NewChallenge: undefined;
   ChallengeDetail: { challengeId: string };
   QuestionAuthor: undefined;
+  MyQuestions: undefined;
   BattleRoomMatch: undefined;
   BattleRoom: { roomId: string };
   PracticeStart: undefined;
   PracticeSession: { sessionId: string };
+  EventsList: undefined;
+  EventDetail: { eventId: string };
+  EventForm: undefined;
 };

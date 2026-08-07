@@ -28,9 +28,9 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
   // Answer result for whichever question is currently on screen only - cleared the moment we
   // advance, so a previous question's correct/wrong state can never bleed into the next one.
-  const [answered, setAnswered] = useState<{ questionId: string; selected: QuizOption; correct: boolean } | null>(
-    null
-  );
+  const [answered, setAnswered] = useState<
+    { questionId: string; selected: QuizOption; correct: boolean; correctOption: QuizOption } | null
+  >(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -53,7 +53,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
     setError(null);
     try {
       const result = await submitPracticeAnswer(schoolId, sessionId, { questionId, selectedOption: selected });
-      setAnswered({ questionId, selected, correct: result.correct });
+      setAnswered({ questionId, selected, correct: result.correct, correctOption: result.correctOption });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -121,12 +121,14 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
             {OPTIONS.map(({ key, field }) => {
               const isThisAnswered = answered && answered.questionId === currentQuestion.id;
               const isSelected = isThisAnswered && answered.selected === key;
+              const isCorrectOption = isThisAnswered && answered.correctOption === key;
               return (
                 <Pressable
                   key={key}
                   style={[
                     styles.optionButton,
                     isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong),
+                    !isSelected && isCorrectOption && styles.optionCorrect,
                   ]}
                   disabled={submitting || !!isThisAnswered}
                   onPress={() => handleSelect(currentQuestion.id, key)}

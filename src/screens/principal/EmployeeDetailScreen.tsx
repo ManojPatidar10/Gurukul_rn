@@ -1,13 +1,17 @@
+import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { startImmediateCall } from '../../api/calls';
+import { createConversation } from '../../api/chat';
 import { createEmployeeCredential } from '../../api/credentials';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -25,6 +29,8 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function EmployeeDetailScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const isViewerAdmin = session.role === 'ADMIN';
   const employee = route.params.employee;
   const [showCredentials, setShowCredentials] = useState(false);
   const [username, setUsername] = useState('');
@@ -32,6 +38,38 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ username: string; password: string } | null>(null);
+  const [calling, setCalling] = useState(false);
+  const [messaging, setMessaging] = useState(false);
+  const isSelf = session.ownerType === 'EMPLOYEE' && session.ownerId === employee.id;
+
+  const handleVideoCall = async () => {
+    setCalling(true);
+    setError(null);
+    try {
+      const call = await startImmediateCall(schoolId, { calleeOwnerType: 'EMPLOYEE', calleeOwnerId: employee.id });
+      navigation.navigate('InCall', { roomName: call.roomName, displayName: employee.name, callLogId: call.callLogId });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setCalling(false);
+    }
+  };
+
+  const handleMessage = async () => {
+    setMessaging(true);
+    setError(null);
+    try {
+      const conversation = await createConversation(schoolId, {
+        otherPartyOwnerType: 'EMPLOYEE',
+        otherPartyOwnerId: employee.id,
+      });
+      navigation.navigate('ConversationThread', { conversationId: conversation.id, title: employee.name });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setMessaging(false);
+    }
+  };
 
   const handleCreateCredential = async () => {
     setSubmitting(true);
@@ -57,28 +95,50 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
             <Text style={styles.heroName}>{employee.name}</Text>
             <StatusChip label={employee.status} variant={employee.status === 'ACTIVE' ? 'success' : 'neutral'} />
           </View>
+          {!isSelf && (
+            <View style={styles.heroActions}>
+              <Pressable style={styles.iconButton} onPress={handleVideoCall} disabled={calling}>
+                {calling ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <FontAwesome5 name="video" size={16} color={colors.white} />
+                )}
+              </Pressable>
+              <Pressable style={styles.iconButton} onPress={handleMessage} disabled={messaging}>
+                {messaging ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <FontAwesome5 name="comment-dots" size={16} color={colors.white} />
+                )}
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.card}>
           <Field label="Designation" value={employee.designation} />
           <Field label="Join date" value={employee.joinDate} />
-          <Field label="Bank account" value={employee.bankAccount} />
+          {isViewerAdmin && <Field label="Bank account" value={employee.bankAccount} />}
           <Field label="Contact phone" value={employee.contactPhone} />
         </View>
 
-        <View style={styles.actions}>
-          <Pressable style={styles.actionButton} onPress={() => navigation.navigate('EmployeeForm', { employee })}>
-            <Text style={styles.actionText}>Edit</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => navigation.navigate('SalaryHistory', { employee })}>
-            <Text style={styles.actionText}>Salary history</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
-            <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
-          </Pressable>
-        </View>
+        {error && <Text style={styles.error}>{error}</Text>}
 
-        {showCredentials && (
+        {isViewerAdmin && (
+          <View style={styles.actions}>
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('EmployeeForm', { employee })}>
+              <Text style={styles.actionText}>Edit</Text>
+            </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('SalaryHistory', { employee })}>
+              <Text style={styles.actionText}>Salary history</Text>
+            </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
+              <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {isViewerAdmin && showCredentials && (
           <View style={styles.credentialPanel}>
             <Text style={styles.credentialTitle}>Create teacher login</Text>
             {created ? (
@@ -128,7 +188,16 @@ const accent = accents.employees;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   heroRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
-  heroText: { marginLeft: spacing.md, gap: spacing.xs },
+  heroText: { flex: 1, marginLeft: spacing.md, gap: spacing.xs },
+  heroActions: { flexDirection: 'row', gap: spacing.sm },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   heroName: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
   card: {
     backgroundColor: colors.surface,
