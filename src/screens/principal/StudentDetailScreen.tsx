@@ -1,7 +1,10 @@
+import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { startImmediateCall } from '../../api/calls';
+import { createConversation } from '../../api/chat';
 import { createStudentCredential } from '../../api/credentials';
 import { deleteStudent, transferStudentClassSection } from '../../api/students';
 import type { Student } from '../../api/types';
@@ -11,6 +14,7 @@ import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -28,11 +32,46 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function StudentDetailScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const isViewerStudent = session.ownerType === 'STUDENT';
+  const isViewerAdmin = session.role === 'ADMIN';
   const [student, setStudent] = useState<Student>(route.params.student);
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [calling, setCalling] = useState(false);
+  const [messaging, setMessaging] = useState(false);
+  const isSelf = session.ownerType === 'STUDENT' && session.ownerId === student.id;
+
+  const handleVideoCall = async () => {
+    setCalling(true);
+    setError(null);
+    try {
+      const call = await startImmediateCall(schoolId, { calleeOwnerType: 'STUDENT', calleeOwnerId: student.id });
+      navigation.navigate('InCall', { roomName: call.roomName, displayName: student.name, callLogId: call.callLogId });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setCalling(false);
+    }
+  };
+
+  const handleMessage = async () => {
+    setMessaging(true);
+    setError(null);
+    try {
+      const conversation = await createConversation(schoolId, {
+        otherPartyOwnerType: 'STUDENT',
+        otherPartyOwnerId: student.id,
+      });
+      navigation.navigate('ConversationThread', { conversationId: conversation.id, title: student.name });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setMessaging(false);
+    }
+  };
 
   const [showCredentials, setShowCredentials] = useState(false);
   const [username, setUsername] = useState('');
@@ -100,39 +139,71 @@ export function StudentDetailScreen({ route, navigation }: Props) {
             <Text style={styles.heroName}>{student.name}</Text>
             <StatusChip label={student.status} variant={student.status === 'ACTIVE' ? 'success' : 'neutral'} />
           </View>
+          {!isSelf && (
+            <View style={styles.heroActions}>
+              <Pressable style={styles.iconButton} onPress={handleVideoCall} disabled={calling}>
+                {calling ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <FontAwesome5 name="video" size={16} color={colors.white} />
+                )}
+              </Pressable>
+              <Pressable style={styles.iconButton} onPress={handleMessage} disabled={messaging}>
+                {messaging ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <FontAwesome5 name="comment-dots" size={16} color={colors.white} />
+                )}
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.card}>
           <Field label="Class-section" value={student.classSectionLabel} />
           <Field label="Date of birth" value={student.dob} />
           <Field label="Gender" value={student.gender} />
-          <Field label="Address" value={student.address} />
-          <Field label="Parent name" value={student.parentName} />
-          <Field label="Parent contact" value={student.parentContact} />
-          <Field label="Admission date" value={student.admissionDate} />
+          {!isViewerStudent && (
+            <>
+              <Field label="Address" value={student.address} />
+              <Field label="Parent name" value={student.parentName} />
+              <Field label="Parent contact" value={student.parentContact} />
+              <Field label="Admission date" value={student.admissionDate} />
+            </>
+          )}
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <View style={styles.actions}>
-          <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentForm', { student })}>
-            <Text style={styles.actionText}>Edit</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => setShowTransfer((v) => !v)}>
-            <Text style={styles.actionText}>{showTransfer ? 'Cancel transfer' : 'Transfer class'}</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
-            <Text style={styles.actionText}>Attendance</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
-            <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
-          </Pressable>
-          <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
-            <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
-          </Pressable>
-        </View>
+        {(isViewerAdmin || !isViewerStudent) && (
+          <View style={styles.actions}>
+            {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentForm', { student })}>
+                <Text style={styles.actionText}>Edit</Text>
+              </Pressable>
+            )}
+            {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => setShowTransfer((v) => !v)}>
+                <Text style={styles.actionText}>{showTransfer ? 'Cancel transfer' : 'Transfer class'}</Text>
+              </Pressable>
+            )}
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
+              <Text style={styles.actionText}>Attendance</Text>
+            </Pressable>
+            {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
+                <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
+              </Pressable>
+            )}
+            {isViewerAdmin && (
+              <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
+                <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
 
-        {showCredentials && (
+        {isViewerAdmin && showCredentials && (
           <View style={styles.transferPanel}>
             <Text style={styles.transferTitle}>Create student login</Text>
             {createdCredential ? (
@@ -196,7 +267,16 @@ const accent = accents.students;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   heroRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
-  heroText: { marginLeft: spacing.md, gap: spacing.xs },
+  heroActions: { flexDirection: 'row', gap: spacing.sm },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroText: { flex: 1, marginLeft: spacing.md, gap: spacing.xs },
   heroName: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
   card: {
     backgroundColor: colors.surface,

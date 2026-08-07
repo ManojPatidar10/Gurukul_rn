@@ -13,9 +13,15 @@ export function createQuizQuestion(schoolId: string, req: CreateQuizQuestionRequ
   return api.post<QuizQuestionResponse>('/api/v1/gamification/arena/questions', req, schoolId);
 }
 
-export function listQuizQuestions(schoolId: string, subjectId: string, className: string) {
+export function listQuizQuestions(
+  schoolId: string,
+  subjectId: string,
+  className: string,
+  createdByEmployeeId?: string
+) {
+  const params = { subjectId, className, ...(createdByEmployeeId ? { createdByEmployeeId } : {}) };
   return api.get<QuizQuestionResponse[]>(
-    `/api/v1/gamification/arena/questions?${new URLSearchParams({ subjectId, className }).toString()}`,
+    `/api/v1/gamification/arena/questions?${new URLSearchParams(params).toString()}`,
     schoolId
   );
 }

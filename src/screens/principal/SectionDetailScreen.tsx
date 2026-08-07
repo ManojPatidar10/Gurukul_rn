@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { useAuth } from '../../context/AuthContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -11,7 +12,9 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionDetail'>;
 const accent = accents.classes;
 
 export function SectionDetailScreen({ route, navigation }: Props) {
+  const { session } = useAuth();
   const classSection = route.params.classSection;
+  const canTakeAttendance = session.ownerType === 'EMPLOYEE';
 
   const items: { title: string; description: string; onPress: () => void }[] = [
     {
@@ -29,11 +32,15 @@ export function SectionDetailScreen({ route, navigation }: Props) {
       description: 'Assignments, quizzes, tests, and exams',
       onPress: () => navigation.navigate('SectionAssessmentsList', { classSection }),
     },
-    {
-      title: 'Attendance',
-      description: 'Take or edit attendance for a date',
-      onPress: () => navigation.navigate('AttendanceTake', { classSection }),
-    },
+    ...(canTakeAttendance
+      ? [
+          {
+            title: 'Attendance',
+            description: 'Take or edit attendance for a date',
+            onPress: () => navigation.navigate('AttendanceTake', { classSection }),
+          },
+        ]
+      : []),
     {
       title: 'Attendance history',
       description: "Every student's attendance totals for this section",

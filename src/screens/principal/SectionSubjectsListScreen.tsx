@@ -3,11 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { assignSectionSubject, listSectionSubjects } from '../../api/sectionSubjects';
+import { getEmployee } from '../../api/employees';
 import type { Employee, Subject, SubjectAssignment } from '../../api/types';
 import EmployeePicker from '../../components/EmployeePicker';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import SubjectPicker from '../../components/SubjectPicker';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -16,6 +18,8 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionSubjectsLis
 
 export function SectionSubjectsListScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const canAssign = session.ownerType === 'EMPLOYEE';
   const classSection = route.params.classSection;
   const [assignments, setAssignments] = useState<SubjectAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +31,20 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [teacherLabel, setTeacherLabel] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [openingTeacherId, setOpeningTeacherId] = useState<string | null>(null);
+
+  const handleOpenTeacher = async (teacherId: string) => {
+    setOpeningTeacherId(teacherId);
+    setError(null);
+    try {
+      const employee = await getEmployee(schoolId, teacherId);
+      navigation.navigate('EmployeeDetail', { employee });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setOpeningTeacherId(null);
+    }
+  };
 
   const load = useCallback(() => {
     setError(null);
@@ -70,7 +88,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
-        {showAssign ? (
+        {canAssign && (showAssign ? (
           <View style={styles.assignForm}>
             <Text style={styles.label}>Subject</Text>
             <SubjectPicker
@@ -109,7 +127,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
           <Pressable style={styles.addButton} onPress={() => setShowAssign(true)}>
             <Text style={styles.addButtonText}>+ Assign subject</Text>
           </Pressable>
-        )}
+        ))}
 
         {error && <Text style={styles.error}>{error}</Text>}
 
@@ -121,14 +139,18 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
             !loading ? <Text style={styles.empty}>No subjects assigned to this section yet.</Text> : null
           }
           renderItem={({ item }) => (
-            <View style={styles.row}>
+            <Pressable
+              style={styles.row}
+              onPress={() => handleOpenTeacher(item.teacherId)}
+              disabled={openingTeacherId !== null}
+            >
               <View>
                 <Text style={styles.rowName}>
                   {item.subjectName} ({item.subjectCode})
                 </Text>
                 <Text style={styles.rowMeta}>Teacher: {item.teacherName}</Text>
               </View>
-            </View>
+            </Pressable>
           )}
         />
       </ScreenContainer>

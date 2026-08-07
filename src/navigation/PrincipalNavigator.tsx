@@ -6,6 +6,7 @@ import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryS
 import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
 import { SectionAttendanceHistoryScreen } from '../screens/principal/SectionAttendanceHistoryScreen';
 import { ClassesListScreen } from '../screens/principal/ClassesListScreen';
+import { ClassmatesScreen } from '../screens/principal/ClassmatesScreen';
 import { ConversationThreadScreen } from '../screens/principal/ConversationThreadScreen';
 import { ConversationsListScreen } from '../screens/principal/ConversationsListScreen';
 import { NewConversationScreen } from '../screens/principal/NewConversationScreen';
@@ -17,12 +18,16 @@ import { BattleRoomScreen } from '../screens/principal/BattleRoomScreen';
 import { PracticeStartScreen } from '../screens/principal/PracticeStartScreen';
 import { PracticeSessionScreen } from '../screens/principal/PracticeSessionScreen';
 import { AwardRecognitionScreen } from '../screens/principal/AwardRecognitionScreen';
+import { EventsListScreen } from '../screens/principal/EventsListScreen';
+import { EventDetailScreen } from '../screens/principal/EventDetailScreen';
+import { EventFormScreen } from '../screens/principal/EventFormScreen';
 import { ChallengeDetailScreen } from '../screens/principal/ChallengeDetailScreen';
 import { GamificationHubScreen } from '../screens/principal/GamificationHubScreen';
 import { HouseWarsScreen } from '../screens/principal/HouseWarsScreen';
 import { InCallScreen } from '../screens/principal/InCallScreen';
 import { LeaderboardScreen } from '../screens/principal/LeaderboardScreen';
 import { NewChallengeScreen } from '../screens/principal/NewChallengeScreen';
+import { MyQuestionsScreen } from '../screens/principal/MyQuestionsScreen';
 import { QuestionAuthorScreen } from '../screens/principal/QuestionAuthorScreen';
 import { PickCallTargetScreen } from '../screens/principal/PickCallTargetScreen';
 import { ScheduleCallScreen } from '../screens/principal/ScheduleCallScreen';
@@ -33,6 +38,8 @@ import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
 import { FeeAssessmentDetailScreen } from '../screens/principal/FeeAssessmentDetailScreen';
 import { FeeAssessmentsListScreen } from '../screens/principal/FeeAssessmentsListScreen';
+import { MyFeesScreen } from '../screens/principal/MyFeesScreen';
+import { MyStudentsScreen } from '../screens/principal/MyStudentsScreen';
 import { FeeCategoriesListScreen } from '../screens/principal/FeeCategoriesListScreen';
 import { FeePaymentFormScreen } from '../screens/principal/FeePaymentFormScreen';
 import { FeeStructureDetailScreen } from '../screens/principal/FeeStructureDetailScreen';
@@ -80,6 +87,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="GlobalSearch" component={GlobalSearchScreen} />
         <Stack.Screen name="StudentsList" component={StudentsListScreen} />
+        <Stack.Screen name="Classmates" component={ClassmatesScreen} />
+        <Stack.Screen name="MyStudents" component={MyStudentsScreen} />
         <Stack.Screen name="StudentDetail" component={StudentDetailScreen} />
         <Stack.Screen name="StudentForm" component={StudentFormScreen} />
         <Stack.Screen name="EmployeesList" component={EmployeesListScreen} />
@@ -95,6 +104,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="FeeStructureForm" component={FeeStructureFormScreen} />
         <Stack.Screen name="FeeStructureDetail" component={FeeStructureDetailScreen} />
         <Stack.Screen name="FeeAssessmentsList" component={FeeAssessmentsListScreen} />
+        <Stack.Screen name="MyFees" component={MyFeesScreen} />
         <Stack.Screen name="FeeAssessmentDetail" component={FeeAssessmentDetailScreen} />
         <Stack.Screen name="FeePaymentForm" component={FeePaymentFormScreen} />
         <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />
@@ -129,6 +139,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="GamificationHub" component={GamificationHubScreen} />
         <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
         <Stack.Screen name="HouseWars" component={HouseWarsScreen} />
+        <Stack.Screen name="EventsList" component={EventsListScreen} />
+        <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+        <Stack.Screen name="EventForm" component={EventFormScreen} />
         <Stack.Screen name="AwardRecognition" component={AwardRecognitionScreen} />
         <Stack.Screen name="Arena" component={ArenaScreen} />
         <Stack.Screen name="BattleRoomMatch" component={BattleRoomMatchScreen} />
@@ -138,6 +151,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="NewChallenge" component={NewChallengeScreen} />
         <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
         <Stack.Screen name="QuestionAuthor" component={QuestionAuthorScreen} />
+        <Stack.Screen name="MyQuestions" component={MyQuestionsScreen} />
       </Stack.Navigator>
   );
 }

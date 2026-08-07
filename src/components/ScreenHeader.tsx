@@ -14,7 +14,7 @@ interface ScreenHeaderProps {
 
 export function ScreenHeader({ title, subtitle, onBack, rightAction }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
-  const initial = title.trim().charAt(0).toUpperCase() || '?';
+  const initial = (title ?? '').trim().charAt(0).toUpperCase() || '?';
 
   return (
     <LinearGradient
