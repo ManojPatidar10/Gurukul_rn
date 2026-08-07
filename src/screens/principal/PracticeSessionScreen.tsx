@@ -25,8 +25,12 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   const [session, setSession] = useState<PracticeSessionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Answer result for whichever question is currently on screen only - cleared the moment we
+  // advance, so a previous question's correct/wrong state can never bleed into the next one.
+  const [answered, setAnswered] = useState<{ questionId: string; selected: QuizOption; correct: boolean } | null>(
+    null
+  );
 
   const load = useCallback(() => {
     setError(null);
@@ -40,19 +44,28 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
     load().finally(() => setLoading(false));
   }, [load]);
 
-  const handleAnswer = async (questionId: string, selected: QuizOption) => {
+  const { questions = [], myAnsweredQuestionIds = [] } = session ?? {};
+  const currentQuestion = questions.find((q) => !myAnsweredQuestionIds.includes(q.id));
+
+  const handleSelect = async (questionId: string, selected: QuizOption) => {
+    if (answered || submitting) return;
     setSubmitting(true);
-    setFeedback(null);
     setError(null);
     try {
       const result = await submitPracticeAnswer(schoolId, sessionId, { questionId, selectedOption: selected });
-      setFeedback(result.correct ? 'correct' : 'incorrect');
-      await load();
+      setAnswered({ questionId, selected, correct: result.correct });
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleNext = async () => {
+    setAnswered(null);
+    setSubmitting(true);
+    await load();
+    setSubmitting(false);
   };
 
   if (loading) {
@@ -74,9 +87,6 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
       </View>
     );
   }
-
-  const { questions, myAnsweredQuestionIds } = session;
-  const currentQuestion = questions.find((q) => !myAnsweredQuestionIds.includes(q.id));
 
   return (
     <View style={styles.root}>
@@ -102,23 +112,40 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
             </Text>
             <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
 
-            {feedback && (
-              <Text style={[styles.feedback, feedback === 'correct' ? styles.feedbackCorrect : styles.feedbackWrong]}>
-                {feedback === 'correct' ? 'Correct!' : 'Not quite.'}
+            {answered && answered.questionId === currentQuestion.id && (
+              <Text style={[styles.feedback, answered.correct ? styles.feedbackCorrect : styles.feedbackWrong]}>
+                {answered.correct ? 'Correct!' : 'Not quite.'}
               </Text>
             )}
 
-            {OPTIONS.map(({ key, field }) => (
-              <Pressable
-                key={key}
-                style={styles.optionButton}
-                disabled={submitting}
-                onPress={() => handleAnswer(currentQuestion.id, key)}
-              >
-                <Text style={styles.optionKey}>{key}</Text>
-                <Text style={styles.optionText}>{currentQuestion[field] as string}</Text>
+            {OPTIONS.map(({ key, field }) => {
+              const isThisAnswered = answered && answered.questionId === currentQuestion.id;
+              const isSelected = isThisAnswered && answered.selected === key;
+              return (
+                <Pressable
+                  key={key}
+                  style={[
+                    styles.optionButton,
+                    isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong),
+                  ]}
+                  disabled={submitting || !!isThisAnswered}
+                  onPress={() => handleSelect(currentQuestion.id, key)}
+                >
+                  <Text style={[styles.optionKey, isSelected && styles.optionKeySelected]}>{key}</Text>
+                  <Text style={styles.optionText}>{currentQuestion[field] as string}</Text>
+                </Pressable>
+              );
+            })}
+
+            {answered && answered.questionId === currentQuestion.id && (
+              <Pressable style={styles.nextButton} onPress={handleNext} disabled={submitting}>
+                {submitting ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.nextButtonText}>Next Question</Text>
+                )}
               </Pressable>
-            ))}
+            )}
           </View>
         )}
       </ScreenContainer>
@@ -159,7 +186,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
+  optionCorrect: { borderColor: colors.success, backgroundColor: '#E4F5E8' },
+  optionWrong: { borderColor: colors.error, backgroundColor: '#FBE7E7' },
   optionKey: {
     width: 24,
     height: 24,
@@ -171,5 +202,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  optionKeySelected: { backgroundColor: colors.textPrimary },
   optionText: { flex: 1, fontSize: 14, color: colors.textPrimary },
+  nextButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    ...softShadow,
+  },
+  nextButtonText: { color: colors.white, fontWeight: '700', fontSize: 15 },
 });
