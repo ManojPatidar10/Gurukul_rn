@@ -6,6 +6,7 @@ import { deleteAssessment } from '../../api/assessments';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -23,6 +24,8 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function AssessmentDetailScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const canManage = session.ownerType === 'EMPLOYEE';
   const { assessment, classSection } = route.params;
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,17 +69,19 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
 
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <View style={styles.actions}>
-          <Pressable
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('AssessmentForm', { classSection, assessment })}
-          >
-            <Text style={styles.actionText}>Edit</Text>
-          </Pressable>
-          <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
-            <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
-          </Pressable>
-        </View>
+        {canManage && (
+          <View style={styles.actions}>
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('AssessmentForm', { classSection, assessment })}
+            >
+              <Text style={styles.actionText}>Edit</Text>
+            </Pressable>
+            <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
+              <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+            </Pressable>
+          </View>
+        )}
       </ScreenContainer>
     </View>
   );

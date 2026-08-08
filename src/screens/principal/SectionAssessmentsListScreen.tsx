@@ -6,6 +6,7 @@ import { listSectionAssessments } from '../../api/assessments';
 import type { Assessment } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -14,6 +15,8 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAssessments
 
 export function SectionAssessmentsListScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const canManage = session.ownerType === 'EMPLOYEE';
   const classSection = route.params.classSection;
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,12 +51,14 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <View style={styles.body}>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => navigation.navigate('AssessmentForm', { classSection })}
-        >
-          <Text style={styles.addButtonText}>+ New assessment</Text>
-        </Pressable>
+        {canManage && (
+          <Pressable
+            style={styles.addButton}
+            onPress={() => navigation.navigate('AssessmentForm', { classSection })}
+          >
+            <Text style={styles.addButtonText}>+ New assessment</Text>
+          </Pressable>
+        )}
 
         {error && <Text style={styles.error}>{error}</Text>}
 
