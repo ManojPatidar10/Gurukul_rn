@@ -14,6 +14,7 @@ import { getStoredSession, setStoredSession, clearStoredSession, type Session } 
 import { setAuthToken } from './src/api/client';
 import { disconnectChatSocket } from './src/api/chatSocket';
 import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
+import { usePushNotifications } from './src/hooks/usePushNotifications';
 import type { SchoolSearchResult } from './src/api/types';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
@@ -52,6 +53,8 @@ export default function App() {
   useEffect(() => {
     setAuthToken(session?.token ?? null);
   }, [session]);
+
+  usePushNotifications(schoolId ?? null, session?.token ?? null);
 
   const handleLoggedIn = (next: Session) => {
     setStoredSession(next);
