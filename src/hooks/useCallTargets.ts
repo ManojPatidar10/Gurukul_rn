@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 
+import { listStudentsInClassSection } from '../api/classSections';
 import { listEmployees } from '../api/employees';
-import { getStudent, searchParents } from '../api/students';
+import { getStudent, searchStudents } from '../api/students';
 import type { OwnerType } from '../api/types';
 import { useAuth } from '../context/AuthContext';
 import { useSchoolId } from '../context/SchoolContext';
@@ -18,9 +19,10 @@ const MIN_QUERY_LENGTH = 2;
 /**
  * Who the current session is allowed to call/invite, mirroring the backend's
  * CallAuthorizationService rule: a STUDENT-owner session (a parent's login - there is no separate
- * Parent entity) can only reach their child's class teacher; an ADMIN employee can reach any
- * other employee; a non-admin employee can only reach an admin/principal. The backend is the
- * real enforcement point - this just narrows the picker to valid choices.
+ * Parent entity) can reach their child's class teacher plus classmates in the same class-section;
+ * an ADMIN employee can reach any other employee or any student in the school; a non-admin
+ * employee can only reach an admin/principal, or a student in their own class-section. The
+ * backend is the real enforcement point - this just narrows the picker to valid choices.
  */
 export function useCallTargets() {
   const schoolId = useSchoolId();
@@ -36,11 +38,17 @@ export function useCallTargets() {
     if (session.ownerType === 'STUDENT') {
       getStudent(schoolId, session.ownerId)
         .then((student) => {
-          setTargets(
-            student.classTeacherId
-              ? [{ ownerType: 'EMPLOYEE' as const, ownerId: student.classTeacherId, name: student.classTeacherName ?? 'Class teacher' }]
-              : []
-          );
+          const classTeacherTarget = student.classTeacherId
+            ? [{ ownerType: 'EMPLOYEE' as const, ownerId: student.classTeacherId, name: student.classTeacherName ?? 'Class teacher' }]
+            : [];
+          return listStudentsInClassSection(schoolId, student.classSectionId)
+            .then((classmates) => {
+              const classmateTargets = classmates
+                .filter((s) => s.id !== student.id)
+                .map((s) => ({ ownerType: 'STUDENT' as const, ownerId: s.id, name: s.name }));
+              setTargets([...classTeacherTarget, ...classmateTargets]);
+            })
+            .catch(() => setTargets(classTeacherTarget));
         })
         .catch((e) => setError((e as Error).message))
         .finally(() => setLoading(false));
@@ -72,16 +80,17 @@ export function useCallTargets() {
     let cancelled = false;
     setSearchingStudents(true);
     const handle = setTimeout(() => {
-      searchParents(schoolId, studentQuery.trim())
+      searchStudents(schoolId, studentQuery.trim())
         .then((students) => {
           if (cancelled) return;
-          // The backend only actually permits an employee to call a student who's in their own
-          // class-section (CallAuthorizationService.isClassTeacherOf) - narrow to that here too,
-          // same "backend is the real enforcement point, this just narrows the picker" spirit as
-          // the static employee-target list above.
-          const myStudents = students.filter((s) => s.classTeacherId === session.ownerId);
+          // Admin/principal can reach any student in the school. A non-admin employee can only
+          // call a student who's in their own class-section (CallAuthorizationService.
+          // isClassTeacherOf) - narrow to that here too, same "backend is the real enforcement
+          // point, this just narrows the picker" spirit as the static employee-target list above.
+          const reachableStudents =
+            session.role === 'ADMIN' ? students : students.filter((s) => s.classTeacherId === session.ownerId);
           setStudentResults(
-            myStudents.map((s) => ({
+            reachableStudents.map((s) => ({
               ownerType: 'STUDENT' as const,
               ownerId: s.id,
               name: s.parentName ? `${s.name} (${s.parentName})` : s.name,
@@ -95,7 +104,7 @@ export function useCallTargets() {
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [canSearchStudents, studentQuery, schoolId, session.ownerId]);
+  }, [canSearchStudents, studentQuery, schoolId, session.ownerId, session.role]);
 
   return {
     targets,

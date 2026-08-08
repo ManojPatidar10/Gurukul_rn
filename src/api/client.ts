@@ -10,6 +10,25 @@ export function setAuthToken(token: string | null) {
   currentToken = token;
 }
 
+// Countdowns tied to a server-issued deadline (e.g. a Battle Room's joinWindowEndsAt) must not be
+// compared against the device's own Date.now() - phone clocks routinely drift by seconds to
+// minutes, which shows up as different participants seeing different countdowns for the same
+// deadline. Every HTTP response carries a `Date` header stamped by the server, so we use that to
+// track how far off the local clock is and correct for it everywhere a countdown reads "now".
+let clockOffsetMs = 0;
+
+function syncClockOffset(response: Response) {
+  const serverDateHeader = response.headers.get('date');
+  if (!serverDateHeader) return;
+  const serverTime = new Date(serverDateHeader).getTime();
+  if (Number.isNaN(serverTime)) return;
+  clockOffsetMs = serverTime - Date.now();
+}
+
+export function serverNow(): number {
+  return Date.now() + clockOffsetMs;
+}
+
 async function request<T>(
   path: string,
   options: { method?: string; schoolId?: string; body?: unknown } = {}
@@ -26,6 +45,8 @@ async function request<T>(
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+
+  syncClockOffset(response);
 
   const json: ApiResponse<T> = await response.json();
 

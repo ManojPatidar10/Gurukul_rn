@@ -5,6 +5,7 @@ import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from '
 
 import { getBattleRoom } from '../../api/battleRooms';
 import { sendBattleAnswer, sendBuzz, subscribeToBattleRoom } from '../../api/battleRoomSocket';
+import { serverNow } from '../../api/client';
 import type { BattleRoomState, QuizOption } from '../../api/types';
 import { CircularCountdown } from '../../components/CircularCountdown';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -62,7 +63,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
     if (!room || room.status !== 'WAITING') return;
 
     const tick = () => {
-      const secondsLeft = (new Date(room.joinWindowEndsAt).getTime() - Date.now()) / 1000;
+      const secondsLeft = (new Date(room.joinWindowEndsAt).getTime() - serverNow()) / 1000;
       setRemainingSeconds(Math.max(0, secondsLeft));
     };
     tick();
