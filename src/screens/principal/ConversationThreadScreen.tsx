@@ -80,11 +80,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-    >
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScreenHeader title={title} onBack={() => navigation.goBack()} />
       {loading ? (
         <ActivityIndicator style={styles.loading} color={colors.primary} />

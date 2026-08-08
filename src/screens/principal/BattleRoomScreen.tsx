@@ -3,8 +3,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getBattleRoom } from '../../api/battleRooms';
+import { getBattleRoom, startBattleRoom } from '../../api/battleRooms';
 import { sendBattleAnswer, sendBuzz, subscribeToBattleRoom } from '../../api/battleRoomSocket';
+import { serverNow } from '../../api/client';
 import type { BattleRoomState, QuizOption } from '../../api/types';
 import { CircularCountdown } from '../../components/CircularCountdown';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -32,6 +33,8 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const prevQuestionIndexRef = useRef<number | undefined>(undefined);
   const questionFade = useRef(new Animated.Value(1)).current;
 
@@ -62,7 +65,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
     if (!room || room.status !== 'WAITING') return;
 
     const tick = () => {
-      const secondsLeft = (new Date(room.joinWindowEndsAt).getTime() - Date.now()) / 1000;
+      const secondsLeft = (new Date(room.joinWindowEndsAt).getTime() - serverNow()) / 1000;
       setRemainingSeconds(Math.max(0, secondsLeft));
     };
     tick();
@@ -102,6 +105,22 @@ export function BattleRoomScreen({ route, navigation }: Props) {
 
   const handleBuzz = () => sendBuzz(session.token, schoolId, roomId);
   const handleAnswer = (option: QuizOption) => sendBattleAnswer(session.token, schoolId, roomId, option);
+
+  const handleStartNow = async () => {
+    setStarting(true);
+    setStartError(null);
+    try {
+      const updated = await startBattleRoom(schoolId, roomId);
+      setRoom(updated);
+    } catch (e) {
+      // "no longer waiting" just means someone else already started it (or the window expired) -
+      // the STOMP subscription is already about to push that same state, nothing to show the user.
+      const message = (e as Error).message;
+      if (!message.includes('no longer waiting')) setStartError(message);
+    } finally {
+      setStarting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -150,6 +169,17 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                 {p.name}
               </Text>
             ))}
+
+            {room.participants.length >= room.minPlayers && (
+              <Pressable style={styles.startNowButton} onPress={handleStartNow} disabled={starting}>
+                {starting ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.startNowButtonText}>Start now</Text>
+                )}
+              </Pressable>
+            )}
+            {startError && <Text style={styles.startError}>{startError}</Text>}
           </View>
         )}
 
@@ -262,6 +292,17 @@ const styles = StyleSheet.create({
   roomCodeLabel: { fontSize: 11, color: colors.textMuted },
   roomCodeValue: { fontSize: 13, color: colors.textPrimary, fontWeight: '700', marginTop: 2 },
   participantRow: { fontSize: 14, color: colors.textPrimary, paddingVertical: spacing.xs },
+  startNowButton: {
+    width: '100%',
+    backgroundColor: gameColors.jade,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.md,
+    ...softShadow,
+  },
+  startNowButtonText: { color: colors.white, fontWeight: '800', fontSize: 15 },
+  startError: { color: colors.error, fontSize: 12.5, marginTop: spacing.sm, textAlign: 'center' },
   questionIndex: { fontSize: 12, color: colors.textMuted, alignSelf: 'flex-start' },
   questionText: {
     fontSize: 17,
