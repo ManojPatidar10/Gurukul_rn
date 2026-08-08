@@ -3,6 +3,7 @@ import type {
   ClassSection,
   Employee,
   FeeAssessment,
+  FeePayment,
   FeeStructure,
   InfraExpenseRequest,
   PayrollLine,
@@ -23,7 +24,9 @@ export type FeatureId =
   | 'gamification'
   | 'houses'
   | 'arena'
-  | 'events';
+  | 'events'
+  | 'academicHelper'
+  | 'teacherTools';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -56,7 +59,10 @@ export type PrincipalStackParamList = {
   FeeAssessmentsList: undefined;
   MyFees: undefined;
   FeeAssessmentDetail: { assessment: FeeAssessment };
-  FeePaymentForm: { assessment: FeeAssessment };
+  FeePaymentForm: { assessment: FeeAssessment; initialPaymentMethod?: string; initialPaymentReference?: string };
+  UpiQrPayment: { assessment: FeeAssessment };
+  FeePaymentSettings: undefined;
+  PaymentReceipt: { payment: FeePayment };
   PayrollHub: undefined;
   SalaryStructuresList: undefined;
   SalaryStructureForm: undefined;
@@ -102,4 +108,10 @@ export type PrincipalStackParamList = {
   EventsList: undefined;
   EventDetail: { eventId: string };
   EventForm: undefined;
+  AcademicHelper: undefined;
+  StudentPerformance: { student: Student };
+  TeacherPerformance: { employee: Employee };
+  TeacherToolsHub: undefined;
+  ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
+  ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
 };

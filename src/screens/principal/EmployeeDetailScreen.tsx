@@ -2,6 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { startImmediateCall } from '../../api/calls';
 import { createConversation } from '../../api/chat';
@@ -31,6 +32,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const isViewerAdmin = session.role === 'ADMIN';
+  const { t } = useTranslation();
   const employee = route.params.employee;
   const [showCredentials, setShowCredentials] = useState(false);
   const [username, setUsername] = useState('');
@@ -93,7 +95,10 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
           <AvatarBadge name={employee.name} accentKey="employees" size={56} />
           <View style={styles.heroText}>
             <Text style={styles.heroName}>{employee.name}</Text>
-            <StatusChip label={employee.status} variant={employee.status === 'ACTIVE' ? 'success' : 'neutral'} />
+            <StatusChip
+              label={employee.status === 'ACTIVE' ? t('common.active') : employee.status === 'INACTIVE' ? t('common.inactive') : employee.status}
+              variant={employee.status === 'ACTIVE' ? 'success' : 'neutral'}
+            />
           </View>
           {!isSelf && (
             <View style={styles.heroActions}>
@@ -116,10 +121,10 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
         </View>
 
         <View style={styles.card}>
-          <Field label="Designation" value={employee.designation} />
-          <Field label="Join date" value={employee.joinDate} />
-          {isViewerAdmin && <Field label="Bank account" value={employee.bankAccount} />}
-          <Field label="Contact phone" value={employee.contactPhone} />
+          <Field label={t('employees.detail.designation')} value={employee.designation} />
+          <Field label={t('employees.detail.joinDate')} value={employee.joinDate} />
+          {isViewerAdmin && <Field label={t('employees.detail.bankAccount')} value={employee.bankAccount} />}
+          <Field label={t('employees.detail.contactPhone')} value={employee.contactPhone} />
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -127,13 +132,16 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
         {isViewerAdmin && (
           <View style={styles.actions}>
             <Pressable style={styles.actionButton} onPress={() => navigation.navigate('EmployeeForm', { employee })}>
-              <Text style={styles.actionText}>Edit</Text>
+              <Text style={styles.actionText}>{t('common.edit')}</Text>
             </Pressable>
             <Pressable style={styles.actionButton} onPress={() => navigation.navigate('SalaryHistory', { employee })}>
-              <Text style={styles.actionText}>Salary history</Text>
+              <Text style={styles.actionText}>{t('employees.detail.salaryHistory')}</Text>
+            </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('TeacherPerformance', { employee })}>
+              <Text style={styles.actionText}>{t('performance.title')}</Text>
             </Pressable>
             <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
-              <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
+              <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>
             </Pressable>
           </View>
         )}

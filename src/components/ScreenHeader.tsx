@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LanguageSwitch } from './LanguageSwitch';
 import { gradients, radius, shadow, spacing } from '../theme/colors';
 
 interface ScreenHeaderProps {
@@ -43,7 +44,7 @@ export function ScreenHeader({ title, subtitle, onBack, rightAction }: ScreenHea
             </Text>
           ) : null}
         </View>
-        {rightAction}
+        {rightAction ?? <LanguageSwitch />}
       </View>
     </LinearGradient>
   );
@@ -60,6 +61,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   badge: {
     width: 44,

@@ -1,12 +1,14 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getPayslip } from '../../api/payrollRuns';
 import type { Payslip } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -22,31 +24,31 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function PayslipDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const payrollLine = route.params.payrollLine;
   const [payslip, setPayslip] = useState<Payslip | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     getPayslip(schoolId, payrollLine.id)
       .then(setPayslip)
-      .catch((e) => setError(e.message))
+      .catch((e) => showToast(e.message, 'error'))
       .finally(() => setLoading(false));
-  }, [schoolId, payrollLine.id]);
+  }, [schoolId, payrollLine.id, showToast]);
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Payslip" subtitle={payrollLine.employeeName} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('payroll.payslip.title')} subtitle={payrollLine.employeeName} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
         {payslip && (
           <View style={styles.card}>
-            <Field label="Gross" value={`₹${payrollLine.gross.toLocaleString('en-IN')}`} />
-            <Field label="Deductions" value={`₹${payrollLine.deductions.toLocaleString('en-IN')}`} />
-            <Field label="Net pay" value={`₹${payslip.net.toLocaleString('en-IN')}`} />
-            <Field label="Document reference" value={payslip.documentRef} />
+            <Field label={t('payroll.payslip.gross')} value={`₹${payrollLine.gross.toLocaleString('en-IN')}`} />
+            <Field label={t('payroll.payslip.deductions')} value={`₹${payrollLine.deductions.toLocaleString('en-IN')}`} />
+            <Field label={t('payroll.payslip.netPay')} value={`₹${payslip.net.toLocaleString('en-IN')}`} />
+            <Field label={t('payroll.payslip.documentReference')} value={payslip.documentRef} />
           </View>
         )}
       </ScreenContainer>
@@ -57,7 +59,6 @@ export function PayslipDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: 40 },
-  error: { color: colors.error },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,

@@ -9,12 +9,14 @@ import { navigationRef } from './src/navigation/navigationRef';
 import { colors } from './src/theme/colors';
 import { SchoolContext } from './src/context/SchoolContext';
 import { AuthContext } from './src/context/AuthContext';
+import { ToastProvider } from './src/context/ToastContext';
 import { getStoredSchoolId } from './src/api/schoolStorage';
 import { getStoredSession, setStoredSession, clearStoredSession, type Session } from './src/api/authStorage';
 import { setAuthToken } from './src/api/client';
 import { disconnectChatSocket } from './src/api/chatSocket';
 import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
 import type { SchoolSearchResult } from './src/api/types';
+import { initI18n } from './src/i18n';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
 import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
@@ -32,6 +34,11 @@ export default function App() {
   const [schoolId, setSchoolId] = useState<string | null | undefined>(undefined);
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [preAuthStep, setPreAuthStep] = useState<PreAuthStep>({ name: 'welcome' });
+  const [i18nReady, setI18nReady] = useState(false);
+
+  useEffect(() => {
+    initI18n().then(() => setI18nReady(true));
+  }, []);
 
   useEffect(() => {
     getStoredSchoolId().then((storedSchoolId) => {
@@ -76,7 +83,7 @@ export default function App() {
     handleLoggedIn(admin);
   };
 
-  const loading = schoolId === undefined || session === undefined;
+  const loading = schoolId === undefined || session === undefined || !i18nReady;
 
   const renderPreAuth = () => {
     switch (preAuthStep.name) {
@@ -136,22 +143,24 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : !schoolId || !session ? (
-        renderPreAuth()
-      ) : (
-        <SchoolContext.Provider value={schoolId}>
-          <AuthContext.Provider value={{ session, logout: handleLogout }}>
-            <NavigationContainer ref={navigationRef}>
-              <PrincipalNavigator />
-            </NavigationContainer>
-            <IncomingCallOverlay session={session} schoolId={schoolId} />
-          </AuthContext.Provider>
-        </SchoolContext.Provider>
-      )}
+      <ToastProvider>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : !schoolId || !session ? (
+          renderPreAuth()
+        ) : (
+          <SchoolContext.Provider value={schoolId}>
+            <AuthContext.Provider value={{ session, logout: handleLogout }}>
+              <NavigationContainer ref={navigationRef}>
+                <PrincipalNavigator />
+              </NavigationContainer>
+              <IncomingCallOverlay session={session} schoolId={schoolId} />
+            </AuthContext.Provider>
+          </SchoolContext.Provider>
+        )}
+      </ToastProvider>
       <StatusBar style="light" />
     </SafeAreaProvider>
   );

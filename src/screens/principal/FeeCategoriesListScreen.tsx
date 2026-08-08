@@ -1,18 +1,21 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { createFeeCategory, listFeeCategories } from '../../api/feeCategories';
 import type { FeeCategory } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeCategoriesList'>;
 
 export function FeeCategoriesListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [categories, setCategories] = useState<FeeCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,13 +25,17 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
+  const { showToast } = useToast();
 
   const load = useCallback(() => {
     setError(null);
     return listFeeCategories(schoolId)
       .then(setCategories)
-      .catch((e) => setError(e.message));
-  }, [schoolId]);
+      .catch((e) => {
+        setError(e.message);
+        showToast(e.message, 'error');
+      });
+  }, [schoolId, showToast]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -44,7 +51,14 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
   };
 
   const handleCreate = async () => {
-    if (!code || !name) return;
+    if (!code.trim()) {
+      showToast(t('fees.categories.errors.code'), 'error');
+      return;
+    }
+    if (!name.trim()) {
+      showToast(t('fees.categories.errors.name'), 'error');
+      return;
+    }
     setCreating(true);
     setError(null);
     try {
@@ -55,6 +69,7 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
       setName('');
     } catch (e) {
       setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setCreating(false);
     }
@@ -62,26 +77,24 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Fee Categories" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('fees.categories.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         {showCreate ? (
           <View style={styles.createForm}>
-            <LabeledInput label="Code" value={code} onChangeText={setCode} placeholder="e.g. TUITION" autoCapitalize="characters" />
-            <LabeledInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Tuition Fee" />
+            <LabeledInput label={t('fees.categories.code')} required value={code} onChangeText={setCode} placeholder="e.g. TUITION" autoCapitalize="characters" />
+            <LabeledInput label={t('fees.categories.name')} required value={name} onChangeText={setName} placeholder="e.g. Tuition Fee" />
             <Pressable style={styles.addButton} onPress={handleCreate} disabled={creating}>
-              <Text style={styles.addButtonText}>{creating ? 'Creating…' : 'Create category'}</Text>
+              <Text style={styles.addButtonText}>{creating ? t('common.creating') : t('fees.categories.createButton')}</Text>
             </Pressable>
             <Pressable onPress={() => setShowCreate(false)}>
-              <Text style={styles.cancel}>Cancel</Text>
+              <Text style={styles.cancel}>{t('common.cancel')}</Text>
             </Pressable>
           </View>
         ) : (
           <Pressable style={styles.addButton} onPress={() => setShowCreate(true)}>
-            <Text style={styles.addButtonText}>+ Add category</Text>
+            <Text style={styles.addButtonText}>{t('fees.categories.addButton')}</Text>
           </Pressable>
         )}
-
-        {error && <Text style={styles.error}>{error}</Text>}
 
         <FlatList
           data={categories}
@@ -90,7 +103,7 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
-                {error ? 'Could not load categories.' : '0 fee categories yet — add the first one.'}
+                {error ? t('fees.categories.loadError') : t('fees.categories.empty')}
               </Text>
             ) : null
           }
@@ -123,7 +136,6 @@ const styles = StyleSheet.create({
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
   cancel: { color: colors.textMuted, textAlign: 'center', marginBottom: spacing.md },
-  error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   row: {
     flexDirection: 'row',

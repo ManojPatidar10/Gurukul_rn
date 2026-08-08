@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -10,28 +11,35 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeesHub'>;
 
 const accent = accents.fees;
 
-const items: { route: keyof PrincipalStackParamList; title: string; description: string }[] = [
-  {
-    route: 'FeeCategoriesList',
-    title: 'Fee Categories',
-    description: 'Tuition, transport, lab fee, etc.',
-  },
-  {
-    route: 'FeeStructuresList',
-    title: 'Fee Structures',
-    description: 'Set per-class fee amounts and generate dues',
-  },
-  {
-    route: 'FeeAssessmentsList',
-    title: 'Assessments & Payments',
-    description: 'View student dues and record payments',
-  },
-];
-
 export function FeesHubScreen({ navigation }: Props) {
+  const { t } = useTranslation();
+
+  const items: { route: keyof PrincipalStackParamList; title: string; description: string }[] = [
+    {
+      route: 'FeeCategoriesList',
+      title: t('fees.hub.categories.title'),
+      description: t('fees.hub.categories.description'),
+    },
+    {
+      route: 'FeeStructuresList',
+      title: t('fees.hub.structures.title'),
+      description: t('fees.hub.structures.description'),
+    },
+    {
+      route: 'FeeAssessmentsList',
+      title: t('fees.hub.assessments.title'),
+      description: t('fees.hub.assessments.description'),
+    },
+    {
+      route: 'FeePaymentSettings',
+      title: t('fees.hub.paymentSettings.title'),
+      description: t('fees.hub.paymentSettings.description'),
+    },
+  ];
+
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Fees" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('fees.hub.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {items.map((item) => (
           <Pressable

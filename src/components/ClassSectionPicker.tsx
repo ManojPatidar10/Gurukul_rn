@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { createClassSection, listClassSections } from '../api/classSections';
 import type { ClassSection } from '../api/types';
+import { ACADEMIC_YEAR_OPTIONS } from '../constants/academicYear';
+import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
+import Dropdown from './Dropdown';
 import LabeledInput from './LabeledInput';
+
+const SECTION_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((letter) => ({
+  label: letter,
+  value: letter,
+}));
 
 interface Props {
   schoolId: string;
@@ -12,30 +21,40 @@ interface Props {
 }
 
 export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
   const [sections, setSections] = useState<ClassSection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [className, setClassName] = useState('');
   const [section, setSection] = useState('');
   const [academicYear, setAcademicYear] = useState('');
   const [creating, setCreating] = useState(false);
+  const { showToast } = useToast();
 
   const load = () => {
     setLoading(true);
-    setError(null);
     listClassSections(schoolId)
       .then(setSections)
-      .catch((e) => setError(e.message))
+      .catch((e) => showToast(e.message, 'error'))
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [schoolId]);
 
   const handleCreate = async () => {
-    if (!className || !section || !academicYear) return;
+    if (!className.trim()) {
+      showToast(t('classSection.picker.errors.className'), 'error');
+      return;
+    }
+    if (!section) {
+      showToast(t('classSection.picker.errors.section'), 'error');
+      return;
+    }
+    if (!academicYear) {
+      showToast(t('classSection.picker.errors.academicYear'), 'error');
+      return;
+    }
     setCreating(true);
-    setError(null);
     try {
       const created = await createClassSection(schoolId, { className, section, academicYear });
       setSections((prev) => [...prev, created]);
@@ -45,7 +64,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
       setSection('');
       setAcademicYear('');
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setCreating(false);
     }
@@ -55,9 +74,8 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
 
   return (
     <View>
-      {error && <Text style={styles.error}>{error}</Text>}
       {sections.length === 0 && !showCreate && (
-        <Text style={styles.empty}>No class-sections yet.</Text>
+        <Text style={styles.empty}>{t('classSection.picker.empty')}</Text>
       )}
       <View style={styles.chips}>
         {sections.map((cs) => (
@@ -75,24 +93,25 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
 
       {showCreate ? (
         <View style={styles.createForm}>
-          <LabeledInput label="Class name" value={className} onChangeText={setClassName} placeholder="e.g. Grade 5" />
-          <LabeledInput label="Section" value={section} onChangeText={setSection} placeholder="e.g. A" />
-          <LabeledInput
-            label="Academic year"
+          <LabeledInput label={t('classSection.picker.className')} required value={className} onChangeText={setClassName} placeholder="e.g. Grade 5" />
+          <Dropdown label={t('classSection.picker.section')} required value={section} options={SECTION_OPTIONS} onSelect={setSection} />
+          <Dropdown
+            label={t('classSection.picker.academicYear')}
+            required
             value={academicYear}
-            onChangeText={setAcademicYear}
-            placeholder="e.g. 2026-2027"
+            options={ACADEMIC_YEAR_OPTIONS}
+            onSelect={setAcademicYear}
           />
           <Pressable style={styles.createButton} onPress={handleCreate} disabled={creating}>
-            <Text style={styles.createButtonText}>{creating ? 'Creating…' : 'Create & select'}</Text>
+            <Text style={styles.createButtonText}>{creating ? t('common.creating') : t('common.createAndSelect')}</Text>
           </Pressable>
           <Pressable onPress={() => setShowCreate(false)}>
-            <Text style={styles.cancel}>Cancel</Text>
+            <Text style={styles.cancel}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       ) : (
         <Pressable onPress={() => setShowCreate(true)}>
-          <Text style={styles.addNew}>+ New class-section</Text>
+          <Text style={styles.addNew}>{t('classSection.picker.addNew')}</Text>
         </Pressable>
       )}
     </View>
@@ -101,7 +120,6 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
 
 const styles = StyleSheet.create({
   loading: { marginVertical: spacing.md },
-  error: { color: colors.error, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, marginBottom: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {

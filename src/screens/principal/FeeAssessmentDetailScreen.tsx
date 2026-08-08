@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -21,6 +22,7 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const { session } = useAuth();
+  const { t } = useTranslation();
   const assessment = route.params.assessment;
   const fullyPaid = assessment.remainingDue <= 0;
   const canRecordPayment = session.ownerType === 'EMPLOYEE';
@@ -29,7 +31,7 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={assessment.studentName}
-        subtitle={`Roll ${assessment.rollNumber} · ${assessment.academicYear}`}
+        subtitle={t('fees.assessmentDetail.subtitle', { roll: assessment.rollNumber, academicYear: assessment.academicYear })}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
@@ -38,19 +40,27 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
         </View>
 
         <View style={styles.card}>
-          <Field label="Total due" value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
-          <Field label="Total paid" value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
-          <Field label="Remaining due" value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
-          <Field label="Due date" value={assessment.dueDate} />
+          <Field label={t('fees.assessmentDetail.totalDue')} value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
+          <Field label={t('fees.assessmentDetail.totalPaid')} value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
+          <Field label={t('fees.assessmentDetail.remainingDue')} value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
+          <Field label={t('fees.assessmentDetail.dueDate')} value={assessment.dueDate} />
         </View>
 
         {!fullyPaid && canRecordPayment && (
-          <Pressable
-            style={styles.payButton}
-            onPress={() => navigation.navigate('FeePaymentForm', { assessment })}
-          >
-            <Text style={styles.payButtonText}>Record payment</Text>
-          </Pressable>
+          <>
+            <Pressable
+              style={styles.payButton}
+              onPress={() => navigation.navigate('UpiQrPayment', { assessment })}
+            >
+              <Text style={styles.payButtonText}>{t('fees.assessmentDetail.payViaUpiQr')}</Text>
+            </Pressable>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={() => navigation.navigate('FeePaymentForm', { assessment })}
+            >
+              <Text style={styles.secondaryButtonText}>{t('fees.assessmentDetail.recordPayment')}</Text>
+            </Pressable>
+          </>
         )}
       </ScreenContainer>
     </View>
@@ -78,4 +88,13 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   payButtonText: { color: colors.white, fontWeight: '700' },
+  secondaryButton: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  secondaryButtonText: { color: colors.primary, fontWeight: '700' },
 });

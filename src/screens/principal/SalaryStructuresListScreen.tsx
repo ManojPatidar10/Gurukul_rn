@@ -1,11 +1,13 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listSalaryStructures } from '../../api/salaryStructures';
 import type { SalaryStructure } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -16,18 +18,23 @@ function netOf(s: SalaryStructure) {
 }
 
 export function SalaryStructuresListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [structures, setStructures] = useState<SalaryStructure[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const load = useCallback(() => {
     setError(null);
     return listSalaryStructures(schoolId)
       .then(setStructures)
-      .catch((e) => setError(e.message));
-  }, [schoolId]);
+      .catch((e) => {
+        setError(e.message);
+        showToast(e.message, 'error');
+      });
+  }, [schoolId, showToast]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -44,13 +51,11 @@ export function SalaryStructuresListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Salary Structures" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('payroll.salaryStructuresList.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         <Pressable style={styles.addButton} onPress={() => navigation.navigate('SalaryStructureForm')}>
-          <Text style={styles.addButtonText}>+ Add salary structure</Text>
+          <Text style={styles.addButtonText}>{t('payroll.salaryStructuresList.addButton')}</Text>
         </Pressable>
-
-        {error && <Text style={styles.error}>{error}</Text>}
 
         <FlatList
           data={structures}
@@ -59,7 +64,7 @@ export function SalaryStructuresListScreen({ navigation }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
-                {error ? 'Could not load salary structures.' : '0 salary structures yet — add the first one.'}
+                {error ? t('payroll.salaryStructuresList.loadError') : t('payroll.salaryStructuresList.empty')}
               </Text>
             ) : null
           }
@@ -68,11 +73,15 @@ export function SalaryStructuresListScreen({ navigation }: Props) {
               <View>
                 <Text style={styles.rowName}>{item.employeeName}</Text>
                 <Text style={styles.rowMeta}>
-                  Basic ₹{item.basic.toLocaleString('en-IN')} + Allowances ₹
-                  {item.allowances.toLocaleString('en-IN')} − Deductions ₹
-                  {item.deductions.toLocaleString('en-IN')}
+                  {t('payroll.salaryStructuresList.rowSubtitle', {
+                    basic: item.basic.toLocaleString('en-IN'),
+                    allowances: item.allowances.toLocaleString('en-IN'),
+                    deductions: item.deductions.toLocaleString('en-IN'),
+                  })}
                 </Text>
-                <Text style={styles.rowMeta}>Effective from {item.effectiveFrom}</Text>
+                <Text style={styles.rowMeta}>
+                  {t('payroll.salaryStructuresList.effectiveFrom', { date: item.effectiveFrom })}
+                </Text>
               </View>
               <Text style={styles.rowNet}>₹{netOf(item).toLocaleString('en-IN')}</Text>
             </View>
@@ -96,7 +105,6 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
-  error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   row: {
     flexDirection: 'row',

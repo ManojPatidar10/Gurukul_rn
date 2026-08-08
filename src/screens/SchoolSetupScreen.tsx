@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { registerSchool } from '../api/schools';
 import { setStoredSchoolId } from '../api/schoolStorage';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
 import LabeledInput from '../components/LabeledInput';
+import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
+import { isValidEmail, isValidPhone, isValidPincode } from '../utils/validators';
 
 interface Props {
   onBack?: () => void;
@@ -28,9 +31,10 @@ const emptyForm = {
 };
 
 export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const set = (key: keyof typeof form) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -38,14 +42,25 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
   const canSubmit = Object.values(form).every((v) => v.trim().length > 0);
 
   const handleSubmit = async () => {
+    if (!isValidPincode(form.pincode)) {
+      showToast(t('schoolSetup.errors.pincode'), 'error');
+      return;
+    }
+    if (!isValidEmail(form.contactEmail)) {
+      showToast(t('schoolSetup.errors.email'), 'error');
+      return;
+    }
+    if (!isValidPhone(form.contactPhone)) {
+      showToast(t('schoolSetup.errors.phone'), 'error');
+      return;
+    }
     setSubmitting(true);
-    setError(null);
     try {
       const { school, admin } = await registerSchool(form);
       await setStoredSchoolId(school.id);
       onRegistered(school.id, admin);
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -53,59 +68,63 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Register your school" subtitle="One-time setup for this device" onBack={onBack} />
+      <ScreenHeader title={t('schoolSetup.title')} subtitle={t('schoolSetup.subtitle')} onBack={onBack} />
       <ScreenContainer>
-        <Text style={styles.subtitle}>
-          You&apos;ll be signed in as the school admin right after registering — your phone number below is used to
-          sign in with an OTP afterwards.
-        </Text>
+        <Text style={styles.subtitle}>{t('schoolSetup.intro')}</Text>
 
-        <LabeledInput label="School name" value={form.name} onChangeText={set('name')} />
-        <LabeledInput label="Address" value={form.address} onChangeText={set('address')} />
-        <LabeledInput label="City" value={form.city} onChangeText={set('city')} />
-        <LabeledInput label="State" value={form.state} onChangeText={set('state')} />
+        <LabeledInput label={t('schoolSetup.schoolName')} required value={form.name} onChangeText={set('name')} />
+        <LabeledInput label={t('schoolSetup.address')} required value={form.address} onChangeText={set('address')} />
+        <LabeledInput label={t('schoolSetup.city')} required value={form.city} onChangeText={set('city')} />
+        <LabeledInput label={t('schoolSetup.state')} required value={form.state} onChangeText={set('state')} />
         <LabeledInput
-          label="Pincode"
+          label={t('schoolSetup.pincode')}
+          required
           value={form.pincode}
           onChangeText={set('pincode')}
           keyboardType="number-pad"
+          maxLength={6}
         />
         <LabeledInput
-          label="Contact email"
+          label={t('schoolSetup.contactEmail')}
+          required
           value={form.contactEmail}
           onChangeText={set('contactEmail')}
           keyboardType="email-address"
           autoCapitalize="none"
         />
         <LabeledInput
-          label="Contact phone"
+          label={t('schoolSetup.contactPhone')}
+          required
           value={form.contactPhone}
           onChangeText={set('contactPhone')}
           keyboardType="phone-pad"
+          maxLength={10}
         />
-        <LabeledInput label="Principal name" value={form.principalName} onChangeText={set('principalName')} />
+        <LabeledInput label={t('schoolSetup.principalName')} required value={form.principalName} onChangeText={set('principalName')} />
         <LabeledInput
-          label="Principal phone"
+          label={t('schoolSetup.principalPhone')}
+          required
           value={form.principalPhone}
           onChangeText={set('principalPhone')}
           keyboardType="phone-pad"
+          maxLength={10}
         />
-        <LabeledInput label="Director name" value={form.directorName} onChangeText={set('directorName')} />
+        <LabeledInput label={t('schoolSetup.directorName')} required value={form.directorName} onChangeText={set('directorName')} />
         <LabeledInput
-          label="Your phone number (for admin login)"
+          label={t('schoolSetup.adminPhone')}
+          required
           value={form.adminPhone}
           onChangeText={set('adminPhone')}
           keyboardType="phone-pad"
+          maxLength={10}
         />
-
-        {error && <Text style={styles.error}>{error}</Text>}
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}
           onPress={handleSubmit}
           disabled={!canSubmit || submitting}
         >
-          <Text style={styles.submitText}>{submitting ? 'Registering…' : 'Register school'}</Text>
+          <Text style={styles.submitText}>{submitting ? t('schoolSetup.submitting') : t('schoolSetup.submit')}</Text>
         </Pressable>
       </ScreenContainer>
     </View>
@@ -115,7 +134,6 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.lg },
-  error: { color: colors.error, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

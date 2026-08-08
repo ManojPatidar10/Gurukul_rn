@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listEmployees, searchEmployees } from '../../api/employees';
 import type { Employee } from '../../api/types';
@@ -10,12 +11,14 @@ import { SearchBar } from '../../components/SearchBar';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeesList'>;
 
 export function EmployeesListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,13 +26,17 @@ export function EmployeesListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
+  const { showToast } = useToast();
 
   const load = useCallback(() => {
     setError(null);
     return (debouncedQuery ? searchEmployees(schoolId, debouncedQuery) : listEmployees(schoolId))
       .then(setEmployees)
-      .catch((e) => setError(e.message));
-  }, [schoolId, debouncedQuery]);
+      .catch((e) => {
+        setError(e.message);
+        showToast(e.message, 'error');
+      });
+  }, [schoolId, debouncedQuery, showToast]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -50,10 +57,10 @@ export function EmployeesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Employees" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('employees.list.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         <Pressable style={styles.addButton} onPress={() => navigation.navigate('EmployeeForm', {})}>
-          <Text style={styles.addButtonText}>+ Add employee</Text>
+          <Text style={styles.addButtonText}>{t('employees.list.addButton')}</Text>
         </Pressable>
 
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name" />
@@ -68,10 +75,10 @@ export function EmployeesListScreen({ navigation }: Props) {
             !loading ? (
               <Text style={styles.empty}>
                 {error
-                  ? 'Could not load employees.'
+                  ? t('employees.list.loadError')
                   : debouncedQuery
-                    ? 'No employees match your search.'
-                    : '0 employees yet — add the first one.'}
+                    ? t('employees.list.noSearchResults')
+                    : t('employees.list.empty')}
               </Text>
             ) : null
           }
@@ -85,7 +92,10 @@ export function EmployeesListScreen({ navigation }: Props) {
                 <Text style={styles.rowName}>{item.name}</Text>
                 <Text style={styles.rowMeta}>{item.designation}</Text>
               </View>
-              <StatusChip label={item.status} variant={item.status === 'ACTIVE' ? 'success' : 'neutral'} />
+              <StatusChip
+                label={item.status === 'ACTIVE' ? t('common.active') : item.status === 'INACTIVE' ? t('common.inactive') : item.status}
+                variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}
+              />
             </Pressable>
           )}
         />

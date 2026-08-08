@@ -33,6 +33,7 @@ import { PickCallTargetScreen } from '../screens/principal/PickCallTargetScreen'
 import { ScheduleCallScreen } from '../screens/principal/ScheduleCallScreen';
 import { ScheduledCallsScreen } from '../screens/principal/ScheduledCallsScreen';
 import { VideoCallHubScreen } from '../screens/principal/VideoCallHubScreen';
+import { AcademicHelperScreen } from '../screens/principal/AcademicHelperScreen';
 import { EmployeeDetailScreen } from '../screens/principal/EmployeeDetailScreen';
 import { EmployeeFormScreen } from '../screens/principal/EmployeeFormScreen';
 import { EmployeesListScreen } from '../screens/principal/EmployeesListScreen';
@@ -42,6 +43,7 @@ import { MyFeesScreen } from '../screens/principal/MyFeesScreen';
 import { MyStudentsScreen } from '../screens/principal/MyStudentsScreen';
 import { FeeCategoriesListScreen } from '../screens/principal/FeeCategoriesListScreen';
 import { FeePaymentFormScreen } from '../screens/principal/FeePaymentFormScreen';
+import { FeePaymentSettingsScreen } from '../screens/principal/FeePaymentSettingsScreen';
 import { FeeStructureDetailScreen } from '../screens/principal/FeeStructureDetailScreen';
 import { FeeStructureFormScreen } from '../screens/principal/FeeStructureFormScreen';
 import { FeeStructuresListScreen } from '../screens/principal/FeeStructuresListScreen';
@@ -51,10 +53,13 @@ import { InfraExpenseFormScreen } from '../screens/principal/InfraExpenseFormScr
 import { InfraExpensesListScreen } from '../screens/principal/InfraExpensesListScreen';
 import { PayrollHubScreen } from '../screens/principal/PayrollHubScreen';
 import { PayrollRunScreen } from '../screens/principal/PayrollRunScreen';
+import { PaymentReceiptScreen } from '../screens/principal/PaymentReceiptScreen';
 import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
 import { ProfileScreen } from '../screens/principal/ProfileScreen';
 import { GlobalSearchScreen } from '../screens/principal/GlobalSearchScreen';
+import { ResourceGeneratorScreen } from '../screens/principal/ResourceGeneratorScreen';
+import { ResourceUploadScreen } from '../screens/principal/ResourceUploadScreen';
 import { SalaryHistoryScreen } from '../screens/principal/SalaryHistoryScreen';
 import { SalaryStructureFormScreen } from '../screens/principal/SalaryStructureFormScreen';
 import { SalaryStructuresListScreen } from '../screens/principal/SalaryStructuresListScreen';
@@ -65,7 +70,11 @@ import { SectionSubjectsListScreen } from '../screens/principal/SectionSubjectsL
 import { SectionsListScreen } from '../screens/principal/SectionsListScreen';
 import { StudentDetailScreen } from '../screens/principal/StudentDetailScreen';
 import { StudentFormScreen } from '../screens/principal/StudentFormScreen';
+import { StudentPerformanceScreen } from '../screens/principal/StudentPerformanceScreen';
 import { StudentsListScreen } from '../screens/principal/StudentsListScreen';
+import { TeacherPerformanceScreen } from '../screens/principal/TeacherPerformanceScreen';
+import { TeacherToolsHubScreen } from '../screens/principal/TeacherToolsHubScreen';
+import { UpiQrPaymentScreen } from '../screens/principal/UpiQrPaymentScreen';
 import { VendorDetailScreen } from '../screens/principal/VendorDetailScreen';
 import { VendorFormScreen } from '../screens/principal/VendorFormScreen';
 import { VendorsListScreen } from '../screens/principal/VendorsListScreen';
@@ -107,6 +116,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="MyFees" component={MyFeesScreen} />
         <Stack.Screen name="FeeAssessmentDetail" component={FeeAssessmentDetailScreen} />
         <Stack.Screen name="FeePaymentForm" component={FeePaymentFormScreen} />
+        <Stack.Screen name="UpiQrPayment" component={UpiQrPaymentScreen} />
+        <Stack.Screen name="FeePaymentSettings" component={FeePaymentSettingsScreen} />
+        <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} />
         <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />
         <Stack.Screen name="SalaryStructuresList" component={SalaryStructuresListScreen} />
         <Stack.Screen name="SalaryStructureForm" component={SalaryStructureFormScreen} />
@@ -152,6 +164,12 @@ export function PrincipalNavigator() {
         <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
         <Stack.Screen name="QuestionAuthor" component={QuestionAuthorScreen} />
         <Stack.Screen name="MyQuestions" component={MyQuestionsScreen} />
+        <Stack.Screen name="AcademicHelper" component={AcademicHelperScreen} />
+        <Stack.Screen name="StudentPerformance" component={StudentPerformanceScreen} />
+        <Stack.Screen name="TeacherPerformance" component={TeacherPerformanceScreen} />
+        <Stack.Screen name="TeacherToolsHub" component={TeacherToolsHubScreen} />
+        <Stack.Screen name="ResourceGenerator" component={ResourceGeneratorScreen} />
+        <Stack.Screen name="ResourceUpload" component={ResourceUploadScreen} />
       </Stack.Navigator>
   );
 }

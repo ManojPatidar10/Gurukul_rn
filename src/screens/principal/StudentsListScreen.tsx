@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listStudents, searchStudents } from '../../api/students';
 import type { Student } from '../../api/types';
@@ -10,12 +11,14 @@ import { SearchBar } from '../../components/SearchBar';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentsList'>;
 
 export function StudentsListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,13 +26,17 @@ export function StudentsListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
+  const { showToast } = useToast();
 
   const load = useCallback(() => {
     setError(null);
     return (debouncedQuery ? searchStudents(schoolId, debouncedQuery) : listStudents(schoolId))
       .then(setStudents)
-      .catch((e) => setError(e.message));
-  }, [schoolId, debouncedQuery]);
+      .catch((e) => {
+        setError(e.message);
+        showToast(e.message, 'error');
+      });
+  }, [schoolId, debouncedQuery, showToast]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -50,10 +57,10 @@ export function StudentsListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Students" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('students.list.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         <Pressable style={styles.addButton} onPress={() => navigation.navigate('StudentForm', {})}>
-          <Text style={styles.addButtonText}>+ Enroll student</Text>
+          <Text style={styles.addButtonText}>{t('students.list.addButton')}</Text>
         </Pressable>
 
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name or roll number" />
@@ -68,10 +75,10 @@ export function StudentsListScreen({ navigation }: Props) {
             !loading ? (
               <Text style={styles.empty}>
                 {error
-                  ? 'Could not load students.'
+                  ? t('students.list.loadError')
                   : debouncedQuery
-                    ? 'No students match your search.'
-                    : '0 students yet — enroll the first one.'}
+                    ? t('students.list.noSearchResults')
+                    : t('students.list.empty')}
               </Text>
             ) : null
           }
@@ -84,10 +91,16 @@ export function StudentsListScreen({ navigation }: Props) {
               <View style={styles.rowMain}>
                 <Text style={styles.rowName}>{item.name}</Text>
                 <Text style={styles.rowMeta}>
-                  Roll {item.rollNumber} · {item.classSectionLabel || 'Unassigned'}
+                  {t('students.list.rowSubtitle', {
+                    roll: item.rollNumber,
+                    classSection: item.classSectionLabel || t('common.unassigned'),
+                  })}
                 </Text>
               </View>
-              <StatusChip label={item.status} variant={item.status === 'ACTIVE' ? 'success' : 'neutral'} />
+              <StatusChip
+                label={item.status === 'ACTIVE' ? t('common.active') : item.status === 'INACTIVE' ? t('common.inactive') : item.status}
+                variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}
+              />
             </Pressable>
           )}
         />

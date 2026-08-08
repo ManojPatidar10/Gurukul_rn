@@ -2,6 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getClassSection, listClassSections } from '../../api/classSections';
 import { getEmployee, listEmployees } from '../../api/employees';
@@ -20,56 +21,6 @@ import type { FeatureAction, FeatureId, PrincipalStackParamList } from '../../ty
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard'>;
 
-const featureActions: FeatureAction[] = [
-  { id: 'students', title: 'Students', icon: 'user-graduate', description: 'Manage student records and class-sections' },
-  { id: 'employees', title: 'Employees', icon: 'id-badge', description: 'Manage staff records' },
-  { id: 'vendors', title: 'Vendors', icon: 'truck', description: 'Manage vendor directory' },
-  { id: 'fees', title: 'Fees', icon: 'file-invoice-dollar', description: 'Fee structures, dues, and payments' },
-  { id: 'payroll', title: 'Payroll', icon: 'money-check-alt', description: 'Salary structures and payroll runs' },
-  {
-    id: 'infraExpenses',
-    title: 'Infra Expenses',
-    icon: 'tools',
-    description: 'Submit, approve, purchase, and pay infrastructure requests',
-  },
-  {
-    id: 'classes',
-    title: 'Classes',
-    icon: 'chalkboard-teacher',
-    description: 'Sections, subjects, assessments, and attendance',
-  },
-  {
-    id: 'myClassSection',
-    title: 'My Class Section',
-    icon: 'door-open',
-    description: 'Attendance and assessments for your homeroom class',
-  },
-  {
-    id: 'calls',
-    title: 'Video Calls',
-    icon: 'video',
-    description: 'Start or schedule a video call',
-  },
-  {
-    id: 'gamification',
-    title: 'Game Hub',
-    icon: 'trophy',
-    description: 'XP, streaks, and levels',
-  },
-  {
-    id: 'arena',
-    title: 'Gurukul Arena',
-    icon: 'gamepad',
-    description: 'Build the quiz question bank for student challenges',
-  },
-  {
-    id: 'events',
-    title: 'School Events',
-    icon: 'calendar-alt',
-    description: 'Annual function, sports meet, competitions, and more',
-  },
-];
-
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
@@ -80,10 +31,14 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification'];
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
-const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses'];
+// Teacher Tools is a principal-driven workflow (principal picks a teacher to act on behalf of),
+// not something a student would ever use either.
+const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'teacherTools'];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
-const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses'];
+// Teacher Tools is principal-only for the same reason as above - a teacher acting "as" another
+// teacher doesn't fit the feature's design.
+const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'teacherTools'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -99,6 +54,8 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   houses: 'HouseWars',
   arena: 'Arena',
   events: 'EventsList',
+  academicHelper: 'AcademicHelper',
+  teacherTools: 'TeacherToolsHub',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -129,6 +86,7 @@ interface Counts {
 }
 
 export function PrincipalDashboardScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
   const isStudent = session.ownerType === 'STUDENT';
@@ -139,6 +97,23 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [myClassSection, setMyClassSection] = useState<ClassSection | null>(null);
   const [myHomeroomSection, setMyHomeroomSection] = useState<ClassSection | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
+
+  const featureActions: FeatureAction[] = [
+    { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
+    { id: 'employees', title: t('dashboard.features.employees.title'), icon: 'id-badge', description: t('dashboard.features.employees.description') },
+    { id: 'vendors', title: t('dashboard.features.vendors.title'), icon: 'truck', description: t('dashboard.features.vendors.description') },
+    { id: 'fees', title: t('dashboard.features.fees.title'), icon: 'file-invoice-dollar', description: t('dashboard.features.fees.description') },
+    { id: 'payroll', title: t('dashboard.features.payroll.title'), icon: 'money-check-alt', description: t('dashboard.features.payroll.description') },
+    { id: 'infraExpenses', title: t('dashboard.features.infraExpenses.title'), icon: 'tools', description: t('dashboard.features.infraExpenses.description') },
+    { id: 'classes', title: t('dashboard.features.classes.title'), icon: 'chalkboard-teacher', description: t('dashboard.features.classes.description') },
+    { id: 'myClassSection', title: t('dashboard.features.myClassSection.title'), icon: 'door-open', description: t('dashboard.features.myClassSection.description') },
+    { id: 'calls', title: t('dashboard.features.calls.title'), icon: 'video', description: t('dashboard.features.calls.description') },
+    { id: 'gamification', title: t('dashboard.features.gamification.title'), icon: 'trophy', description: t('dashboard.features.gamification.description') },
+    { id: 'arena', title: t('dashboard.features.arena.title'), icon: 'gamepad', description: t('dashboard.features.arena.description') },
+    { id: 'events', title: t('dashboard.features.events.title'), icon: 'calendar-alt', description: t('dashboard.features.events.description') },
+    { id: 'academicHelper', title: t('dashboard.features.academicHelper.title'), icon: 'lightbulb', description: t('dashboard.features.academicHelper.description') },
+    { id: 'teacherTools', title: t('dashboard.features.teacherTools.title'), icon: 'chalkboard-teacher', description: t('dashboard.features.teacherTools.description') },
+  ];
 
   const visibleFeatures = featureActions
     .filter((feature) => {
@@ -211,8 +186,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader
-        title={school?.name ?? 'Gurukul'}
-        subtitle={`Welcome, ${myName ?? session.username}`}
+        title={school?.name ?? t('dashboard.fallbackTitle')}
+        subtitle={t('dashboard.welcome', { name: myName ?? session.username })}
         rightAction={
           <View style={styles.headerActions}>
             <Pressable
@@ -251,13 +226,13 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
         {!isStudent && !isTeacher && (
           <View style={styles.statRow}>
-            <StatSummaryCard accentKey="students" icon="user-graduate" label="Students" value={counts.students} />
-            <StatSummaryCard accentKey="employees" icon="id-badge" label="Employees" value={counts.employees} />
-            <StatSummaryCard accentKey="vendors" icon="truck" label="Vendors" value={counts.vendors} />
+            <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} />
+            <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} />
+            <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} />
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
         <View style={styles.tileGrid}>
           {visibleFeatures.map((feature) => (
             <FeatureTile

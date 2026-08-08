@@ -2,6 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { startImmediateCall } from '../../api/calls';
 import { createConversation } from '../../api/chat';
@@ -16,6 +17,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -31,6 +33,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function StudentDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const isViewerStudent = session.ownerType === 'STUDENT';
@@ -93,35 +96,34 @@ export function StudentDetailScreen({ route, navigation }: Props) {
       setCreatingCredential(false);
     }
   };
+  const { showToast } = useToast();
 
   const handleTransfer = async (classSectionId: string) => {
     setTransferring(true);
-    setError(null);
     try {
       const updated = await transferStudentClassSection(schoolId, student.id, { classSectionId });
       setStudent(updated);
       setShowTransfer(false);
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setTransferring(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete student', `Remove ${student.name}? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('students.detail.deleteTitle'), t('students.detail.deleteMessage', { name: student.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           setDeleting(true);
-          setError(null);
           try {
             await deleteStudent(schoolId, student.id);
             navigation.goBack();
           } catch (e) {
-            setError((e as Error).message);
+            showToast((e as Error).message, 'error');
             setDeleting(false);
           }
         },
@@ -131,13 +133,20 @@ export function StudentDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={student.name} subtitle={`Roll ${student.rollNumber}`} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={student.name}
+        subtitle={t('students.detail.rollLabel', { roll: student.rollNumber })}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         <View style={styles.heroRow}>
           <AvatarBadge name={student.name} accentKey="students" size={56} />
           <View style={styles.heroText}>
             <Text style={styles.heroName}>{student.name}</Text>
-            <StatusChip label={student.status} variant={student.status === 'ACTIVE' ? 'success' : 'neutral'} />
+            <StatusChip
+              label={student.status === 'ACTIVE' ? t('common.active') : student.status}
+              variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
+            />
           </View>
           {!isSelf && (
             <View style={styles.heroActions}>
@@ -160,15 +169,15 @@ export function StudentDetailScreen({ route, navigation }: Props) {
         </View>
 
         <View style={styles.card}>
-          <Field label="Class-section" value={student.classSectionLabel} />
-          <Field label="Date of birth" value={student.dob} />
-          <Field label="Gender" value={student.gender} />
+          <Field label={t('students.detail.classSection')} value={student.classSectionLabel} />
+          <Field label={t('students.detail.dob')} value={student.dob} />
+          <Field label={t('students.detail.gender')} value={student.gender} />
           {!isViewerStudent && (
             <>
-              <Field label="Address" value={student.address} />
-              <Field label="Parent name" value={student.parentName} />
-              <Field label="Parent contact" value={student.parentContact} />
-              <Field label="Admission date" value={student.admissionDate} />
+              <Field label={t('students.detail.address')} value={student.address} />
+              <Field label={t('students.detail.parentName')} value={student.parentName} />
+              <Field label={t('students.detail.parentContact')} value={student.parentContact} />
+              <Field label={t('students.detail.admissionDate')} value={student.admissionDate} />
             </>
           )}
         </View>
@@ -179,25 +188,30 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           <View style={styles.actions}>
             {isViewerAdmin && (
               <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentForm', { student })}>
-                <Text style={styles.actionText}>Edit</Text>
+                <Text style={styles.actionText}>{t('common.edit')}</Text>
               </Pressable>
             )}
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentPerformance', { student })}>
+              <Text style={styles.actionText}>{t('performance.title')}</Text>
+            </Pressable>
             {isViewerAdmin && (
               <Pressable style={styles.actionButton} onPress={() => setShowTransfer((v) => !v)}>
-                <Text style={styles.actionText}>{showTransfer ? 'Cancel transfer' : 'Transfer class'}</Text>
+                <Text style={styles.actionText}>
+                  {showTransfer ? t('students.detail.cancelTransfer') : t('students.detail.transferClass')}
+                </Text>
               </Pressable>
             )}
             <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
-              <Text style={styles.actionText}>Attendance</Text>
+              <Text style={styles.actionText}>{t('students.detail.attendance')}</Text>
             </Pressable>
             {isViewerAdmin && (
               <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
-                <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
+                <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>
               </Pressable>
             )}
             {isViewerAdmin && (
               <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
-                <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+                <Text style={styles.deleteText}>{deleting ? t('common.deleting') : t('common.delete')}</Text>
               </Pressable>
             )}
           </View>
@@ -248,13 +262,13 @@ export function StudentDetailScreen({ route, navigation }: Props) {
 
         {showTransfer && (
           <View style={styles.transferPanel}>
-            <Text style={styles.transferTitle}>Move to a different class-section</Text>
+            <Text style={styles.transferTitle}>{t('students.detail.moveToClassSection')}</Text>
             <ClassSectionPicker
               schoolId={schoolId}
               selectedId={student.classSectionId}
               onSelect={(cs) => handleTransfer(cs.id)}
             />
-            {transferring && <Text style={styles.transferring}>Transferring…</Text>}
+            {transferring && <Text style={styles.transferring}>{t('students.detail.transferring')}</Text>}
           </View>
         )}
       </ScreenContainer>
@@ -288,7 +302,6 @@ const styles = StyleSheet.create({
   field: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
-  error: { color: colors.error, marginBottom: spacing.sm },
   actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   actionButton: {
     backgroundColor: accent.light,
@@ -321,4 +334,5 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.5 },
   credentialSubmitText: { color: colors.white, fontWeight: '700' },
+  error: { color: colors.error, marginBottom: spacing.md },
 });

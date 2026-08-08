@@ -1,30 +1,37 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listFeeAssessments } from '../../api/feeAssessments';
 import type { FeeAssessment } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeAssessmentsList'>;
 
 export function FeeAssessmentsListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [assessments, setAssessments] = useState<FeeAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const load = useCallback(() => {
     setError(null);
     return listFeeAssessments(schoolId)
       .then(setAssessments)
-      .catch((e) => setError(e.message));
-  }, [schoolId]);
+      .catch((e) => {
+        setError(e.message);
+        showToast(e.message, 'error');
+      });
+  }, [schoolId, showToast]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -41,10 +48,8 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Assessments & Dues" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('fees.assessmentsList.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        {error && <Text style={styles.error}>{error}</Text>}
-
         <FlatList
           data={assessments}
           keyExtractor={(item) => item.id}
@@ -52,9 +57,7 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
-                {error
-                  ? 'Could not load assessments.'
-                  : '0 assessments yet — generate them from a fee structure first.'}
+                {error ? t('fees.assessmentsList.loadError') : t('fees.assessmentsList.empty')}
               </Text>
             ) : null
           }
@@ -66,8 +69,11 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
               <View style={styles.rowMain}>
                 <Text style={styles.rowName}>{item.studentName}</Text>
                 <Text style={styles.rowMeta}>
-                  Roll {item.rollNumber} · Due ₹{item.remainingDue.toLocaleString('en-IN')} of ₹
-                  {item.totalDue.toLocaleString('en-IN')}
+                  {t('fees.assessmentsList.rowSubtitle', {
+                    roll: item.rollNumber,
+                    due: item.remainingDue.toLocaleString('en-IN'),
+                    total: item.totalDue.toLocaleString('en-IN'),
+                  })}
                 </Text>
               </View>
               <StatusChip
@@ -85,7 +91,6 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   body: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
-  error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   row: {
     flexDirection: 'row',

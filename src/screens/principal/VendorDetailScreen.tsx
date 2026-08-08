@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -19,6 +20,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function VendorDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const vendor = route.params.vendor;
 
   return (
@@ -31,15 +33,15 @@ export function VendorDetailScreen({ route, navigation }: Props) {
         </View>
 
         <View style={styles.card}>
-          <Field label="Contact phone" value={vendor.contactPhone} />
-          <Field label="Contact email" value={vendor.contactEmail} />
-          <Field label="Bank account" value={vendor.bankAccount} />
-          <Field label="UPI ID" value={vendor.upiId} />
-          <Field label="Address" value={vendor.address} />
+          <Field label={t('vendors.detail.contactPhone')} value={vendor.contactPhone} />
+          <Field label={t('vendors.detail.contactEmail')} value={vendor.contactEmail} />
+          <Field label={t('vendors.detail.bankAccount')} value={vendor.bankAccount} />
+          <Field label={t('vendors.detail.upiId')} value={vendor.upiId} />
+          <Field label={t('vendors.detail.address')} value={vendor.address} />
         </View>
 
         <Pressable style={styles.actionButton} onPress={() => navigation.navigate('VendorForm', { vendor })}>
-          <Text style={styles.actionText}>Edit</Text>
+          <Text style={styles.actionText}>{t('common.edit')}</Text>
         </Pressable>
       </ScreenContainer>
     </View>

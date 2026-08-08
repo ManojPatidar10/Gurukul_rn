@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { createEmployee, listEmployees } from '../api/employees';
 import type { Employee } from '../api/types';
+import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 
@@ -12,30 +14,40 @@ interface Props {
 }
 
 export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [designation, setDesignation] = useState('');
   const [joinDate, setJoinDate] = useState('');
   const [creating, setCreating] = useState(false);
+  const { showToast } = useToast();
 
   const load = () => {
     setLoading(true);
-    setError(null);
     listEmployees(schoolId)
       .then(setEmployees)
-      .catch((e) => setError(e.message))
+      .catch((e) => showToast(e.message, 'error'))
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [schoolId]);
 
   const handleCreate = async () => {
-    if (!name || !designation || !joinDate) return;
+    if (!name.trim()) {
+      showToast(t('employees.picker.errors.name'), 'error');
+      return;
+    }
+    if (!designation.trim()) {
+      showToast(t('employees.picker.errors.designation'), 'error');
+      return;
+    }
+    if (!joinDate.trim()) {
+      showToast(t('employees.picker.errors.joinDate'), 'error');
+      return;
+    }
     setCreating(true);
-    setError(null);
     try {
       const created = await createEmployee(schoolId, { name, designation, joinDate });
       setEmployees((prev) => [...prev, created]);
@@ -45,7 +57,7 @@ export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props
       setDesignation('');
       setJoinDate('');
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setCreating(false);
     }
@@ -55,9 +67,8 @@ export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props
 
   return (
     <View>
-      {error && <Text style={styles.error}>{error}</Text>}
       {employees.length === 0 && !showCreate && (
-        <Text style={styles.empty}>No employees yet.</Text>
+        <Text style={styles.empty}>{t('employees.picker.empty')}</Text>
       )}
       <View style={styles.chips}>
         {employees.map((emp) => (
@@ -75,24 +86,25 @@ export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props
 
       {showCreate ? (
         <View style={styles.createForm}>
-          <LabeledInput label="Name" value={name} onChangeText={setName} />
-          <LabeledInput label="Designation" value={designation} onChangeText={setDesignation} />
+          <LabeledInput label={t('employees.picker.name')} required value={name} onChangeText={setName} />
+          <LabeledInput label={t('employees.picker.designation')} required value={designation} onChangeText={setDesignation} />
           <LabeledInput
-            label="Join date (YYYY-MM-DD)"
+            label={t('employees.picker.joinDate')}
+            required
             value={joinDate}
             onChangeText={setJoinDate}
             placeholder="2026-04-01"
           />
           <Pressable style={styles.createButton} onPress={handleCreate} disabled={creating}>
-            <Text style={styles.createButtonText}>{creating ? 'Creating…' : 'Create & select'}</Text>
+            <Text style={styles.createButtonText}>{creating ? t('common.creating') : t('common.createAndSelect')}</Text>
           </Pressable>
           <Pressable onPress={() => setShowCreate(false)}>
-            <Text style={styles.cancel}>Cancel</Text>
+            <Text style={styles.cancel}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       ) : (
         <Pressable onPress={() => setShowCreate(true)}>
-          <Text style={styles.addNew}>+ New employee</Text>
+          <Text style={styles.addNew}>{t('employees.picker.addNew')}</Text>
         </Pressable>
       )}
     </View>
@@ -101,7 +113,6 @@ export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props
 
 const styles = StyleSheet.create({
   loading: { marginVertical: spacing.md },
-  error: { color: colors.error, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, marginBottom: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {

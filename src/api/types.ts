@@ -15,11 +15,27 @@ export interface School {
   contactPhone: string;
   principalName: string;
   directorName: string;
+  upiVpa: string | null;
+  upiPayeeName: string | null;
   studentCount: number;
   classSectionCount: number;
   teacherCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SchoolUpdateRequest {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  contactEmail: string;
+  contactPhone: string;
+  principalName: string;
+  directorName: string;
+  upiVpa?: string;
+  upiPayeeName?: string;
 }
 
 export interface SchoolRegistrationRequest {
@@ -36,18 +52,6 @@ export interface SchoolRegistrationRequest {
   adminPhone: string;
   adminUsername?: string;
   adminPassword?: string;
-}
-
-export interface SchoolUpdateRequest {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  contactEmail: string;
-  contactPhone: string;
-  principalName: string;
-  directorName: string;
 }
 
 export interface SchoolSearchResult {
@@ -241,6 +245,14 @@ export interface FeePayment {
   amount: number;
   transactionId: string;
   receiptNumber: string;
+  studentName: string;
+  rollNumber: string;
+  classSectionLabel: string;
+  academicYear: string;
+  schoolName: string;
+  paymentMethod: string;
+  paymentReference: string | null;
+  transactionDate: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -248,6 +260,17 @@ export interface FeePayment {
 export interface DuesReport {
   overdueAssessments: FeeAssessment[];
   totalOverdue: number;
+}
+
+export interface UpiQrResponse {
+  upiUri: string;
+  payeeVpa: string;
+  payeeName: string;
+  amount: number;
+  referenceId: string;
+  assessmentId: string;
+  studentName: string;
+  generatedAt: string;
 }
 
 export interface SalaryStructure {
@@ -985,4 +1008,218 @@ export interface EventPollResponse {
 
 export interface EventPollVoteRequest {
   optionId: string;
+}
+
+export interface AssessmentResultEntry {
+  studentId: string;
+  marksObtained: number;
+  remarks?: string;
+}
+
+export interface BulkAssessmentResultRequest {
+  results: AssessmentResultEntry[];
+}
+
+export interface AssessmentResultResponse {
+  id: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  assessmentDate: string;
+  subjectName: string | null;
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  marksObtained: number;
+  maxMarks: number;
+  percentage: number;
+  remarks: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type FeedbackCategory =
+  | 'TEACHING_QUALITY'
+  | 'DISCIPLINE'
+  | 'PUNCTUALITY'
+  | 'PARENT_FEEDBACK'
+  | 'PEER_REVIEW'
+  | 'OTHER';
+
+export interface EmployeeFeedbackRequest {
+  rating: number;
+  category: FeedbackCategory;
+  comment?: string;
+  feedbackDate: string;
+  submittedBy?: string;
+}
+
+export interface EmployeeFeedbackResponse {
+  id: string;
+  employeeId: string;
+  rating: number;
+  category: FeedbackCategory;
+  comment: string | null;
+  feedbackDate: string;
+  submittedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TypeBreakdown {
+  type: AssessmentType;
+  averagePercentage: number;
+  count: number;
+}
+
+export interface AttendanceSummary {
+  totalDays: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+  attendancePercentage: number;
+}
+
+export interface MonthAttendance {
+  month: string;
+  percentage: number;
+}
+
+export interface StudentPerformanceSummary {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  overallPerformancePercentage: number;
+  examWeightedAveragePercentage: number;
+  byAssessmentType: TypeBreakdown[];
+  examHistory: AssessmentResultResponse[];
+  attendance: AttendanceSummary;
+  attendanceByMonth: MonthAttendance[];
+}
+
+export interface SectionResultBreakdown {
+  sectionId: string;
+  className: string;
+  section: string;
+  averagePercentage: number;
+}
+
+export interface CategoryBreakdown {
+  category: FeedbackCategory;
+  averageRating: number;
+  count: number;
+}
+
+export interface EmployeePerformanceSummary {
+  employeeId: string;
+  employeeName: string;
+  overallResultPercentage: number;
+  byClassSection: SectionResultBreakdown[];
+  averageFeedbackRating: number;
+  feedbackByCategory: CategoryBreakdown[];
+  feedbackHistory: EmployeeFeedbackResponse[];
+}
+
+export interface Teacher {
+  id: string;
+  schoolId: string;
+  employeeCode: string;
+  name: string;
+  email: string;
+  phone: string;
+  qualification: string;
+  specialization: string;
+  joiningDate: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TeacherResourceType = 'BOOK' | 'NOTES' | 'WORKSHEET' | 'PRESENTATION' | 'VIDEO' | 'LINK' | 'OTHER';
+
+export interface TeacherResourceRequest {
+  classSectionId: string;
+  subjectName: string;
+  resourceType: TeacherResourceType;
+  title: string;
+  description: string;
+  resourceUrl: string;
+  availableOffline: boolean;
+}
+
+export interface TeacherResourceUploadFields {
+  classSectionId: string;
+  subjectName: string;
+  resourceType: TeacherResourceType;
+  title: string;
+  description: string;
+  availableOffline: boolean;
+}
+
+export interface TeacherResourceResponse {
+  id: string;
+  schoolId: string;
+  teacherId: string;
+  teacherName: string;
+  classSectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  classSectionLabel: string;
+  subjectName: string;
+  resourceType: TeacherResourceType;
+  title: string;
+  description: string;
+  resourceUrl: string;
+  availableOffline: boolean;
+  fileName: string | null;
+  contentType: string | null;
+  fileSizeBytes: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TeacherAssessmentType = 'QUIZ' | 'TEST' | 'EXAM' | 'ASSIGNMENT_CHECK';
+export type QuizDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'MIXED';
+export type QuestionType = 'MCQ' | 'SHORT_ANSWER' | 'LONG_ANSWER' | 'TRUE_FALSE';
+
+export interface AiQuizGenerationRequest {
+  classSectionId: string;
+  subjectName: string;
+  assessmentType: TeacherAssessmentType;
+  title: string;
+  syllabus: string;
+  difficulty: QuizDifficulty;
+  questionCount: number;
+  maxMarks: number;
+  questionTypes?: QuestionType[];
+  additionalInstructions?: string;
+}
+
+export interface GeneratedQuizQuestion {
+  number: number;
+  questionType: QuestionType;
+  question: string;
+  options: string[];
+  answer: string;
+  explanation: string;
+  marks: number;
+}
+
+export interface AiQuizGenerationResponse {
+  schoolId: string;
+  teacherId: string;
+  teacherName: string;
+  classSectionId: string;
+  classSectionLabel: string;
+  subjectName: string;
+  assessmentType: TeacherAssessmentType;
+  title: string;
+  syllabus: string;
+  difficulty: QuizDifficulty;
+  maxMarks: number;
+  questionCount: number;
+  generatorMode: string;
+  reviewNote: string;
+  questions: GeneratedQuizQuestion[];
 }

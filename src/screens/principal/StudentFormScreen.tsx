@@ -1,21 +1,38 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { createStudent, updateStudent } from '../../api/students';
 import type { StudentRequest } from '../../api/types';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
+import DateField, { parseDateString } from '../../components/DateField';
+import Dropdown from '../../components/Dropdown';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { isNotBefore, isValidPhone } from '../../utils/validators';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentForm'>;
 
 export function StudentFormScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
+
+  const GENDER_OPTIONS = [
+    { label: t('common.male'), value: 'MALE' },
+    { label: t('common.female'), value: 'FEMALE' },
+    { label: t('common.other'), value: 'OTHER' },
+  ];
+
+  const STATUS_OPTIONS = [
+    { label: t('common.active'), value: 'ACTIVE' },
+    { label: t('common.inactive'), value: 'INACTIVE' },
+  ];
   const student = route.params?.student ?? null;
   const isEdit = !!student;
 
@@ -32,7 +49,7 @@ export function StudentFormScreen({ route, navigation }: Props) {
     status: student?.status ?? 'ACTIVE',
   });
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const set = (key: keyof StudentRequest) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -42,15 +59,22 @@ export function StudentFormScreen({ route, navigation }: Props) {
     form.parentName && form.parentContact && form.classSectionId && form.admissionDate;
 
   const handleSubmit = async () => {
+    if (!isValidPhone(form.parentContact)) {
+      showToast(t('students.form.errors.parentContact'), 'error');
+      return;
+    }
+    if (!isNotBefore(form.admissionDate, form.dob)) {
+      showToast(t('students.form.errors.admissionBeforeDob'), 'error');
+      return;
+    }
     setSubmitting(true);
-    setError(null);
     try {
       const result = isEdit
         ? await updateStudent(schoolId, student!.id, form)
         : await createStudent(schoolId, form);
       navigation.replace('StudentDetail', { student: result });
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -59,48 +83,39 @@ export function StudentFormScreen({ route, navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader
-        title={isEdit ? 'Edit student' : 'Enroll student'}
+        title={isEdit ? t('students.form.titleEdit') : t('students.form.titleCreate')}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
-        <LabeledInput label="Roll number" value={form.rollNumber} onChangeText={set('rollNumber')} />
-        <LabeledInput label="Name" value={form.name} onChangeText={set('name')} />
+        <LabeledInput label={t('students.form.rollNumber')} required value={form.rollNumber} onChangeText={set('rollNumber')} />
+        <LabeledInput label={t('students.form.name')} required value={form.name} onChangeText={set('name')} />
+        <DateField label={t('students.form.dob')} required value={form.dob} onChange={set('dob')} maximumDate={new Date()} />
+        <Dropdown label={t('students.form.gender')} required value={form.gender} options={GENDER_OPTIONS} onSelect={set('gender')} />
+        <LabeledInput label={t('students.form.address')} required value={form.address} onChangeText={set('address')} />
+        <LabeledInput label={t('students.form.parentName')} required value={form.parentName} onChangeText={set('parentName')} />
         <LabeledInput
-          label="Date of birth (YYYY-MM-DD)"
-          value={form.dob}
-          onChangeText={set('dob')}
-          placeholder="2015-06-01"
-        />
-        <LabeledInput
-          label="Gender"
-          value={form.gender}
-          onChangeText={set('gender')}
-          placeholder="MALE / FEMALE / OTHER"
-        />
-        <LabeledInput label="Address" value={form.address} onChangeText={set('address')} />
-        <LabeledInput label="Parent name" value={form.parentName} onChangeText={set('parentName')} />
-        <LabeledInput
-          label="Parent contact"
+          label={t('students.form.parentContact')}
+          required
           value={form.parentContact}
           onChangeText={set('parentContact')}
           keyboardType="phone-pad"
+          maxLength={10}
         />
-        <LabeledInput
-          label="Admission date (YYYY-MM-DD)"
+        <DateField
+          label={t('students.form.admissionDate')}
+          required
           value={form.admissionDate}
-          onChangeText={set('admissionDate')}
-          placeholder="2026-04-01"
+          onChange={set('admissionDate')}
+          minimumDate={form.dob ? parseDateString(form.dob) : undefined}
         />
-        <LabeledInput label="Status" value={form.status} onChangeText={set('status')} placeholder="ACTIVE" />
+        <Dropdown label={t('students.form.status')} value={form.status ?? 'ACTIVE'} options={STATUS_OPTIONS} onSelect={set('status')} />
 
-        <Text style={styles.label}>Class-section</Text>
+        <Text style={styles.label}>{t('students.form.classSection')} *</Text>
         <ClassSectionPicker
           schoolId={schoolId}
           selectedId={form.classSectionId || null}
           onSelect={(cs) => set('classSectionId')(cs.id)}
         />
-
-        {error && <Text style={styles.error}>{error}</Text>}
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}
@@ -108,7 +123,7 @@ export function StudentFormScreen({ route, navigation }: Props) {
           disabled={!canSubmit || submitting}
         >
           <Text style={styles.submitText}>
-            {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Enroll student'}
+            {submitting ? t('common.saving') : isEdit ? t('common.saveChanges') : t('students.form.submitCreate')}
           </Text>
         </Pressable>
       </ScreenContainer>
@@ -119,7 +134,6 @@ export function StudentFormScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.sm },
-  error: { color: colors.error, marginTop: spacing.md },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

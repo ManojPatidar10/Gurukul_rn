@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { Assessment, AssessmentRequest, AssessmentType } from './types';
+import type { Assessment, AssessmentRequest, AssessmentResultResponse, AssessmentType, BulkAssessmentResultRequest } from './types';
 
 export function listSectionAssessments(schoolId: string, sectionId: string, type?: AssessmentType) {
   const query = type ? `?type=${type}` : '';
@@ -20,4 +20,8 @@ export function updateAssessment(schoolId: string, id: string, req: AssessmentRe
 
 export function deleteAssessment(schoolId: string, id: string) {
   return api.delete<void>(`/api/v1/assessments/${id}`, schoolId);
+}
+
+export function submitAssessmentResults(schoolId: string, assessmentId: string, req: BulkAssessmentResultRequest) {
+  return api.post<AssessmentResultResponse[]>(`/api/v1/assessments/${assessmentId}/results`, req, schoolId);
 }
