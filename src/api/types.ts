@@ -553,11 +553,26 @@ export interface Message {
   senderOwnerId: string | null;
   content: string;
   sentAt: string;
+  attachmentUrl: string | null;
+  attachmentContentType: string | null;
+  attachmentFileName: string | null;
 }
 
 export interface MessageHistoryResponse {
   messages: Message[];
   hasMore: boolean;
+}
+
+export interface PresignChatAttachmentRequest {
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+}
+
+export interface PresignChatAttachmentResponse {
+  uploadUrl: string;
+  objectKey: string;
+  expiresAt: string;
 }
 
 export type AnnouncementScope = 'SCHOOL' | 'CLASS' | 'GRADE';
