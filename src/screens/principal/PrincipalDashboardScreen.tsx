@@ -74,6 +74,12 @@ const featureActions: FeatureAction[] = [
     icon: 'file-alt',
     description: 'Your term grades and attendance',
   },
+  {
+    id: 'gradingScale',
+    title: 'Grading Scale',
+    icon: 'sliders-h',
+    description: 'Marks-percentage to letter-grade bands',
+  },
 ];
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
@@ -86,10 +92,10 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard'];
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
-const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses'];
+const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'gradingScale'];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
-const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses'];
+const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'gradingScale'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -106,6 +112,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   arena: 'Arena',
   events: 'EventsList',
   reportCard: 'ReportCard',
+  gradingScale: 'GradingScale',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own

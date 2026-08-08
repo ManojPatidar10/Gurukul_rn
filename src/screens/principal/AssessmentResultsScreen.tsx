@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getAssessmentResults, submitAssessmentResults } from '../../api/assessments';
@@ -45,6 +45,30 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
 
   useEffect(load, [schoolId, assessment.id]);
 
+  // Quick sanity-check stats for the teacher before publishing goes to the principal - "pass"
+  // uses the same 33% floor as the default grading scale's D/F boundary (GradingScaleService).
+  const summary = useMemo(() => {
+    const entered = roster.filter((r) => r.absent || r.marksObtained != null);
+    const scored = roster.filter(
+      (r): r is StudentResult & { marksObtained: number } => !r.absent && r.marksObtained != null
+    );
+    if (scored.length === 0) {
+      return { entered: entered.length, total: roster.length, average: null, highest: null, lowest: null, passCount: 0, failCount: 0 };
+    }
+    const marks = scored.map((r) => r.marksObtained);
+    const passThreshold = assessment.maxMarks * 0.33;
+    const passCount = scored.filter((r) => r.marksObtained >= passThreshold).length;
+    return {
+      entered: entered.length,
+      total: roster.length,
+      average: marks.reduce((a, b) => a + b, 0) / marks.length,
+      highest: Math.max(...marks),
+      lowest: Math.min(...marks),
+      passCount,
+      failCount: scored.length - passCount,
+    };
+  }, [roster, assessment.maxMarks]);
+
   const setRow = (studentId: string, patch: Partial<RowState>) => {
     setRows((prev) => ({ ...prev, [studentId]: { ...prev[studentId], ...patch } }));
   };
@@ -86,6 +110,40 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
         {success && <Text style={styles.success}>Results saved.</Text>}
 
         {!loading && roster.length === 0 && <Text style={styles.empty}>0 students in this section.</Text>}
+
+        {!loading && roster.length > 0 && (
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>
+              {summary.entered} / {summary.total} entered
+            </Text>
+            {summary.average != null ? (
+              <View style={styles.summaryStatRow}>
+                <View style={styles.summaryStat}>
+                  <Text style={styles.summaryStatValue}>{summary.average.toFixed(1)}</Text>
+                  <Text style={styles.summaryStatLabel}>Average</Text>
+                </View>
+                <View style={styles.summaryStat}>
+                  <Text style={styles.summaryStatValue}>{summary.highest}</Text>
+                  <Text style={styles.summaryStatLabel}>Highest</Text>
+                </View>
+                <View style={styles.summaryStat}>
+                  <Text style={styles.summaryStatValue}>{summary.lowest}</Text>
+                  <Text style={styles.summaryStatLabel}>Lowest</Text>
+                </View>
+                <View style={styles.summaryStat}>
+                  <Text style={[styles.summaryStatValue, { color: colors.success }]}>{summary.passCount}</Text>
+                  <Text style={styles.summaryStatLabel}>Pass</Text>
+                </View>
+                <View style={styles.summaryStat}>
+                  <Text style={[styles.summaryStatValue, { color: colors.error }]}>{summary.failCount}</Text>
+                  <Text style={styles.summaryStatLabel}>Fail</Text>
+                </View>
+              </View>
+            ) : (
+              <Text style={styles.summaryEmpty}>No marks entered yet.</Text>
+            )}
+          </View>
+        )}
 
         {roster.map((student) => {
           const row = rows[student.studentId] ?? { marksText: '', absent: false };
@@ -131,6 +189,18 @@ const styles = StyleSheet.create({
   error: { color: colors.error, marginBottom: spacing.md },
   success: { color: colors.success, marginBottom: spacing.md, fontWeight: '600' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
+  summaryCard: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  summaryTitle: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
+  summaryEmpty: { fontSize: 13, color: colors.textMuted },
+  summaryStatRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  summaryStat: { alignItems: 'center', minWidth: 56 },
+  summaryStatValue: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  summaryStatLabel: { fontSize: 10.5, color: colors.textMuted, marginTop: 2 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
