@@ -4,10 +4,11 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 
 import { createConversation } from '../../api/chat';
 import { listEmployees } from '../../api/employees';
-import { listStudents } from '../../api/students';
+import { getStudent, listStudents } from '../../api/students';
 import type { OwnerType } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { SearchBar } from '../../components/SearchBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, spacing } from '../../theme/colors';
@@ -24,26 +25,41 @@ interface Party {
 export function NewConversationScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
+  const isStudent = session.role === 'STUDENT';
   const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creatingId, setCreatingId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([listEmployees(schoolId), listStudents(schoolId)])
-      .then(([employees, students]) => {
+    Promise.all([
+      listEmployees(schoolId),
+      listStudents(schoolId),
+      isStudent ? getStudent(schoolId, session.ownerId) : Promise.resolve(null),
+    ])
+      .then(([employees, students, me]) => {
+        // A student can message any staff member, but only their own classmates - not the
+        // whole school's student directory.
+        const visibleStudents = me
+          ? students.filter(
+              (s) => s.id !== me.id && s.className === me.className && s.section === me.section && s.academicYear === me.academicYear
+            )
+          : students;
         const list: Party[] = [
           ...employees
             .filter((e) => e.id !== session.ownerId)
             .map((e) => ({ ownerType: 'EMPLOYEE' as const, ownerId: e.id, name: `${e.name} (Staff)` })),
-          ...students.map((s) => ({ ownerType: 'STUDENT' as const, ownerId: s.id, name: `${s.name} (Student)` })),
+          ...visibleStudents.map((s) => ({ ownerType: 'STUDENT' as const, ownerId: s.id, name: `${s.name} (Student)` })),
         ];
         setParties(list);
       })
       .catch((e) => setError((e as Error).message))
       .finally(() => setLoading(false));
-  }, [schoolId, session.ownerId]);
+  }, [schoolId, session.ownerId, isStudent]);
+
+  const visibleParties = parties.filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()));
 
   const handleSelect = async (party: Party) => {
     setCreatingId(party.ownerId);
@@ -65,12 +81,18 @@ export function NewConversationScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title="New Conversation" onBack={() => navigation.goBack()} />
       <ScreenContainer padded={false}>
+        <View style={styles.searchWrap}>
+          <SearchBar value={query} onChangeText={setQuery} placeholder="Search staff or classmates by name" />
+        </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <Text style={styles.error}>{error}</Text>}
         <FlatList
-          data={parties}
+          data={visibleParties}
           scrollEnabled={false}
           keyExtractor={(item) => `${item.ownerType}:${item.ownerId}`}
+          ListEmptyComponent={
+            !loading && !error ? <Text style={styles.empty}>{query ? 'No match found.' : 'No one to message yet.'}</Text> : null
+          }
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => handleSelect(item)} disabled={creatingId === item.ownerId}>
               <Text style={styles.rowTitle}>{item.name}</Text>
@@ -85,8 +107,10 @@ export function NewConversationScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  searchWrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   loading: { marginTop: spacing.xl },
   error: { color: colors.error, padding: spacing.lg, fontSize: 13 },
+  empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
