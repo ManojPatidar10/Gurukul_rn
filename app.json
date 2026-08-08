@@ -41,6 +41,7 @@
         { "microphonePermission": "Gurukul uses your microphone for video calls." }
       ],
       "expo-font",
+      "expo-notifications",
       "./plugins/withCleartextTraffic.js"
     ],
     "extra": {
