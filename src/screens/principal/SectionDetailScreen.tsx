@@ -15,6 +15,7 @@ export function SectionDetailScreen({ route, navigation }: Props) {
   const { session } = useAuth();
   const classSection = route.params.classSection;
   const canTakeAttendance = session.ownerType === 'EMPLOYEE';
+  const isAdmin = session.role === 'ADMIN';
 
   const items: { title: string; description: string; onPress: () => void }[] = [
     {
@@ -43,6 +44,15 @@ export function SectionDetailScreen({ route, navigation }: Props) {
             title: 'Attendance history',
             description: "Every student's attendance totals for this section",
             onPress: () => navigation.navigate('SectionAttendanceHistory', { classSection }),
+          },
+        ]
+      : []),
+    ...(isAdmin
+      ? [
+          {
+            title: 'Publish report cards',
+            description: "Release a term's report cards to every student in this section",
+            onPress: () => navigation.navigate('PublishReportCards', { classSection }),
           },
         ]
       : []),
