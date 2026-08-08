@@ -28,7 +28,8 @@ export type FeatureId =
   | 'gradingScale'
   | 'markMyAttendance'
   | 'schoolLocation'
-  | 'staffAttendance';
+  | 'staffAttendance'
+  | 'myAttendance';
 
 export interface FeatureAction {
   id: FeatureId;

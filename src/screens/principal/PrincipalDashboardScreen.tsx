@@ -75,6 +75,12 @@ const featureActions: FeatureAction[] = [
     description: 'Your term grades and attendance',
   },
   {
+    id: 'myAttendance',
+    title: 'View Attendance',
+    icon: 'calendar-check',
+    description: 'Your attendance calendar',
+  },
+  {
     id: 'gradingScale',
     title: 'Grading Scale',
     icon: 'sliders-h',
@@ -104,7 +110,7 @@ const featureActions: FeatureAction[] = [
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
 // needed for teachers/admins, who use it to author quiz questions rather than play.
-const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard'];
+const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAttendance'];
 // Arena (question authoring) and self-mark check-in are teacher-only concepts - a principal/admin
 // self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
@@ -134,6 +140,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   markMyAttendance: 'MarkMyAttendance',
   schoolLocation: 'SchoolLocationSettings',
   staffAttendance: 'StaffAttendance',
+  myAttendance: 'AttendanceHistory',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -317,6 +324,12 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
                 }
                 if (isStudent && feature.id === 'reportCard') {
                   navigation.navigate('ReportCard', {
+                    student: { id: session.ownerId, name: myName ?? session.username },
+                  });
+                  return;
+                }
+                if (isStudent && feature.id === 'myAttendance') {
+                  navigation.navigate('AttendanceHistory', {
                     student: { id: session.ownerId, name: myName ?? session.username },
                   });
                   return;
