@@ -22,9 +22,11 @@ Notifications.setNotificationHandler({
  * integration) - see PushNotificationService on the backend for why: this is an Expo
  * managed-workflow app, so there's no separate push project to set up or pay for.
  *
- * A simulator/emulator has no push capability at all (Device.isDevice is false there) -
- * getExpoPushTokenAsync throws in that case, so this silently no-ops rather than logging an error
- * a developer would otherwise see on every single simulator run.
+ * A simulator/emulator has no push capability at all (Device.isDevice is false there), and as of
+ * SDK 53, Expo Go itself no longer supports remote push tokens on either platform - only a real
+ * development or production build does. getExpoPushTokenAsync throws in both cases, so the whole
+ * attempt is wrapped in a try/catch: this silently no-ops rather than logging an error every time
+ * the app runs somewhere push isn't actually available.
  */
 export function usePushNotifications(schoolId: string | null, sessionKey: string | null) {
   useEffect(() => {
@@ -32,24 +34,29 @@ export function usePushNotifications(schoolId: string | null, sessionKey: string
     let cancelled = false;
 
     (async () => {
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: 'default',
-          importance: Notifications.AndroidImportance.MAX,
-        });
-      }
+      try {
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+          });
+        }
 
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let status = existingStatus;
-      if (status !== 'granted') {
-        ({ status } = await Notifications.requestPermissionsAsync());
-      }
-      if (status !== 'granted' || cancelled) return;
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let status = existingStatus;
+        if (status !== 'granted') {
+          ({ status } = await Notifications.requestPermissionsAsync());
+        }
+        if (status !== 'granted' || cancelled) return;
 
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
-      if (cancelled) return;
-      registerDeviceToken(schoolId, expoPushToken).catch(() => {});
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+        const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+        if (cancelled) return;
+        await registerDeviceToken(schoolId, expoPushToken);
+      } catch {
+        // Push isn't available here (Expo Go on SDK 53+, a simulator, or a denied permission) -
+        // the app works fine without it, just without a way to reach a backgrounded session.
+      }
     })();
 
     return () => {
