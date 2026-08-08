@@ -27,7 +27,8 @@ export type FeatureId =
   | 'reportCard'
   | 'gradingScale'
   | 'markMyAttendance'
-  | 'schoolLocation';
+  | 'schoolLocation'
+  | 'staffAttendance';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -86,6 +87,8 @@ export type PrincipalStackParamList = {
   GradingScale: undefined;
   MarkMyAttendance: undefined;
   SchoolLocationSettings: undefined;
+  StaffAttendance: undefined;
+  EmployeeAttendanceHistory: { employee: Pick<Employee, 'id' | 'name'> };
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };

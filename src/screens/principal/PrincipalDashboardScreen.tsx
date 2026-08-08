@@ -92,6 +92,12 @@ const featureActions: FeatureAction[] = [
     icon: 'map-pin',
     description: 'Geofence for teacher self-attendance',
   },
+  {
+    id: 'staffAttendance',
+    title: 'Staff Attendance',
+    icon: 'clipboard-check',
+    description: "Today's staff roster and check-in history",
+  },
 ];
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
@@ -104,10 +110,10 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard'];
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
-const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'gradingScale', 'schoolLocation'];
+const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'gradingScale', 'schoolLocation', 'staffAttendance'];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
-const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'gradingScale', 'schoolLocation'];
+const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'gradingScale', 'schoolLocation', 'staffAttendance'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -127,6 +133,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   gradingScale: 'GradingScale',
   markMyAttendance: 'MarkMyAttendance',
   schoolLocation: 'SchoolLocationSettings',
+  staffAttendance: 'StaffAttendance',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
