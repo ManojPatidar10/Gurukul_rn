@@ -17,6 +17,9 @@ export function PickCallTargetScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const {
     targets,
+    filteredTargets,
+    localQuery,
+    setLocalQuery,
     loading,
     error,
     canSearchStudents,
@@ -84,11 +87,18 @@ export function PickCallTargetScreen({ navigation }: Props) {
           )}
         />
 
-        {!loading && targets.length === 0 && !error && studentResults.length === 0 && (
-          <Text style={styles.empty}>No one available to call right now.</Text>
+        {!loading && targets.length > 0 && (
+          <View style={styles.searchSection}>
+            <SearchBar value={localQuery} onChangeText={setLocalQuery} placeholder="Search by name…" />
+          </View>
+        )}
+        {!loading && filteredTargets.length === 0 && !error && studentResults.length === 0 && (
+          <Text style={styles.empty}>
+            {localQuery ? 'No match found.' : 'No one available to call right now.'}
+          </Text>
         )}
         <FlatList
-          data={targets}
+          data={filteredTargets}
           scrollEnabled={false}
           keyExtractor={(item) => `${item.ownerType}:${item.ownerId}`}
           renderItem={({ item }) => (

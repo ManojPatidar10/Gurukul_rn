@@ -7,8 +7,9 @@ import { scheduleCall } from '../../api/calls';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { SearchBar } from '../../components/SearchBar';
 import { useSchoolId } from '../../context/SchoolContext';
-import { useCallTargets } from '../../hooks/useCallTargets';
+import { useCallTargets, type CallTarget } from '../../hooks/useCallTargets';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -16,7 +17,14 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'ScheduleCall'>;
 
 export function ScheduleCallScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
-  const { targets, loading: loadingTargets, error: targetsError } = useCallTargets();
+  const {
+    targets,
+    filteredTargets,
+    localQuery,
+    setLocalQuery,
+    loading: loadingTargets,
+    error: targetsError,
+  } = useCallTargets();
   const [title, setTitle] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [scheduledAt, setScheduledAt] = useState(() => new Date(Date.now() + 60 * 60 * 1000));
@@ -33,20 +41,30 @@ export function ScheduleCallScreen({ navigation }: Props) {
     [singleFixedTarget, selectedIds]
   );
 
-  const toggleTarget = (ownerId: string) => {
-    setSelectedIds((prev) => (prev.includes(ownerId) ? prev.filter((id) => id !== ownerId) : [...prev, ownerId]));
+  // A scheduled call can only invite one owner type at a time (ScheduleCallRequest.inviteeOwnerType
+  // is a single value for the whole batch) - a student's target list now mixes teachers and
+  // classmates, so picking one of a different type than what's already selected starts a fresh
+  // selection instead of silently mixing (and silently dropping) types in one request.
+  const toggleTarget = (target: CallTarget) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(target.ownerId)) return prev.filter((id) => id !== target.ownerId);
+      const currentType = prev.length > 0 ? targets.find((t) => t.ownerId === prev[0])?.ownerType : null;
+      if (currentType && currentType !== target.ownerType) return [target.ownerId];
+      return [...prev, target.ownerId];
+    });
   };
 
   const canSubmit = title.trim().length > 0 && effectiveSelectedIds.length > 0 && scheduledAt.getTime() > Date.now();
 
   const handleSubmit = async () => {
     if (!canSubmit || targets.length === 0) return;
+    const inviteeOwnerType = targets.find((t) => t.ownerId === effectiveSelectedIds[0])?.ownerType ?? targets[0].ownerType;
     setSubmitting(true);
     setError(null);
     try {
       await scheduleCall(schoolId, {
         title: title.trim(),
-        inviteeOwnerType: targets[0].ownerType,
+        inviteeOwnerType,
         inviteeOwnerIds: effectiveSelectedIds,
         scheduledAt: scheduledAt.toISOString(),
       });
@@ -72,20 +90,24 @@ export function ScheduleCallScreen({ navigation }: Props) {
         )}
         {singleFixedTarget && <Text style={styles.fixedTarget}>{singleFixedTarget.name}</Text>}
         {isMultiPick && (
-          <View style={styles.chips}>
-            {targets.map((target) => {
-              const selected = selectedIds.includes(target.ownerId);
-              return (
-                <Pressable
-                  key={target.ownerId}
-                  onPress={() => toggleTarget(target.ownerId)}
-                  style={[styles.chip, selected && styles.chipSelected]}
-                >
-                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{target.name}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <>
+            <SearchBar value={localQuery} onChangeText={setLocalQuery} placeholder="Search by name…" />
+            {filteredTargets.length === 0 && <Text style={styles.empty}>No match found.</Text>}
+            <View style={styles.chips}>
+              {filteredTargets.map((target) => {
+                const selected = selectedIds.includes(target.ownerId);
+                return (
+                  <Pressable
+                    key={target.ownerId}
+                    onPress={() => toggleTarget(target)}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{target.name}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
         )}
 
         <Text style={styles.sectionLabel}>When</Text>
