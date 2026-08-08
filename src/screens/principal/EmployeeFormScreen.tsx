@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createEmployee, updateEmployee } from '../../api/employees';
 import type { EmployeeRequest } from '../../api/types';
+import { DatePickerField } from '../../components/DatePickerField';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -58,12 +59,7 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
       <ScreenContainer>
         <LabeledInput label="Name" value={form.name} onChangeText={set('name')} />
         <LabeledInput label="Designation" value={form.designation} onChangeText={set('designation')} />
-        <LabeledInput
-          label="Join date (YYYY-MM-DD)"
-          value={form.joinDate}
-          onChangeText={set('joinDate')}
-          placeholder="2026-04-01"
-        />
+        <DatePickerField label="Join date" value={form.joinDate} onChange={set('joinDate')} />
         <LabeledInput
           label="Bank account"
           value={form.bankAccount}

@@ -13,6 +13,7 @@ import type { InfraExpenseRequest } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { DatePickerField } from '../../components/DatePickerField';
 import LabeledInput from '../../components/LabeledInput';
 import VendorPicker from '../../components/VendorPicker';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -239,11 +240,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
               value={paymentReference}
               onChangeText={setPaymentReference}
             />
-            <LabeledInput
-              label="Transaction date (YYYY-MM-DD)"
-              value={transactionDate}
-              onChangeText={setTransactionDate}
-            />
+            <DatePickerField label="Transaction date" value={transactionDate} onChange={setTransactionDate} />
             <Pressable
               style={[styles.submit, (!paymentMethod || busy) && styles.disabled]}
               onPress={handlePay}

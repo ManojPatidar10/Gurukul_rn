@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { recordFeePayment } from '../../api/feePayments';
+import { DatePickerField } from '../../components/DatePickerField';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -68,11 +69,7 @@ export function FeePaymentFormScreen({ route, navigation }: Props) {
           value={paymentReference}
           onChangeText={setPaymentReference}
         />
-        <LabeledInput
-          label="Transaction date (YYYY-MM-DD)"
-          value={transactionDate}
-          onChangeText={setTransactionDate}
-        />
+        <DatePickerField label="Transaction date" value={transactionDate} onChange={setTransactionDate} />
 
         {error && <Text style={styles.error}>{error}</Text>}
 

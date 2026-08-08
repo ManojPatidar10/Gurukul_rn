@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createPayrollRun, listPayrollRunLines, payPayrollRun, processPayrollRun } from '../../api/payrollRuns';
 import type { PayrollLine, PayrollRun } from '../../api/types';
+import { DatePickerField } from '../../components/DatePickerField';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -158,11 +159,7 @@ export function PayrollRunScreen({ navigation }: Props) {
                   value={paymentReference}
                   onChangeText={setPaymentReference}
                 />
-                <LabeledInput
-                  label="Transaction date (YYYY-MM-DD)"
-                  value={transactionDate}
-                  onChangeText={setTransactionDate}
-                />
+                <DatePickerField label="Transaction date" value={transactionDate} onChange={setTransactionDate} />
                 <Pressable
                   style={[styles.button, (!paymentMethod || busy) && styles.buttonDisabled]}
                   onPress={handlePay}
