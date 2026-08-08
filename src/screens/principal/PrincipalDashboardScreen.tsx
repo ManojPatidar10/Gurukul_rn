@@ -157,8 +157,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const visibleFeatures = featureActions
     .filter((feature) => {
       if (feature.id === 'myClassSection') return isTeacher && !!myHomeroomSection;
-      if (session.role === 'ADMIN') return true;
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
+      if (session.role === 'ADMIN') return true;
       if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';
       if (isStudent && STUDENT_HIDDEN_FEATURES.includes(feature.id)) return false;
       if (isTeacher && TEACHER_HIDDEN_FEATURES.includes(feature.id)) return false;
