@@ -13,6 +13,14 @@ import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAssessmentsList'>;
 
+// Whether the assessment date has passed yet - a full "awaiting results / published" tri-state
+// would need a per-term publication check against the backend; this stays a simple two-state
+// signal computed purely from the date, no extra network calls.
+function examStatus(assessmentDate: string): { label: string; variant: 'info' | 'success' } {
+  const today = new Date().toISOString().slice(0, 10);
+  return assessmentDate > today ? { label: 'Upcoming', variant: 'info' } : { label: 'Completed', variant: 'success' };
+}
+
 export function SectionAssessmentsListScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -73,20 +81,26 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
               </Text>
             ) : null
           }
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.row}
-              onPress={() => navigation.navigate('AssessmentDetail', { assessment: item, classSection })}
-            >
-              <View style={styles.rowMain}>
-                <Text style={styles.rowName}>{item.title}</Text>
-                <Text style={styles.rowMeta}>
-                  {item.subjectName} · {item.assessmentDate} · Max {item.maxMarks}
-                </Text>
-              </View>
-              <StatusChip label={item.type} variant="neutral" />
-            </Pressable>
-          )}
+          renderItem={({ item }) => {
+            const status = examStatus(item.assessmentDate);
+            return (
+              <Pressable
+                style={styles.row}
+                onPress={() => navigation.navigate('AssessmentDetail', { assessment: item, classSection })}
+              >
+                <View style={styles.rowMain}>
+                  <Text style={styles.rowName}>{item.title}</Text>
+                  <Text style={styles.rowMeta}>
+                    {item.subjectName} · {item.assessmentDate} · Max {item.maxMarks}
+                  </Text>
+                </View>
+                <View style={styles.chipStack}>
+                  <StatusChip label={item.type} variant="neutral" />
+                  <StatusChip label={status.label} variant={status.variant} />
+                </View>
+              </Pressable>
+            );
+          }}
         />
       </View>
     </View>
@@ -121,4 +135,5 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, marginRight: spacing.sm },
   rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  chipStack: { alignItems: 'flex-end', gap: spacing.xs },
 });

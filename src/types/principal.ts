@@ -24,7 +24,8 @@ export type FeatureId =
   | 'houses'
   | 'arena'
   | 'events'
-  | 'reportCard';
+  | 'reportCard'
+  | 'gradingScale';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -80,6 +81,7 @@ export type PrincipalStackParamList = {
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
   ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
   PublishReportCards: { classSection: ClassSection };
+  GradingScale: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };
