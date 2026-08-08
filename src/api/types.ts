@@ -595,6 +595,19 @@ export interface StaffAttendanceRoster {
   entries: StaffAttendanceEntry[];
 }
 
+export interface EmployeeAttendanceHistory {
+  employeeId: string;
+  employeeName: string;
+  from: string | null;
+  to: string | null;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+  records: StaffAttendanceRecord[];
+}
+
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 export type OwnerType = 'EMPLOYEE' | 'STUDENT';
 
