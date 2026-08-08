@@ -6,6 +6,8 @@ import { AssessmentResultsScreen } from '../screens/principal/AssessmentResultsS
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { PublishReportCardsScreen } from '../screens/principal/PublishReportCardsScreen';
 import { GradingScaleScreen } from '../screens/principal/GradingScaleScreen';
+import { MarkMyAttendanceScreen } from '../screens/principal/MarkMyAttendanceScreen';
+import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocationSettingsScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
 import { SectionAttendanceHistoryScreen } from '../screens/principal/SectionAttendanceHistoryScreen';
@@ -134,6 +136,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="ReportCard" component={ReportCardScreen} />
         <Stack.Screen name="PublishReportCards" component={PublishReportCardsScreen} />
         <Stack.Screen name="GradingScale" component={GradingScaleScreen} />
+        <Stack.Screen name="MarkMyAttendance" component={MarkMyAttendanceScreen} />
+        <Stack.Screen name="SchoolLocationSettings" component={SchoolLocationSettingsScreen} />
         <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
         <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />

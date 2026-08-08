@@ -25,7 +25,9 @@ export type FeatureId =
   | 'arena'
   | 'events'
   | 'reportCard'
-  | 'gradingScale';
+  | 'gradingScale'
+  | 'markMyAttendance'
+  | 'schoolLocation';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -82,6 +84,8 @@ export type PrincipalStackParamList = {
   ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
   PublishReportCards: { classSection: ClassSection };
   GradingScale: undefined;
+  MarkMyAttendance: undefined;
+  SchoolLocationSettings: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };
