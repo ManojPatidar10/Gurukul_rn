@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { createStudent, updateStudent } from '../../api/students';
 import type { StudentRequest } from '../../api/types';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
+import { DatePickerField } from '../../components/DatePickerField';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -65,12 +66,7 @@ export function StudentFormScreen({ route, navigation }: Props) {
       <ScreenContainer>
         <LabeledInput label="Roll number" value={form.rollNumber} onChangeText={set('rollNumber')} />
         <LabeledInput label="Name" value={form.name} onChangeText={set('name')} />
-        <LabeledInput
-          label="Date of birth (YYYY-MM-DD)"
-          value={form.dob}
-          onChangeText={set('dob')}
-          placeholder="2015-06-01"
-        />
+        <DatePickerField label="Date of birth" value={form.dob} onChange={set('dob')} maximumDate={new Date()} />
         <LabeledInput
           label="Gender"
           value={form.gender}
@@ -85,12 +81,7 @@ export function StudentFormScreen({ route, navigation }: Props) {
           onChangeText={set('parentContact')}
           keyboardType="phone-pad"
         />
-        <LabeledInput
-          label="Admission date (YYYY-MM-DD)"
-          value={form.admissionDate}
-          onChangeText={set('admissionDate')}
-          placeholder="2026-04-01"
-        />
+        <DatePickerField label="Admission date" value={form.admissionDate} onChange={set('admissionDate')} />
         <LabeledInput label="Status" value={form.status} onChangeText={set('status')} placeholder="ACTIVE" />
 
         <Text style={styles.label}>Class-section</Text>

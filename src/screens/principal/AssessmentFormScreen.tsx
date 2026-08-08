@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createAssessment, updateAssessment } from '../../api/assessments';
 import type { AssessmentType, Employee, Subject } from '../../api/types';
+import { DatePickerField } from '../../components/DatePickerField';
 import EmployeePicker from '../../components/EmployeePicker';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -95,12 +96,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         />
         {subjectLabel ? <Text style={styles.selectedHint}>Selected: {subjectLabel}</Text> : null}
 
-        <LabeledInput
-          label="Assessment date (YYYY-MM-DD)"
-          value={assessmentDate}
-          onChangeText={setAssessmentDate}
-          placeholder="2026-08-15"
-        />
+        <DatePickerField label="Assessment date" value={assessmentDate} onChange={setAssessmentDate} />
         <LabeledInput label="Max marks" value={maxMarks} onChangeText={setMaxMarks} keyboardType="numeric" />
         <LabeledInput
           label="Term (optional, e.g. Term 1 - for report cards)"
