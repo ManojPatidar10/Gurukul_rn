@@ -64,11 +64,23 @@ export async function subscribeToConversation(
   };
 }
 
-export async function sendMessage(token: string, schoolId: string, conversationId: string, content: string) {
+export interface SendMessageAttachment {
+  attachmentObjectKey: string;
+  attachmentContentType: string;
+  attachmentFileName: string;
+}
+
+export async function sendMessage(
+  token: string,
+  schoolId: string,
+  conversationId: string,
+  content: string,
+  attachment?: SendMessageAttachment
+) {
   const activeClient = await ensureClient(token, schoolId);
   activeClient.publish({
     destination: `/app/conversations/${conversationId}/messages`,
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content: content || undefined, ...attachment }),
   });
 }
 
