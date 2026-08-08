@@ -15,11 +15,20 @@ export interface School {
   contactPhone: string;
   principalName: string;
   directorName: string;
+  latitude: number | null;
+  longitude: number | null;
+  geofenceRadiusMeters: number;
   studentCount: number;
   classSectionCount: number;
   teacherCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SchoolLocationUpdateRequest {
+  latitude: number;
+  longitude: number;
+  geofenceRadiusMeters: number;
 }
 
 export interface SchoolRegistrationRequest {
@@ -550,6 +559,40 @@ export interface SectionAttendanceHistory {
   from: string | null;
   to: string | null;
   students: SectionStudentAttendanceSummary[];
+}
+
+export interface SelfMarkAttendanceRequest {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
+
+export interface StaffAttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  attendanceDate: string;
+  status: AttendanceStatus;
+  markedByEmployeeId: string;
+  markedByEmployeeName: string;
+  remarks: string | null;
+  selfMarked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaffAttendanceEntry {
+  employeeId: string;
+  employeeName: string;
+  designation: string;
+  status: AttendanceStatus | null;
+  remarks: string | null;
+  selfMarked: boolean;
+}
+
+export interface StaffAttendanceRoster {
+  date: string;
+  entries: StaffAttendanceEntry[];
 }
 
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';

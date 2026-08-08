@@ -80,6 +80,18 @@ const featureActions: FeatureAction[] = [
     icon: 'sliders-h',
     description: 'Marks-percentage to letter-grade bands',
   },
+  {
+    id: 'markMyAttendance',
+    title: 'Mark My Attendance',
+    icon: 'map-marker-alt',
+    description: 'Check in from the school premises',
+  },
+  {
+    id: 'schoolLocation',
+    title: 'School Location',
+    icon: 'map-pin',
+    description: 'Geofence for teacher self-attendance',
+  },
 ];
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
@@ -87,15 +99,15 @@ const featureActions: FeatureAction[] = [
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
 // needed for teachers/admins, who use it to author quiz questions rather than play.
 const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard'];
-// Arena (question authoring) is teacher-only - a principal/admin has no need to write quiz
-// questions, so this doesn't fall into the general non-student bucket above.
-const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena'];
+// Arena (question authoring) and self-mark check-in are teacher-only concepts - a principal/admin
+// self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
+const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
-const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'gradingScale'];
+const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'gradingScale', 'schoolLocation'];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
-const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'gradingScale'];
+const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'gradingScale', 'schoolLocation'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -113,6 +125,8 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   events: 'EventsList',
   reportCard: 'ReportCard',
   gradingScale: 'GradingScale',
+  markMyAttendance: 'MarkMyAttendance',
+  schoolLocation: 'SchoolLocationSettings',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own

@@ -52,7 +52,7 @@ export const softShadow = {
   elevation: 1,
 } as const;
 
-export type AccentKey = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll' | 'infraExpenses' | 'classes' | 'myClassSection' | 'chat' | 'calls' | 'gamification' | 'houses' | 'arena' | 'events' | 'reportCard' | 'gradingScale';
+export type AccentKey = 'students' | 'employees' | 'vendors' | 'fees' | 'payroll' | 'infraExpenses' | 'classes' | 'myClassSection' | 'chat' | 'calls' | 'gamification' | 'houses' | 'arena' | 'events' | 'reportCard' | 'gradingScale' | 'markMyAttendance' | 'schoolLocation';
 
 export const accents: Record<AccentKey, { base: string; light: string }> = {
   students: { base: '#2563EB', light: '#E3ECFD' },
@@ -71,6 +71,8 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   events: { base: '#0369A1', light: '#DCEEFB' },
   reportCard: { base: '#B45309', light: '#FCEEDB' },
   gradingScale: { base: '#475569', light: '#E7EAEE' },
+  markMyAttendance: { base: '#16A34A', light: '#DCFCE7' },
+  schoolLocation: { base: '#0F766E', light: '#DAF2EF' },
 };
 
 /**

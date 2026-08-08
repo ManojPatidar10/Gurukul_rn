@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   School,
+  SchoolLocationUpdateRequest,
   SchoolRegistrationRequest,
   SchoolRegistrationResponse,
   SchoolSearchResult,
@@ -22,4 +23,8 @@ export function getSchool(id: string) {
 
 export function updateSchool(id: string, req: SchoolUpdateRequest) {
   return api.put<School>(`/api/v1/schools/${id}`, req, id);
+}
+
+export function updateSchoolLocation(id: string, req: SchoolLocationUpdateRequest) {
+  return api.put<School>(`/api/v1/schools/${id}/location`, req, id);
 }
