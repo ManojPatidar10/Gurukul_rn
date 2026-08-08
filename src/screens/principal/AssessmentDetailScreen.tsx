@@ -63,6 +63,7 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
           <Field label="Subject" value={`${assessment.subjectName} (${assessment.subjectCode})`} />
           <Field label="Date" value={assessment.assessmentDate} />
           <Field label="Max marks" value={String(assessment.maxMarks)} />
+          <Field label="Term" value={assessment.term ?? ''} />
           <Field label="Description" value={assessment.description} />
           <Field label="Created by" value={assessment.createdByTeacherName} />
         </View>
@@ -71,6 +72,12 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
 
         {canManage && (
           <View style={styles.actions}>
+            <Pressable
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('AssessmentResults', { assessment })}
+            >
+              <Text style={styles.actionText}>Enter results</Text>
+            </Pressable>
             <Pressable
               style={styles.actionButton}
               onPress={() => navigation.navigate('AssessmentForm', { classSection, assessment })}

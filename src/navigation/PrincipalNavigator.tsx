@@ -2,6 +2,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AssessmentDetailScreen } from '../screens/principal/AssessmentDetailScreen';
 import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen';
+import { AssessmentResultsScreen } from '../screens/principal/AssessmentResultsScreen';
+import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
+import { PublishReportCardsScreen } from '../screens/principal/PublishReportCardsScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
 import { SectionAttendanceHistoryScreen } from '../screens/principal/SectionAttendanceHistoryScreen';
@@ -123,9 +126,12 @@ export function PrincipalNavigator() {
         <Stack.Screen name="SectionAssessmentsList" component={SectionAssessmentsListScreen} />
         <Stack.Screen name="AssessmentForm" component={AssessmentFormScreen} />
         <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
+        <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
         <Stack.Screen name="AttendanceTake" component={AttendanceTakeScreen} />
         <Stack.Screen name="SectionAttendanceHistory" component={SectionAttendanceHistoryScreen} />
         <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+        <Stack.Screen name="ReportCard" component={ReportCardScreen} />
+        <Stack.Screen name="PublishReportCards" component={PublishReportCardsScreen} />
         <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
         <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />

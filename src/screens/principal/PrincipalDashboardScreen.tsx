@@ -68,13 +68,19 @@ const featureActions: FeatureAction[] = [
     icon: 'calendar-alt',
     description: 'Annual function, sports meet, competitions, and more',
   },
+  {
+    id: 'reportCard',
+    title: 'Report Card',
+    icon: 'file-alt',
+    description: 'Your term grades and attendance',
+  },
 ];
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
 // needed for teachers/admins, who use it to author quiz questions rather than play.
-const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification'];
+const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard'];
 // Arena (question authoring) is teacher-only - a principal/admin has no need to write quiz
 // questions, so this doesn't fall into the general non-student bucket above.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena'];
@@ -99,6 +105,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   houses: 'HouseWars',
   arena: 'Arena',
   events: 'EventsList',
+  reportCard: 'ReportCard',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -278,6 +285,12 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
                 }
                 if (isStudent && feature.id === 'fees') {
                   navigation.navigate('MyFees');
+                  return;
+                }
+                if (isStudent && feature.id === 'reportCard') {
+                  navigation.navigate('ReportCard', {
+                    student: { id: session.ownerId, name: myName ?? session.username },
+                  });
                   return;
                 }
                 if (isTeacher && feature.id === 'students') {

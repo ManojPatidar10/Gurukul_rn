@@ -394,6 +394,7 @@ export interface Assessment {
   description: string;
   createdByTeacherId: string;
   createdByTeacherName: string;
+  term: string | null;
 }
 
 export interface AssessmentRequest {
@@ -404,6 +405,72 @@ export interface AssessmentRequest {
   maxMarks: number;
   description?: string;
   teacherId: string;
+  term?: string;
+}
+
+export interface AssessmentResultEntry {
+  studentId: string;
+  marksObtained?: number;
+  absent: boolean;
+  remarks?: string;
+}
+
+export interface StudentResult {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  marksObtained: number | null;
+  absent: boolean;
+  remarks: string | null;
+}
+
+export interface AssessmentResults {
+  assessmentId: string;
+  assessmentTitle: string;
+  maxMarks: number;
+  results: StudentResult[];
+}
+
+export interface GradingBand {
+  id: string | null;
+  minPercentage: number;
+  maxPercentage: number;
+  label: string;
+}
+
+export interface SubjectResult {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  maxMarks: number;
+  marksObtained: number;
+  percentage: number;
+  grade: string;
+}
+
+export interface ReportCard {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  term: string;
+  subjects: SubjectResult[];
+  totalMaxMarks: number;
+  totalMarksObtained: number;
+  overallPercentage: number;
+  overallGrade: string;
+  attendancePercentage: number | null;
+  published: boolean;
+  publishedAt: string | null;
+}
+
+export interface ReportCardPublication {
+  classSectionId: string;
+  term: string;
+  publishedAt: string;
+  publishedByEmployeeName: string;
 }
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';

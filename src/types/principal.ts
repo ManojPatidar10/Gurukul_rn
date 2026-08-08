@@ -23,7 +23,8 @@ export type FeatureId =
   | 'gamification'
   | 'houses'
   | 'arena'
-  | 'events';
+  | 'events'
+  | 'reportCard';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -73,9 +74,12 @@ export type PrincipalStackParamList = {
   SectionAssessmentsList: { classSection: ClassSection };
   AssessmentForm: { classSection: ClassSection; assessment?: Assessment };
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
+  AssessmentResults: { assessment: Assessment };
   AttendanceTake: { classSection: ClassSection };
   SectionAttendanceHistory: { classSection: ClassSection };
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
+  ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
+  PublishReportCards: { classSection: ClassSection };
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };
