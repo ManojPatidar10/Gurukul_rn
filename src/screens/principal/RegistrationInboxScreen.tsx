@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { approveRegistration, createTeacherInvite, listRegistrations, rejectRegistration } from '../../api/registration';
-import type { RegistrationEntityType, RegistrationInboxEntry } from '../../api/types';
+import type { Employee, RegistrationInboxEntry } from '../../api/types';
+import EmployeePicker from '../../components/EmployeePicker';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -12,28 +13,24 @@ import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'RegistrationInbox'>;
 
-const TABS: { key: RegistrationEntityType; label: string }[] = [
-  { key: 'STUDENT_REGISTRATION', label: 'Students' },
-  { key: 'EMPLOYEE_REGISTRATION', label: 'Teachers' },
-  { key: 'PARENT_REGISTRATION', label: 'Parents' },
-];
-
 export function RegistrationInboxScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
-  const [tab, setTab] = useState<RegistrationEntityType>('STUDENT_REGISTRATION');
   const [entries, setEntries] = useState<RegistrationInboxEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [decidingId, setDecidingId] = useState<string | null>(null);
+
+  const [showInvite, setShowInvite] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [invite, setInvite] = useState<{ code: string; expiresAt: string } | null>(null);
   const [generatingInvite, setGeneratingInvite] = useState(false);
 
   const load = useCallback(() => {
     setError(null);
-    return listRegistrations(schoolId, tab)
+    return listRegistrations(schoolId, 'PARENT_REGISTRATION')
       .then(setEntries)
       .catch((e) => setError((e as Error).message));
-  }, [schoolId, tab]);
+  }, [schoolId]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -49,10 +46,11 @@ export function RegistrationInboxScreen({ navigation }: Props) {
   }, [load]);
 
   const handleGenerateInvite = async () => {
+    if (!selectedEmployee) return;
     setGeneratingInvite(true);
     setError(null);
     try {
-      const result = await createTeacherInvite(schoolId);
+      const result = await createTeacherInvite(schoolId, selectedEmployee.id);
       setInvite(result);
     } catch (e) {
       setError((e as Error).message);
@@ -93,48 +91,52 @@ export function RegistrationInboxScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Registration Approvals" onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Parent Registration Approvals" onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <View style={styles.tabRow}>
-          {TABS.map((t) => (
-            <Pressable
-              key={t.key}
-              style={[styles.tab, tab === t.key && styles.tabActive]}
-              onPress={() => {
-                setTab(t.key);
-                setInvite(null);
-              }}
-            >
-              <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>{t.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {tab === 'EMPLOYEE_REGISTRATION' && (
-          <View style={styles.inviteCard}>
-            {invite ? (
-              <>
-                <Text style={styles.inviteLabel}>Share this code with the teacher</Text>
-                <Text style={styles.inviteCode} selectable>
-                  {invite.code}
-                </Text>
-                <Text style={styles.inviteExpiry}>Expires {new Date(invite.expiresAt).toLocaleString()}</Text>
-              </>
-            ) : (
-              <Pressable style={styles.inviteButton} onPress={handleGenerateInvite} disabled={generatingInvite}>
+        <View style={styles.inviteCard}>
+          {invite ? (
+            <>
+              <Text style={styles.inviteLabel}>Share this code with the teacher</Text>
+              <Text style={styles.inviteCode} selectable>
+                {invite.code}
+              </Text>
+              <Text style={styles.inviteExpiry}>Expires {new Date(invite.expiresAt).toLocaleString()}</Text>
+              <Pressable
+                onPress={() => {
+                  setInvite(null);
+                  setSelectedEmployee(null);
+                  setShowInvite(false);
+                }}
+              >
+                <Text style={styles.inviteDone}>Done</Text>
+              </Pressable>
+            </>
+          ) : showInvite ? (
+            <>
+              <Text style={styles.inviteLabel}>Pick the teacher to invite</Text>
+              <EmployeePicker schoolId={schoolId} selectedId={selectedEmployee?.id ?? null} onSelect={setSelectedEmployee} />
+              <Pressable
+                style={[styles.inviteButton, !selectedEmployee && styles.inviteButtonDisabled]}
+                onPress={handleGenerateInvite}
+                disabled={!selectedEmployee || generatingInvite}
+              >
                 <Text style={styles.inviteButtonText}>
-                  {generatingInvite ? 'Generating…' : 'Generate teacher invite code'}
+                  {generatingInvite ? 'Generating…' : 'Generate invite code'}
                 </Text>
               </Pressable>
-            )}
-          </View>
-        )}
+            </>
+          ) : (
+            <Pressable style={styles.inviteButton} onPress={() => setShowInvite(true)}>
+              <Text style={styles.inviteButtonText}>Invite a teacher</Text>
+            </Pressable>
+          )}
+        </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         {!loading && entries.length === 0 && !error && (
-          <Text style={styles.empty}>No pending registrations.</Text>
+          <Text style={styles.empty}>No pending parent registrations.</Text>
         )}
 
         {entries.map((entry) => (
@@ -168,17 +170,6 @@ export function RegistrationInboxScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  tabRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.pill,
-    padding: 4,
-    marginBottom: spacing.md,
-  },
-  tab: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.pill, alignItems: 'center' },
-  tabActive: { backgroundColor: colors.primary },
-  tabText: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
-  tabTextActive: { color: colors.white },
   inviteCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -193,10 +184,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
+  inviteButtonDisabled: { opacity: 0.5 },
   inviteButtonText: { color: colors.white, fontWeight: '700', fontSize: 13 },
-  inviteLabel: { fontSize: 12, color: colors.textMuted },
+  inviteLabel: { fontSize: 12, color: colors.textMuted, marginBottom: spacing.sm },
   inviteCode: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginTop: 4, letterSpacing: 1 },
   inviteExpiry: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+  inviteDone: { color: colors.primary, fontWeight: '700', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },

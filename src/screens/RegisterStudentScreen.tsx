@@ -4,9 +4,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { GoogleSignInCancelledError, getGoogleIdToken } from '../api/googleSignIn';
 import { registerStudent, registerStudentWithGoogle } from '../api/registration';
-import type { RegisterStudentRequest } from '../api/types';
-import ClassSectionPicker from '../components/ClassSectionPicker';
-import { DatePickerField } from '../components/DatePickerField';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
@@ -20,51 +17,27 @@ type AuthMode = 'password' | 'google';
 
 export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }: Props) {
   const [authMode, setAuthMode] = useState<AuthMode>('password');
-  const [form, setForm] = useState<Omit<RegisterStudentRequest, 'classSectionId'>>({
-    rollNumber: '',
-    name: '',
-    dob: '',
-    gender: '',
-    address: '',
-    parentName: '',
-    parentContact: '',
-    admissionDate: '',
-    username: '',
-    password: '',
-  });
-  const [classSectionId, setClassSectionId] = useState<string | null>(null);
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (key: keyof typeof form) => (value: string) => setForm((prev) => ({ ...prev, [key]: value }));
-
-  const coreFieldsFilled =
-    !!form.rollNumber &&
-    !!form.name &&
-    !!form.dob &&
-    !!form.gender &&
-    !!form.address &&
-    !!form.parentName &&
-    !!form.parentContact &&
-    !!classSectionId &&
-    !!form.admissionDate;
-
+  const passwordsMatch = password === confirmPassword;
   const canSubmit =
-    coreFieldsFilled && (authMode === 'google' || (!!form.username && form.password.length >= 8));
+    !!registrationNumber &&
+    (authMode === 'google' || (!!username && password.length >= 8 && passwordsMatch));
 
   const handleSubmit = async () => {
-    if (!canSubmit || !classSectionId) return;
+    if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
     try {
-      let result;
-      if (authMode === 'google') {
-        const idToken = await getGoogleIdToken();
-        const { username, password, ...rest } = form;
-        result = await registerStudentWithGoogle(schoolId, { ...rest, classSectionId, idToken });
-      } else {
-        result = await registerStudent(schoolId, { ...form, classSectionId });
-      }
+      const result =
+        authMode === 'google'
+          ? await registerStudentWithGoogle(schoolId, { registrationNumber, idToken: await getGoogleIdToken() })
+          : await registerStudent(schoolId, { registrationNumber, username, password });
       onSubmitted(result.message);
     } catch (e) {
       if (!(e instanceof GoogleSignInCancelledError)) setError((e as Error).message);
@@ -80,26 +53,16 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
           <Text style={styles.backText}>←</Text>
         </Pressable>
         <Text style={styles.title}>Student registration</Text>
-        <Text style={styles.subtitle}>Pending admin approval after you submit</Text>
+        <Text style={styles.subtitle}>Enter your registration number to link your account</Text>
       </LinearGradient>
 
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
-        <LabeledInput label="Roll number" value={form.rollNumber} onChangeText={set('rollNumber')} placeholder="e.g. 8A-045" />
-        <LabeledInput label="Full name" value={form.name} onChangeText={set('name')} />
-        <DatePickerField label="Date of birth" value={form.dob} onChange={(v) => setForm((p) => ({ ...p, dob: v }))} maximumDate={new Date()} />
-        <LabeledInput label="Gender" value={form.gender} onChangeText={set('gender')} placeholder="e.g. MALE" />
-        <LabeledInput label="Address" value={form.address} onChangeText={set('address')} />
-        <LabeledInput label="Parent name" value={form.parentName} onChangeText={set('parentName')} />
-        <LabeledInput label="Parent contact" value={form.parentContact} onChangeText={set('parentContact')} keyboardType="phone-pad" />
-
-        <Text style={styles.fieldLabel}>Class section</Text>
-        <ClassSectionPicker schoolId={schoolId} selectedId={classSectionId} onSelect={(cs) => setClassSectionId(cs.id)} />
-
-        <DatePickerField
-          label="Admission date"
-          value={form.admissionDate}
-          onChange={(v) => setForm((p) => ({ ...p, admissionDate: v }))}
-          maximumDate={new Date()}
+        <LabeledInput
+          label="Registration number"
+          value={registrationNumber}
+          onChangeText={setRegistrationNumber}
+          autoCapitalize="characters"
+          placeholder="e.g. as given by your school"
         />
 
         <Text style={styles.sectionLabel}>Your login</Text>
@@ -112,11 +75,20 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
           </Pressable>
         </View>
 
-        {authMode === 'password' && (
+        {authMode === 'password' ? (
           <>
-            <LabeledInput label="Username" value={form.username} onChangeText={set('username')} autoCapitalize="none" />
-            <LabeledInput label="Password (min 8 characters)" value={form.password} onChangeText={set('password')} secureTextEntry />
+            <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
+            <LabeledInput label="Password (min 8 characters)" value={password} onChangeText={setPassword} secureTextEntry />
+            <LabeledInput
+              label="Confirm password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+            {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>Passwords don&apos;t match.</Text>}
           </>
+        ) : (
+          <Text style={styles.googleHint}>You&apos;ll sign in with your Google account.</Text>
         )}
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -127,11 +99,7 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
           disabled={!canSubmit || submitting}
         >
           <Text style={styles.submitText}>
-            {submitting
-              ? 'Submitting…'
-              : authMode === 'google'
-                ? 'Continue with Google'
-                : 'Submit registration'}
+            {submitting ? 'Submitting…' : authMode === 'google' ? 'Continue with Google' : 'Submit registration'}
           </Text>
         </Pressable>
       </ScrollView>
@@ -162,17 +130,9 @@ const styles = StyleSheet.create({
   },
   backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
   title: { color: colors.white, fontSize: 20, fontWeight: '800' },
-  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4 },
+  subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4, paddingHorizontal: spacing.lg, textAlign: 'center' },
   form: { flex: 1 },
   formContent: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
   sectionLabel: {
     fontSize: 14,
     fontWeight: '800',
@@ -191,6 +151,8 @@ const styles = StyleSheet.create({
   modeTabActive: { backgroundColor: colors.primary },
   modeTabText: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
   modeTabTextActive: { color: colors.white },
+  googleHint: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.md },
+  mismatch: { color: colors.error, fontSize: 12.5, marginTop: -spacing.sm, marginBottom: spacing.md },
   error: { color: colors.error, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.primary,

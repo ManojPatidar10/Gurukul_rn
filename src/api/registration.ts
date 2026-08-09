@@ -21,8 +21,8 @@ export function registerStudentWithGoogle(schoolId: string, req: RegisterStudent
   return api.post<RegistrationSubmittedResponse>('/api/v1/register/student/google', req, schoolId);
 }
 
-export function createTeacherInvite(schoolId: string) {
-  return api.post<TeacherInviteResponse>('/api/v1/registrations/teacher-invites', {}, schoolId);
+export function createTeacherInvite(schoolId: string, employeeId: string) {
+  return api.post<TeacherInviteResponse>(`/api/v1/employees/${employeeId}/invite`, {}, schoolId);
 }
 
 export function registerTeacher(schoolId: string, req: RegisterTeacherRequest) {
