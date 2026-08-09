@@ -4,8 +4,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { GoogleSignInCancelledError, getGoogleIdToken } from '../api/googleSignIn';
 import { registerTeacher, registerTeacherWithGoogle } from '../api/registration';
-import type { RegisterTeacherRequest } from '../api/types';
-import { DatePickerField } from '../components/DatePickerField';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
@@ -19,43 +17,26 @@ type AuthMode = 'password' | 'google';
 
 export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }: Props) {
   const [authMode, setAuthMode] = useState<AuthMode>('password');
-  const [form, setForm] = useState<RegisterTeacherRequest>({
-    inviteCode: '',
-    name: '',
-    designation: 'Teacher',
-    joinDate: '',
-    contactPhone: '',
-    contactEmail: '',
-    username: '',
-    password: '',
-  });
+  const [inviteCode, setInviteCode] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (key: keyof RegisterTeacherRequest) => (value: string) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
-
-  const coreFieldsFilled = !!form.inviteCode && !!form.name && !!form.designation && !!form.joinDate && !!form.contactPhone;
-
+  const passwordsMatch = password === confirmPassword;
   const canSubmit =
-    coreFieldsFilled &&
-    (authMode === 'google'
-      ? true
-      : !!form.contactEmail && !!form.username && form.password.length >= 8);
+    !!inviteCode && (authMode === 'google' || (!!username && password.length >= 8 && passwordsMatch));
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
     try {
-      let result;
-      if (authMode === 'google') {
-        const idToken = await getGoogleIdToken();
-        const { username, password, contactEmail, ...rest } = form;
-        result = await registerTeacherWithGoogle(schoolId, { ...rest, idToken });
-      } else {
-        result = await registerTeacher(schoolId, form);
-      }
+      const result =
+        authMode === 'google'
+          ? await registerTeacherWithGoogle(schoolId, { inviteCode, idToken: await getGoogleIdToken() })
+          : await registerTeacher(schoolId, { inviteCode, username, password });
       onSubmitted(result.message);
     } catch (e) {
       if (!(e instanceof GoogleSignInCancelledError)) setError((e as Error).message);
@@ -77,15 +58,11 @@ export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }:
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
         <LabeledInput
           label="Invite code"
-          value={form.inviteCode}
-          onChangeText={set('inviteCode')}
+          value={inviteCode}
+          onChangeText={setInviteCode}
           autoCapitalize="characters"
           placeholder="e.g. P74BRN7X"
         />
-        <LabeledInput label="Full name" value={form.name} onChangeText={set('name')} />
-        <LabeledInput label="Designation" value={form.designation} onChangeText={set('designation')} />
-        <DatePickerField label="Join date" value={form.joinDate} onChange={(v) => setForm((p) => ({ ...p, joinDate: v }))} maximumDate={new Date()} />
-        <LabeledInput label="Contact phone" value={form.contactPhone} onChangeText={set('contactPhone')} keyboardType="phone-pad" />
 
         <Text style={styles.sectionLabel}>Your login</Text>
         <View style={styles.modeRow}>
@@ -99,12 +76,18 @@ export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }:
 
         {authMode === 'password' ? (
           <>
-            <LabeledInput label="Contact email" value={form.contactEmail} onChangeText={set('contactEmail')} autoCapitalize="none" keyboardType="email-address" />
-            <LabeledInput label="Username" value={form.username} onChangeText={set('username')} autoCapitalize="none" />
-            <LabeledInput label="Password (min 8 characters)" value={form.password} onChangeText={set('password')} secureTextEntry />
+            <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
+            <LabeledInput label="Password (min 8 characters)" value={password} onChangeText={setPassword} secureTextEntry />
+            <LabeledInput
+              label="Confirm password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+            {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>Passwords don&apos;t match.</Text>}
           </>
         ) : (
-          <Text style={styles.googleHint}>Your email will come from your Google account.</Text>
+          <Text style={styles.googleHint}>You&apos;ll sign in with your Google account.</Text>
         )}
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -168,6 +151,7 @@ const styles = StyleSheet.create({
   modeTabText: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
   modeTabTextActive: { color: colors.white },
   googleHint: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.md },
+  mismatch: { color: colors.error, fontSize: 12.5, marginTop: -spacing.sm, marginBottom: spacing.md },
   error: { color: colors.error, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.primary,

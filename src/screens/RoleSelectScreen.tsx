@@ -12,9 +12,9 @@ interface Props {
 }
 
 const ROLES: { role: RegistrationRole; title: string; description: string }[] = [
-  { role: 'student', title: "I'm a student", description: 'Register with your roll number and class' },
+  { role: 'student', title: "I'm a student", description: 'Register with the registration number given by your school' },
   { role: 'teacher', title: "I'm a teacher", description: 'Requires an invite code from your admin' },
-  { role: 'parent', title: "I'm a parent", description: "Link to your child's roll number" },
+  { role: 'parent', title: "I'm a parent", description: "Link using your child's registration number and your contact on file" },
 ];
 
 export default function RoleSelectScreen({ schoolName, onBack, onSelectRole }: Props) {

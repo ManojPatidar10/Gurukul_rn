@@ -67,7 +67,6 @@ export function ProfileScreen({ navigation }: Props) {
         setEmployee(updated);
       } else if (student) {
         const updated = await updateStudent(schoolId, student.id, {
-          rollNumber: student.rollNumber,
           name,
           dob: student.dob,
           gender: student.gender,

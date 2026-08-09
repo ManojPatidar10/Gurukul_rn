@@ -163,6 +163,9 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           <Field label="Class-section" value={student.classSectionLabel} />
           <Field label="Date of birth" value={student.dob} />
           <Field label="Gender" value={student.gender} />
+          {isViewerAdmin && student.registrationNumber && (
+            <Field label="Registration number" value={student.registrationNumber} />
+          )}
           {!isViewerStudent && (
             <>
               <Field label="Address" value={student.address} />

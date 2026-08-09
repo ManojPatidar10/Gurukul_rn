@@ -4,7 +4,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { GoogleSignInCancelledError, getGoogleIdToken } from '../api/googleSignIn';
 import { registerParent, registerParentWithGoogle } from '../api/registration';
-import type { RegisterParentRequest } from '../api/types';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
@@ -18,39 +17,33 @@ type AuthMode = 'password' | 'google';
 
 export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: Props) {
   const [authMode, setAuthMode] = useState<AuthMode>('password');
-  const [form, setForm] = useState<RegisterParentRequest>({
-    name: '',
-    email: '',
-    phone: '',
-    studentRollNumber: '',
-    username: '',
-    password: '',
-  });
+  const [studentRegistrationNumber, setStudentRegistrationNumber] = useState('');
+  const [parentContact, setParentContact] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (key: keyof RegisterParentRequest) => (value: string) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
-
-  const coreFieldsFilled = !!form.name && !!form.phone && !!form.studentRollNumber;
-
+  const passwordsMatch = password === confirmPassword;
   const canSubmit =
-    coreFieldsFilled &&
-    (authMode === 'google' ? true : !!form.email && !!form.username && form.password.length >= 8);
+    !!studentRegistrationNumber &&
+    !!parentContact &&
+    (authMode === 'google' || (!!username && password.length >= 8 && passwordsMatch));
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
     try {
-      let result;
-      if (authMode === 'google') {
-        const idToken = await getGoogleIdToken();
-        const { username, password, email, ...rest } = form;
-        result = await registerParentWithGoogle(schoolId, { ...rest, idToken });
-      } else {
-        result = await registerParent(schoolId, form);
-      }
+      const result =
+        authMode === 'google'
+          ? await registerParentWithGoogle(schoolId, {
+              studentRegistrationNumber,
+              parentContact,
+              idToken: await getGoogleIdToken(),
+            })
+          : await registerParent(schoolId, { studentRegistrationNumber, parentContact, username, password });
       onSubmitted(result.message);
     } catch (e) {
       if (!(e instanceof GoogleSignInCancelledError)) setError((e as Error).message);
@@ -66,18 +59,23 @@ export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: 
           <Text style={styles.backText}>←</Text>
         </Pressable>
         <Text style={styles.title}>Parent registration</Text>
-        <Text style={styles.subtitle}>Link to your child using their roll number</Text>
+        <Text style={styles.subtitle}>Enter your child&apos;s registration number to link your account</Text>
       </LinearGradient>
 
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
-        <LabeledInput label="Your name" value={form.name} onChangeText={set('name')} />
-        <LabeledInput label="Phone" value={form.phone} onChangeText={set('phone')} keyboardType="phone-pad" />
         <LabeledInput
-          label="Child's roll number"
-          value={form.studentRollNumber}
-          onChangeText={set('studentRollNumber')}
+          label="Child's registration number"
+          value={studentRegistrationNumber}
+          onChangeText={setStudentRegistrationNumber}
           autoCapitalize="characters"
-          placeholder="e.g. 8A-045"
+          placeholder="e.g. as given by the school"
+        />
+        <LabeledInput
+          label="Your contact number on file"
+          value={parentContact}
+          onChangeText={setParentContact}
+          keyboardType="phone-pad"
+          placeholder="Registered with the school"
         />
 
         <Text style={styles.sectionLabel}>Your login</Text>
@@ -92,12 +90,18 @@ export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: 
 
         {authMode === 'password' ? (
           <>
-            <LabeledInput label="Email" value={form.email} onChangeText={set('email')} autoCapitalize="none" keyboardType="email-address" />
-            <LabeledInput label="Username" value={form.username} onChangeText={set('username')} autoCapitalize="none" />
-            <LabeledInput label="Password (min 8 characters)" value={form.password} onChangeText={set('password')} secureTextEntry />
+            <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
+            <LabeledInput label="Password (min 8 characters)" value={password} onChangeText={setPassword} secureTextEntry />
+            <LabeledInput
+              label="Confirm password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+            {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>Passwords don&apos;t match.</Text>}
           </>
         ) : (
-          <Text style={styles.googleHint}>Your email will come from your Google account.</Text>
+          <Text style={styles.googleHint}>You&apos;ll sign in with your Google account.</Text>
         )}
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -161,6 +165,7 @@ const styles = StyleSheet.create({
   modeTabText: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
   modeTabTextActive: { color: colors.white },
   googleHint: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.md },
+  mismatch: { color: colors.error, fontSize: 12.5, marginTop: -spacing.sm, marginBottom: spacing.md },
   error: { color: colors.error, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.primary,
