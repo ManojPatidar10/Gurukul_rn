@@ -39,7 +39,9 @@
       ],
       [
         "expo-av",
-        { "microphonePermission": "Gurukul uses your microphone for video calls." }
+        {
+          "microphonePermission": "Gurukul uses your microphone for video calls."
+        }
       ],
       [
         "expo-location",
@@ -49,7 +51,8 @@
       ],
       "expo-font",
       "expo-notifications",
-      "./plugins/withCleartextTraffic.js"
+      "./plugins/withCleartextTraffic.js",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "eas": {

@@ -1,8 +1,12 @@
 import { api } from './client';
-import type { LoginRequest, LoginResponse, OtpRequest, OtpVerifyRequest } from './types';
+import type { GoogleLoginRequest, LoginRequest, LoginResponse, OtpRequest, OtpVerifyRequest } from './types';
 
 export function login(schoolId: string, req: LoginRequest) {
   return api.post<LoginResponse>('/api/v1/auth/login', req, schoolId);
+}
+
+export function loginWithGoogle(schoolId: string, req: GoogleLoginRequest) {
+  return api.post<LoginResponse>('/api/v1/auth/google', req, schoolId);
 }
 
 export function requestOtp(schoolId: string, req: OtpRequest) {
