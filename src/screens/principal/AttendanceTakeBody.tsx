@@ -1,21 +1,20 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getEmployee, searchEmployees } from '../../api/employees';
 import { listStudentsInClassSection } from '../../api/classSections';
 import { getSectionAttendance, markSectionAttendance } from '../../api/attendance';
-import type { AttendanceStatus, Employee, Student } from '../../api/types';
+import type { AttendanceStatus, ClassSection, Employee, Student } from '../../api/types';
 import { DatePickerField } from '../../components/DatePickerField';
 import { ScreenContainer } from '../../components/ScreenContainer';
-import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
-import type { PrincipalStackParamList } from '../../types/principal';
 
-type Props = NativeStackScreenProps<PrincipalStackParamList, 'AttendanceTake'>;
+interface Props {
+  classSection: ClassSection;
+}
 
 const STATUSES: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'LATE', 'HALF_DAY'];
 const SEARCH_DEBOUNCE_MS = 300;
@@ -27,10 +26,9 @@ const statusColor: Record<AttendanceStatus, string> = {
   HALF_DAY: colors.textSecondary,
 };
 
-export function AttendanceTakeScreen({ route, navigation }: Props) {
+export function AttendanceTakeBody({ classSection }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
-  const classSection = route.params.classSection;
   const isAdmin = session.role === 'ADMIN';
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -150,14 +148,8 @@ export function AttendanceTakeScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={styles.root}>
-      <ScreenHeader
-        title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Attendance"
-        onBack={() => navigation.goBack()}
-      />
-      <ScreenContainer>
-        <DatePickerField label="Date" value={date} onChange={setDate} />
+    <ScreenContainer>
+      <DatePickerField label="Date" value={date} onChange={setDate} />
         <Pressable style={styles.loadButton} onPress={handleLoadDate} disabled={loadingDate}>
           <Text style={styles.loadButtonText}>{loadingDate ? 'Loading…' : 'Load attendance for this date'}</Text>
         </Pressable>
@@ -275,13 +267,11 @@ export function AttendanceTakeScreen({ route, navigation }: Props) {
             <Text style={styles.submitText}>{submitting ? 'Saving…' : 'Save attendance'}</Text>
           </Pressable>
         )}
-      </ScreenContainer>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
   label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
   loadButton: {
     backgroundColor: colors.primaryLight,

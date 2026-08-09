@@ -104,6 +104,12 @@ const featureActions: FeatureAction[] = [
     icon: 'clipboard-check',
     description: "Today's staff roster and check-in history",
   },
+  {
+    id: 'registrationInbox',
+    title: 'Registration Approvals',
+    icon: 'user-check',
+    description: 'Review pending student, teacher, and parent registrations',
+  },
 ];
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
@@ -116,10 +122,10 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAtt
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
-const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'gradingScale', 'schoolLocation', 'staffAttendance'];
+const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'gradingScale', 'schoolLocation', 'staffAttendance', 'registrationInbox'];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
-const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'gradingScale', 'schoolLocation', 'staffAttendance'];
+const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'gradingScale', 'schoolLocation', 'staffAttendance', 'registrationInbox'];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -140,6 +146,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   markMyAttendance: 'MarkMyAttendance',
   schoolLocation: 'SchoolLocationSettings',
   staffAttendance: 'StaffAttendance',
+  registrationInbox: 'RegistrationInbox',
   myAttendance: 'AttendanceHistory',
 };
 

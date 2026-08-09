@@ -14,9 +14,10 @@ interface Props {
   onBack: () => void;
   onUsePassword: () => void;
   onLoggedIn: (session: Session) => void;
+  onRegister?: () => void;
 }
 
-export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePassword, onLoggedIn }: Props) {
+export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePassword, onLoggedIn, onRegister }: Props) {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -76,7 +77,11 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
           <LabeledInput label="OTP" value={otp} onChangeText={setOtp} keyboardType="number-pad" placeholder="1234" />
         )}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && (
+          <Text style={[styles.error, error.includes('pending admin approval') && styles.pendingNotice]}>
+            {error}
+          </Text>
+        )}
 
         {!otpSent ? (
           <Pressable
@@ -104,6 +109,11 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
         <Pressable onPress={onUsePassword} style={styles.linkButton}>
           <Text style={styles.linkText}>Sign in with username & password instead</Text>
         </Pressable>
+        {onRegister && (
+          <Pressable onPress={onRegister} style={styles.linkButton}>
+            <Text style={styles.linkText}>New here? Create an account</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -145,6 +155,7 @@ const styles = StyleSheet.create({
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
+  pendingNotice: { color: colors.warning, fontWeight: '600' },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

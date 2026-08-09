@@ -1,20 +1,19 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getSectionAttendanceHistory } from '../../api/attendance';
-import type { SectionAttendanceHistory } from '../../api/types';
+import type { ClassSection, SectionAttendanceHistory } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
-import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
-import type { PrincipalStackParamList } from '../../types/principal';
 
-type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAttendanceHistory'>;
+interface Props {
+  classSection: ClassSection;
+  onSelectStudent: (student: { id: string; name: string }) => void;
+}
 
-export function SectionAttendanceHistoryScreen({ route, navigation }: Props) {
+export function SectionAttendanceHistoryBody({ classSection, onSelectStudent }: Props) {
   const schoolId = useSchoolId();
-  const classSection = route.params.classSection;
   const [history, setHistory] = useState<SectionAttendanceHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,13 +26,7 @@ export function SectionAttendanceHistoryScreen({ route, navigation }: Props) {
   }, [schoolId, classSection.id]);
 
   return (
-    <View style={styles.root}>
-      <ScreenHeader
-        title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Attendance history"
-        onBack={() => navigation.goBack()}
-      />
-      <ScreenContainer>
+    <ScreenContainer>
         {loading && <ActivityIndicator style={styles.loading} />}
         {error && <Text style={styles.error}>{error}</Text>}
 
@@ -48,11 +41,7 @@ export function SectionAttendanceHistoryScreen({ route, navigation }: Props) {
             <Pressable
               key={student.studentId}
               style={styles.row}
-              onPress={() =>
-                navigation.navigate('AttendanceHistory', {
-                  student: { id: student.studentId, name: student.studentName },
-                })
-              }
+              onPress={() => onSelectStudent({ id: student.studentId, name: student.studentName })}
             >
               <View style={styles.rowBody}>
                 <Text style={styles.rowName}>
@@ -67,13 +56,11 @@ export function SectionAttendanceHistoryScreen({ route, navigation }: Props) {
             </Pressable>
           );
         })}
-      </ScreenContainer>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: 40 },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },

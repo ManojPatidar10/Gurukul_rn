@@ -608,12 +608,16 @@ export interface EmployeeAttendanceHistory {
   records: StaffAttendanceRecord[];
 }
 
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
-export type OwnerType = 'EMPLOYEE' | 'STUDENT';
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
+export type OwnerType = 'EMPLOYEE' | 'STUDENT' | 'PARENT';
 
 export interface LoginRequest {
   username: string;
   password: string;
+}
+
+export interface GoogleLoginRequest {
+  idToken: string;
 }
 
 export interface LoginResponse {
@@ -624,6 +628,80 @@ export interface LoginResponse {
   role: UserRole;
   schoolId: string;
   username: string;
+}
+
+export interface RegistrationSubmittedResponse {
+  entityId: string;
+  message: string;
+}
+
+export interface RegisterStudentRequest {
+  rollNumber: string;
+  name: string;
+  dob: string;
+  gender: string;
+  address: string;
+  parentName: string;
+  parentContact: string;
+  classSectionId: string;
+  admissionDate: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterStudentGoogleRequest = Omit<RegisterStudentRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export interface TeacherInviteResponse {
+  code: string;
+  expiresAt: string;
+}
+
+export interface RegisterTeacherRequest {
+  inviteCode: string;
+  name: string;
+  designation: string;
+  joinDate: string;
+  contactPhone: string;
+  contactEmail: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterTeacherGoogleRequest = Omit<RegisterTeacherRequest, 'username' | 'password' | 'contactEmail'> & {
+  idToken: string;
+};
+
+export interface RegisterParentRequest {
+  name: string;
+  email: string;
+  phone: string;
+  studentRollNumber: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterParentGoogleRequest = Omit<RegisterParentRequest, 'username' | 'password' | 'email'> & {
+  idToken: string;
+};
+
+export type RegistrationEntityType = 'STUDENT_REGISTRATION' | 'EMPLOYEE_REGISTRATION' | 'PARENT_REGISTRATION';
+
+export interface RegistrationInboxEntry {
+  entityId: string;
+  entityType: RegistrationEntityType;
+  displayName: string;
+  submittedBy: string;
+  submittedAt: string;
+}
+
+export interface RegistrationDecisionRequest {
+  comment?: string;
+}
+
+export interface LinkChildRequest {
+  studentRollNumber: string;
 }
 
 export interface OtpRequest {

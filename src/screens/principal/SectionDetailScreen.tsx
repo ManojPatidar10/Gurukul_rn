@@ -37,13 +37,8 @@ export function SectionDetailScreen({ route, navigation }: Props) {
       ? [
           {
             title: 'Attendance',
-            description: 'Take or edit attendance for a date',
+            description: 'Take attendance for a date, or view history',
             onPress: () => navigation.navigate('AttendanceTake', { classSection }),
-          },
-          {
-            title: 'Attendance history',
-            description: "Every student's attendance totals for this section",
-            onPress: () => navigation.navigate('SectionAttendanceHistory', { classSection }),
           },
         ]
       : []),
