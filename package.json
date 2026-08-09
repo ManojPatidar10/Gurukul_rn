@@ -4,7 +4,7 @@
   "main": "index.ts",
   "private": true,
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --dev-client",
     "android": "node scripts/run-android.js",
     "ios": "expo run:ios",
     "web": "expo start --web",
