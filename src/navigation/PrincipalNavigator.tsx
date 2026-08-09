@@ -2,6 +2,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { AssessmentDetailScreen } from '../screens/principal/AssessmentDetailScreen';
 import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen';
+import { AssessmentResultsScreen } from '../screens/principal/AssessmentResultsScreen';
+import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
+import { PublishReportCardsScreen } from '../screens/principal/PublishReportCardsScreen';
+import { GradingScaleScreen } from '../screens/principal/GradingScaleScreen';
+import { MarkMyAttendanceScreen } from '../screens/principal/MarkMyAttendanceScreen';
+import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocationSettingsScreen';
+import { StaffAttendanceScreen } from '../screens/principal/StaffAttendanceScreen';
+import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAttendanceHistoryScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
 import { SectionAttendanceHistoryScreen } from '../screens/principal/SectionAttendanceHistoryScreen';
@@ -135,9 +143,17 @@ export function PrincipalNavigator() {
         <Stack.Screen name="SectionAssessmentsList" component={SectionAssessmentsListScreen} />
         <Stack.Screen name="AssessmentForm" component={AssessmentFormScreen} />
         <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
+        <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
         <Stack.Screen name="AttendanceTake" component={AttendanceTakeScreen} />
         <Stack.Screen name="SectionAttendanceHistory" component={SectionAttendanceHistoryScreen} />
         <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+        <Stack.Screen name="ReportCard" component={ReportCardScreen} />
+        <Stack.Screen name="PublishReportCards" component={PublishReportCardsScreen} />
+        <Stack.Screen name="GradingScale" component={GradingScaleScreen} />
+        <Stack.Screen name="MarkMyAttendance" component={MarkMyAttendanceScreen} />
+        <Stack.Screen name="SchoolLocationSettings" component={SchoolLocationSettingsScreen} />
+        <Stack.Screen name="StaffAttendance" component={StaffAttendanceScreen} />
+        <Stack.Screen name="EmployeeAttendanceHistory" component={EmployeeAttendanceHistoryScreen} />
         <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
         <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />

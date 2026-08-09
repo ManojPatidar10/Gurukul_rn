@@ -123,9 +123,9 @@ export function StudentPerformanceScreen({ route, navigation }: Props) {
         maxMarks: Number(maxMarks),
         teacherId,
       });
-      await submitAssessmentResults(schoolId, assessment.id, {
-        results: [{ studentId: student.id, marksObtained: Number(marksObtained) }],
-      });
+      await submitAssessmentResults(schoolId, assessment.id, [
+        { studentId: student.id, marksObtained: Number(marksObtained), absent: false },
+      ]);
       resetForm();
       setShowEntryForm(false);
       load();

@@ -22,7 +22,8 @@
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
-        "MODIFY_AUDIO_SETTINGS"
+        "MODIFY_AUDIO_SETTINGS",
+        "ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -40,7 +41,14 @@
         "expo-av",
         { "microphonePermission": "Gurukul uses your microphone for video calls." }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Gurukul uses your location to confirm you're at the school when self-marking attendance."
+        }
+      ],
       "expo-font",
+      "expo-notifications",
       "./plugins/withCleartextTraffic.js",
       "expo-localization"
     ],

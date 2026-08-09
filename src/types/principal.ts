@@ -26,7 +26,13 @@ export type FeatureId =
   | 'arena'
   | 'events'
   | 'academicHelper'
-  | 'teacherTools';
+  | 'teacherTools'
+  | 'reportCard'
+  | 'gradingScale'
+  | 'markMyAttendance'
+  | 'schoolLocation'
+  | 'staffAttendance'
+  | 'myAttendance';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -79,9 +85,17 @@ export type PrincipalStackParamList = {
   SectionAssessmentsList: { classSection: ClassSection };
   AssessmentForm: { classSection: ClassSection; assessment?: Assessment };
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
+  AssessmentResults: { assessment: Assessment };
   AttendanceTake: { classSection: ClassSection };
   SectionAttendanceHistory: { classSection: ClassSection };
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
+  ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
+  PublishReportCards: { classSection: ClassSection };
+  GradingScale: undefined;
+  MarkMyAttendance: undefined;
+  SchoolLocationSettings: undefined;
+  StaffAttendance: undefined;
+  EmployeeAttendanceHistory: { employee: Pick<Employee, 'id' | 'name'> };
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };

@@ -6,7 +6,7 @@ import { getEmployee, searchEmployees } from '../../api/employees';
 import { listStudentsInClassSection } from '../../api/classSections';
 import { getSectionAttendance, markSectionAttendance } from '../../api/attendance';
 import type { AttendanceStatus, Employee, Student } from '../../api/types';
-import LabeledInput from '../../components/LabeledInput';
+import { DatePickerField } from '../../components/DatePickerField';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
@@ -157,7 +157,7 @@ export function AttendanceTakeScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
-        <LabeledInput label="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} />
+        <DatePickerField label="Date" value={date} onChange={setDate} />
         <Pressable style={styles.loadButton} onPress={handleLoadDate} disabled={loadingDate}>
           <Text style={styles.loadButtonText}>{loadingDate ? 'Loading…' : 'Load attendance for this date'}</Text>
         </Pressable>

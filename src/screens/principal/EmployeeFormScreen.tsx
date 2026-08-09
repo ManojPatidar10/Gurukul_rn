@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { createEmployee, updateEmployee } from '../../api/employees';
 import type { EmployeeRequest } from '../../api/types';
-import DateField from '../../components/DateField';
+import { DatePickerField } from '../../components/DatePickerField';
 import Dropdown from '../../components/Dropdown';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -76,7 +76,7 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
       <ScreenContainer>
         <LabeledInput label={t('employees.form.name')} required value={form.name} onChangeText={set('name')} />
         <LabeledInput label={t('employees.form.designation')} required value={form.designation} onChangeText={set('designation')} />
-        <DateField label={t('employees.form.joinDate')} required value={form.joinDate} onChange={set('joinDate')} maximumDate={new Date()} />
+        <DatePickerField label={t('employees.form.joinDate')} value={form.joinDate} onChange={set('joinDate')} maximumDate={new Date()} />
         <LabeledInput
           label={t('employees.form.bankAccount')}
           value={form.bankAccount}

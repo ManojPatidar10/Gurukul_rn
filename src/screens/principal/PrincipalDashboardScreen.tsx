@@ -25,20 +25,37 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
 // needed for teachers/admins, who use it to author quiz questions rather than play.
-const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification'];
-// Arena (question authoring) is teacher-only - a principal/admin has no need to write quiz
-// questions, so this doesn't fall into the general non-student bucket above.
-const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena'];
+const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAttendance'];
+// Arena (question authoring) and self-mark check-in are teacher-only concepts - a principal/admin
+// self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
+const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
 // Teacher Tools is a principal-driven workflow (principal picks a teacher to act on behalf of),
 // not something a student would ever use either.
-const STUDENT_HIDDEN_FEATURES: FeatureId[] = ['vendors', 'payroll', 'infraExpenses', 'teacherTools'];
+const STUDENT_HIDDEN_FEATURES: FeatureId[] = [
+  'vendors',
+  'payroll',
+  'infraExpenses',
+  'teacherTools',
+  'gradingScale',
+  'schoolLocation',
+  'staffAttendance',
+];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
 // Teacher Tools is principal-only for the same reason as above - a teacher acting "as" another
 // teacher doesn't fit the feature's design.
-const TEACHER_HIDDEN_FEATURES: FeatureId[] = ['employees', 'vendors', 'fees', 'infraExpenses', 'teacherTools'];
+const TEACHER_HIDDEN_FEATURES: FeatureId[] = [
+  'employees',
+  'vendors',
+  'fees',
+  'infraExpenses',
+  'teacherTools',
+  'gradingScale',
+  'schoolLocation',
+  'staffAttendance',
+];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   students: 'StudentsList',
@@ -56,6 +73,12 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   events: 'EventsList',
   academicHelper: 'AcademicHelper',
   teacherTools: 'TeacherToolsHub',
+  reportCard: 'ReportCard',
+  gradingScale: 'GradingScale',
+  markMyAttendance: 'MarkMyAttendance',
+  schoolLocation: 'SchoolLocationSettings',
+  staffAttendance: 'StaffAttendance',
+  myAttendance: 'AttendanceHistory',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -113,13 +136,19 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'events', title: t('dashboard.features.events.title'), icon: 'calendar-alt', description: t('dashboard.features.events.description') },
     { id: 'academicHelper', title: t('dashboard.features.academicHelper.title'), icon: 'lightbulb', description: t('dashboard.features.academicHelper.description') },
     { id: 'teacherTools', title: t('dashboard.features.teacherTools.title'), icon: 'chalkboard-teacher', description: t('dashboard.features.teacherTools.description') },
+    { id: 'reportCard', title: t('dashboard.features.reportCard.title'), icon: 'file-alt', description: t('dashboard.features.reportCard.description') },
+    { id: 'myAttendance', title: t('dashboard.features.myAttendance.title'), icon: 'calendar-check', description: t('dashboard.features.myAttendance.description') },
+    { id: 'gradingScale', title: t('dashboard.features.gradingScale.title'), icon: 'sliders-h', description: t('dashboard.features.gradingScale.description') },
+    { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
+    { id: 'schoolLocation', title: t('dashboard.features.schoolLocation.title'), icon: 'map-pin', description: t('dashboard.features.schoolLocation.description') },
+    { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
   ];
 
   const visibleFeatures = featureActions
     .filter((feature) => {
       if (feature.id === 'myClassSection') return isTeacher && !!myHomeroomSection;
-      if (session.role === 'ADMIN') return true;
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
+      if (session.role === 'ADMIN') return true;
       if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';
       if (isStudent && STUDENT_HIDDEN_FEATURES.includes(feature.id)) return false;
       if (isTeacher && TEACHER_HIDDEN_FEATURES.includes(feature.id)) return false;
@@ -253,6 +282,18 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
                 }
                 if (isStudent && feature.id === 'fees') {
                   navigation.navigate('MyFees');
+                  return;
+                }
+                if (isStudent && feature.id === 'reportCard') {
+                  navigation.navigate('ReportCard', {
+                    student: { id: session.ownerId, name: myName ?? session.username },
+                  });
+                  return;
+                }
+                if (isStudent && feature.id === 'myAttendance') {
+                  navigation.navigate('AttendanceHistory', {
+                    student: { id: session.ownerId, name: myName ?? session.username },
+                  });
                   return;
                 }
                 if (isTeacher && feature.id === 'students') {

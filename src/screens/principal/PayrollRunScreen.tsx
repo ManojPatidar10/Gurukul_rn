@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { createPayrollRun, listPayrollRunLines, payPayrollRun, processPayrollRun } from '../../api/payrollRuns';
 import type { PayrollLine, PayrollRun } from '../../api/types';
-import DateField from '../../components/DateField';
+import { DatePickerField } from '../../components/DatePickerField';
 import Dropdown from '../../components/Dropdown';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -176,7 +176,7 @@ export function PayrollRunScreen({ navigation }: Props) {
                   value={paymentReference}
                   onChangeText={setPaymentReference}
                 />
-                <DateField label={t('payroll.run.transactionDate')} value={transactionDate} onChange={setTransactionDate} />
+                <DatePickerField label={t('payroll.run.transactionDate')} value={transactionDate} onChange={setTransactionDate} />
                 <Pressable
                   style={[styles.button, (!paymentMethod || busy) && styles.buttonDisabled]}
                   onPress={handlePay}

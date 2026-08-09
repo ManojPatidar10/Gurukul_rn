@@ -17,6 +17,9 @@ export interface School {
   directorName: string;
   upiVpa: string | null;
   upiPayeeName: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geofenceRadiusMeters: number;
   studentCount: number;
   classSectionCount: number;
   teacherCount: number;
@@ -36,6 +39,12 @@ export interface SchoolUpdateRequest {
   directorName: string;
   upiVpa?: string;
   upiPayeeName?: string;
+}
+
+export interface SchoolLocationUpdateRequest {
+  latitude: number;
+  longitude: number;
+  geofenceRadiusMeters: number;
 }
 
 export interface SchoolRegistrationRequest {
@@ -417,6 +426,7 @@ export interface Assessment {
   description: string;
   createdByTeacherId: string;
   createdByTeacherName: string;
+  term: string | null;
 }
 
 export interface AssessmentRequest {
@@ -427,6 +437,72 @@ export interface AssessmentRequest {
   maxMarks: number;
   description?: string;
   teacherId: string;
+  term?: string;
+}
+
+export interface AssessmentResultEntry {
+  studentId: string;
+  marksObtained?: number;
+  absent: boolean;
+  remarks?: string;
+}
+
+export interface StudentResult {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  marksObtained: number | null;
+  absent: boolean;
+  remarks: string | null;
+}
+
+export interface AssessmentResults {
+  assessmentId: string;
+  assessmentTitle: string;
+  maxMarks: number;
+  results: StudentResult[];
+}
+
+export interface GradingBand {
+  id: string | null;
+  minPercentage: number;
+  maxPercentage: number;
+  label: string;
+}
+
+export interface SubjectResult {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  maxMarks: number;
+  marksObtained: number;
+  percentage: number;
+  grade: string;
+}
+
+export interface ReportCard {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  term: string;
+  subjects: SubjectResult[];
+  totalMaxMarks: number;
+  totalMarksObtained: number;
+  overallPercentage: number;
+  overallGrade: string;
+  attendancePercentage: number | null;
+  published: boolean;
+  publishedAt: string | null;
+}
+
+export interface ReportCardPublication {
+  classSectionId: string;
+  term: string;
+  publishedAt: string;
+  publishedByEmployeeName: string;
 }
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
@@ -508,6 +584,53 @@ export interface SectionAttendanceHistory {
   students: SectionStudentAttendanceSummary[];
 }
 
+export interface SelfMarkAttendanceRequest {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
+
+export interface StaffAttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  attendanceDate: string;
+  status: AttendanceStatus;
+  markedByEmployeeId: string;
+  markedByEmployeeName: string;
+  remarks: string | null;
+  selfMarked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaffAttendanceEntry {
+  employeeId: string;
+  employeeName: string;
+  designation: string;
+  status: AttendanceStatus | null;
+  remarks: string | null;
+  selfMarked: boolean;
+}
+
+export interface StaffAttendanceRoster {
+  date: string;
+  entries: StaffAttendanceEntry[];
+}
+
+export interface EmployeeAttendanceHistory {
+  employeeId: string;
+  employeeName: string;
+  from: string | null;
+  to: string | null;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+  records: StaffAttendanceRecord[];
+}
+
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
 export type OwnerType = 'EMPLOYEE' | 'STUDENT';
 
@@ -576,11 +699,26 @@ export interface Message {
   senderOwnerId: string | null;
   content: string;
   sentAt: string;
+  attachmentUrl: string | null;
+  attachmentContentType: string | null;
+  attachmentFileName: string | null;
 }
 
 export interface MessageHistoryResponse {
   messages: Message[];
   hasMore: boolean;
+}
+
+export interface PresignChatAttachmentRequest {
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+}
+
+export interface PresignChatAttachmentResponse {
+  uploadUrl: string;
+  objectKey: string;
+  expiresAt: string;
 }
 
 export type AnnouncementScope = 'SCHOOL' | 'CLASS' | 'GRADE';
@@ -1010,16 +1148,6 @@ export interface EventPollVoteRequest {
   optionId: string;
 }
 
-export interface AssessmentResultEntry {
-  studentId: string;
-  marksObtained: number;
-  remarks?: string;
-}
-
-export interface BulkAssessmentResultRequest {
-  results: AssessmentResultEntry[];
-}
-
 export interface AssessmentResultResponse {
   id: string;
   assessmentId: string;
@@ -1029,7 +1157,7 @@ export interface AssessmentResultResponse {
   studentId: string;
   studentName: string;
   rollNumber: string;
-  marksObtained: number;
+  marksObtained: number | null;
   maxMarks: number;
   percentage: number;
   remarks: string | null;

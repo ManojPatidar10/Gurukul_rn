@@ -5,6 +5,8 @@ import type {
   CreateAnnouncementRequest,
   CreateConversationRequest,
   MessageHistoryResponse,
+  PresignChatAttachmentRequest,
+  PresignChatAttachmentResponse,
 } from './types';
 
 export function listConversations(schoolId: string) {
@@ -17,6 +19,18 @@ export function createConversation(schoolId: string, req: CreateConversationRequ
 
 export function getConversationMessages(schoolId: string, conversationId: string, page = 0) {
   return api.get<MessageHistoryResponse>(`/api/v1/chat/conversations/${conversationId}/messages?page=${page}`, schoolId);
+}
+
+export function presignChatAttachment(
+  schoolId: string,
+  conversationId: string,
+  req: PresignChatAttachmentRequest
+) {
+  return api.post<PresignChatAttachmentResponse>(
+    `/api/v1/chat/conversations/${conversationId}/attachments/presign`,
+    req,
+    schoolId
+  );
 }
 
 export function getOrCreateBotConversation(schoolId: string) {

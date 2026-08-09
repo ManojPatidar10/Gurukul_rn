@@ -2,8 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getStudentAttendanceHistory } from '../../api/attendance';
-import type { AttendanceStatus, StudentAttendanceHistory } from '../../api/types';
+import { getEmployeeAttendanceHistory } from '../../api/staffAttendance';
+import type { AttendanceStatus, EmployeeAttendanceHistory } from '../../api/types';
 import { toIsoDate } from '../../components/DatePickerField';
 import { MonthAttendanceCalendar } from '../../components/MonthAttendanceCalendar';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -12,7 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
-type Props = NativeStackScreenProps<PrincipalStackParamList, 'AttendanceHistory'>;
+type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeAttendanceHistory'>;
 type ViewMode = 'calendar' | 'list';
 
 const statusColor: Record<AttendanceStatus, string> = {
@@ -28,33 +28,33 @@ function monthRange(month: Date) {
   return { from, to };
 }
 
-export function AttendanceHistoryScreen({ route, navigation }: Props) {
+export function EmployeeAttendanceHistoryScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
-  const student = route.params.student;
+  const employee = route.params.employee;
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [month, setMonth] = useState(() => new Date());
 
-  const [history, setHistory] = useState<StudentAttendanceHistory | null>(null);
+  const [history, setHistory] = useState<EmployeeAttendanceHistory | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [monthHistory, setMonthHistory] = useState<StudentAttendanceHistory | null>(null);
+  const [monthHistory, setMonthHistory] = useState<EmployeeAttendanceHistory | null>(null);
   const [loadingMonth, setLoadingMonth] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getStudentAttendanceHistory(schoolId, student.id)
+    getEmployeeAttendanceHistory(schoolId, employee.id)
       .then(setHistory)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError((e as Error).message))
       .finally(() => setLoadingHistory(false));
-  }, [schoolId, student.id]);
+  }, [schoolId, employee.id]);
 
   useEffect(() => {
     setLoadingMonth(true);
     const { from, to } = monthRange(month);
-    getStudentAttendanceHistory(schoolId, student.id, from, to)
+    getEmployeeAttendanceHistory(schoolId, employee.id, from, to)
       .then(setMonthHistory)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError((e as Error).message))
       .finally(() => setLoadingMonth(false));
-  }, [schoolId, student.id, month]);
+  }, [schoolId, employee.id, month]);
 
   const recordsByDate = useMemo(() => {
     const map: Record<string, AttendanceStatus> = {};
@@ -69,7 +69,7 @@ export function AttendanceHistoryScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={student.name} subtitle="Attendance history" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={employee.name} subtitle="Attendance history" onBack={() => navigation.goBack()} />
       <ScreenContainer>
         <View style={styles.tabRow}>
           <Pressable
@@ -133,6 +133,7 @@ export function AttendanceHistoryScreen({ route, navigation }: Props) {
                     <View>
                       <Text style={styles.rowDate}>{record.attendanceDate}</Text>
                       {record.remarks ? <Text style={styles.rowRemarks}>{record.remarks}</Text> : null}
+                      {record.selfMarked && <Text style={styles.rowSelfMarked}>📍 Self check-in</Text>}
                     </View>
                     <Text style={[styles.rowStatus, { color: statusColor[record.status] }]}>
                       {record.status.replace('_', ' ')}
@@ -194,5 +195,6 @@ const styles = StyleSheet.create({
   },
   rowDate: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   rowRemarks: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  rowSelfMarked: { fontSize: 11, color: colors.primary, marginTop: 2, fontWeight: '600' },
   rowStatus: { fontSize: 12, fontWeight: '700' },
 });

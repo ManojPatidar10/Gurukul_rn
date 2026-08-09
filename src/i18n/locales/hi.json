@@ -71,7 +71,13 @@
       "calls": { "title": "वीडियो कॉल", "description": "वीडियो कॉल शुरू करें या शेड्यूल करें" },
       "gamification": { "title": "गेम हब", "description": "XP, स्ट्रीक और लेवल" },
       "arena": { "title": "गुरुकुल अरीना", "description": "विद्यार्थी चुनौतियों के लिए क्विज़ प्रश्न बैंक बनाएं" },
-      "events": { "title": "स्कूल इवेंट्स", "description": "वार्षिक समारोह, खेल दिवस, प्रतियोगिताएं और अधिक" }
+      "events": { "title": "स्कूल इवेंट्स", "description": "वार्षिक समारोह, खेल दिवस, प्रतियोगिताएं और अधिक" },
+      "reportCard": { "title": "रिपोर्ट कार्ड", "description": "आपके टर्म के ग्रेड और उपस्थिति" },
+      "myAttendance": { "title": "उपस्थिति देखें", "description": "आपका उपस्थिति कैलेंडर" },
+      "gradingScale": { "title": "ग्रेडिंग स्केल", "description": "अंक-प्रतिशत से अक्षर-ग्रेड बैंड" },
+      "markMyAttendance": { "title": "मेरी उपस्थिति दर्ज करें", "description": "स्कूल परिसर से चेक-इन करें" },
+      "schoolLocation": { "title": "स्कूल स्थान", "description": "शिक्षक स्व-उपस्थिति के लिए जियोफेंस" },
+      "staffAttendance": { "title": "स्टाफ उपस्थिति", "description": "आज का स्टाफ रोस्टर और चेक-इन इतिहास" }
     }
   },
   "academicHelper": {

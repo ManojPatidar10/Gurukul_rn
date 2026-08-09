@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { createStudent, updateStudent } from '../../api/students';
 import type { StudentRequest } from '../../api/types';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
-import DateField, { parseDateString } from '../../components/DateField';
+import { DatePickerField, parseIsoDate } from '../../components/DatePickerField';
 import Dropdown from '../../components/Dropdown';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -89,7 +89,7 @@ export function StudentFormScreen({ route, navigation }: Props) {
       <ScreenContainer>
         <LabeledInput label={t('students.form.rollNumber')} required value={form.rollNumber} onChangeText={set('rollNumber')} />
         <LabeledInput label={t('students.form.name')} required value={form.name} onChangeText={set('name')} />
-        <DateField label={t('students.form.dob')} required value={form.dob} onChange={set('dob')} maximumDate={new Date()} />
+        <DatePickerField label={t('students.form.dob')} value={form.dob} onChange={set('dob')} maximumDate={new Date()} />
         <Dropdown label={t('students.form.gender')} required value={form.gender} options={GENDER_OPTIONS} onSelect={set('gender')} />
         <LabeledInput label={t('students.form.address')} required value={form.address} onChangeText={set('address')} />
         <LabeledInput label={t('students.form.parentName')} required value={form.parentName} onChangeText={set('parentName')} />
@@ -101,12 +101,11 @@ export function StudentFormScreen({ route, navigation }: Props) {
           keyboardType="phone-pad"
           maxLength={10}
         />
-        <DateField
+        <DatePickerField
           label={t('students.form.admissionDate')}
-          required
           value={form.admissionDate}
           onChange={set('admissionDate')}
-          minimumDate={form.dob ? parseDateString(form.dob) : undefined}
+          minimumDate={form.dob ? parseIsoDate(form.dob) : undefined}
         />
         <Dropdown label={t('students.form.status')} value={form.status ?? 'ACTIVE'} options={STATUS_OPTIONS} onSelect={set('status')} />
 

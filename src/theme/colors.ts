@@ -68,7 +68,13 @@ export type AccentKey =
   | 'arena'
   | 'events'
   | 'academicHelper'
-  | 'teacherTools';
+  | 'teacherTools'
+  | 'reportCard'
+  | 'gradingScale'
+  | 'markMyAttendance'
+  | 'schoolLocation'
+  | 'staffAttendance'
+  | 'myAttendance';
 
 export const accents: Record<AccentKey, { base: string; light: string }> = {
   students: { base: '#2563EB', light: '#E3ECFD' },
@@ -87,6 +93,12 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   events: { base: '#0369A1', light: '#DCEEFB' },
   academicHelper: { base: '#0891B2', light: '#DFF4F8' },
   teacherTools: { base: '#4F46E5', light: '#E8E6FC' },
+  reportCard: { base: '#B45309', light: '#FCEEDB' },
+  gradingScale: { base: '#475569', light: '#E7EAEE' },
+  markMyAttendance: { base: '#16A34A', light: '#DCFCE7' },
+  myAttendance: { base: '#16A34A', light: '#DCFCE7' },
+  schoolLocation: { base: '#0F766E', light: '#DAF2EF' },
+  staffAttendance: { base: '#9333EA', light: '#F1E4FC' },
 };
 
 /**

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { recordFeePayment } from '../../api/feePayments';
-import DateField from '../../components/DateField';
+import { DatePickerField } from '../../components/DatePickerField';
 import Dropdown from '../../components/Dropdown';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -93,7 +93,7 @@ export function FeePaymentFormScreen({ route, navigation }: Props) {
           value={paymentReference}
           onChangeText={setPaymentReference}
         />
-        <DateField label={t('fees.paymentForm.transactionDate')} value={transactionDate} onChange={setTransactionDate} />
+        <DatePickerField label={t('fees.paymentForm.transactionDate')} value={transactionDate} onChange={setTransactionDate} />
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}

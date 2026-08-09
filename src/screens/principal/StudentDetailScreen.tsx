@@ -204,6 +204,9 @@ export function StudentDetailScreen({ route, navigation }: Props) {
             <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
               <Text style={styles.actionText}>{t('students.detail.attendance')}</Text>
             </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('ReportCard', { student })}>
+              <Text style={styles.actionText}>Report card</Text>
+            </Pressable>
             {isViewerAdmin && (
               <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
                 <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>

@@ -71,7 +71,13 @@
       "calls": { "title": "Video Calls", "description": "Start or schedule a video call" },
       "gamification": { "title": "Game Hub", "description": "XP, streaks, and levels" },
       "arena": { "title": "Gurukul Arena", "description": "Build the quiz question bank for student challenges" },
-      "events": { "title": "School Events", "description": "Annual function, sports meet, competitions, and more" }
+      "events": { "title": "School Events", "description": "Annual function, sports meet, competitions, and more" },
+      "reportCard": { "title": "Report Card", "description": "Your term grades and attendance" },
+      "myAttendance": { "title": "View Attendance", "description": "Your attendance calendar" },
+      "gradingScale": { "title": "Grading Scale", "description": "Marks-percentage to letter-grade bands" },
+      "markMyAttendance": { "title": "Mark My Attendance", "description": "Check in from the school premises" },
+      "schoolLocation": { "title": "School Location", "description": "Geofence for teacher self-attendance" },
+      "staffAttendance": { "title": "Staff Attendance", "description": "Today's staff roster and check-in history" }
     }
   },
   "academicHelper": {
