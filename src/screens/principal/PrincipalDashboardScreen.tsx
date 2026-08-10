@@ -41,7 +41,6 @@ const STUDENT_HIDDEN_FEATURES: FeatureId[] = [
   'infraExpenses',
   'teacherTools',
   'gradingScale',
-  'schoolLocation',
   'staffAttendance',
   'registrationInbox',
 ];
@@ -56,7 +55,6 @@ const TEACHER_HIDDEN_FEATURES: FeatureId[] = [
   'infraExpenses',
   'teacherTools',
   'gradingScale',
-  'schoolLocation',
   'staffAttendance',
   'registrationInbox',
 ];
@@ -80,7 +78,6 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   reportCard: 'ReportCard',
   gradingScale: 'GradingScale',
   markMyAttendance: 'MarkMyAttendance',
-  schoolLocation: 'SchoolLocationSettings',
   staffAttendance: 'StaffAttendance',
   registrationInbox: 'RegistrationInbox',
   myAttendance: 'AttendanceHistory',
@@ -145,7 +142,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'myAttendance', title: t('dashboard.features.myAttendance.title'), icon: 'calendar-check', description: t('dashboard.features.myAttendance.description') },
     { id: 'gradingScale', title: t('dashboard.features.gradingScale.title'), icon: 'sliders-h', description: t('dashboard.features.gradingScale.description') },
     { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
-    { id: 'schoolLocation', title: t('dashboard.features.schoolLocation.title'), icon: 'map-pin', description: t('dashboard.features.schoolLocation.description') },
     { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
     { id: 'registrationInbox', title: t('dashboard.features.registrationInbox.title'), icon: 'user-check', description: t('dashboard.features.registrationInbox.description') },
   ];

@@ -30,7 +30,6 @@ export type FeatureId =
   | 'reportCard'
   | 'gradingScale'
   | 'markMyAttendance'
-  | 'schoolLocation'
   | 'staffAttendance'
   | 'myAttendance'
   | 'registrationInbox';

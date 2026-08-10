@@ -65,6 +65,9 @@ export interface SchoolRegistrationRequest {
   adminPhone: string;
   adminUsername?: string;
   adminPassword?: string;
+  latitude?: number;
+  longitude?: number;
+  geofenceRadiusMeters?: number;
 }
 
 export interface SchoolSearchResult {

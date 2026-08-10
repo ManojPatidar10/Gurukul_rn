@@ -72,7 +72,6 @@ export type AccentKey =
   | 'reportCard'
   | 'gradingScale'
   | 'markMyAttendance'
-  | 'schoolLocation'
   | 'staffAttendance'
   | 'myAttendance'
   | 'registrationInbox';
@@ -98,7 +97,6 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   gradingScale: { base: '#475569', light: '#E7EAEE' },
   markMyAttendance: { base: '#16A34A', light: '#DCFCE7' },
   myAttendance: { base: '#16A34A', light: '#DCFCE7' },
-  schoolLocation: { base: '#0F766E', light: '#DAF2EF' },
   staffAttendance: { base: '#9333EA', light: '#F1E4FC' },
   registrationInbox: { base: '#0F766E', light: '#DBF0EC' },
 };
