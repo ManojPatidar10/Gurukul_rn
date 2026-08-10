@@ -32,7 +32,8 @@ export type FeatureId =
   | 'markMyAttendance'
   | 'staffAttendance'
   | 'myAttendance'
-  | 'registrationInbox';
+  | 'registrationInbox'
+  | 'myClassFees';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -73,6 +74,8 @@ export type PrincipalStackParamList = {
   SalaryStructureForm: undefined;
   PayrollRun: undefined;
   PayslipDetail: { payrollLine: PayrollLine };
+  PayrollOverview: undefined;
+  MyClassFees: { classSection: ClassSection };
   InfraExpensesList: undefined;
   InfraExpenseDetail: { request: InfraExpenseRequest };
   InfraExpenseForm: undefined;

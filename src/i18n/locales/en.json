@@ -144,6 +144,10 @@
       "registrationInbox": {
         "title": "Registration Approvals",
         "description": "Review pending student, teacher, and parent registrations"
+      },
+      "myClassFees": {
+        "title": "My Class Fees",
+        "description": "Fee payment status for students in your class"
       }
     }
   },
@@ -360,6 +364,17 @@
       "title": "Assessments & Dues",
       "loadError": "Could not load assessments.",
       "empty": "0 assessments yet — generate them from a fee structure first.",
+      "rowSubtitle": "Roll {{roll}} · Due ₹{{due}} of ₹{{total}}",
+      "summaryTotal": "Total students",
+      "summaryUnpaidCount": "Unpaid",
+      "summaryUnpaidAmount": "Amount due",
+      "searchPlaceholder": "Search by name or roll number…"
+    },
+    "myClassFees": {
+      "title": "My Class Fees",
+      "fullyPaid": "Fully paid",
+      "remaining": "Remaining due",
+      "empty": "No fee assessments for this section yet.",
       "rowSubtitle": "Roll {{roll}} · Due ₹{{due}} of ₹{{total}}"
     },
     "assessmentDetail": {
@@ -456,7 +471,21 @@
       "runPayroll": {
         "title": "Run Payroll",
         "description": "Create a run, process it, and pay employees for the month"
+      },
+      "overview": {
+        "title": "Payroll Overview",
+        "description": "How many employees are paid vs. still pending, across every run"
       }
+    },
+    "overview": {
+      "title": "Payroll Overview",
+      "paidCount": "Employees paid",
+      "pendingCount": "Employees pending",
+      "paidAmount": "Amount paid",
+      "pendingAmount": "Amount pending",
+      "runsTitle": "By run",
+      "empty": "No payroll runs yet.",
+      "runSubtitle": "{{count}} employees"
     },
     "salaryStructuresList": {
       "title": "Salary Structures",
