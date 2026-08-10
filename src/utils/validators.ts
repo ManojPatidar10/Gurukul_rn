@@ -18,6 +18,10 @@ export function isValidBankAccount(value: string): boolean {
   return /^\d{9,18}$/.test(value.trim());
 }
 
+export function isValidIfsc(value: string): boolean {
+  return /^[A-Z]{4}0[A-Z0-9]{6}$/.test(value.trim().toUpperCase());
+}
+
 export function isPositiveNumber(value: string): boolean {
   return value.trim() !== '' && Number(value) > 0;
 }

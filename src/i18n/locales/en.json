@@ -58,26 +58,86 @@
     "welcome": "Welcome, {{name}}",
     "quickActions": "Quick Actions",
     "features": {
-      "students": { "title": "Students", "description": "Manage student records and class-sections" },
-      "employees": { "title": "Employees", "description": "Manage staff records" },
-      "vendors": { "title": "Vendors", "description": "Manage vendor directory" },
-      "fees": { "title": "Fees", "description": "Fee structures, dues, and payments" },
-      "payroll": { "title": "Payroll", "description": "Salary structures and payroll runs" },
-      "academicHelper": { "title": "Academic Helper", "description": "Ask questions and get instant AI-powered help" },
-      "teacherTools": { "title": "Teacher Tools", "description": "AI quiz generator and resource uploads for teachers" },
-      "infraExpenses": { "title": "Infra Expenses", "description": "Submit, approve, purchase, and pay infrastructure requests" },
-      "classes": { "title": "Classes", "description": "Sections, subjects, assessments, and attendance" },
-      "myClassSection": { "title": "My Class Section", "description": "Attendance and assessments for your homeroom class" },
-      "calls": { "title": "Video Calls", "description": "Start or schedule a video call" },
-      "gamification": { "title": "Game Hub", "description": "XP, streaks, and levels" },
-      "arena": { "title": "Gurukul Arena", "description": "Build the quiz question bank for student challenges" },
-      "events": { "title": "School Events", "description": "Annual function, sports meet, competitions, and more" },
-      "reportCard": { "title": "Report Card", "description": "Your term grades and attendance" },
-      "myAttendance": { "title": "View Attendance", "description": "Your attendance calendar" },
-      "gradingScale": { "title": "Grading Scale", "description": "Marks-percentage to letter-grade bands" },
-      "markMyAttendance": { "title": "Mark My Attendance", "description": "Check in from the school premises" },
-      "schoolLocation": { "title": "School Location", "description": "Geofence for teacher self-attendance" },
-      "staffAttendance": { "title": "Staff Attendance", "description": "Today's staff roster and check-in history" }
+      "students": {
+        "title": "Students",
+        "description": "Manage student records and class-sections"
+      },
+      "employees": {
+        "title": "Employees",
+        "description": "Manage staff records"
+      },
+      "vendors": {
+        "title": "Vendors",
+        "description": "Manage vendor directory"
+      },
+      "fees": {
+        "title": "Fees",
+        "description": "Fee structures, dues, and payments"
+      },
+      "payroll": {
+        "title": "Payroll",
+        "description": "Salary structures and payroll runs"
+      },
+      "academicHelper": {
+        "title": "Academic Helper",
+        "description": "Ask questions and get instant AI-powered help"
+      },
+      "teacherTools": {
+        "title": "Teacher Tools",
+        "description": "AI quiz generator and resource uploads for teachers"
+      },
+      "infraExpenses": {
+        "title": "Infra Expenses",
+        "description": "Submit, approve, purchase, and pay infrastructure requests"
+      },
+      "classes": {
+        "title": "Classes",
+        "description": "Sections, subjects, assessments, and attendance"
+      },
+      "myClassSection": {
+        "title": "My Class Section",
+        "description": "Attendance and assessments for your homeroom class"
+      },
+      "calls": {
+        "title": "Video Calls",
+        "description": "Start or schedule a video call"
+      },
+      "gamification": {
+        "title": "Game Hub",
+        "description": "XP, streaks, and levels"
+      },
+      "arena": {
+        "title": "Gurukul Arena",
+        "description": "Build the quiz question bank for student challenges"
+      },
+      "events": {
+        "title": "School Events",
+        "description": "Annual function, sports meet, competitions, and more"
+      },
+      "reportCard": {
+        "title": "Report Card",
+        "description": "Your term grades and attendance"
+      },
+      "myAttendance": {
+        "title": "View Attendance",
+        "description": "Your attendance calendar"
+      },
+      "gradingScale": {
+        "title": "Grading Scale",
+        "description": "Marks-percentage to letter-grade bands"
+      },
+      "markMyAttendance": {
+        "title": "Mark My Attendance",
+        "description": "Check in from the school premises"
+      },
+      "schoolLocation": {
+        "title": "School Location",
+        "description": "Geofence for teacher self-attendance"
+      },
+      "staffAttendance": {
+        "title": "Staff Attendance",
+        "description": "Today's staff roster and check-in history"
+      }
     }
   },
   "academicHelper": {
@@ -214,10 +274,22 @@
   "fees": {
     "hub": {
       "title": "Fees",
-      "categories": { "title": "Fee Categories", "description": "Tuition, transport, lab fee, etc." },
-      "structures": { "title": "Fee Structures", "description": "Set per-class fee amounts and generate dues" },
-      "assessments": { "title": "Assessments & Payments", "description": "View student dues and record payments" },
-      "paymentSettings": { "title": "Payment Settings", "description": "Set the UPI ID used to generate fee payment QR codes" }
+      "categories": {
+        "title": "Fee Categories",
+        "description": "Tuition, transport, lab fee, etc."
+      },
+      "structures": {
+        "title": "Fee Structures",
+        "description": "Set per-class fee amounts and generate dues"
+      },
+      "assessments": {
+        "title": "Assessments & Payments",
+        "description": "View student dues and record payments"
+      },
+      "paymentSettings": {
+        "title": "Payment Settings",
+        "description": "Set the bank account fee payments are received into"
+      }
     },
     "categories": {
       "title": "Fee Categories",
@@ -289,23 +361,7 @@
       "totalPaid": "Total paid",
       "remainingDue": "Remaining due",
       "dueDate": "Due date",
-      "recordPayment": "Record payment",
-      "payViaUpiQr": "Pay via UPI QR"
-    },
-    "paymentForm": {
-      "title": "Record payment",
-      "subtitle": "{{name}} · Roll {{roll}}",
-      "hint": "Remaining due: ₹{{amount}} (partial payments allowed)",
-      "amount": "Amount",
-      "paymentMethod": "Payment method",
-      "paymentReference": "Payment reference (optional)",
-      "transactionDate": "Transaction date",
-      "submit": "Record payment",
-      "submitting": "Recording…",
-      "errors": {
-        "invalidAmount": "Enter an amount greater than 0.",
-        "exceedsRemaining": "Amount cannot exceed the remaining due of ₹{{amount}}."
-      }
+      "payFees": "Pay Fees"
     },
     "paymentMethods": {
       "cash": "Cash",
@@ -314,28 +370,20 @@
       "cheque": "Cheque",
       "card": "Card"
     },
-    "upiQr": {
-      "title": "Pay via UPI QR",
-      "generate": "Generate QR",
-      "regenerate": "Regenerate QR",
-      "payeeLabel": "Payee: {{name}}",
-      "vpaLabel": "UPI ID: {{vpa}}",
-      "referenceLabel": "Reference: {{reference}}",
-      "orDivider": "or",
-      "openUpiApp": "Pay with a UPI App",
-      "noUpiAppError": "No UPI app was found on this device to handle the payment.",
-      "caution": "This does not automatically confirm payment — verify you've received the funds in your bank/UPI app before recording it below.",
-      "recordPayment": "Record this payment"
-    },
     "paymentSettings": {
       "title": "Payment Settings",
-      "hint": "This UPI ID receives payments made by scanning a fee QR code. Set it once for your school.",
-      "upiVpa": "UPI ID",
-      "upiPayeeName": "Payee name shown to parents",
+      "hint": "Students pay their fees directly into this bank account from the app. Set it once for your school.",
       "saved": "Payment settings saved.",
       "errors": {
-        "upiVpa": "Enter a valid UPI ID, e.g. school@bank."
-      }
+        "bankAccountNumber": "Enter a valid bank account number (9-18 digits).",
+        "bankIfsc": "Enter a valid IFSC code, e.g. SBIN0001234.",
+        "upiVpaOverride": "Enter a valid UPI ID, e.g. name@oksbi."
+      },
+      "bankAccountNumber": "Bank account number",
+      "bankIfsc": "IFSC code",
+      "bankAccountHolderName": "Account holder name shown to students",
+      "upiVpaOverride": "UPI ID override (optional, for testing)",
+      "upiVpaOverrideHint": "If set, this exact UPI ID is used for payments instead of the one derived from the account number/IFSC above — useful for testing against a real, known-valid account."
     },
     "receipt": {
       "title": "Payment Receipt",
@@ -353,13 +401,47 @@
       "sharing": "Preparing…",
       "shareTitle": "Share fee payment receipt",
       "shareUnavailable": "Sharing isn't available on this device."
+    },
+    "payFees": {
+      "title": "Pay Fees",
+      "amountDue": "Amount due",
+      "payNow": "Pay Now",
+      "tryAgain": "Try Again",
+      "preparing": "Preparing your payment…",
+      "openingApp": "Opening your payment app…",
+      "confirming": "Confirming your payment…",
+      "noUpiAppError": "No payment app (like PhonePe) was found on this device.",
+      "caution": "You'll be taken to your UPI app (e.g. PhonePe) to complete the payment. Come back to this screen once you're done.",
+      "subtitle": "{{name}} · Roll {{roll}}",
+      "confirmTitle": "Did the payment succeed?",
+      "confirmMessage": "We can't automatically detect this - please confirm what happened in your UPI app.",
+      "confirmYes": "Yes, it succeeded",
+      "confirmNo": "No, cancelled",
+      "confirmUnsure": "Not sure",
+      "pendingTitle": "Payment already in progress",
+      "pendingMessage": "You already started a payment for this fee that hasn't been confirmed yet. Pay again anyway?",
+      "pendingCancel": "Cancel",
+      "pendingContinue": "Pay Again",
+      "resultSuccessTitle": "Payment response received",
+      "resultTransactionId": "Transaction ID",
+      "resultUnverifiedCaveat": "This reflects what was reported, not an independently verified payment.",
+      "resultPendingMessage": "Payment is being processed. Do not make another payment yet.",
+      "resultFailedMessage": "Payment failed.",
+      "resultCancelledMessage": "Payment was cancelled.",
+      "resultUnknownMessage": "We could not confirm the payment result. Check My Fees later before paying again."
     }
   },
   "payroll": {
     "hub": {
       "title": "Payroll",
-      "salaryStructures": { "title": "Salary Structures", "description": "Basic, allowances, and deductions per employee" },
-      "runPayroll": { "title": "Run Payroll", "description": "Create a run, process it, and pay employees for the month" }
+      "salaryStructures": {
+        "title": "Salary Structures",
+        "description": "Basic, allowances, and deductions per employee"
+      },
+      "runPayroll": {
+        "title": "Run Payroll",
+        "description": "Create a run, process it, and pay employees for the month"
+      }
     },
     "salaryStructuresList": {
       "title": "Salary Structures",
@@ -405,9 +487,18 @@
       "paidSuccess": "Payroll run paid successfully.",
       "startNewRun": "Start a new run",
       "months": {
-        "1": "January", "2": "February", "3": "March", "4": "April",
-        "5": "May", "6": "June", "7": "July", "8": "August",
-        "9": "September", "10": "October", "11": "November", "12": "December"
+        "1": "January",
+        "2": "February",
+        "3": "March",
+        "4": "April",
+        "5": "May",
+        "6": "June",
+        "7": "July",
+        "8": "August",
+        "9": "September",
+        "10": "October",
+        "11": "November",
+        "12": "December"
       }
     },
     "payslip": {
@@ -445,8 +536,14 @@
       "selectTeacher": "Select teacher",
       "selectClass": "Select class-section",
       "incompleteHint": "Select a teacher and a class-section to continue.",
-      "generate": { "title": "Generate Resource (AI)", "description": "Create a quiz or test draft from a syllabus" },
-      "upload": { "title": "Upload Resource", "description": "Share a book, notes, worksheet, or link" }
+      "generate": {
+        "title": "Generate Resource (AI)",
+        "description": "Create a quiz or test draft from a syllabus"
+      },
+      "upload": {
+        "title": "Upload Resource",
+        "description": "Share a book, notes, worksheet, or link"
+      }
     },
     "generator": {
       "title": "AI Resource Generator",
@@ -467,8 +564,18 @@
       "answerLabel": "Answer",
       "explanationLabel": "Explanation",
       "reviewNote": "AI-generated draft — review for accuracy before publishing to students.",
-      "assessmentTypes": { "QUIZ": "Quiz", "TEST": "Test", "EXAM": "Exam", "ASSIGNMENT_CHECK": "Assignment check" },
-      "difficulties": { "EASY": "Easy", "MEDIUM": "Medium", "HARD": "Hard", "MIXED": "Mixed" },
+      "assessmentTypes": {
+        "QUIZ": "Quiz",
+        "TEST": "Test",
+        "EXAM": "Exam",
+        "ASSIGNMENT_CHECK": "Assignment check"
+      },
+      "difficulties": {
+        "EASY": "Easy",
+        "MEDIUM": "Medium",
+        "HARD": "Hard",
+        "MIXED": "Mixed"
+      },
       "questionTypeOptions": {
         "MCQ": "Multiple choice",
         "SHORT_ANSWER": "Short answer",

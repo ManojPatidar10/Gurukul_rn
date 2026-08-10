@@ -50,7 +50,7 @@ import { FeeAssessmentsListScreen } from '../screens/principal/FeeAssessmentsLis
 import { MyFeesScreen } from '../screens/principal/MyFeesScreen';
 import { MyStudentsScreen } from '../screens/principal/MyStudentsScreen';
 import { FeeCategoriesListScreen } from '../screens/principal/FeeCategoriesListScreen';
-import { FeePaymentFormScreen } from '../screens/principal/FeePaymentFormScreen';
+import { PayFeesScreen } from '../screens/principal/PayFeesScreen';
 import { FeePaymentSettingsScreen } from '../screens/principal/FeePaymentSettingsScreen';
 import { FeeStructureDetailScreen } from '../screens/principal/FeeStructureDetailScreen';
 import { FeeStructureFormScreen } from '../screens/principal/FeeStructureFormScreen';
@@ -82,7 +82,6 @@ import { StudentPerformanceScreen } from '../screens/principal/StudentPerformanc
 import { StudentsListScreen } from '../screens/principal/StudentsListScreen';
 import { TeacherPerformanceScreen } from '../screens/principal/TeacherPerformanceScreen';
 import { TeacherToolsHubScreen } from '../screens/principal/TeacherToolsHubScreen';
-import { UpiQrPaymentScreen } from '../screens/principal/UpiQrPaymentScreen';
 import { VendorDetailScreen } from '../screens/principal/VendorDetailScreen';
 import { VendorFormScreen } from '../screens/principal/VendorFormScreen';
 import { VendorsListScreen } from '../screens/principal/VendorsListScreen';
@@ -123,8 +122,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="FeeAssessmentsList" component={FeeAssessmentsListScreen} />
         <Stack.Screen name="MyFees" component={MyFeesScreen} />
         <Stack.Screen name="FeeAssessmentDetail" component={FeeAssessmentDetailScreen} />
-        <Stack.Screen name="FeePaymentForm" component={FeePaymentFormScreen} />
-        <Stack.Screen name="UpiQrPayment" component={UpiQrPaymentScreen} />
+        <Stack.Screen name="PayFees" component={PayFeesScreen} />
         <Stack.Screen name="FeePaymentSettings" component={FeePaymentSettingsScreen} />
         <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} />
         <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />

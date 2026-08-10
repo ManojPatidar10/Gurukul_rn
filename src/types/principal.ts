@@ -65,8 +65,7 @@ export type PrincipalStackParamList = {
   FeeAssessmentsList: undefined;
   MyFees: undefined;
   FeeAssessmentDetail: { assessment: FeeAssessment };
-  FeePaymentForm: { assessment: FeeAssessment; initialPaymentMethod?: string; initialPaymentReference?: string };
-  UpiQrPayment: { assessment: FeeAssessment };
+  PayFees: { assessment: FeeAssessment };
   FeePaymentSettings: undefined;
   PaymentReceipt: { payment: FeePayment };
   PayrollHub: undefined;

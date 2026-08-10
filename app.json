@@ -8,7 +8,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.gurukul.rn"
+      "bundleIdentifier": "com.gurukul.rn",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["upi", "phonepe", "gpay"]
+      }
     },
     "android": {
       "package": "com.gurukul.rn",
@@ -50,6 +53,7 @@
       "expo-font",
       "expo-notifications",
       "./plugins/withCleartextTraffic.js",
+      "./plugins/withUpiIntentQueries.js",
       "expo-localization"
     ],
     "extra": {

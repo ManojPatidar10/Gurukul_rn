@@ -12,7 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { isValidUpiId } from '../../utils/validators';
+import { isValidBankAccount, isValidIfsc, isValidUpiId } from '../../utils/validators';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeePaymentSettings'>;
 
@@ -22,16 +22,20 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
   const { showToast } = useToast();
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
-  const [upiVpa, setUpiVpa] = useState('');
-  const [upiPayeeName, setUpiPayeeName] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankIfsc, setBankIfsc] = useState('');
+  const [bankAccountHolderName, setBankAccountHolderName] = useState('');
+  const [upiVpaOverride, setUpiVpaOverride] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     getSchool(schoolId)
       .then((s) => {
         setSchool(s);
-        setUpiVpa(s.upiVpa ?? '');
-        setUpiPayeeName(s.upiPayeeName ?? s.name);
+        setBankAccountNumber(s.bankAccountNumber ?? '');
+        setBankIfsc(s.bankIfsc ?? '');
+        setBankAccountHolderName(s.bankAccountHolderName ?? s.name);
+        setUpiVpaOverride(s.upiVpaOverride ?? '');
       })
       .catch((e) => showToast((e as Error).message, 'error'))
       .finally(() => setLoading(false));
@@ -39,8 +43,16 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
 
   const handleSave = async () => {
     if (!school) return;
-    if (!isValidUpiId(upiVpa)) {
-      showToast(t('fees.paymentSettings.errors.upiVpa'), 'error');
+    if (!isValidBankAccount(bankAccountNumber)) {
+      showToast(t('fees.paymentSettings.errors.bankAccountNumber'), 'error');
+      return;
+    }
+    if (!isValidIfsc(bankIfsc)) {
+      showToast(t('fees.paymentSettings.errors.bankIfsc'), 'error');
+      return;
+    }
+    if (upiVpaOverride.trim() && !isValidUpiId(upiVpaOverride)) {
+      showToast(t('fees.paymentSettings.errors.upiVpaOverride'), 'error');
       return;
     }
     setSaving(true);
@@ -55,8 +67,10 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
         contactPhone: school.contactPhone,
         principalName: school.principalName,
         directorName: school.directorName,
-        upiVpa: upiVpa.trim(),
-        upiPayeeName: upiPayeeName.trim() || school.name,
+        bankAccountNumber: bankAccountNumber.trim(),
+        bankIfsc: bankIfsc.trim().toUpperCase(),
+        bankAccountHolderName: bankAccountHolderName.trim() || school.name,
+        upiVpaOverride: upiVpaOverride.trim() || undefined,
       });
       setSchool(updated);
       showToast(t('fees.paymentSettings.saved'), 'success');
@@ -82,18 +96,34 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
       <ScreenContainer>
         <Text style={styles.hint}>{t('fees.paymentSettings.hint')}</Text>
         <LabeledInput
-          label={t('fees.paymentSettings.upiVpa')}
+          label={t('fees.paymentSettings.bankAccountNumber')}
           required
-          value={upiVpa}
-          onChangeText={setUpiVpa}
-          autoCapitalize="none"
-          placeholder="school@bank"
+          value={bankAccountNumber}
+          onChangeText={setBankAccountNumber}
+          keyboardType="numeric"
+          placeholder="123456789012"
         />
         <LabeledInput
-          label={t('fees.paymentSettings.upiPayeeName')}
-          value={upiPayeeName}
-          onChangeText={setUpiPayeeName}
+          label={t('fees.paymentSettings.bankIfsc')}
+          required
+          value={bankIfsc}
+          onChangeText={setBankIfsc}
+          autoCapitalize="characters"
+          placeholder="SBIN0001234"
+        />
+        <LabeledInput
+          label={t('fees.paymentSettings.bankAccountHolderName')}
+          value={bankAccountHolderName}
+          onChangeText={setBankAccountHolderName}
           placeholder={school?.name}
+        />
+        <Text style={styles.sectionHint}>{t('fees.paymentSettings.upiVpaOverrideHint')}</Text>
+        <LabeledInput
+          label={t('fees.paymentSettings.upiVpaOverride')}
+          value={upiVpaOverride}
+          onChangeText={setUpiVpaOverride}
+          autoCapitalize="none"
+          placeholder="yourname@oksbi"
         />
         <Pressable style={[styles.save, saving && styles.saveDisabled]} onPress={handleSave} disabled={saving}>
           <Text style={styles.saveText}>{saving ? t('common.saving') : t('common.save')}</Text>
@@ -107,6 +137,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: spacing.xl },
   hint: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.lg },
+  sectionHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.md, marginBottom: spacing.xs, fontStyle: 'italic' },
   save: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

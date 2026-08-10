@@ -15,8 +15,10 @@ export interface School {
   contactPhone: string;
   principalName: string;
   directorName: string;
-  upiVpa: string | null;
-  upiPayeeName: string | null;
+  bankAccountNumber: string | null;
+  bankIfsc: string | null;
+  bankAccountHolderName: string | null;
+  upiVpaOverride: string | null;
   latitude: number | null;
   longitude: number | null;
   geofenceRadiusMeters: number;
@@ -37,8 +39,10 @@ export interface SchoolUpdateRequest {
   contactPhone: string;
   principalName: string;
   directorName: string;
-  upiVpa?: string;
-  upiPayeeName?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+  bankAccountHolderName?: string;
+  upiVpaOverride?: string;
 }
 
 export interface SchoolLocationUpdateRequest {
@@ -271,15 +275,47 @@ export interface DuesReport {
   totalOverdue: number;
 }
 
-export interface UpiQrResponse {
-  upiUri: string;
-  payeeVpa: string;
-  payeeName: string;
-  amount: number;
-  referenceId: string;
+export interface FeePaymentRequestResponse {
   assessmentId: string;
   studentName: string;
+  amount: number;
+  payeeName: string;
+  accountNumber: string;
+  ifsc: string;
+  upiUri: string;
+  referenceId: string;
   generatedAt: string;
+}
+
+export type PaymentAttemptStatus =
+  | 'INITIATED'
+  | 'RESPONSE_SUCCESS'
+  | 'PENDING'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'UNKNOWN'
+  | 'VERIFIED';
+
+export interface PaymentAttempt {
+  id: string;
+  assessmentId: string;
+  transactionRef: string;
+  amount: number;
+  currency: string;
+  status: PaymentAttemptStatus;
+  upiTransactionId: string | null;
+  approvalRefNo: string | null;
+  responseCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentAttemptResultRequest {
+  status: PaymentAttemptStatus;
+  upiTransactionId?: string;
+  approvalRefNo?: string;
+  responseCode?: string;
+  rawResponse?: string;
 }
 
 export interface SalaryStructure {

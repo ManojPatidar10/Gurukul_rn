@@ -7,6 +7,7 @@ import * as Sharing from 'expo-sharing';
 
 import type { FeePayment } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -58,10 +59,12 @@ function Row({ label, value }: { label: string; value: string }) {
 export function PaymentReceiptScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const { session } = useAuth();
   const payment = route.params.payment;
   const [sharing, setSharing] = useState(false);
 
-  const handleDone = () => navigation.navigate('FeeAssessmentsList');
+  const handleDone = () =>
+    navigation.navigate(session.ownerType === 'STUDENT' ? 'MyFees' : 'FeeAssessmentsList');
 
   const handleShare = async () => {
     setSharing(true);

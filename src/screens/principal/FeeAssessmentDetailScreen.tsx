@@ -25,7 +25,7 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const assessment = route.params.assessment;
   const fullyPaid = assessment.remainingDue <= 0;
-  const canRecordPayment = session.ownerType === 'EMPLOYEE';
+  const canPayFees = session.ownerType === 'STUDENT';
 
   return (
     <View style={styles.root}>
@@ -46,21 +46,13 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
           <Field label={t('fees.assessmentDetail.dueDate')} value={assessment.dueDate} />
         </View>
 
-        {!fullyPaid && canRecordPayment && (
-          <>
-            <Pressable
-              style={styles.payButton}
-              onPress={() => navigation.navigate('UpiQrPayment', { assessment })}
-            >
-              <Text style={styles.payButtonText}>{t('fees.assessmentDetail.payViaUpiQr')}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.secondaryButton}
-              onPress={() => navigation.navigate('FeePaymentForm', { assessment })}
-            >
-              <Text style={styles.secondaryButtonText}>{t('fees.assessmentDetail.recordPayment')}</Text>
-            </Pressable>
-          </>
+        {!fullyPaid && canPayFees && (
+          <Pressable
+            style={styles.payButton}
+            onPress={() => navigation.navigate('PayFees', { assessment })}
+          >
+            <Text style={styles.payButtonText}>{t('fees.assessmentDetail.payFees')}</Text>
+          </Pressable>
         )}
       </ScreenContainer>
     </View>
@@ -88,13 +80,4 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   payButtonText: { color: colors.white, fontWeight: '700' },
-  secondaryButton: {
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  secondaryButtonText: { color: colors.primary, fontWeight: '700' },
 });
