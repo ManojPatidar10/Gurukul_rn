@@ -367,7 +367,8 @@
       "totalPaid": "Total paid",
       "remainingDue": "Remaining due",
       "dueDate": "Due date",
-      "payFees": "Pay Fees"
+      "payFees": "Pay Fees",
+      "payFeesComingSoon": "Online fee payment is coming soon."
     },
     "paymentMethods": {
       "cash": "Cash",

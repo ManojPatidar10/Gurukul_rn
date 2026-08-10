@@ -367,7 +367,8 @@
       "totalPaid": "कुल भुगतान",
       "remainingDue": "शेष बकाया",
       "dueDate": "देय तिथि",
-      "payFees": "फीस भरें"
+      "payFees": "फीस भरें",
+      "payFeesComingSoon": "ऑनलाइन फीस भुगतान जल्द ही आ रहा है।"
     },
     "paymentMethods": {
       "cash": "नकद",
