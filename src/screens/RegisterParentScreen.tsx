@@ -1,9 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GoogleSignInCancelledError, getGoogleIdToken } from '../api/googleSignIn';
 import { registerParent, registerParentWithGoogle } from '../api/registration';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
@@ -16,6 +19,8 @@ interface Props {
 type AuthMode = 'password' | 'google';
 
 export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: Props) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [authMode, setAuthMode] = useState<AuthMode>('password');
   const [studentRegistrationNumber, setStudentRegistrationNumber] = useState('');
   const [parentContact, setParentContact] = useState('');
@@ -58,50 +63,53 @@ export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: 
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
-        <Text style={styles.title}>Parent registration</Text>
-        <Text style={styles.subtitle}>Enter your child&apos;s registration number to link your account</Text>
+        <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
+          <LanguageSwitch />
+        </View>
+        <Text style={styles.title}>{t('registration.parent.title')}</Text>
+        <Text style={styles.subtitle}>{t('registration.parent.subtitle')}</Text>
       </LinearGradient>
 
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
         <LabeledInput
-          label="Child's registration number"
+          label={t('registration.parent.childRegistrationNumber')}
           value={studentRegistrationNumber}
           onChangeText={setStudentRegistrationNumber}
           autoCapitalize="characters"
-          placeholder="e.g. as given by the school"
+          placeholder={t('registration.parent.childRegistrationNumberPlaceholder')}
         />
         <LabeledInput
-          label="Your contact number on file"
+          label={t('registration.parent.contactNumber')}
           value={parentContact}
           onChangeText={setParentContact}
           keyboardType="phone-pad"
-          placeholder="Registered with the school"
+          placeholder={t('registration.parent.contactNumberPlaceholder')}
         />
 
-        <Text style={styles.sectionLabel}>Your login</Text>
+        <Text style={styles.sectionLabel}>{t('registration.yourLogin')}</Text>
         <View style={styles.modeRow}>
           <Pressable style={[styles.modeTab, authMode === 'password' && styles.modeTabActive]} onPress={() => setAuthMode('password')}>
-            <Text style={[styles.modeTabText, authMode === 'password' && styles.modeTabTextActive]}>Username & password</Text>
+            <Text style={[styles.modeTabText, authMode === 'password' && styles.modeTabTextActive]}>{t('registration.usernamePassword')}</Text>
           </Pressable>
           <Pressable style={[styles.modeTab, authMode === 'google' && styles.modeTabActive]} onPress={() => setAuthMode('google')}>
-            <Text style={[styles.modeTabText, authMode === 'google' && styles.modeTabTextActive]}>Google</Text>
+            <Text style={[styles.modeTabText, authMode === 'google' && styles.modeTabTextActive]}>{t('registration.google')}</Text>
           </Pressable>
         </View>
 
         {authMode === 'password' ? (
           <>
-            <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
-            <LabeledInput label="Password (min 8 characters)" value={password} onChangeText={setPassword} secureTextEntry />
+            <LabeledInput label={t('registration.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
+            <LabeledInput label={t('registration.passwordMin8')} value={password} onChangeText={setPassword} secureTextEntry />
             <LabeledInput
-              label="Confirm password"
+              label={t('registration.confirmPassword')}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
             />
-            {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>Passwords don&apos;t match.</Text>}
+            {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>{t('registration.passwordsDontMatch')}</Text>}
           </>
         ) : (
-          <Text style={styles.googleHint}>You&apos;ll sign in with your Google account.</Text>
+          <Text style={styles.googleHint}>{t('registration.googleHint')}</Text>
         )}
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -112,7 +120,7 @@ export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: 
           disabled={!canSubmit || submitting}
         >
           <Text style={styles.submitText}>
-            {submitting ? 'Submitting…' : authMode === 'google' ? 'Continue with Google' : 'Submit registration'}
+            {submitting ? t('registration.submitting') : authMode === 'google' ? t('registration.continueWithGoogle') : t('registration.submitRegistration')}
           </Text>
         </Pressable>
       </ScrollView>
@@ -142,6 +150,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  languageSwitchWrapper: {
+    position: 'absolute',
+    right: spacing.lg,
+  },
   title: { color: colors.white, fontSize: 20, fontWeight: '800' },
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4, paddingHorizontal: spacing.lg, textAlign: 'center' },
   form: { flex: 1 },

@@ -1,6 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
 interface Props {
@@ -9,22 +12,26 @@ interface Props {
 }
 
 export default function RegistrationSubmittedScreen({ message, onDone }: Props) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.root}>
       <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+        <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.sm }]}>
+          <LanguageSwitch />
+        </View>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>✓</Text>
         </View>
-        <Text style={styles.title}>Registration submitted</Text>
+        <Text style={styles.title}>{t('registration.submitted.title')}</Text>
       </LinearGradient>
 
       <View style={styles.body}>
         <Text style={styles.message}>{message}</Text>
-        <Text style={styles.hint}>
-          You&apos;ll be able to sign in once a school admin reviews and approves your registration.
-        </Text>
+        <Text style={styles.hint}>{t('registration.submitted.hint')}</Text>
         <Pressable style={styles.submit} onPress={onDone}>
-          <Text style={styles.submitText}>Back to sign in</Text>
+          <Text style={styles.submitText}>{t('registration.submitted.backToSignIn')}</Text>
         </Pressable>
       </View>
     </View>
@@ -40,6 +47,10 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
     ...shadow,
+  },
+  languageSwitchWrapper: {
+    position: 'absolute',
+    right: spacing.lg,
   },
   badge: {
     width: 64,

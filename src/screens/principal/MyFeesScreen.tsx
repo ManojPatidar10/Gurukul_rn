@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listStudentFeeAssessments } from '../../api/feeAssessments';
 import type { FeeAssessment } from '../../api/types';
@@ -14,6 +15,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyFees'>;
 
 export function MyFeesScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [assessments, setAssessments] = useState<FeeAssessment[]>([]);
@@ -43,7 +45,7 @@ export function MyFeesScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="My Fees" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('myFees.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         {error && <Text style={styles.error}>{error}</Text>}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
@@ -54,7 +56,7 @@ export function MyFeesScreen({ navigation }: Props) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           ListEmptyComponent={
             !loading ? (
-              <Text style={styles.empty}>{error ? 'Could not load your fee dues.' : 'No fee assessments yet.'}</Text>
+              <Text style={styles.empty}>{error ? t('myFees.loadError') : t('myFees.empty')}</Text>
             ) : null
           }
           renderItem={({ item }) => (
@@ -65,7 +67,10 @@ export function MyFeesScreen({ navigation }: Props) {
               <View style={styles.rowMain}>
                 <Text style={styles.rowName}>{item.academicYear}</Text>
                 <Text style={styles.rowMeta}>
-                  Due ₹{item.remainingDue.toLocaleString('en-IN')} of ₹{item.totalDue.toLocaleString('en-IN')}
+                  {t('myFees.due', {
+                    remaining: item.remainingDue.toLocaleString('en-IN'),
+                    total: item.totalDue.toLocaleString('en-IN'),
+                  })}
                 </Text>
               </View>
               <StatusChip label={item.status} variant={item.remainingDue <= 0 ? 'success' : 'warning'} />

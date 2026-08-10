@@ -1,6 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
 export type RegistrationRole = 'student' | 'teacher' | 'parent';
@@ -11,24 +14,30 @@ interface Props {
   onSelectRole: (role: RegistrationRole) => void;
 }
 
-const ROLES: { role: RegistrationRole; title: string; description: string }[] = [
-  { role: 'student', title: "I'm a student", description: 'Register with the registration number given by your school' },
-  { role: 'teacher', title: "I'm a teacher", description: 'Requires an invite code from your admin' },
-  { role: 'parent', title: "I'm a parent", description: "Link using your child's registration number and your contact on file" },
-];
-
 export default function RoleSelectScreen({ schoolName, onBack, onSelectRole }: Props) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+
+  const ROLES: { role: RegistrationRole; title: string; description: string }[] = [
+    { role: 'student', title: t('roleSelect.student.title'), description: t('roleSelect.student.description') },
+    { role: 'teacher', title: t('roleSelect.teacher.title'), description: t('roleSelect.teacher.description') },
+    { role: 'parent', title: t('roleSelect.parent.title'), description: t('roleSelect.parent.description') },
+  ];
+
   return (
     <View style={styles.root}>
       <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
+        <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
+          <LanguageSwitch />
+        </View>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>G</Text>
         </View>
-        <Text style={styles.title}>{schoolName ?? 'Create an account'}</Text>
-        <Text style={styles.subtitle}>Who are you registering as?</Text>
+        <Text style={styles.title}>{schoolName ?? t('roleSelect.createAccount')}</Text>
+        <Text style={styles.subtitle}>{t('roleSelect.subtitle')}</Text>
       </LinearGradient>
 
       <View style={styles.form}>
@@ -65,6 +74,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  languageSwitchWrapper: {
+    position: 'absolute',
+    right: spacing.lg,
+  },
   badge: {
     width: 64,
     height: 64,

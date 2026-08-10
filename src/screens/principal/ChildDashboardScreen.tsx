@@ -1,6 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -11,27 +12,28 @@ import type { PrincipalStackParamList } from '../../types/principal';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ChildDashboard'>;
 
 export function ChildDashboardScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const { logout } = useAuth();
   const student = route.params.student;
 
   const tiles: { key: string; title: string; icon: string; accentKey: keyof typeof accents; onPress: () => void }[] = [
     {
       key: 'attendance',
-      title: 'Attendance',
+      title: t('childDashboard.attendance'),
       icon: 'calendar-check',
       accentKey: 'myAttendance',
       onPress: () => navigation.navigate('AttendanceHistory', { student }),
     },
     {
       key: 'fees',
-      title: 'Fees',
+      title: t('childDashboard.fees'),
       icon: 'file-invoice-dollar',
       accentKey: 'fees',
       onPress: () => navigation.navigate('ChildFees', { student }),
     },
     {
       key: 'reportCard',
-      title: 'Report Card',
+      title: t('childDashboard.reportCard'),
       icon: 'file-alt',
       accentKey: 'reportCard',
       onPress: () => navigation.navigate('ReportCard', { student }),
@@ -57,7 +59,7 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
         </View>
 
         <Pressable style={styles.logoutButton} onPress={logout}>
-          <Text style={styles.logoutText}>Log out</Text>
+          <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
       </ScreenContainer>
     </View>

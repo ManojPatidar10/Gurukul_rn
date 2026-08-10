@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getMyChildren } from '../api/parents';
 import type { Student } from '../api/types';
@@ -15,6 +16,7 @@ import type { PrincipalStackParamList } from '../types/principal';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ParentHome'>;
 
 export function ParentHomeScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
   const [children, setChildren] = useState<Student[] | null>(null);
@@ -43,7 +45,7 @@ export function ParentHomeScreen({ navigation }: Props) {
   if (error) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="My Children" subtitle={session.username} />
+        <ScreenHeader title={t('parentHome.title')} subtitle={session.username} />
         <ScreenContainer>
           <Text style={styles.error}>{error}</Text>
         </ScreenContainer>
@@ -54,7 +56,7 @@ export function ParentHomeScreen({ navigation }: Props) {
   if (children === null) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="My Children" subtitle={session.username} />
+        <ScreenHeader title={t('parentHome.title')} subtitle={session.username} />
         <ActivityIndicator color={colors.primary} style={styles.loading} />
       </View>
     );
@@ -62,23 +64,23 @@ export function ParentHomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="My Children" subtitle={session.username} />
+      <ScreenHeader title={t('parentHome.title')} subtitle={session.username} />
       <ScreenContainer>
-        {children.length === 0 && <Text style={styles.empty}>No children linked to your account yet.</Text>}
+        {children.length === 0 && <Text style={styles.empty}>{t('parentHome.empty')}</Text>}
         {children.map((child) => (
           <Pressable key={child.id} style={styles.row} onPress={() => navigation.navigate('ChildDashboard', { student: child })}>
             <AvatarBadge name={child.name} accentKey="students" />
             <View style={styles.rowMain}>
               <Text style={styles.rowName}>{child.name}</Text>
               <Text style={styles.rowMeta}>
-                Roll {child.rollNumber} · {child.classSectionLabel}
+                {t('parentHome.rollAndClass', { roll: child.rollNumber, classSection: child.classSectionLabel })}
               </Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </Pressable>
         ))}
         <Pressable style={styles.logoutButton} onPress={logout}>
-          <Text style={styles.logoutText}>Log out</Text>
+          <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
       </ScreenContainer>
     </View>

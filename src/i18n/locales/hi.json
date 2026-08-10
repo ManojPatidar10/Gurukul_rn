@@ -23,7 +23,9 @@
     "inactive": "निष्क्रिय",
     "male": "पुरुष",
     "female": "महिला",
-    "other": "अन्य"
+    "other": "अन्य",
+    "logOut": "लॉग आउट",
+    "profile": "प्रोफ़ाइल"
   },
   "language": {
     "toggleLabel": "भाषा बदलें",
@@ -699,5 +701,126 @@
       "rating": "0 से 5 के बीच रेटिंग दर्ज करें।",
       "feedbackDate": "एक तारीख चुनें।"
     }
+  },
+  "welcome": {
+    "title": "गुरुकुल",
+    "subtitle": "स्कूल प्रबंधन, आसान बनाया गया",
+    "findSchool": "मेरा स्कूल खोजें",
+    "registerSchool": "नया स्कूल रजिस्टर करें"
+  },
+  "auth": {
+    "signInSubtitle": "जारी रखने के लिए साइन इन करें",
+    "signInWithPhoneSubtitle": "अपने फ़ोन नंबर से साइन इन करें",
+    "username": "उपयोगकर्ता नाम",
+    "password": "पासवर्ड",
+    "signingIn": "साइन इन किया जा रहा है…",
+    "signIn": "साइन इन करें",
+    "or": "या",
+    "continueWithGoogle": "Google से जारी रखें",
+    "newHereCreateAccount": "नए हैं? खाता बनाएं",
+    "phoneNumber": "फ़ोन नंबर",
+    "otp": "OTP",
+    "sendingOtp": "भेजा जा रहा है…",
+    "sendOtp": "OTP भेजें",
+    "verifyingOtp": "सत्यापित किया जा रहा है…",
+    "verifyAndSignIn": "सत्यापित करें और साइन इन करें",
+    "changePhoneNumber": "फ़ोन नंबर बदलें",
+    "useUsernamePassword": "इसके बजाय उपयोगकर्ता नाम और पासवर्ड से साइन इन करें"
+  },
+  "roleSelect": {
+    "createAccount": "खाता बनाएं",
+    "subtitle": "आप किस रूप में रजिस्टर कर रहे हैं?",
+    "student": {
+      "title": "मैं एक विद्यार्थी हूं",
+      "description": "अपने स्कूल द्वारा दिए गए पंजीकरण नंबर से रजिस्टर करें"
+    },
+    "teacher": {
+      "title": "मैं एक शिक्षक हूं",
+      "description": "आपके एडमिन से एक आमंत्रण कोड आवश्यक है"
+    },
+    "parent": {
+      "title": "मैं एक अभिभावक हूं",
+      "description": "अपने बच्चे के पंजीकरण नंबर और आपके दर्ज संपर्क का उपयोग करके लिंक करें"
+    }
+  },
+  "registration": {
+    "yourLogin": "आपका लॉगिन",
+    "usernamePassword": "उपयोगकर्ता नाम और पासवर्ड",
+    "google": "Google",
+    "username": "उपयोगकर्ता नाम",
+    "passwordMin8": "पासवर्ड (कम से कम 8 अक्षर)",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "passwordsDontMatch": "पासवर्ड मेल नहीं खाते।",
+    "googleHint": "आप अपने Google खाते से साइन इन करेंगे।",
+    "submitting": "सबमिट किया जा रहा है…",
+    "continueWithGoogle": "Google से जारी रखें",
+    "submitRegistration": "पंजीकरण सबमिट करें",
+    "teacher": {
+      "title": "शिक्षक पंजीकरण",
+      "subtitle": "आपको अपने एडमिन से एक आमंत्रण कोड चाहिए होगा",
+      "inviteCode": "आमंत्रण कोड",
+      "inviteCodePlaceholder": "जैसे P74BRN7X"
+    },
+    "student": {
+      "title": "विद्यार्थी पंजीकरण",
+      "subtitle": "अपना खाता लिंक करने के लिए अपना पंजीकरण नंबर दर्ज करें",
+      "registrationNumber": "पंजीकरण नंबर",
+      "registrationNumberPlaceholder": "जैसा आपके स्कूल द्वारा दिया गया है"
+    },
+    "parent": {
+      "title": "अभिभावक पंजीकरण",
+      "subtitle": "अपना खाता लिंक करने के लिए अपने बच्चे का पंजीकरण नंबर दर्ज करें",
+      "childRegistrationNumber": "बच्चे का पंजीकरण नंबर",
+      "childRegistrationNumberPlaceholder": "जैसा स्कूल द्वारा दिया गया है",
+      "contactNumber": "आपका दर्ज संपर्क नंबर",
+      "contactNumberPlaceholder": "स्कूल में दर्ज"
+    },
+    "submitted": {
+      "title": "पंजीकरण सबमिट किया गया",
+      "hint": "स्कूल एडमिन द्वारा आपके पंजीकरण की समीक्षा और अनुमोदन के बाद आप साइन इन कर सकेंगे।",
+      "backToSignIn": "साइन इन पर वापस जाएं"
+    }
+  },
+  "schoolSearch": {
+    "title": "अपना स्कूल खोजें",
+    "searchByName": "नाम से खोजें",
+    "placeholder": "जैसे Gurukul",
+    "empty": "कोई स्कूल नहीं मिला।"
+  },
+  "parentHome": {
+    "title": "मेरे बच्चे",
+    "empty": "अभी तक आपके खाते से कोई बच्चा लिंक नहीं है।",
+    "rollAndClass": "रोल {{roll}} · {{classSection}}"
+  },
+  "childDashboard": {
+    "attendance": "उपस्थिति",
+    "fees": "फीस",
+    "reportCard": "रिपोर्ट कार्ड"
+  },
+  "myFees": {
+    "title": "मेरी फीस",
+    "loadError": "आपकी फीस बकाया लोड नहीं की जा सकी।",
+    "empty": "अभी तक कोई फीस आकलन नहीं।",
+    "due": "बकाया ₹{{remaining}} में से ₹{{total}}"
+  },
+  "childFees": {
+    "title": "{{name}} की फीस",
+    "loadError": "फीस बकाया लोड नहीं की जा सकी।",
+    "empty": "अभी तक कोई फीस आकलन नहीं।"
+  },
+  "registrationInbox": {
+    "title": "अभिभावक पंजीकरण अनुमोदन",
+    "shareCode": "यह कोड शिक्षक के साथ साझा करें",
+    "expires": "समाप्ति {{date}}",
+    "pickTeacher": "आमंत्रित करने के लिए शिक्षक चुनें",
+    "generating": "बनाया जा रहा है…",
+    "generateInviteCode": "आमंत्रण कोड बनाएं",
+    "inviteTeacher": "एक शिक्षक को आमंत्रित करें",
+    "empty": "कोई लंबित अभिभावक पंजीकरण नहीं।",
+    "approve": "स्वीकृत करें",
+    "reject": "अस्वीकृत करें",
+    "approveTitle": "पंजीकरण स्वीकृत करें",
+    "rejectTitle": "पंजीकरण अस्वीकृत करें",
+    "confirmMessage": "{{name}} का पंजीकरण {{action}}?"
   }
 }

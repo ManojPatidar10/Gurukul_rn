@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { approveRegistration, createTeacherInvite, listRegistrations, rejectRegistration } from '../../api/registration';
 import type { Employee, RegistrationInboxEntry } from '../../api/types';
@@ -14,6 +15,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'RegistrationInbox'>;
 
 export function RegistrationInboxScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [entries, setEntries] = useState<RegistrationInboxEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,12 +63,15 @@ export function RegistrationInboxScreen({ navigation }: Props) {
 
   const handleDecide = (entry: RegistrationInboxEntry, decision: 'approve' | 'reject') => {
     Alert.alert(
-      decision === 'approve' ? 'Approve registration' : 'Reject registration',
-      `${decision === 'approve' ? 'Approve' : 'Reject'} ${entry.displayName}'s registration?`,
+      decision === 'approve' ? t('registrationInbox.approveTitle') : t('registrationInbox.rejectTitle'),
+      t('registrationInbox.confirmMessage', {
+        action: decision === 'approve' ? t('registrationInbox.approve') : t('registrationInbox.reject'),
+        name: entry.displayName,
+      }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: decision === 'approve' ? 'Approve' : 'Reject',
+          text: decision === 'approve' ? t('registrationInbox.approve') : t('registrationInbox.reject'),
           style: decision === 'reject' ? 'destructive' : 'default',
           onPress: async () => {
             setDecidingId(entry.entityId);
@@ -91,16 +96,18 @@ export function RegistrationInboxScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Parent Registration Approvals" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('registrationInbox.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         <View style={styles.inviteCard}>
           {invite ? (
             <>
-              <Text style={styles.inviteLabel}>Share this code with the teacher</Text>
+              <Text style={styles.inviteLabel}>{t('registrationInbox.shareCode')}</Text>
               <Text style={styles.inviteCode} selectable>
                 {invite.code}
               </Text>
-              <Text style={styles.inviteExpiry}>Expires {new Date(invite.expiresAt).toLocaleString()}</Text>
+              <Text style={styles.inviteExpiry}>
+                {t('registrationInbox.expires', { date: new Date(invite.expiresAt).toLocaleString() })}
+              </Text>
               <Pressable
                 onPress={() => {
                   setInvite(null);
@@ -108,12 +115,12 @@ export function RegistrationInboxScreen({ navigation }: Props) {
                   setShowInvite(false);
                 }}
               >
-                <Text style={styles.inviteDone}>Done</Text>
+                <Text style={styles.inviteDone}>{t('common.done')}</Text>
               </Pressable>
             </>
           ) : showInvite ? (
             <>
-              <Text style={styles.inviteLabel}>Pick the teacher to invite</Text>
+              <Text style={styles.inviteLabel}>{t('registrationInbox.pickTeacher')}</Text>
               <EmployeePicker schoolId={schoolId} selectedId={selectedEmployee?.id ?? null} onSelect={setSelectedEmployee} />
               <Pressable
                 style={[styles.inviteButton, !selectedEmployee && styles.inviteButtonDisabled]}
@@ -121,13 +128,13 @@ export function RegistrationInboxScreen({ navigation }: Props) {
                 disabled={!selectedEmployee || generatingInvite}
               >
                 <Text style={styles.inviteButtonText}>
-                  {generatingInvite ? 'Generating…' : 'Generate invite code'}
+                  {generatingInvite ? t('registrationInbox.generating') : t('registrationInbox.generateInviteCode')}
                 </Text>
               </Pressable>
             </>
           ) : (
             <Pressable style={styles.inviteButton} onPress={() => setShowInvite(true)}>
-              <Text style={styles.inviteButtonText}>Invite a teacher</Text>
+              <Text style={styles.inviteButtonText}>{t('registrationInbox.inviteTeacher')}</Text>
             </Pressable>
           )}
         </View>
@@ -136,7 +143,7 @@ export function RegistrationInboxScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         {!loading && entries.length === 0 && !error && (
-          <Text style={styles.empty}>No pending parent registrations.</Text>
+          <Text style={styles.empty}>{t('registrationInbox.empty')}</Text>
         )}
 
         {entries.map((entry) => (
@@ -153,10 +160,10 @@ export function RegistrationInboxScreen({ navigation }: Props) {
               ) : (
                 <>
                   <Pressable style={styles.approveButton} onPress={() => handleDecide(entry, 'approve')}>
-                    <Text style={styles.approveButtonText}>Approve</Text>
+                    <Text style={styles.approveButtonText}>{t('registrationInbox.approve')}</Text>
                   </Pressable>
                   <Pressable style={styles.rejectButton} onPress={() => handleDecide(entry, 'reject')}>
-                    <Text style={styles.rejectButtonText}>Reject</Text>
+                    <Text style={styles.rejectButtonText}>{t('registrationInbox.reject')}</Text>
                   </Pressable>
                 </>
               )}

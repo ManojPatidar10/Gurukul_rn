@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getEmployee, updateEmployee } from '../../api/employees';
 import { getStudent, updateStudent } from '../../api/students';
@@ -16,6 +17,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Profile'>;
 
 export function ProfileScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -91,7 +93,7 @@ export function ProfileScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Profile" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('common.profile')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} />}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -221,7 +223,7 @@ export function ProfileScreen({ navigation }: Props) {
 
             {!editing && (
               <Pressable style={styles.logoutButton} onPress={logout}>
-                <Text style={styles.logoutButtonText}>Log out</Text>
+                <Text style={styles.logoutButtonText}>{t('common.logOut')}</Text>
               </Pressable>
             )}
           </View>
