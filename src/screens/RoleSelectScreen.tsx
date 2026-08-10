@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { Logo } from '../components/Logo';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
 export type RegistrationRole = 'student' | 'teacher' | 'parent';
@@ -33,9 +34,7 @@ export default function RoleSelectScreen({ schoolName, onBack, onSelectRole }: P
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>G</Text>
-        </View>
+        <Logo width={120} onDarkBackground />
         <Text style={styles.title}>{schoolName ?? t('roleSelect.createAccount')}</Text>
         <Text style={styles.subtitle}>{t('roleSelect.subtitle')}</Text>
       </LinearGradient>
@@ -78,16 +77,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
   },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  badgeText: { color: colors.white, fontSize: 28, fontWeight: '800' },
   title: { color: colors.white, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.md },
