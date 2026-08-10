@@ -4,9 +4,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { login, loginWithGoogle } from '../api/auth';
+import { login } from '../api/auth';
 import { setAuthToken } from '../api/client';
-import { GoogleSignInCancelledError, getGoogleIdToken } from '../api/googleSignIn';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
@@ -25,7 +24,6 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = !!username && !!password;
@@ -41,23 +39,6 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
       setError((e as Error).message);
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setGoogleSubmitting(true);
-    setError(null);
-    try {
-      const idToken = await getGoogleIdToken();
-      const session = await loginWithGoogle(schoolId, { idToken });
-      setAuthToken(session.token);
-      onLoggedIn(session);
-    } catch (e) {
-      if (!(e instanceof GoogleSignInCancelledError)) {
-        setError((e as Error).message);
-      }
-    } finally {
-      setGoogleSubmitting(false);
     }
   };
 
@@ -93,22 +74,6 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
           disabled={!canSubmit || submitting}
         >
           <Text style={styles.submitText}>{submitting ? t('auth.signingIn') : t('auth.signIn')}</Text>
-        </Pressable>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>{t('auth.or')}</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <Pressable
-          style={[styles.googleButton, googleSubmitting && styles.disabled]}
-          onPress={handleGoogleSignIn}
-          disabled={googleSubmitting}
-        >
-          <Text style={styles.googleButtonText}>
-            {googleSubmitting ? t('auth.signingIn') : t('auth.continueWithGoogle')}
-          </Text>
         </Pressable>
 
         {onRegister && (
@@ -172,18 +137,6 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.5 },
   submitText: { color: colors.white, fontWeight: '700', fontSize: 16 },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg, gap: spacing.sm },
-  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-  dividerText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
-  googleButton: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-  },
-  googleButtonText: { color: colors.textPrimary, fontWeight: '700', fontSize: 15 },
   linkButton: { marginTop: spacing.lg, alignItems: 'center' },
   linkText: { color: colors.primary, fontWeight: '600' },
 });

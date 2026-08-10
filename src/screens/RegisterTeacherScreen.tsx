@@ -4,8 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GoogleSignInCancelledError, getGoogleIdToken } from '../api/googleSignIn';
-import { registerTeacher, registerTeacherWithGoogle } from '../api/registration';
+import { registerTeacher } from '../api/registration';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
@@ -16,12 +15,9 @@ interface Props {
   onSubmitted: (message: string) => void;
 }
 
-type AuthMode = 'password' | 'google';
-
 export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [authMode, setAuthMode] = useState<AuthMode>('password');
   const [inviteCode, setInviteCode] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -30,21 +26,17 @@ export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }:
   const [error, setError] = useState<string | null>(null);
 
   const passwordsMatch = password === confirmPassword;
-  const canSubmit =
-    !!inviteCode && (authMode === 'google' || (!!username && password.length >= 8 && passwordsMatch));
+  const canSubmit = !!inviteCode && !!username && password.length >= 8 && passwordsMatch;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
     try {
-      const result =
-        authMode === 'google'
-          ? await registerTeacherWithGoogle(schoolId, { inviteCode, idToken: await getGoogleIdToken() })
-          : await registerTeacher(schoolId, { inviteCode, username, password });
+      const result = await registerTeacher(schoolId, { inviteCode, username, password });
       onSubmitted(result.message);
     } catch (e) {
-      if (!(e instanceof GoogleSignInCancelledError)) setError((e as Error).message);
+      setError((e as Error).message);
     } finally {
       setSubmitting(false);
     }
@@ -73,30 +65,15 @@ export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }:
         />
 
         <Text style={styles.sectionLabel}>{t('registration.yourLogin')}</Text>
-        <View style={styles.modeRow}>
-          <Pressable style={[styles.modeTab, authMode === 'password' && styles.modeTabActive]} onPress={() => setAuthMode('password')}>
-            <Text style={[styles.modeTabText, authMode === 'password' && styles.modeTabTextActive]}>{t('registration.usernamePassword')}</Text>
-          </Pressable>
-          <Pressable style={[styles.modeTab, authMode === 'google' && styles.modeTabActive]} onPress={() => setAuthMode('google')}>
-            <Text style={[styles.modeTabText, authMode === 'google' && styles.modeTabTextActive]}>{t('registration.google')}</Text>
-          </Pressable>
-        </View>
-
-        {authMode === 'password' ? (
-          <>
-            <LabeledInput label={t('registration.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
-            <LabeledInput label={t('registration.passwordMin8')} value={password} onChangeText={setPassword} secureTextEntry />
-            <LabeledInput
-              label={t('registration.confirmPassword')}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
-            {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>{t('registration.passwordsDontMatch')}</Text>}
-          </>
-        ) : (
-          <Text style={styles.googleHint}>{t('registration.googleHint')}</Text>
-        )}
+        <LabeledInput label={t('registration.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
+        <LabeledInput label={t('registration.passwordMin8')} value={password} onChangeText={setPassword} secureTextEntry />
+        <LabeledInput
+          label={t('registration.confirmPassword')}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+        />
+        {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>{t('registration.passwordsDontMatch')}</Text>}
 
         {error && <Text style={styles.error}>{error}</Text>}
 
@@ -106,7 +83,7 @@ export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }:
           disabled={!canSubmit || submitting}
         >
           <Text style={styles.submitText}>
-            {submitting ? t('registration.submitting') : authMode === 'google' ? t('registration.continueWithGoogle') : t('registration.submitRegistration')}
+            {submitting ? t('registration.submitting') : t('registration.submitRegistration')}
           </Text>
         </Pressable>
       </ScrollView>
@@ -151,18 +128,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
-  modeRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.pill,
-    padding: 4,
-    marginBottom: spacing.md,
-  },
-  modeTab: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.pill, alignItems: 'center' },
-  modeTabActive: { backgroundColor: colors.primary },
-  modeTabText: { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
-  modeTabTextActive: { color: colors.white },
-  googleHint: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.md },
   mismatch: { color: colors.error, fontSize: 12.5, marginTop: -spacing.sm, marginBottom: spacing.md },
   error: { color: colors.error, marginBottom: spacing.md },
   submit: {
