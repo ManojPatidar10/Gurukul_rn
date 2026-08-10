@@ -114,7 +114,10 @@ export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props
 const styles = StyleSheet.create({
   loading: { marginVertical: spacing.md },
   empty: { color: colors.textMuted, marginBottom: spacing.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  // alignItems: 'flex-start' matters here - without it, flexWrap's default cross-axis stretch
+  // makes every chip in a wrapped row match the height of the tallest one in that row, so a short
+  // chip next to a two-line-wrapping long one visibly balloons in padding for no reason.
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {
     borderWidth: 1.5,
     borderColor: colors.border,

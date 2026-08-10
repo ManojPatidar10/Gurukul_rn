@@ -283,6 +283,7 @@ export interface FeePaymentRequestResponse {
   payeeName: string;
   accountNumber: string;
   ifsc: string;
+  payeeVpa: string;
   upiUri: string;
   referenceId: string;
   generatedAt: string;

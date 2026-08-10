@@ -52,7 +52,7 @@ export default function TeacherPicker({ schoolId, selectedId, onSelect }: Props)
 const styles = StyleSheet.create({
   loading: { marginVertical: spacing.md },
   empty: { color: colors.textMuted, marginBottom: spacing.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {
     borderWidth: 1.5,
     borderColor: colors.border,

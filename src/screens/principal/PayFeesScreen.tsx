@@ -154,6 +154,25 @@ export function PayFeesScreen({ route, navigation }: Props) {
                 {stage === 'error' ? t('fees.payFees.tryAgain') : t('fees.payFees.payNow')}
               </Text>
             </Pressable>
+
+            {stage === 'error' && paymentRequest && (
+              <View style={styles.manualCard}>
+                <Text style={styles.manualTitle}>{t('fees.payFees.manualTitle')}</Text>
+                <Text style={styles.manualHint}>{t('fees.payFees.manualHint')}</Text>
+                <Text style={styles.manualLabel}>{t('fees.payFees.manualUpiId')}</Text>
+                <Text style={styles.manualValue} selectable>
+                  {paymentRequest.payeeVpa}
+                </Text>
+                <Text style={styles.manualLabel}>{t('fees.payFees.manualAmount')}</Text>
+                <Text style={styles.manualValue} selectable>
+                  ₹{paymentRequest.amount.toLocaleString('en-IN')}
+                </Text>
+                <Text style={styles.manualNote}>{t('fees.payFees.manualNote')}</Text>
+                <Pressable style={styles.manualReportButton} onPress={() => promptForOutcome(paymentRequest)}>
+                  <Text style={styles.manualReportButtonText}>{t('fees.payFees.manualReportButton')}</Text>
+                </Pressable>
+              </View>
+            )}
           </>
         )}
 
@@ -235,6 +254,26 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   payButtonText: { color: colors.white, fontWeight: '700', fontSize: 16 },
+  manualCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
+    ...softShadow,
+  },
+  manualTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.xs },
+  manualHint: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.md, lineHeight: 18 },
+  manualLabel: { fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: spacing.sm },
+  manualValue: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginTop: 2 },
+  manualNote: { fontSize: 12, color: colors.textMuted, marginTop: spacing.md, fontStyle: 'italic' },
+  manualReportButton: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  manualReportButtonText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
   statusCard: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
