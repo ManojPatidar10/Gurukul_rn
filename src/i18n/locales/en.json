@@ -23,7 +23,9 @@
     "inactive": "Inactive",
     "male": "Male",
     "female": "Female",
-    "other": "Other"
+    "other": "Other",
+    "logOut": "Log out",
+    "profile": "Profile"
   },
   "language": {
     "toggleLabel": "Change language",
@@ -699,5 +701,126 @@
       "rating": "Enter a rating between 0 and 5.",
       "feedbackDate": "Select a date."
     }
+  },
+  "welcome": {
+    "title": "Gurukul",
+    "subtitle": "School management, made simple",
+    "findSchool": "Find my school",
+    "registerSchool": "Register a new school"
+  },
+  "auth": {
+    "signInSubtitle": "Sign in to continue",
+    "signInWithPhoneSubtitle": "Sign in with your phone number",
+    "username": "Username",
+    "password": "Password",
+    "signingIn": "Signing in…",
+    "signIn": "Sign in",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "newHereCreateAccount": "New here? Create an account",
+    "phoneNumber": "Phone number",
+    "otp": "OTP",
+    "sendingOtp": "Sending…",
+    "sendOtp": "Send OTP",
+    "verifyingOtp": "Verifying…",
+    "verifyAndSignIn": "Verify & sign in",
+    "changePhoneNumber": "Change phone number",
+    "useUsernamePassword": "Sign in with username & password instead"
+  },
+  "roleSelect": {
+    "createAccount": "Create an account",
+    "subtitle": "Who are you registering as?",
+    "student": {
+      "title": "I'm a student",
+      "description": "Register with the registration number given by your school"
+    },
+    "teacher": {
+      "title": "I'm a teacher",
+      "description": "Requires an invite code from your admin"
+    },
+    "parent": {
+      "title": "I'm a parent",
+      "description": "Link using your child's registration number and your contact on file"
+    }
+  },
+  "registration": {
+    "yourLogin": "Your login",
+    "usernamePassword": "Username & password",
+    "google": "Google",
+    "username": "Username",
+    "passwordMin8": "Password (min 8 characters)",
+    "confirmPassword": "Confirm password",
+    "passwordsDontMatch": "Passwords don't match.",
+    "googleHint": "You'll sign in with your Google account.",
+    "submitting": "Submitting…",
+    "continueWithGoogle": "Continue with Google",
+    "submitRegistration": "Submit registration",
+    "teacher": {
+      "title": "Teacher registration",
+      "subtitle": "You'll need an invite code from your admin",
+      "inviteCode": "Invite code",
+      "inviteCodePlaceholder": "e.g. P74BRN7X"
+    },
+    "student": {
+      "title": "Student registration",
+      "subtitle": "Enter your registration number to link your account",
+      "registrationNumber": "Registration number",
+      "registrationNumberPlaceholder": "e.g. as given by your school"
+    },
+    "parent": {
+      "title": "Parent registration",
+      "subtitle": "Enter your child's registration number to link your account",
+      "childRegistrationNumber": "Child's registration number",
+      "childRegistrationNumberPlaceholder": "e.g. as given by the school",
+      "contactNumber": "Your contact number on file",
+      "contactNumberPlaceholder": "Registered with the school"
+    },
+    "submitted": {
+      "title": "Registration submitted",
+      "hint": "You'll be able to sign in once a school admin reviews and approves your registration.",
+      "backToSignIn": "Back to sign in"
+    }
+  },
+  "schoolSearch": {
+    "title": "Find your school",
+    "searchByName": "Search by name",
+    "placeholder": "e.g. Gurukul",
+    "empty": "No schools found."
+  },
+  "parentHome": {
+    "title": "My Children",
+    "empty": "No children linked to your account yet.",
+    "rollAndClass": "Roll {{roll}} · {{classSection}}"
+  },
+  "childDashboard": {
+    "attendance": "Attendance",
+    "fees": "Fees",
+    "reportCard": "Report Card"
+  },
+  "myFees": {
+    "title": "My Fees",
+    "loadError": "Could not load your fee dues.",
+    "empty": "No fee assessments yet.",
+    "due": "Due ₹{{remaining}} of ₹{{total}}"
+  },
+  "childFees": {
+    "title": "{{name}}'s Fees",
+    "loadError": "Could not load fee dues.",
+    "empty": "No fee assessments yet."
+  },
+  "registrationInbox": {
+    "title": "Parent Registration Approvals",
+    "shareCode": "Share this code with the teacher",
+    "expires": "Expires {{date}}",
+    "pickTeacher": "Pick the teacher to invite",
+    "generating": "Generating…",
+    "generateInviteCode": "Generate invite code",
+    "inviteTeacher": "Invite a teacher",
+    "empty": "No pending parent registrations.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveTitle": "Approve registration",
+    "rejectTitle": "Reject registration",
+    "confirmMessage": "{{action}} {{name}}'s registration?"
   }
 }

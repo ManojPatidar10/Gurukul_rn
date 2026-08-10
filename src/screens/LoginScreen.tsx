@@ -1,10 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { login, loginWithGoogle } from '../api/auth';
 import { setAuthToken } from '../api/client';
 import { GoogleSignInCancelledError, getGoogleIdToken } from '../api/googleSignIn';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
@@ -17,6 +20,8 @@ interface Props {
 }
 
 export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }: Props) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -62,16 +67,19 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
+        <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
+          <LanguageSwitch />
+        </View>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>G</Text>
         </View>
         <Text style={styles.title}>Gurukul</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.subtitle}>{t('auth.signInSubtitle')}</Text>
       </LinearGradient>
 
       <View style={styles.form}>
-        <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
-        <LabeledInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+        <LabeledInput label={t('auth.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
+        <LabeledInput label={t('auth.password')} value={password} onChangeText={setPassword} secureTextEntry />
 
         {error && (
           <Text style={[styles.error, error.includes('pending admin approval') && styles.pendingNotice]}>
@@ -84,12 +92,12 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
           onPress={handleSubmit}
           disabled={!canSubmit || submitting}
         >
-          <Text style={styles.submitText}>{submitting ? 'Signing in…' : 'Sign in'}</Text>
+          <Text style={styles.submitText}>{submitting ? t('auth.signingIn') : t('auth.signIn')}</Text>
         </Pressable>
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
+          <Text style={styles.dividerText}>{t('auth.or')}</Text>
           <View style={styles.dividerLine} />
         </View>
 
@@ -98,12 +106,14 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
           onPress={handleGoogleSignIn}
           disabled={googleSubmitting}
         >
-          <Text style={styles.googleButtonText}>{googleSubmitting ? 'Signing in…' : 'Continue with Google'}</Text>
+          <Text style={styles.googleButtonText}>
+            {googleSubmitting ? t('auth.signingIn') : t('auth.continueWithGoogle')}
+          </Text>
         </Pressable>
 
         {onRegister && (
           <Pressable onPress={onRegister} style={styles.linkButton}>
-            <Text style={styles.linkText}>New here? Create an account</Text>
+            <Text style={styles.linkText}>{t('auth.newHereCreateAccount')}</Text>
           </Pressable>
         )}
       </View>
@@ -133,6 +143,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  languageSwitchWrapper: {
+    position: 'absolute',
+    right: spacing.lg,
+  },
   badge: {
     width: 64,
     height: 64,

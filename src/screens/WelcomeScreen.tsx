@@ -1,6 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
 interface Props {
@@ -9,22 +12,28 @@ interface Props {
 }
 
 export default function WelcomeScreen({ onFindSchool, onRegisterSchool }: Props) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.root}>
       <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+        <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.sm }]}>
+          <LanguageSwitch />
+        </View>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>G</Text>
         </View>
-        <Text style={styles.title}>Gurukul</Text>
-        <Text style={styles.subtitle}>School management, made simple</Text>
+        <Text style={styles.title}>{t('welcome.title')}</Text>
+        <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>
       </LinearGradient>
 
       <View style={styles.actions}>
         <Pressable style={styles.primaryButton} onPress={onFindSchool}>
-          <Text style={styles.primaryButtonText}>Find my school</Text>
+          <Text style={styles.primaryButtonText}>{t('welcome.findSchool')}</Text>
         </Pressable>
         <Pressable style={styles.secondaryButton} onPress={onRegisterSchool}>
-          <Text style={styles.secondaryButtonText}>Register a new school</Text>
+          <Text style={styles.secondaryButtonText}>{t('welcome.registerSchool')}</Text>
         </Pressable>
       </View>
     </View>
@@ -40,6 +49,10 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.xl,
     borderBottomRightRadius: radius.xl,
     ...shadow,
+  },
+  languageSwitchWrapper: {
+    position: 'absolute',
+    right: spacing.lg,
   },
   badge: {
     width: 64,
