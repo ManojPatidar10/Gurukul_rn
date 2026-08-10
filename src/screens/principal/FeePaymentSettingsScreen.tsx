@@ -118,6 +118,9 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
           placeholder={school?.name}
         />
         <Text style={styles.sectionHint}>{t('fees.paymentSettings.upiVpaOverrideHint')}</Text>
+        {!upiVpaOverride.trim() && (
+          <Text style={styles.warning}>{t('fees.paymentSettings.upiVpaOverrideWarning')}</Text>
+        )}
         <LabeledInput
           label={t('fees.paymentSettings.upiVpaOverride')}
           value={upiVpaOverride}
@@ -138,6 +141,7 @@ const styles = StyleSheet.create({
   loading: { marginTop: spacing.xl },
   hint: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.lg },
   sectionHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.md, marginBottom: spacing.xs, fontStyle: 'italic' },
+  warning: { fontSize: 12.5, color: colors.warning, fontWeight: '600', marginBottom: spacing.sm },
   save: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
