@@ -137,6 +137,10 @@
       "staffAttendance": {
         "title": "Staff Attendance",
         "description": "Today's staff roster and check-in history"
+      },
+      "registrationInbox": {
+        "title": "Registration Approvals",
+        "description": "Review pending student, teacher, and parent registrations"
       }
     }
   },

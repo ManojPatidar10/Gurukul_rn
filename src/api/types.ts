@@ -100,6 +100,8 @@ export interface Student {
   id: string;
   schoolId: string;
   rollNumber: string;
+  /** Only populated for the ADMIN caller; null for anyone else (teacher, student, parent, unauthenticated). */
+  registrationNumber: string | null;
   name: string;
   dob: string;
   gender: string;
@@ -120,7 +122,6 @@ export interface Student {
 }
 
 export interface StudentRequest {
-  rollNumber: string;
   name: string;
   dob: string;
   gender: string;
@@ -667,12 +668,16 @@ export interface EmployeeAttendanceHistory {
   records: StaffAttendanceRecord[];
 }
 
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
-export type OwnerType = 'EMPLOYEE' | 'STUDENT';
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
+export type OwnerType = 'EMPLOYEE' | 'STUDENT' | 'PARENT';
 
 export interface LoginRequest {
   username: string;
   password: string;
+}
+
+export interface GoogleLoginRequest {
+  idToken: string;
 }
 
 export interface LoginResponse {
@@ -683,6 +688,70 @@ export interface LoginResponse {
   role: UserRole;
   schoolId: string;
   username: string;
+}
+
+export interface RegistrationSubmittedResponse {
+  entityId: string;
+  message: string;
+}
+
+// Claim-by-reference-key model: admin already created the underlying record (student at
+// enrollment, employee at hiring) - self-registration just proves who you are with a reference
+// key and sets credentials, instead of re-entering data admin already has on file. The exact
+// field name/format for each reference key is pending confirmation from backend - update here
+// once known, screens just bind to these types.
+export interface RegisterStudentRequest {
+  registrationNumber: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterStudentGoogleRequest = Omit<RegisterStudentRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export interface TeacherInviteResponse {
+  code: string;
+  expiresAt: string;
+}
+
+export interface RegisterTeacherRequest {
+  inviteCode: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterTeacherGoogleRequest = Omit<RegisterTeacherRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export interface RegisterParentRequest {
+  studentRegistrationNumber: string;
+  parentContact: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterParentGoogleRequest = Omit<RegisterParentRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export type RegistrationEntityType = 'STUDENT_REGISTRATION' | 'EMPLOYEE_REGISTRATION' | 'PARENT_REGISTRATION';
+
+export interface RegistrationInboxEntry {
+  entityId: string;
+  entityType: RegistrationEntityType;
+  displayName: string;
+  submittedBy: string;
+  submittedAt: string;
+}
+
+export interface RegistrationDecisionRequest {
+  comment?: string;
+}
+
+export interface LinkChildRequest {
+  studentRegistrationNumber: string;
 }
 
 export interface OtpRequest {

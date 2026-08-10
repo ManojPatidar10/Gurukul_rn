@@ -1,3 +1,4 @@
+import { FontAwesome5 } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -39,6 +40,7 @@ export function DatePickerField({ label, value, onChange, minimumDate, maximumDa
             ? parseIsoDate(value).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
             : (placeholder ?? 'Select date')}
         </Text>
+        <FontAwesome5 name="calendar-alt" size={15} color={colors.textMuted} />
       </Pressable>
       {show && (
         <DateTimePicker
@@ -69,6 +71,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   input: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderRadius: radius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,

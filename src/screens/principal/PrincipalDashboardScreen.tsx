@@ -32,7 +32,8 @@ const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
 // Teacher Tools is a principal-driven workflow (principal picks a teacher to act on behalf of),
-// not something a student would ever use either.
+// not something a student would ever use either. Registration Approvals is an admin-only inbox -
+// no legitimate use for a student either.
 const STUDENT_HIDDEN_FEATURES: FeatureId[] = [
   'vendors',
   'payroll',
@@ -41,11 +42,12 @@ const STUDENT_HIDDEN_FEATURES: FeatureId[] = [
   'gradingScale',
   'schoolLocation',
   'staffAttendance',
+  'registrationInbox',
 ];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
 // Teacher Tools is principal-only for the same reason as above - a teacher acting "as" another
-// teacher doesn't fit the feature's design.
+// teacher doesn't fit the feature's design. Registration Approvals is admin-only for the same reason.
 const TEACHER_HIDDEN_FEATURES: FeatureId[] = [
   'employees',
   'vendors',
@@ -55,6 +57,7 @@ const TEACHER_HIDDEN_FEATURES: FeatureId[] = [
   'gradingScale',
   'schoolLocation',
   'staffAttendance',
+  'registrationInbox',
 ];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
@@ -78,6 +81,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   markMyAttendance: 'MarkMyAttendance',
   schoolLocation: 'SchoolLocationSettings',
   staffAttendance: 'StaffAttendance',
+  registrationInbox: 'RegistrationInbox',
   myAttendance: 'AttendanceHistory',
 };
 
@@ -142,6 +146,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
     { id: 'schoolLocation', title: t('dashboard.features.schoolLocation.title'), icon: 'map-pin', description: t('dashboard.features.schoolLocation.description') },
     { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
+    { id: 'registrationInbox', title: t('dashboard.features.registrationInbox.title'), icon: 'user-check', description: t('dashboard.features.registrationInbox.description') },
   ];
 
   const visibleFeatures = featureActions

@@ -11,8 +11,8 @@ import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocatio
 import { StaffAttendanceScreen } from '../screens/principal/StaffAttendanceScreen';
 import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAttendanceHistoryScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
-import { AttendanceTakeScreen } from '../screens/principal/AttendanceTakeScreen';
-import { SectionAttendanceHistoryScreen } from '../screens/principal/SectionAttendanceHistoryScreen';
+import { RegistrationInboxScreen } from '../screens/principal/RegistrationInboxScreen';
+import { SectionAttendanceScreen } from '../screens/principal/SectionAttendanceScreen';
 import { ClassesListScreen } from '../screens/principal/ClassesListScreen';
 import { ClassmatesScreen } from '../screens/principal/ClassmatesScreen';
 import { ConversationThreadScreen } from '../screens/principal/ConversationThreadScreen';
@@ -142,9 +142,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AssessmentForm" component={AssessmentFormScreen} />
         <Stack.Screen name="AssessmentDetail" component={AssessmentDetailScreen} />
         <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
-        <Stack.Screen name="AttendanceTake" component={AttendanceTakeScreen} />
-        <Stack.Screen name="SectionAttendanceHistory" component={SectionAttendanceHistoryScreen} />
+        <Stack.Screen name="AttendanceTake" component={SectionAttendanceScreen} />
         <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+        <Stack.Screen name="RegistrationInbox" component={RegistrationInboxScreen} />
         <Stack.Screen name="ReportCard" component={ReportCardScreen} />
         <Stack.Screen name="PublishReportCards" component={PublishReportCardsScreen} />
         <Stack.Screen name="GradingScale" component={GradingScaleScreen} />

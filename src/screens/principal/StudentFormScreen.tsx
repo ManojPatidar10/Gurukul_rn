@@ -37,7 +37,6 @@ export function StudentFormScreen({ route, navigation }: Props) {
   const isEdit = !!student;
 
   const [form, setForm] = useState<StudentRequest>({
-    rollNumber: student?.rollNumber ?? '',
     name: student?.name ?? '',
     dob: student?.dob ?? '',
     gender: student?.gender ?? '',
@@ -55,7 +54,7 @@ export function StudentFormScreen({ route, navigation }: Props) {
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const canSubmit =
-    form.rollNumber && form.name && form.dob && form.gender && form.address &&
+    form.name && form.dob && form.gender && form.address &&
     form.parentName && form.parentContact && form.classSectionId && form.admissionDate;
 
   const handleSubmit = async () => {
@@ -87,7 +86,6 @@ export function StudentFormScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
-        <LabeledInput label={t('students.form.rollNumber')} required value={form.rollNumber} onChangeText={set('rollNumber')} />
         <LabeledInput label={t('students.form.name')} required value={form.name} onChangeText={set('name')} />
         <DatePickerField label={t('students.form.dob')} value={form.dob} onChange={set('dob')} maximumDate={new Date()} />
         <Dropdown label={t('students.form.gender')} required value={form.gender} options={GENDER_OPTIONS} onSelect={set('gender')} />

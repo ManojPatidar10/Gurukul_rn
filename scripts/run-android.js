@@ -16,13 +16,13 @@ function hasAndroidSdk() {
 }
 
 if (hasAndroidSdk()) {
-  console.log('Android SDK detected. Launching Expo for Android...');
-  const child = spawn('npx', ['expo', 'start', '--android'], { stdio: 'inherit', shell: true });
+  console.log('Android SDK detected. Launching Expo for Android (dev client)...');
+  const child = spawn('npx', ['expo', 'start', '--dev-client', '--android'], { stdio: 'inherit', shell: true });
   child.on('exit', (code) => process.exit(code || 0));
 } else {
   console.log('Android SDK or adb was not detected.');
   console.log('Starting the Expo dev server instead.');
-  console.log('Install Android Studio with the SDK and ADB, or use Expo Go on a physical device to run the app.');
-  const child = spawn('npx', ['expo', 'start'], { stdio: 'inherit', shell: true });
+  console.log('Install Android Studio with the SDK and ADB, then install the dev-client build to run the app.');
+  const child = spawn('npx', ['expo', 'start', '--dev-client'], { stdio: 'inherit', shell: true });
   child.on('exit', (code) => process.exit(code || 0));
 }

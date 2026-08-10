@@ -32,7 +32,8 @@ export type FeatureId =
   | 'markMyAttendance'
   | 'schoolLocation'
   | 'staffAttendance'
-  | 'myAttendance';
+  | 'myAttendance'
+  | 'registrationInbox';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -86,8 +87,11 @@ export type PrincipalStackParamList = {
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
   AssessmentResults: { assessment: Assessment };
   AttendanceTake: { classSection: ClassSection };
-  SectionAttendanceHistory: { classSection: ClassSection };
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
+  RegistrationInbox: undefined;
+  ParentHome: undefined;
+  ChildDashboard: { student: Pick<Student, 'id' | 'name'> };
+  ChildFees: { student: Pick<Student, 'id' | 'name'> };
   ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
   PublishReportCards: { classSection: ClassSection };
   GradingScale: undefined;
