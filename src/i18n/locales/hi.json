@@ -144,6 +144,10 @@
       "registrationInbox": {
         "title": "पंजीकरण अनुमोदन",
         "description": "लंबित विद्यार्थी, शिक्षक और अभिभावक पंजीकरण की समीक्षा करें"
+      },
+      "myClassFees": {
+        "title": "मेरी कक्षा की फीस",
+        "description": "आपकी कक्षा के छात्रों की फीस भुगतान स्थिति"
       }
     }
   },
@@ -360,6 +364,17 @@
       "title": "आकलन और बकाया",
       "loadError": "आकलन लोड नहीं किए जा सके।",
       "empty": "अभी तक 0 आकलन — पहले किसी फीस संरचना से इन्हें बनाएं।",
+      "rowSubtitle": "रोल {{roll}} · बकाया ₹{{due}} में से ₹{{total}}",
+      "summaryTotal": "कुल छात्र",
+      "summaryUnpaidCount": "अवैतनिक",
+      "summaryUnpaidAmount": "बकाया राशि",
+      "searchPlaceholder": "नाम या रोल नंबर से खोजें…"
+    },
+    "myClassFees": {
+      "title": "मेरी कक्षा की फीस",
+      "fullyPaid": "पूर्ण भुगतान",
+      "remaining": "शेष बकाया",
+      "empty": "इस सेक्शन के लिए अभी तक कोई फीस आकलन नहीं है।",
       "rowSubtitle": "रोल {{roll}} · बकाया ₹{{due}} में से ₹{{total}}"
     },
     "assessmentDetail": {
@@ -456,7 +471,21 @@
       "runPayroll": {
         "title": "पेरोल चलाएं",
         "description": "एक रन बनाएं, उसे संसाधित करें, और महीने के लिए कर्मचारियों को भुगतान करें"
+      },
+      "overview": {
+        "title": "पेरोल अवलोकन",
+        "description": "हर रन में कितने कर्मचारियों को भुगतान हुआ बनाम अभी भी लंबित है"
       }
+    },
+    "overview": {
+      "title": "पेरोल अवलोकन",
+      "paidCount": "भुगतान किए गए कर्मचारी",
+      "pendingCount": "लंबित कर्मचारी",
+      "paidAmount": "भुगतान की गई राशि",
+      "pendingAmount": "लंबित राशि",
+      "runsTitle": "रन के अनुसार",
+      "empty": "अभी तक कोई पेरोल रन नहीं है।",
+      "runSubtitle": "{{count}} कर्मचारी"
     },
     "salaryStructuresList": {
       "title": "वेतन संरचनाएं",

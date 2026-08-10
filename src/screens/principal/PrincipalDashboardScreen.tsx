@@ -81,6 +81,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   staffAttendance: 'StaffAttendance',
   registrationInbox: 'RegistrationInbox',
   myAttendance: 'AttendanceHistory',
+  myClassFees: 'MyClassFees',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -144,11 +145,12 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
     { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
     { id: 'registrationInbox', title: t('dashboard.features.registrationInbox.title'), icon: 'user-check', description: t('dashboard.features.registrationInbox.description') },
+    { id: 'myClassFees', title: t('dashboard.features.myClassFees.title'), icon: 'file-invoice-dollar', description: t('dashboard.features.myClassFees.description') },
   ];
 
   const visibleFeatures = featureActions
     .filter((feature) => {
-      if (feature.id === 'myClassSection') return isTeacher && !!myHomeroomSection;
+      if (feature.id === 'myClassSection' || feature.id === 'myClassFees') return isTeacher && !!myHomeroomSection;
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
       if (session.role === 'ADMIN') return true;
       if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';
@@ -309,6 +311,10 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
                 }
                 if (isTeacher && myHomeroomSection && feature.id === 'myClassSection') {
                   navigation.navigate('SectionDetail', { classSection: myHomeroomSection });
+                  return;
+                }
+                if (isTeacher && myHomeroomSection && feature.id === 'myClassFees') {
+                  navigation.navigate('MyClassFees', { classSection: myHomeroomSection });
                   return;
                 }
                 navigation.navigate(featureRoutes[feature.id] as never);

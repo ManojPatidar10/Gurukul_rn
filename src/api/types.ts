@@ -275,8 +275,26 @@ export interface FeePayment {
 }
 
 export interface DuesReport {
+  unpaidAssessments: FeeAssessment[];
+  totalUnpaid: number;
   overdueAssessments: FeeAssessment[];
   totalOverdue: number;
+}
+
+export interface PayrollRunSummary {
+  month: number;
+  year: number;
+  status: string;
+  employeeCount: number;
+  totalNet: number;
+}
+
+export interface PayrollOverview {
+  paidEmployeeCount: number;
+  pendingEmployeeCount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  runs: PayrollRunSummary[];
 }
 
 export interface FeePaymentRequestResponse {

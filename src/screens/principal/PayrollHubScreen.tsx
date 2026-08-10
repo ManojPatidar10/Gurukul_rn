@@ -25,6 +25,11 @@ export function PayrollHubScreen({ navigation }: Props) {
       title: t('payroll.hub.runPayroll.title'),
       description: t('payroll.hub.runPayroll.description'),
     },
+    {
+      route: 'PayrollOverview',
+      title: t('payroll.hub.overview.title'),
+      description: t('payroll.hub.overview.description'),
+    },
   ];
 
   return (

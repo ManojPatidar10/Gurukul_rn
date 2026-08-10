@@ -61,6 +61,8 @@ import { InfraExpenseFormScreen } from '../screens/principal/InfraExpenseFormScr
 import { InfraExpensesListScreen } from '../screens/principal/InfraExpensesListScreen';
 import { PayrollHubScreen } from '../screens/principal/PayrollHubScreen';
 import { PayrollRunScreen } from '../screens/principal/PayrollRunScreen';
+import { PayrollOverviewScreen } from '../screens/principal/PayrollOverviewScreen';
+import { MyClassFeesScreen } from '../screens/principal/MyClassFeesScreen';
 import { PaymentReceiptScreen } from '../screens/principal/PaymentReceiptScreen';
 import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
@@ -129,7 +131,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="SalaryStructuresList" component={SalaryStructuresListScreen} />
         <Stack.Screen name="SalaryStructureForm" component={SalaryStructureFormScreen} />
         <Stack.Screen name="PayrollRun" component={PayrollRunScreen} />
+        <Stack.Screen name="PayrollOverview" component={PayrollOverviewScreen} />
         <Stack.Screen name="PayslipDetail" component={PayslipDetailScreen} />
+        <Stack.Screen name="MyClassFees" component={MyClassFeesScreen} />
         <Stack.Screen name="InfraExpensesList" component={InfraExpensesListScreen} />
         <Stack.Screen name="InfraExpenseDetail" component={InfraExpenseDetailScreen} />
         <Stack.Screen name="InfraExpenseForm" component={InfraExpenseFormScreen} />
