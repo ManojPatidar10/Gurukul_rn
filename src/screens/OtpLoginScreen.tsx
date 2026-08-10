@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { requestOtp, verifyOtp } from '../api/auth';
 import { setAuthToken } from '../api/client';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { Logo } from '../components/Logo';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
@@ -65,9 +66,7 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>G</Text>
-        </View>
+        <Logo width={120} onDarkBackground />
         <Text style={styles.title}>{schoolName ?? t('auth.signIn')}</Text>
         <Text style={styles.subtitle}>{t('auth.signInWithPhoneSubtitle')}</Text>
       </LinearGradient>
@@ -153,16 +152,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
   },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  badgeText: { color: colors.white, fontSize: 28, fontWeight: '800' },
   title: { color: colors.white, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },

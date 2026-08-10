@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { Logo } from '../components/Logo';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
 interface Props {
@@ -21,10 +22,7 @@ export default function WelcomeScreen({ onFindSchool, onRegisterSchool }: Props)
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.sm }]}>
           <LanguageSwitch />
         </View>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>G</Text>
-        </View>
-        <Text style={styles.title}>{t('welcome.title')}</Text>
+        <Logo width={200} onDarkBackground />
         <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>
       </LinearGradient>
 
@@ -54,17 +52,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
   },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  badgeText: { color: colors.white, fontSize: 28, fontWeight: '800' },
-  title: { color: colors.white, fontSize: 26, fontWeight: '800' },
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   actions: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.md },
   primaryButton: {

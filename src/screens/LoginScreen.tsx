@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login } from '../api/auth';
 import { setAuthToken } from '../api/client';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { Logo } from '../components/Logo';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
@@ -51,10 +52,7 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
           <LanguageSwitch />
         </View>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>G</Text>
-        </View>
-        <Text style={styles.title}>Gurukul</Text>
+        <Logo width={160} onDarkBackground />
         <Text style={styles.subtitle}>{t('auth.signInSubtitle')}</Text>
       </LinearGradient>
 
@@ -112,17 +110,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
   },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  badgeText: { color: colors.white, fontSize: 28, fontWeight: '800' },
-  title: { color: colors.white, fontSize: 26, fontWeight: '800' },
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
