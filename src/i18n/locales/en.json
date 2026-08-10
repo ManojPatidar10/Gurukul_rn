@@ -388,8 +388,9 @@
       "bankAccountNumber": "Bank account number",
       "bankIfsc": "IFSC code",
       "bankAccountHolderName": "Account holder name shown to students",
-      "upiVpaOverride": "UPI ID override (optional, for testing)",
-      "upiVpaOverrideHint": "If set, this exact UPI ID is used for payments instead of the one derived from the account number/IFSC above — useful for testing against a real, known-valid account."
+      "upiVpaOverride": "Your real UPI ID (needed for payments to work)",
+      "upiVpaOverrideHint": "Without this, the app guesses a UPI ID from your account number and IFSC (e.g. 123456789012@sbi) — this is rarely a real, working payee, so student payments will fail with an error inside their UPI app. Enter the same UPI ID you'd give someone to pay you directly (the one behind your bank's UPI QR code, e.g. name@oksbi, name@ybl, name@paytm) to fix this.",
+      "upiVpaOverrideWarning": "No real UPI ID set yet — payments will likely fail until you add one below."
     },
     "receipt": {
       "title": "Payment Receipt",
