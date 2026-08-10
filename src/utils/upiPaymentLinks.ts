@@ -2,13 +2,17 @@ import { Linking, Platform } from 'react-native';
 
 /**
  * Android UPI apps all register for NPCI's shared `upi://pay?...` intent scheme, so one
- * generic URI works for whichever app is installed. iOS has no equivalent shared scheme -
- * each UPI app only responds to its own prefix, so the same query string has to be retried
- * against each known app's scheme in turn. Only Google Pay's iOS scheme
+ * generic URI works for whichever app is installed. iOS has no single reliable equivalent:
+ * some UPI apps do register the bare `upi://pay` scheme (tried last below, since which app
+ * wins when several are registered is undocumented/non-deterministic), but the two big ones
+ * have their own app-specific schemes instead. Only Google Pay's iOS scheme
  * (`gpay://upi/pay?...`, documented at developers.google.com/pay/india/api/ios/in-app-payments)
- * is confirmed to accept these exact query params - PhonePe's `phonepe://` scheme is used for
- * its own SDK/navigation purposes, not a plain pay intent, so it is deliberately not guessed at
- * here until confirmed.
+ * is confirmed to accept these exact query params. PhonePe has no equivalent public bare-URL
+ * pay intent for iOS - its documented iOS integration (github.com/PhonePe/PhonePePayment) is a
+ * native merchant SDK keyed to `ppemerchantsdkv1`-`ppemerchantsdkv5`, requiring a registered
+ * merchant ID, not a URI any app can construct. That's a real platform gap, not a bug we can
+ * silently guess around - see the manual-VPA fallback in PayFeesScreen for how callers should
+ * handle resolvePaymentAppUrl returning null on iOS with PhonePe installed.
  */
 const IOS_UPI_APP_SCHEMES = ['gpay://upi/pay'];
 
@@ -28,5 +32,5 @@ export async function resolvePaymentAppUrl(genericUpiUri: string): Promise<strin
       return candidate;
     }
   }
-  return null;
+  return (await Linking.canOpenURL(genericUpiUri)) ? genericUpiUri : null;
 }
