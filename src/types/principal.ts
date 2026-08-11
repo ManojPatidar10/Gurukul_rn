@@ -96,6 +96,7 @@ export type PrincipalStackParamList = {
   ChildFees: { student: Pick<Student, 'id' | 'name'> };
   ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
   PublishReportCards: { classSection: ClassSection };
+  SectionReportCardsGrid: { classSection: ClassSection };
   GradingScale: undefined;
   MarkMyAttendance: undefined;
   SchoolLocationSettings: undefined;
