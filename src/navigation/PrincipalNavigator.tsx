@@ -5,6 +5,7 @@ import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen'
 import { AssessmentResultsScreen } from '../screens/principal/AssessmentResultsScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { PublishReportCardsScreen } from '../screens/principal/PublishReportCardsScreen';
+import { SectionReportCardsGridScreen } from '../screens/principal/SectionReportCardsGridScreen';
 import { GradingScaleScreen } from '../screens/principal/GradingScaleScreen';
 import { MarkMyAttendanceScreen } from '../screens/principal/MarkMyAttendanceScreen';
 import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocationSettingsScreen';
@@ -151,6 +152,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="RegistrationInbox" component={RegistrationInboxScreen} />
         <Stack.Screen name="ReportCard" component={ReportCardScreen} />
         <Stack.Screen name="PublishReportCards" component={PublishReportCardsScreen} />
+        <Stack.Screen name="SectionReportCardsGrid" component={SectionReportCardsGridScreen} />
         <Stack.Screen name="GradingScale" component={GradingScaleScreen} />
         <Stack.Screen name="MarkMyAttendance" component={MarkMyAttendanceScreen} />
         <Stack.Screen name="SchoolLocationSettings" component={SchoolLocationSettingsScreen} />
