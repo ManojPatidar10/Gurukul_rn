@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>What It Takes to Run a School — Gurukul</title>
+  <meta name="description" content="How Gurukul's fee, payroll, and infrastructure-expense features work, broken down by role: Admin, Teacher, Student, and Parent." />
+  <link rel="icon" href="./assets/favicon.png" />
+  <style>
+  :root{
+    --bg:#FDFEFA;
+    --surface:#FFFFFF;
+    --surface-raised:#FFFFFF;
+    --ink:#3C4550;
+    --ink-soft:#8A9284;
+    --ink-faint:#BEC4B2;
+    --line:#F0F2E6;
+    --accent:#CA9236;
+    --accent-strong:#A8761F;
+    --accent-tint:#FCF5E4;
+    --fees:#CA9236;
+    --payroll:#55A292;
+    --payroll-tint:#EEF9F5;
+    --expenses:#CB8478;
+    --expenses-tint:#FCEFEB;
+    --stamp:#CE6960;
+    --fees-tint:#FCF5E4;
+    --shadow: 0 1px 2px rgba(51,61,72,.03), 0 4px 14px -10px rgba(51,61,72,.08);
+    --font-display: 'Iowan Old Style', Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Consolas, 'Liberation Mono', monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12161B;
+      --surface:#181E25;
+      --surface-raised:#1F2630;
+      --ink:#E9E7DC;
+      --ink-soft:#AEB4A4;
+      --ink-faint:#727A6C;
+      --line:#2B323C;
+      --accent:#E0A94E;
+      --accent-strong:#F0BE6E;
+      --accent-tint:#3A2F1B;
+      --fees:#E0A94E;
+      --payroll:#4FA78D;
+      --payroll-tint:#173A32;
+      --expenses:#D9847A;
+      --expenses-tint:#3B211D;
+      --stamp:#D9695D;
+      --fees-tint:#3A2F1B;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  a.back-link{
+    display:inline-block;
+    font-family:var(--font-mono);
+    font-size:.8rem;
+    color:var(--ink-soft);
+    text-decoration:none;
+    padding:1.1rem clamp(1rem,4vw,2rem) 0;
+  }
+  a.back-link:hover{color:var(--accent-strong);}
+
+  .page{max-width:960px;margin:0 auto;padding:0 clamp(1rem,4vw,2rem) 4rem;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding-top:clamp(1rem,3vw,2rem);}
+  .eyebrow{
+    font-family:var(--font-mono);
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:.72rem;
+    color:var(--accent-strong);
+    margin:0 0 .9rem;
+    font-weight:600;
+  }
+  h1.title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:clamp(2.3rem,6vw,3.6rem);
+    line-height:1.05;
+    margin:0 0 1rem;
+    text-wrap:balance;
+    letter-spacing:-.01em;
+  }
+  .lede{
+    max-width:62ch;
+    font-size:clamp(1.02rem,1.6vw,1.18rem);
+    color:var(--ink-soft);
+    margin:0 0 1.9rem;
+  }
+
+  .persona-bar{display:flex;flex-wrap:wrap;gap:.55rem;margin-bottom:1.1rem;}
+  .persona-chip{
+    font-family:var(--font-mono);
+    font-size:.82rem;
+    letter-spacing:.02em;
+    padding:.5rem 1rem;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
+  }
+  .persona-chip:hover{border-color:var(--accent);color:var(--ink);}
+  .persona-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .persona-chip[aria-pressed="true"]{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+    font-weight:600;
+  }
+
+  .persona-detail{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left:3px solid var(--accent);
+    border-radius:10px;
+    padding:1rem 1.25rem;
+    margin-bottom:2.2rem;
+  }
+  .persona-detail p{margin:0;color:var(--ink);font-size:.98rem;}
+  .persona-detail strong{color:var(--accent-strong);}
+
+  /* ---------- Domain key ---------- */
+  .domain-key{
+    display:flex;flex-wrap:wrap;gap:1.4rem;align-items:center;
+    font-family:var(--font-mono);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-faint);
+    padding:.9rem 0 1.6rem;
+    border-bottom:1px solid var(--line);
+    margin-bottom:2.4rem;
+  }
+  .domain-dot{width:.6rem;height:.6rem;border-radius:50%;display:inline-block;margin-right:.4rem;vertical-align:middle;}
+  .domain-dot.fees{background:var(--fees);}
+  .domain-dot.payroll{background:var(--payroll);}
+  .domain-dot.expenses{background:var(--expenses);}
+
+  /* ---------- Domain groups ---------- */
+  .domain-group{margin-bottom:3rem;}
+  .domain-title{
+    font-family:var(--font-mono);
+    text-transform:uppercase;
+    letter-spacing:.16em;
+    font-size:.8rem;
+    font-weight:700;
+    margin:0 0 1.1rem;
+    padding-bottom:.6rem;
+    border-bottom:2px solid currentColor;
+    display:inline-block;
+  }
+  .domain-title.fees{color:var(--fees);}
+  .domain-title.payroll{color:var(--payroll);}
+  .domain-title.expenses{color:var(--expenses);}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--surface-raised);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:clamp(1.2rem,3vw,1.8rem);
+    margin-bottom:1.4rem;
+    box-shadow:var(--shadow);
+    transition:opacity .2s ease, filter .2s ease;
+  }
+  .card.dimmed{opacity:.38;filter:saturate(.5);}
+
+  .card-head{
+    display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:.75rem 1.5rem;
+    margin-bottom:.6rem;
+  }
+  .card h3{
+    font-family:var(--font-display);
+    font-size:clamp(1.25rem,2.4vw,1.5rem);
+    margin:0;
+    text-wrap:balance;
+    flex:1 1 260px;
+  }
+  .role-chips{display:flex;gap:.4rem;flex-wrap:wrap;flex:0 0 auto;}
+  .role-chip{
+    font-family:var(--font-mono);
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    padding:.28rem .55rem;
+    border-radius:6px;
+    border:1px solid var(--line);
+    color:var(--ink-faint);
+    background:transparent;
+    white-space:nowrap;
+  }
+  .role-chip.on{
+    background:var(--accent-tint);
+    border-color:var(--accent);
+    color:var(--accent-strong);
+    font-weight:700;
+  }
+  .role-chip.planned{
+    border-style:dashed;
+    color:var(--ink-soft);
+  }
+
+  .card-lede{color:var(--ink-soft);margin:.2rem 0 1.1rem;max-width:66ch;}
+
+  .steps{margin:0 0 1.1rem;padding-left:1.3rem;}
+  .steps li{margin-bottom:.45rem;padding-left:.2rem;}
+  .steps li::marker{color:var(--ink-faint);font-family:var(--font-mono);font-size:.85em;}
+
+  /* ---------- Stepper ---------- */
+  .stepper{
+    display:flex;flex-wrap:nowrap;overflow-x:auto;gap:0;
+    margin:0 0 1.2rem;
+    padding-bottom:.3rem;
+  }
+  .stage{
+    display:flex;flex-direction:column;gap:.3rem;
+    padding:.7rem 1.1rem .7rem 0;
+    min-width:120px;
+    position:relative;
+  }
+  .stage:not(:last-child)::after{
+    content:"→";
+    position:absolute;
+    right:-.1rem;
+    top:1.05rem;
+    color:var(--ink-faint);
+    font-size:.9rem;
+  }
+  .stage .stage-name{
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:.8rem;
+    letter-spacing:.03em;
+    color:var(--ink);
+  }
+  .stage .stage-desc{font-size:.8rem;color:var(--ink-soft);max-width:16ch;}
+  .stage.branch .stage-name{color:var(--stamp);}
+
+  /* ---------- Lanes (two-audience / two-path comparisons) ---------- */
+  .lanes{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:0 0 1.2rem;}
+  @media (max-width:620px){.lanes{grid-template-columns:1fr;}}
+  .lane{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:.9rem 1rem;
+    position:relative;
+    overflow:hidden;
+  }
+  .lane h4{
+    margin:0 0 .5rem;
+    font-family:var(--font-mono);
+    font-size:.75rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-faint);
+  }
+  .lane ol,.lane ul{margin:0;padding-left:1.2rem;font-size:.9rem;}
+  .lane li{margin-bottom:.3rem;}
+  .lane.paused{opacity:.85;}
+  .stamp{
+    position:absolute;
+    top:.6rem;
+    right:-1.6rem;
+    transform:rotate(18deg);
+    border:2.5px solid var(--stamp);
+    color:var(--stamp);
+    font-family:var(--font-mono);
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:.62rem;
+    padding:.2rem 1.9rem;
+    border-radius:3px;
+    pointer-events:none;
+  }
+
+  details.more{
+    margin:0 0 1.1rem;
+    border-top:1px dashed var(--line);
+    padding-top:.7rem;
+  }
+  details.more summary{
+    cursor:pointer;
+    font-family:var(--font-mono);
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--accent-strong);
+    font-weight:600;
+  }
+  details.more summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+  details.more[open] summary{margin-bottom:.6rem;}
+  details.more p{color:var(--ink-soft);font-size:.92rem;margin:.4rem 0;}
+
+  .note{
+    border-left:3px solid var(--stamp);
+    background:color-mix(in srgb, var(--stamp) 8%, transparent);
+    border-radius:0 8px 8px 0;
+    padding:.7rem 1rem;
+    font-size:.89rem;
+    color:var(--ink-soft);
+  }
+  .note strong{color:var(--ink);}
+
+  /* ---------- Unify section ---------- */
+  .unify{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:clamp(1.4rem,3vw,2rem);
+    margin:2.5rem 0;
+  }
+  .unify h2{
+    font-family:var(--font-display);
+    font-size:1.5rem;
+    margin:0 0 .6rem;
+  }
+  .unify p{color:var(--ink-soft);max-width:64ch;margin:0;}
+
+  .foot{
+    color:var(--ink-faint);
+    font-size:.82rem;
+    font-family:var(--font-mono);
+    padding-top:1rem;
+    border-top:1px solid var(--line);
+  }
+
+  @media (max-width:600px){
+    .stage{min-width:105px;}
+  }
+  </style>
+</head>
+<body>
+
+<a class="back-link" href="./index.html">&larr; Gurukul</a>
+
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">Gurukul Platform — School Operations</p>
+    <h1 class="title">What It Takes to Run a School</h1>
+    <p class="lede">Six features that handle fees, payroll, and infrastructure spending inside Gurukul — what each of the four roles can actually do in each one, exactly how the flow runs, and what's still manual or switched off.</p>
+
+    <div class="persona-bar" role="group" aria-label="Filter by role">
+      <button class="persona-chip" data-role="ALL" aria-pressed="true">All roles</button>
+      <button class="persona-chip" data-role="ADMIN" aria-pressed="false">Admin</button>
+      <button class="persona-chip" data-role="TEACHER" aria-pressed="false">Teacher</button>
+      <button class="persona-chip" data-role="STUDENT" aria-pressed="false">Student</button>
+      <button class="persona-chip" data-role="PARENT" aria-pressed="false">Parent</button>
+    </div>
+
+    <div class="persona-detail">
+      <p id="personaText" data-current="ALL">Across these six features, <strong>Admin</strong> is the only role with full reach today. Teachers see one slice — their own class's fee status. Students and parents can see, but currently can't act on, their own fee bill. Pick a role above to see exactly what's theirs.</p>
+    </div>
+  </header>
+
+  <nav class="domain-key">
+    <span><span class="domain-dot fees"></span>Fees</span>
+    <span><span class="domain-dot payroll"></span>Payroll</span>
+    <span><span class="domain-dot expenses"></span>Infrastructure</span>
+  </nav>
+
+  <main class="ledger">
+
+    <!-- ============ FEES ============ -->
+    <section class="domain-group" data-domain="fees">
+      <h2 class="domain-title fees">Fees</h2>
+
+      <!-- Card 1: Fee Structure Setup -->
+      <article class="card" data-roles="ADMIN">
+        <div class="card-head">
+          <h3>Fee Structure Setup &amp; Bill Generation</h3>
+          <div class="role-chips">
+            <span class="role-chip on">Admin</span>
+            <span class="role-chip">Teacher</span>
+            <span class="role-chip">Student</span>
+            <span class="role-chip">Parent</span>
+          </div>
+        </div>
+        <p class="card-lede">Define what students in a class owe — categories like tuition or transport, bundled into a per-section fee structure — then generate every student's individual bill in one tap.</p>
+        <ol class="steps">
+          <li>Create fee categories once per school (Tuition, Transport, Lab, etc.).</li>
+          <li>Build a fee structure for one class-section and academic year: a bundle of categories, each with an amount.</li>
+          <li>Tap <strong>Generate Assessments</strong> to create a bill for every currently active student in that section.</li>
+          <li>Students admitted later are billed automatically the moment they're placed in a section that already has a structure — no need to re-run generation.</li>
+        </ol>
+        <details class="more">
+          <summary>What happens if you generate twice</summary>
+          <p>Nothing breaks — re-running generation never duplicates a student's bill or changes an existing one. But it also means editing a fee amount after bills already exist won't reach any student who was already billed; only new students get the new number.</p>
+        </details>
+        <div class="note">
+          <p><strong>Worth knowing:</strong> nothing at the server currently restricts who can create categories, build structures, or trigger bulk billing for a whole class — this relies entirely on only Admin having these screens in the app. Structures also can't be edited or deleted once created, so a wrong amount means setting up a fresh structure rather than correcting the old one.</p>
+        </div>
+      </article>
+
+      <!-- Card 2: Fee Payment -->
+      <article class="card" data-roles="ADMIN STUDENT PARENT">
+        <div class="card-head">
+          <h3>Recording Fee Payments</h3>
+          <div class="role-chips">
+            <span class="role-chip on">Admin</span>
+            <span class="role-chip">Teacher</span>
+            <span class="role-chip planned">Student</span>
+            <span class="role-chip planned">Parent</span>
+          </div>
+        </div>
+        <p class="card-lede">Every fee payment on the books today is entered by staff after the money has already changed hands. A self-service online option was built for students and parents — it's just not switched on.</p>
+        <div class="lanes">
+          <div class="lane">
+            <h4>Live today</h4>
+            <ol>
+              <li>Staff collects payment in person — cash, cheque, or a bank/UPI transfer completed outside the app.</li>
+              <li>Staff enters the amount against the student's bill.</li>
+              <li>The bill's paid amount and status update immediately, and a receipt number is generated.</li>
+            </ol>
+          </div>
+          <div class="lane paused">
+            <span class="stamp">On hold</span>
+            <h4>Built, not switched on</h4>
+            <ol>
+              <li>Student or parent would tap <em>Pay Fees</em>.</li>
+              <li>The app would open their UPI app with the amount pre-filled.</li>
+              <li>They pay (or cancel) outside the app, then return and confirm what happened.</li>
+              <li>The app takes their word for it — there's no independent confirmation from a payment gateway.</li>
+            </ol>
+          </div>
+        </div>
+        <details class="more">
+          <summary>Why it's paused</summary>
+          <p>The online path is a direct link into a UPI app rather than a connection to a real payment gateway, so the only signal that a payment succeeded is the payer's own self-reported answer to "did it work?" That wasn't reliable enough to trust with real money, so the button was switched off in favor of the staff-recorded flow above. The screens and backend logic for it are still fully built and sitting in the codebase, ready to be reconnected once a proper payment gateway is in place.</p>
+        </details>
+        <div class="note">
+          <p><strong>Worth knowing:</strong> there's no way to void or correct a payment once it's recorded, and no refund flow for either path.</p>
+        </div>
+      </article>
+
+      <!-- Card 3: Fees Overview -->
+      <article class="card" data-roles="ADMIN TEACHER">
+        <div class="card-head">
+          <h3>Fees Overview &amp; My Class Fees</h3>
+          <div class="role-chips">
+            <span class="role-chip on">Admin</span>
+            <span class="role-chip on">Teacher</span>
+            <span class="role-chip">Student</span>
+            <span class="role-chip">Parent</span>
+          </div>
+        </div>
+        <p class="card-lede">Two windows onto the same bills: Admin sees every student's fee status school-wide; a homeroom teacher sees only their own section.</p>
+        <div class="lanes">
+          <div class="lane">
+            <h4>Admin — whole school</h4>
+            <ul>
+              <li>Dashboard → Fees → Fee Assessments</li>
+              <li>Every student in the school, with search and status filters (Unpaid / Partial / Overdue / Paid)</li>
+              <li>A summary card totals unpaid students and unpaid amount</li>
+            </ul>
+          </div>
+          <div class="lane">
+            <h4>Teacher — own section only</h4>
+            <ul>
+              <li>Dashboard → "My Class Fees" tile (only appears for a homeroom teacher)</li>
+              <li>Just that one section's students — asking for another section is refused</li>
+              <li>A simpler summary: how many are paid up, how much is still owed</li>
+            </ul>
+          </div>
+        </div>
+        <div class="note">
+          <p><strong>Worth knowing:</strong> a bill only flips to "Overdue" once a payment has been made against it. A bill that's never been paid at all stays marked "Unpaid" even long after its due date has passed, even though the amount owed shown is always current.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ PAYROLL ============ -->
+    <section class="domain-group" data-domain="payroll">
+      <h2 class="domain-title payroll">Payroll</h2>
+
+      <!-- Card 4: Payroll Runs -->
+      <article class="card" data-roles="ADMIN">
+        <div class="card-head">
+          <h3>Salary Structures &amp; Payroll Runs</h3>
+          <div class="role-chips">
+            <span class="role-chip on">Admin</span>
+            <span class="role-chip">Teacher</span>
+            <span class="role-chip">Student</span>
+            <span class="role-chip">Parent</span>
+          </div>
+        </div>
+        <p class="card-lede">Set each employee's pay components once, then run payroll for a month in three steps: create the run, process it, pay it.</p>
+        <div class="stepper">
+          <div class="stage">
+            <span class="stage-name">Draft</span>
+            <span class="stage-desc">Run created for one month — nothing calculated yet</span>
+          </div>
+          <div class="stage">
+            <span class="stage-name">Processed</span>
+            <span class="stage-desc">Pay calculated for every active employee from their current salary structure</span>
+          </div>
+          <div class="stage">
+            <span class="stage-name">Paid</span>
+            <span class="stage-desc">Money recorded as sent; payslips issued</span>
+          </div>
+        </div>
+        <details class="more">
+          <summary>How pay is actually calculated</summary>
+          <p>Each employee has a salary structure: a basic amount, allowances, and a deductions amount. Processing a run adds basic + allowances for gross pay, then subtracts deductions for net pay — for whichever salary structure was effective as of that month, for every active employee.</p>
+        </details>
+        <div class="note">
+          <p><strong>Worth knowing:</strong> "deductions" is a single number entered manually per employee — there's no built-in provident fund, ESI, professional tax, or income-tax withholding calculation. A school that owes any of those still has to work out the number itself and enter it as one lump deduction.</p>
+        </div>
+      </article>
+
+      <!-- Card 5: Payroll Overview -->
+      <article class="card" data-roles="ADMIN">
+        <div class="card-head">
+          <h3>Payroll Overview</h3>
+          <div class="role-chips">
+            <span class="role-chip on">Admin</span>
+            <span class="role-chip">Teacher</span>
+            <span class="role-chip">Student</span>
+            <span class="role-chip">Parent</span>
+          </div>
+        </div>
+        <p class="card-lede">A school-wide dashboard of how much payroll has gone out and how much is still pending, rolled up across every pay run.</p>
+        <div class="lanes">
+          <div class="lane">
+            <h4>Example: two runs</h4>
+            <ul>
+              <li>January run — status <strong>Paid</strong> → every employee in it counts as paid</li>
+              <li>February run — status <strong>Processed</strong> → every employee in it counts as pending, even the ones already individually paid</li>
+            </ul>
+          </div>
+          <div class="lane">
+            <h4>What the overview adds up</h4>
+            <ul>
+              <li>Employees paid, and the total amount, from every run marked Paid</li>
+              <li>Employees pending, and the total amount, from every run not yet marked Paid</li>
+            </ul>
+          </div>
+        </div>
+        <div class="note">
+          <p><strong>Worth knowing:</strong> the paid/pending split is counted per pay run, not per employee. The moment a run is marked Paid, everyone in it counts as paid in this overview — there's no in-between state where some employees in the same run show paid and others don't.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ============ INFRASTRUCTURE ============ -->
+    <section class="domain-group" data-domain="expenses">
+      <h2 class="domain-title expenses">Infrastructure</h2>
+
+      <!-- Card 6: Infra Expenses -->
+      <article class="card" data-roles="ADMIN">
+        <div class="card-head">
+          <h3>Infrastructure Expenses</h3>
+          <div class="role-chips">
+            <span class="role-chip on">Admin</span>
+            <span class="role-chip">Teacher</span>
+            <span class="role-chip">Student</span>
+            <span class="role-chip">Parent</span>
+          </div>
+        </div>
+        <p class="card-lede">A four-stage paper trail for school infrastructure spending: request it, approve or reject it, record what was actually bought, then pay the vendor.</p>
+        <div class="stepper">
+          <div class="stage">
+            <span class="stage-name">Draft</span>
+            <span class="stage-desc">Request written up with a category and estimated cost</span>
+          </div>
+          <div class="stage">
+            <span class="stage-name">Submitted</span>
+            <span class="stage-desc">Sent for a decision</span>
+          </div>
+          <div class="stage">
+            <span class="stage-name">Approved</span>
+            <span class="stage-desc">Cleared to buy</span>
+          </div>
+          <div class="stage">
+            <span class="stage-name">Purchased</span>
+            <span class="stage-desc">Vendor and invoice recorded, with the real amount spent</span>
+          </div>
+          <div class="stage">
+            <span class="stage-name">Paid</span>
+            <span class="stage-desc">Vendor paid; posted to the school ledger</span>
+          </div>
+        </div>
+        <details class="more">
+          <summary>If it's rejected</summary>
+          <p>A rejected request can be edited and resubmitted, restarting from Submitted — it isn't a dead end. There's no separate "cancel" action, though, and no way to revise the estimate without going through resubmission.</p>
+        </details>
+        <div class="note">
+          <p><strong>Worth knowing:</strong> every step here — requesting, approving, rejecting, recording a purchase, paying a vendor — is currently open to any logged-in user, not just admins; the app only steers admins toward these screens. The "who approved this" record is also just a typed name today, not tied to a verified login.</p>
+        </div>
+      </article>
+    </section>
+
+  </main>
+
+  <section class="unify">
+    <h2>One ledger underneath</h2>
+    <p>Fees collected, salaries paid, and vendors paid all land in the same underlying financial ledger — giving the school one unified transaction record across all three domains, even though each one is set up and approved through its own workflow above.</p>
+  </section>
+
+  <footer class="foot">
+    <p>Compiled directly from the Gurukul application — backend and app behavior, not a design spec.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var chips = document.querySelectorAll('.persona-chip');
+  var cards = document.querySelectorAll('.card');
+  var textEl = document.getElementById('personaText');
+
+  var copy = {
+    ALL: 'Across these six features, <strong>Admin</strong> is the only role with full reach today. Teachers see one slice — their own class\'s fee status. Students and parents can see, but currently can\'t act on, their own fee bill. Pick a role above to see exactly what\'s theirs.',
+    ADMIN: '<strong>Admin</strong> sets up fee categories and structures, generates every student\'s bill, records payments as they\'re collected, runs and pays payroll each month, and is the one who requests, approves, purchases, and pays for infrastructure spending. In practice, admin is also the role every one of these screens is built for — even the ones the server itself doesn\'t strictly limit to admin.',
+    TEACHER: 'A homeroom <strong>teacher</strong> sees one read-only screen: the fee status of their own class-section, and only their own — asking for another section\'s dues is refused. Payroll, fee setup, and infrastructure spending don\'t appear in a teacher\'s app at all.',
+    STUDENT: 'A <strong>student</strong> can see their own fee bill. Paying it from the app was built — a tap would open their UPI app with the amount pre-filled — but that button is switched off today, so the only way to pay is still the traditional in-person route, recorded by staff.',
+    PARENT: 'A <strong>parent</strong> sees, and once the online flow is switched back on could pay, fees for the children linked to their account — never another family\'s. Payroll and infrastructure spending aren\'t visible to parents at all.'
+  };
+
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var role = chip.getAttribute('data-role');
+      chips.forEach(function(c){ c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+      textEl.innerHTML = copy[role] || copy.ALL;
+
+      cards.forEach(function(card){
+        if (role === 'ALL') {
+          card.classList.remove('dimmed');
+          return;
+        }
+        var roles = (card.getAttribute('data-roles') || '').split(' ');
+        if (roles.indexOf(role) === -1) {
+          card.classList.add('dimmed');
+        } else {
+          card.classList.remove('dimmed');
+        }
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
