@@ -1,8 +1,8 @@
 import { api } from './client';
-import type { PagedResponse, Student, StudentRequest, StudentClassSectionUpdateRequest } from './types';
+import type { Student, StudentRequest, StudentClassSectionUpdateRequest } from './types';
 
 export function listStudents(schoolId: string, page = 0, size = 50) {
-  return api.get<PagedResponse<Student>>(`/api/v1/students?page=${page}&size=${size}`, schoolId);
+  return api.getPaginated<Student>(`/api/v1/students?page=${page}&size=${size}`, schoolId);
 }
 
 // For consumers that need the full roster (pickers, name lookups, filtering) rather than one page.

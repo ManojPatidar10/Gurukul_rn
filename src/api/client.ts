@@ -1,4 +1,4 @@
-import type { ApiResponse } from './types';
+import type { ApiResponse, PagedResponse } from './types';
 
 export const BASE_URL = 'http://13.60.11.238:8080';
 
@@ -29,10 +29,10 @@ export function serverNow(): number {
   return Date.now() + clockOffsetMs;
 }
 
-async function request<T>(
+async function rawRequest(
   path: string,
   options: { method?: string; schoolId?: string; body?: unknown } = {}
-): Promise<T> {
+): Promise<any> {
   const { method = 'GET', schoolId, body } = options;
 
   const headers: Record<string, string> = { Accept: 'application/json' };
@@ -48,17 +48,43 @@ async function request<T>(
 
   syncClockOffset(response);
 
-  const json: ApiResponse<T> = await response.json();
+  const json = await response.json();
 
   if (!response.ok || !json.success) {
     throw new ApiError(json.message ?? `Request failed with status ${response.status}`);
   }
 
+  return json;
+}
+
+async function request<T>(
+  path: string,
+  options: { method?: string; schoolId?: string; body?: unknown } = {}
+): Promise<T> {
+  const json: ApiResponse<T> = await rawRequest(path, options);
   return json.data as T;
+}
+
+// Paginated list endpoints keep `data` as the bare row array (so old, un-updated app builds keep
+// working unchanged) and carry `hasNext`/`totalElements` as siblings on the envelope rather than
+// nested under `data` - deliberately reverted from a nested `data.content` shape once it was clear
+// that would break every already-installed APK the moment it deployed.
+async function requestPaginated<T>(path: string, schoolId?: string): Promise<PagedResponse<T>> {
+  const json: ApiResponse<T[]> & { hasNext?: boolean; totalElements?: number } = await rawRequest(path, {
+    method: 'GET',
+    schoolId,
+  });
+  const content = json.data ?? [];
+  return {
+    content,
+    hasNext: json.hasNext ?? false,
+    totalElements: json.totalElements ?? content.length,
+  };
 }
 
 export const api = {
   get: <T>(path: string, schoolId?: string) => request<T>(path, { method: 'GET', schoolId }),
+  getPaginated: <T>(path: string, schoolId?: string) => requestPaginated<T>(path, schoolId),
   post: <T>(path: string, body: unknown, schoolId?: string) =>
     request<T>(path, { method: 'POST', body, schoolId }),
   put: <T>(path: string, body: unknown, schoolId: string) =>

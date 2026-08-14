@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { DuesReport, FeeAssessment, PagedResponse, PayrollOverview } from './types';
+import type { DuesReport, FeeAssessment, PayrollOverview } from './types';
 
 export function listFeeAssessments(
   schoolId: string,
@@ -13,7 +13,7 @@ export function listFeeAssessments(
   if (classSectionId) params.set('classSectionId', classSectionId);
   params.set('page', String(page));
   params.set('size', String(size));
-  return api.get<PagedResponse<FeeAssessment>>(`/api/v1/fee-assessments?${params.toString()}`, schoolId);
+  return api.getPaginated<FeeAssessment>(`/api/v1/fee-assessments?${params.toString()}`, schoolId);
 }
 
 export function listStudentFeeAssessments(schoolId: string, studentId: string) {

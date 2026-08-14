@@ -3,7 +3,6 @@ import type {
   CallLogResponse,
   CallSessionResponse,
   MyInviteResponse,
-  PagedResponse,
   RsvpRequest,
   ScheduleCallRequest,
   ScheduledCallResponse,
@@ -63,11 +62,11 @@ export function endImmediateCall(schoolId: string, callLogId: string) {
 }
 
 export function listMyCallHistory(schoolId: string, page = 0, size = 50) {
-  return api.get<PagedResponse<CallLogResponse>>(`/api/v1/calls/history?page=${page}&size=${size}`, schoolId);
+  return api.getPaginated<CallLogResponse>(`/api/v1/calls/history?page=${page}&size=${size}`, schoolId);
 }
 
 export function listSchoolCallHistory(schoolId: string, page = 0, size = 50) {
-  return api.get<PagedResponse<CallLogResponse>>(
+  return api.getPaginated<CallLogResponse>(
     `/api/v1/calls/history/school?page=${page}&size=${size}`,
     schoolId
   );

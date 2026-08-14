@@ -1,8 +1,8 @@
 import { api } from './client';
-import type { Employee, EmployeeRequest, PagedResponse, SalaryHistoryEntry } from './types';
+import type { Employee, EmployeeRequest, SalaryHistoryEntry } from './types';
 
 export function listEmployees(schoolId: string, page = 0, size = 50) {
-  return api.get<PagedResponse<Employee>>(`/api/v1/employees?page=${page}&size=${size}`, schoolId);
+  return api.getPaginated<Employee>(`/api/v1/employees?page=${page}&size=${size}`, schoolId);
 }
 
 // For consumers that need the full roster (pickers, name lookups, filtering) rather than one page.
