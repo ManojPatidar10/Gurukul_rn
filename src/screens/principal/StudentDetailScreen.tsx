@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { startImmediateCall } from '../../api/calls';
 import { createConversation } from '../../api/chat';
 import { createStudentCredential } from '../../api/credentials';
+import { createStudentInvite } from '../../api/registration';
 import { deleteStudent, transferStudentClassSection } from '../../api/students';
 import type { Student } from '../../api/types';
 import { AvatarBadge } from '../../components/AvatarBadge';
@@ -96,6 +97,24 @@ export function StudentDetailScreen({ route, navigation }: Props) {
       setCreatingCredential(false);
     }
   };
+  const [showInvite, setShowInvite] = useState(false);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  const handleGenerateInvite = async () => {
+    setGeneratingInvite(true);
+    setInviteError(null);
+    try {
+      const result = await createStudentInvite(schoolId, student.id);
+      setInviteResult(result);
+    } catch (e) {
+      setInviteError((e as Error).message);
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
   const { showToast } = useToast();
 
   const handleTransfer = async (classSectionId: string) => {
@@ -216,6 +235,17 @@ export function StudentDetailScreen({ route, navigation }: Props) {
               </Pressable>
             )}
             {isViewerAdmin && (
+              <Pressable
+                style={styles.actionButton}
+                onPress={() => {
+                  setShowInvite((v) => !v);
+                  if (!showInvite) handleGenerateInvite();
+                }}
+              >
+                <Text style={styles.actionText}>{showInvite ? t('common.cancel') : 'Generate invite code'}</Text>
+              </Pressable>
+            )}
+            {isViewerAdmin && (
               <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
                 <Text style={styles.deleteText}>{deleting ? t('common.deleting') : t('common.delete')}</Text>
               </Pressable>
@@ -262,6 +292,26 @@ export function StudentDetailScreen({ route, navigation }: Props) {
                   </Text>
                 </Pressable>
               </>
+            )}
+          </View>
+        )}
+
+        {isViewerAdmin && showInvite && (
+          <View style={styles.transferPanel}>
+            <Text style={styles.transferTitle}>Student invite code</Text>
+            {generatingInvite && <Text style={styles.transferring}>Generating…</Text>}
+            {inviteError && <Text style={styles.error}>{inviteError}</Text>}
+            {inviteResult && (
+              <View>
+                <Text style={styles.success}>
+                  Share this code with {student.name} to register — it expires{' '}
+                  {new Date(inviteResult.expiresAt).toLocaleString()}:
+                </Text>
+                <View style={styles.credentialBox}>
+                  <Text style={styles.credentialLabel}>Invite code</Text>
+                  <Text style={styles.credentialValue}>{inviteResult.code}</Text>
+                </View>
+              </View>
             )}
           </View>
         )}

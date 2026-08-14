@@ -732,6 +732,21 @@ export type RegisterStudentGoogleRequest = Omit<RegisterStudentRequest, 'usernam
   idToken: string;
 };
 
+export interface StudentInviteResponse {
+  code: string;
+  expiresAt: string;
+}
+
+export interface RegisterStudentInviteRequest {
+  inviteCode: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterStudentInviteGoogleRequest = Omit<RegisterStudentInviteRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
 export interface TeacherInviteResponse {
   code: string;
   expiresAt: string;

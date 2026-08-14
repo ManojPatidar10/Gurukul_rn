@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { registerStudent } from '../api/registration';
+import { registerStudent, registerStudentWithInvite } from '../api/registration';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
@@ -18,7 +18,9 @@ interface Props {
 export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const [useInviteCode, setUseInviteCode] = useState(false);
   const [registrationNumber, setRegistrationNumber] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,14 +28,17 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
   const [error, setError] = useState<string | null>(null);
 
   const passwordsMatch = password === confirmPassword;
-  const canSubmit = !!registrationNumber && !!username && password.length >= 8 && passwordsMatch;
+  const referenceValue = useInviteCode ? inviteCode : registrationNumber;
+  const canSubmit = !!referenceValue && !!username && password.length >= 8 && passwordsMatch;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
     try {
-      const result = await registerStudent(schoolId, { registrationNumber, username, password });
+      const result = useInviteCode
+        ? await registerStudentWithInvite(schoolId, { inviteCode, username, password })
+        : await registerStudent(schoolId, { registrationNumber, username, password });
       onSubmitted(result.message);
     } catch (e) {
       setError((e as Error).message);
@@ -56,13 +61,40 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
       </LinearGradient>
 
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
-        <LabeledInput
-          label={t('registration.student.registrationNumber')}
-          value={registrationNumber}
-          onChangeText={setRegistrationNumber}
-          autoCapitalize="characters"
-          placeholder={t('registration.student.registrationNumberPlaceholder')}
-        />
+        <View style={styles.toggleRow}>
+          <Pressable
+            style={[styles.toggleButton, !useInviteCode && styles.toggleButtonActive]}
+            onPress={() => setUseInviteCode(false)}
+          >
+            <Text style={[styles.toggleText, !useInviteCode && styles.toggleTextActive]}>
+              {t('registration.student.registrationNumber')}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.toggleButton, useInviteCode && styles.toggleButtonActive]}
+            onPress={() => setUseInviteCode(true)}
+          >
+            <Text style={[styles.toggleText, useInviteCode && styles.toggleTextActive]}>Invite code</Text>
+          </Pressable>
+        </View>
+
+        {useInviteCode ? (
+          <LabeledInput
+            label="Invite code"
+            value={inviteCode}
+            onChangeText={setInviteCode}
+            autoCapitalize="characters"
+            placeholder="e.g. K7M2QXPZ"
+          />
+        ) : (
+          <LabeledInput
+            label={t('registration.student.registrationNumber')}
+            value={registrationNumber}
+            onChangeText={setRegistrationNumber}
+            autoCapitalize="characters"
+            placeholder={t('registration.student.registrationNumberPlaceholder')}
+          />
+        )}
 
         <Text style={styles.sectionLabel}>{t('registration.yourLogin')}</Text>
         <LabeledInput label={t('registration.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
@@ -121,6 +153,22 @@ const styles = StyleSheet.create({
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4, paddingHorizontal: spacing.lg, textAlign: 'center' },
   form: { flex: 1 },
   formContent: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  toggleRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.pill,
+    padding: 4,
+    marginBottom: spacing.md,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+  },
+  toggleButtonActive: { backgroundColor: colors.primary },
+  toggleText: { color: colors.textMuted, fontWeight: '700', fontSize: 13 },
+  toggleTextActive: { color: colors.white },
   sectionLabel: {
     fontSize: 14,
     fontWeight: '800',
