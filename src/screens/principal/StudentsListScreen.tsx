@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -16,6 +16,42 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentsList'>;
+
+const ROW_HEIGHT = 76;
+
+const StudentRow = memo(function StudentRow({
+  student,
+  onPress,
+}: {
+  student: Student;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Pressable style={styles.row} onPress={onPress}>
+      <AvatarBadge name={student.name} accentKey="students" />
+      <View style={styles.rowMain}>
+        <Text style={styles.rowName}>{student.name}</Text>
+        <Text style={styles.rowMeta}>
+          {t('students.list.rowSubtitle', {
+            roll: student.rollNumber,
+            classSection: student.classSectionLabel || t('common.unassigned'),
+          })}
+        </Text>
+      </View>
+      <StatusChip
+        label={
+          student.status === 'ACTIVE'
+            ? t('common.active')
+            : student.status === 'INACTIVE'
+              ? t('common.inactive')
+              : student.status
+        }
+        variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
+      />
+    </Pressable>
+  );
+});
 
 export function StudentsListScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -39,16 +75,23 @@ export function StudentsListScreen({ navigation }: Props) {
   }, [schoolId, debouncedQuery, showToast]);
 
   useEffect(() => {
+    setLoading(true);
+    load().finally(() => setLoading(false));
+  }, [load]);
+
+  const hasMounted = useRef(false);
+  useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      // Skip the initial focus event - the mount effect above already loads.
+      if (!hasMounted.current) {
+        hasMounted.current = true;
+        return;
+      }
       setLoading(true);
       load().finally(() => setLoading(false));
     });
     return unsubscribe;
   }, [navigation, load]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -71,6 +114,15 @@ export function StudentsListScreen({ navigation }: Props) {
           data={students}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          removeClippedSubviews
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={7}
+          getItemLayout={(_, index) => ({
+            length: ROW_HEIGHT,
+            offset: ROW_HEIGHT * index,
+            index,
+          })}
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
@@ -83,25 +135,7 @@ export function StudentsListScreen({ navigation }: Props) {
             ) : null
           }
           renderItem={({ item }) => (
-            <Pressable
-              style={styles.row}
-              onPress={() => navigation.navigate('StudentDetail', { student: item })}
-            >
-              <AvatarBadge name={item.name} accentKey="students" />
-              <View style={styles.rowMain}>
-                <Text style={styles.rowName}>{item.name}</Text>
-                <Text style={styles.rowMeta}>
-                  {t('students.list.rowSubtitle', {
-                    roll: item.rollNumber,
-                    classSection: item.classSectionLabel || t('common.unassigned'),
-                  })}
-                </Text>
-              </View>
-              <StatusChip
-                label={item.status === 'ACTIVE' ? t('common.active') : item.status === 'INACTIVE' ? t('common.inactive') : item.status}
-                variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}
-              />
-            </Pressable>
+            <StudentRow student={item} onPress={() => navigation.navigate('StudentDetail', { student: item })} />
           )}
         />
       </View>
