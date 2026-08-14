@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getStaffAttendanceRoster } from '../../api/staffAttendance';
-import type { AttendanceStatus, StaffAttendanceRoster } from '../../api/types';
+import type { AttendanceMethod, AttendanceStatus, StaffAttendanceRoster } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
@@ -12,6 +12,12 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StaffAttendance'>;
+
+const methodEmoji: Record<AttendanceMethod, string> = {
+  RFID: '📇',
+  FINGERPRINT: '👆',
+  FACE: '📷',
+};
 
 const statusVariant: Record<AttendanceStatus, 'success' | 'error' | 'warning' | 'neutral'> = {
   PRESENT: 'success',
@@ -101,6 +107,7 @@ export function StaffAttendanceScreen({ navigation }: Props) {
                   <Text style={styles.rowMeta}>
                     {entry.designation}
                     {entry.selfMarked ? ' · 📍 self check-in' : ''}
+                    {entry.method ? ` · ${methodEmoji[entry.method]} ${entry.method.toLowerCase()}` : ''}
                   </Text>
                 </View>
                 <StatusChip

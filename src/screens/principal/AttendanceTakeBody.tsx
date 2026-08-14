@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { getEmployee, searchEmployees } from '../../api/employees';
 import { listStudentsInClassSection } from '../../api/classSections';
 import { getSectionAttendance, markSectionAttendance } from '../../api/attendance';
-import type { AttendanceStatus, ClassSection, Employee, Student } from '../../api/types';
+import type { AttendanceMethod, AttendanceStatus, ClassSection, Employee, Student } from '../../api/types';
 import { DatePickerField } from '../../components/DatePickerField';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { SearchBar } from '../../components/SearchBar';
@@ -26,6 +26,12 @@ const statusColor: Record<AttendanceStatus, string> = {
   HALF_DAY: colors.textSecondary,
 };
 
+const methodEmoji: Record<AttendanceMethod, string> = {
+  RFID: '📇',
+  FINGERPRINT: '👆',
+  FACE: '📷',
+};
+
 export function AttendanceTakeBody({ classSection }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -34,6 +40,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [roster, setRoster] = useState<Student[]>([]);
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
+  const [methods, setMethods] = useState<Record<string, AttendanceMethod | null>>({});
   const [teacherId, setTeacherId] = useState<string | null>(isAdmin ? classSection.classTeacherId : session.ownerId);
   const [teacherLabel, setTeacherLabel] = useState(isAdmin ? (classSection.classTeacherName ?? '') : '');
 
@@ -91,19 +98,26 @@ export function AttendanceTakeBody({ classSection }: Props) {
     getSectionAttendance(schoolId, classSection.id, date)
       .then((res) => {
         const nextStatuses: Record<string, AttendanceStatus> = {};
+        const nextMethods: Record<string, AttendanceMethod | null> = {};
         res.entries.forEach((entry) => {
           nextStatuses[entry.studentId] = entry.status;
+          nextMethods[entry.studentId] = entry.method;
         });
         setStatuses(nextStatuses);
+        setMethods(nextMethods);
       })
       .catch(() => {
         setStatuses({});
+        setMethods({});
       })
       .finally(() => setLoadingDate(false));
   };
 
   const setStatus = (studentId: string, status: AttendanceStatus) => {
     setStatuses((prev) => ({ ...prev, [studentId]: status }));
+    // Saving will clear any device attribution for this student's record (teacher's mark takes
+    // over, matching AttendanceService.markSection) - drop the stale badge here too.
+    setMethods((prev) => ({ ...prev, [studentId]: null }));
   };
 
   const markAllPresent = () => {
@@ -234,6 +248,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
               </View>
               <Text style={styles.studentName}>
                 {student.name} · Roll {student.rollNumber}
+                {methods[student.id] ? ` · ${methodEmoji[methods[student.id] as AttendanceMethod]}` : ''}
               </Text>
             </Pressable>
             <View style={styles.statusRow}>

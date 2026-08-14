@@ -9,6 +9,7 @@ import { createConversation } from '../../api/chat';
 import { createStudentCredential } from '../../api/credentials';
 import { deleteStudent, transferStudentClassSection } from '../../api/students';
 import type { Student } from '../../api/types';
+import { AttendanceIdentifiersPanel } from '../../components/AttendanceIdentifiersPanel';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
 import LabeledInput from '../../components/LabeledInput';
@@ -77,6 +78,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
   };
 
   const [showCredentials, setShowCredentials] = useState(false);
+  const [showAttendanceIdentifiers, setShowAttendanceIdentifiers] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [creatingCredential, setCreatingCredential] = useState(false);
@@ -216,6 +218,13 @@ export function StudentDetailScreen({ route, navigation }: Props) {
               </Pressable>
             )}
             {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => setShowAttendanceIdentifiers((v) => !v)}>
+                <Text style={styles.actionText}>
+                  {showAttendanceIdentifiers ? t('common.cancel') : t('attendanceIdentifiers.actionButton')}
+                </Text>
+              </Pressable>
+            )}
+            {isViewerAdmin && (
               <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
                 <Text style={styles.deleteText}>{deleting ? t('common.deleting') : t('common.delete')}</Text>
               </Pressable>
@@ -275,6 +284,12 @@ export function StudentDetailScreen({ route, navigation }: Props) {
               onSelect={(cs) => handleTransfer(cs.id)}
             />
             {transferring && <Text style={styles.transferring}>{t('students.detail.transferring')}</Text>}
+          </View>
+        )}
+
+        {isViewerAdmin && showAttendanceIdentifiers && (
+          <View style={styles.transferPanel}>
+            <AttendanceIdentifiersPanel ownerType="STUDENT" ownerId={student.id} />
           </View>
         )}
       </ScreenContainer>

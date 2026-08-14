@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { startImmediateCall } from '../../api/calls';
 import { createConversation } from '../../api/chat';
 import { createEmployeeCredential } from '../../api/credentials';
+import { AttendanceIdentifiersPanel } from '../../components/AttendanceIdentifiersPanel';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -35,6 +36,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const employee = route.params.employee;
   const [showCredentials, setShowCredentials] = useState(false);
+  const [showAttendanceIdentifiers, setShowAttendanceIdentifiers] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -149,6 +151,17 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
             <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
               <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>
             </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => setShowAttendanceIdentifiers((v) => !v)}>
+              <Text style={styles.actionText}>
+                {showAttendanceIdentifiers ? t('common.cancel') : t('attendanceIdentifiers.actionButton')}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {isViewerAdmin && showAttendanceIdentifiers && (
+          <View style={styles.credentialPanel}>
+            <AttendanceIdentifiersPanel ownerType="EMPLOYEE" ownerId={employee.id} />
           </View>
         )}
 
