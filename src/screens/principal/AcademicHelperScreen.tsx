@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { askBedrock, BedrockError, type ChatMessage } from '../../services/bedrock/bedrockClient';
+import { askAcademicHelper, type AcademicHelperMessage } from '../../api/academicHelper';
+import { ApiError } from '../../api/client';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
@@ -23,21 +24,9 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'AcademicHelper'>;
 
 type Mode = 'student' | 'teacher';
 
-interface Message extends ChatMessage {
+interface Message extends AcademicHelperMessage {
   id: string;
 }
-
-const STUDENT_SYSTEM_PROMPT =
-  'You are a friendly, patient academic tutor helping a school student (grades K-12) understand ' +
-  'concepts and solve homework problems. Explain step by step in simple, encouraging language ' +
-  "appropriate for their level. If the question is ambiguous, ask a clarifying question. Always " +
-  "answer in the same language the student's question is written in.";
-
-const TEACHER_SYSTEM_PROMPT =
-  'You are an expert teaching assistant helping a school teacher with lesson planning, pedagogy, ' +
-  'explaining difficult concepts, drafting quiz/test questions, and classroom management ' +
-  "strategies. Be thorough, professional, and practical. Always answer in the same language the " +
-  "teacher's question is written in.";
 
 const accent = accents.academicHelper;
 
@@ -63,15 +52,14 @@ export function AcademicHelperScreen({ navigation }: Props) {
     setSending(true);
 
     try {
-      const systemPrompt = mode === 'student' ? STUDENT_SYSTEM_PROMPT : TEACHER_SYSTEM_PROMPT;
-      const reply = await askBedrock(
-        systemPrompt,
-        history.map((m) => ({ role: m.role, content: m.content }))
-      );
+      const { reply } = await askAcademicHelper({
+        mode,
+        messages: history.map((m) => ({ role: m.role, content: m.content })),
+      });
       const assistantMessage: Message = { id: `${Date.now()}-a`, role: 'assistant', content: reply };
       setMessagesByMode((prev) => ({ ...prev, [mode]: [...prev[mode], assistantMessage] }));
     } catch (e) {
-      const message = e instanceof BedrockError ? e.message : (e as Error).message;
+      const message = e instanceof ApiError ? e.message : (e as Error).message;
       showToast(message, 'error');
     } finally {
       setSending(false);
