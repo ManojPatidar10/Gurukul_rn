@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { listStudents, searchStudents } from '../../api/students';
@@ -18,6 +18,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentsList'>;
 
 const ROW_HEIGHT = 76;
+const PAGE_SIZE = 50;
 
 const StudentRow = memo(function StudentRow({
   student,
@@ -62,21 +63,42 @@ export function StudentsListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { showToast } = useToast();
 
-  const load = useCallback(() => {
-    setError(null);
-    return (debouncedQuery ? searchStudents(schoolId, debouncedQuery) : listStudents(schoolId))
-      .then(setStudents)
-      .catch((e) => {
-        setError(e.message);
-        showToast(e.message, 'error');
-      });
-  }, [schoolId, debouncedQuery, showToast]);
+  const load = useCallback(
+    (pageToLoad: number, append: boolean) => {
+      setError(null);
+      if (debouncedQuery) {
+        return searchStudents(schoolId, debouncedQuery)
+          .then((rows) => {
+            setStudents(rows);
+            setHasNext(false);
+          })
+          .catch((e) => {
+            setError(e.message);
+            showToast(e.message, 'error');
+          });
+      }
+      return listStudents(schoolId, pageToLoad, PAGE_SIZE)
+        .then((res) => {
+          setStudents((prev) => (append ? [...prev, ...res.content] : res.content));
+          setHasNext(res.hasNext);
+          setPage(pageToLoad);
+        })
+        .catch((e) => {
+          setError(e.message);
+          showToast(e.message, 'error');
+        });
+    },
+    [schoolId, debouncedQuery, showToast]
+  );
 
   useEffect(() => {
     setLoading(true);
-    load().finally(() => setLoading(false));
+    load(0, false).finally(() => setLoading(false));
   }, [load]);
 
   const hasMounted = useRef(false);
@@ -88,14 +110,20 @@ export function StudentsListScreen({ navigation }: Props) {
         return;
       }
       setLoading(true);
-      load().finally(() => setLoading(false));
+      load(0, false).finally(() => setLoading(false));
     });
     return unsubscribe;
   }, [navigation, load]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    load().finally(() => setRefreshing(false));
+    load(0, false).finally(() => setRefreshing(false));
+  };
+
+  const handleLoadMore = () => {
+    if (!hasNext || loadingMore || debouncedQuery) return;
+    setLoadingMore(true);
+    load(page + 1, true).finally(() => setLoadingMore(false));
   };
 
   return (
@@ -123,6 +151,9 @@ export function StudentsListScreen({ navigation }: Props) {
             offset: ROW_HEIGHT * index,
             index,
           })}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
@@ -158,6 +189,7 @@ const styles = StyleSheet.create({
   addButtonText: { color: colors.white, fontWeight: '700' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  footerLoader: { marginVertical: spacing.md },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

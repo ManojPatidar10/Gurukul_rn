@@ -1,8 +1,21 @@
 import { api } from './client';
-import type { Student, StudentRequest, StudentClassSectionUpdateRequest } from './types';
+import type { PagedResponse, Student, StudentRequest, StudentClassSectionUpdateRequest } from './types';
 
-export function listStudents(schoolId: string) {
-  return api.get<Student[]>('/api/v1/students', schoolId);
+export function listStudents(schoolId: string, page = 0, size = 50) {
+  return api.get<PagedResponse<Student>>(`/api/v1/students?page=${page}&size=${size}`, schoolId);
+}
+
+// For consumers that need the full roster (pickers, name lookups, filtering) rather than one page.
+export async function listAllStudents(schoolId: string): Promise<Student[]> {
+  const all: Student[] = [];
+  let page = 0;
+  for (;;) {
+    const res = await listStudents(schoolId, page, 200);
+    all.push(...res.content);
+    if (!res.hasNext) break;
+    page += 1;
+  }
+  return all;
 }
 
 export function getStudent(schoolId: string, id: string) {

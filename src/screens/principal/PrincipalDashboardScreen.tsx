@@ -201,11 +201,11 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   useEffect(() => {
     const load = () => {
-      listStudents(schoolId)
-        .then((rows) => setCounts((prev) => ({ ...prev, students: rows.length })))
+      listStudents(schoolId, 0, 1)
+        .then((res) => setCounts((prev) => ({ ...prev, students: res.totalElements })))
         .catch(() => setCounts((prev) => ({ ...prev, students: null })));
-      listEmployees(schoolId)
-        .then((rows) => setCounts((prev) => ({ ...prev, employees: rows.length })))
+      listEmployees(schoolId, 0, 1)
+        .then((res) => setCounts((prev) => ({ ...prev, employees: res.totalElements })))
         .catch(() => setCounts((prev) => ({ ...prev, employees: null })));
       listVendors(schoolId)
         .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))

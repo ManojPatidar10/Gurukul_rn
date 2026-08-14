@@ -3,6 +3,7 @@ import type {
   CallLogResponse,
   CallSessionResponse,
   MyInviteResponse,
+  PagedResponse,
   RsvpRequest,
   ScheduleCallRequest,
   ScheduledCallResponse,
@@ -61,10 +62,13 @@ export function endImmediateCall(schoolId: string, callLogId: string) {
   return api.post<CallSessionResponse>(`/api/v1/calls/${callLogId}/end`, {}, schoolId);
 }
 
-export function listMyCallHistory(schoolId: string) {
-  return api.get<CallLogResponse[]>('/api/v1/calls/history', schoolId);
+export function listMyCallHistory(schoolId: string, page = 0, size = 50) {
+  return api.get<PagedResponse<CallLogResponse>>(`/api/v1/calls/history?page=${page}&size=${size}`, schoolId);
 }
 
-export function listSchoolCallHistory(schoolId: string) {
-  return api.get<CallLogResponse[]>('/api/v1/calls/history/school', schoolId);
+export function listSchoolCallHistory(schoolId: string, page = 0, size = 50) {
+  return api.get<PagedResponse<CallLogResponse>>(
+    `/api/v1/calls/history/school?page=${page}&size=${size}`,
+    schoolId
+  );
 }

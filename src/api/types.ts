@@ -690,6 +690,12 @@ export interface EmployeeAttendanceHistory {
   records: StaffAttendanceRecord[];
 }
 
+export interface PagedResponse<T> {
+  content: T[];
+  hasNext: boolean;
+  totalElements: number;
+}
+
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 export type OwnerType = 'EMPLOYEE' | 'STUDENT' | 'PARENT';
 

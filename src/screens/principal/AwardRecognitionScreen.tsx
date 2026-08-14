@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { awardSpotRecognition } from '../../api/houses';
-import { listStudents, searchStudents } from '../../api/students';
+import { listAllStudents, searchStudents } from '../../api/students';
 import type { Student } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -30,7 +30,7 @@ export function AwardRecognitionScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    (debouncedQuery ? searchStudents(schoolId, debouncedQuery) : listStudents(schoolId))
+    (debouncedQuery ? searchStudents(schoolId, debouncedQuery) : listAllStudents(schoolId))
       .then(setStudents)
       .catch(() => setStudents([]));
   }, [schoolId, debouncedQuery]);

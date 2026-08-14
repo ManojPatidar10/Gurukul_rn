@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createChallenge } from '../../api/arena';
-import { getStudent, listStudents } from '../../api/students';
+import { getStudent, listAllStudents } from '../../api/students';
 import { listSubjects } from '../../api/subjects';
 import type { Student, Subject } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -32,7 +32,7 @@ export function NewChallengeScreen({ navigation }: Props) {
     setLoading(true);
     setError(null);
     getStudent(schoolId, session.ownerId)
-      .then((me) => Promise.all([listStudents(schoolId), listSubjects(schoolId)]).then(([students, subs]) => ({ me, students, subs })))
+      .then((me) => Promise.all([listAllStudents(schoolId), listSubjects(schoolId)]).then(([students, subs]) => ({ me, students, subs })))
       .then(({ me, students, subs }) => {
         setClassmates(
           students.filter(

@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getStudent, listStudents } from '../../api/students';
+import { getStudent, listAllStudents } from '../../api/students';
 import type { Student } from '../../api/types';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -28,7 +28,7 @@ export function ClassmatesScreen({ navigation }: Props) {
     setLoading(true);
     setError(null);
     getStudent(schoolId, session.ownerId)
-      .then((me) => listStudents(schoolId).then((students) => ({ me, students })))
+      .then((me) => listAllStudents(schoolId).then((students) => ({ me, students })))
       .then(({ me, students }) => {
         setClassmates(students.filter((s) => s.className === me.className && s.academicYear === me.academicYear));
         setSection(me.section);

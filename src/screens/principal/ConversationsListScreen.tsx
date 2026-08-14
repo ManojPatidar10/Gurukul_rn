@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getConversationMessages, listConversations } from '../../api/chat';
-import { listEmployees } from '../../api/employees';
-import { listStudents } from '../../api/students';
+import { listAllEmployees } from '../../api/employees';
+import { listAllStudents } from '../../api/students';
 import type { Conversation } from '../../api/types';
 import { getLastReadAt } from '../../api/unreadStore';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -31,7 +31,7 @@ export function ConversationsListScreen({ navigation }: Props) {
   const load = () => {
     setLoading(true);
     setError(null);
-    Promise.all([listConversations(schoolId), listEmployees(schoolId), listStudents(schoolId)])
+    Promise.all([listConversations(schoolId), listAllEmployees(schoolId), listAllStudents(schoolId)])
       .then(async ([convos, employees, students]) => {
         const withOthers = convos.filter((c) => otherParty(c));
         setConversations(withOthers);

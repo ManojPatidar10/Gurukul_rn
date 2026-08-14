@@ -1,8 +1,21 @@
 import { api } from './client';
-import type { Employee, EmployeeRequest, SalaryHistoryEntry } from './types';
+import type { Employee, EmployeeRequest, PagedResponse, SalaryHistoryEntry } from './types';
 
-export function listEmployees(schoolId: string) {
-  return api.get<Employee[]>('/api/v1/employees', schoolId);
+export function listEmployees(schoolId: string, page = 0, size = 50) {
+  return api.get<PagedResponse<Employee>>(`/api/v1/employees?page=${page}&size=${size}`, schoolId);
+}
+
+// For consumers that need the full roster (pickers, name lookups, filtering) rather than one page.
+export async function listAllEmployees(schoolId: string): Promise<Employee[]> {
+  const all: Employee[] = [];
+  let page = 0;
+  for (;;) {
+    const res = await listEmployees(schoolId, page, 200);
+    all.push(...res.content);
+    if (!res.hasNext) break;
+    page += 1;
+  }
+  return all;
 }
 
 export function getEmployee(schoolId: string, id: string) {

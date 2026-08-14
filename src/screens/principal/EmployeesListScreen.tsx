@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { listEmployees, searchEmployees } from '../../api/employees';
@@ -17,6 +17,8 @@ import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeesList'>;
 
+const PAGE_SIZE = 50;
+
 export function EmployeesListScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
@@ -26,33 +28,66 @@ export function EmployeesListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { showToast } = useToast();
 
-  const load = useCallback(() => {
-    setError(null);
-    return (debouncedQuery ? searchEmployees(schoolId, debouncedQuery) : listEmployees(schoolId))
-      .then(setEmployees)
-      .catch((e) => {
-        setError(e.message);
-        showToast(e.message, 'error');
-      });
-  }, [schoolId, debouncedQuery, showToast]);
+  const load = useCallback(
+    (pageToLoad: number, append: boolean) => {
+      setError(null);
+      if (debouncedQuery) {
+        return searchEmployees(schoolId, debouncedQuery)
+          .then((rows) => {
+            setEmployees(rows);
+            setHasNext(false);
+          })
+          .catch((e) => {
+            setError(e.message);
+            showToast(e.message, 'error');
+          });
+      }
+      return listEmployees(schoolId, pageToLoad, PAGE_SIZE)
+        .then((res) => {
+          setEmployees((prev) => (append ? [...prev, ...res.content] : res.content));
+          setHasNext(res.hasNext);
+          setPage(pageToLoad);
+        })
+        .catch((e) => {
+          setError(e.message);
+          showToast(e.message, 'error');
+        });
+    },
+    [schoolId, debouncedQuery, showToast]
+  );
 
   useEffect(() => {
+    setLoading(true);
+    load(0, false).finally(() => setLoading(false));
+  }, [load]);
+
+  const hasMounted = useRef(false);
+  useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      if (!hasMounted.current) {
+        hasMounted.current = true;
+        return;
+      }
       setLoading(true);
-      load().finally(() => setLoading(false));
+      load(0, false).finally(() => setLoading(false));
     });
     return unsubscribe;
   }, [navigation, load]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
   const handleRefresh = () => {
     setRefreshing(true);
-    load().finally(() => setRefreshing(false));
+    load(0, false).finally(() => setRefreshing(false));
+  };
+
+  const handleLoadMore = () => {
+    if (!hasNext || loadingMore || debouncedQuery) return;
+    setLoadingMore(true);
+    load(page + 1, true).finally(() => setLoadingMore(false));
   };
 
   return (
@@ -71,6 +106,9 @@ export function EmployeesListScreen({ navigation }: Props) {
           data={employees}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
@@ -119,6 +157,7 @@ const styles = StyleSheet.create({
   addButtonText: { color: colors.white, fontWeight: '700' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  footerLoader: { marginVertical: spacing.md },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

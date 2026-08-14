@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { listStudentsInClassSection } from '../api/classSections';
-import { listEmployees } from '../api/employees';
+import { listAllEmployees } from '../api/employees';
 import { listSectionSubjects } from '../api/sectionSubjects';
 import { getStudent, searchStudents } from '../api/students';
 import type { OwnerType } from '../api/types';
@@ -77,7 +77,7 @@ export function useCallTargets() {
       return;
     }
 
-    listEmployees(schoolId)
+    listAllEmployees(schoolId)
       .then((employees) => {
         const candidates =
           session.role === 'ADMIN'
