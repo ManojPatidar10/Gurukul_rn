@@ -155,11 +155,13 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
           onEndReachedThreshold={0.4}
           ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
           ListEmptyComponent={
-            !loading ? (
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
               <Text style={styles.empty}>
                 {error ? t('fees.assessmentsList.loadError') : t('fees.assessmentsList.empty')}
               </Text>
-            ) : null
+            )
           }
           renderItem={({ item }) => (
             <Pressable
@@ -190,6 +192,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   footerLoader: { marginVertical: spacing.md },
+  loader: { marginTop: 40 },
   summaryCard: {
     flexDirection: 'row',
     backgroundColor: colors.surface,

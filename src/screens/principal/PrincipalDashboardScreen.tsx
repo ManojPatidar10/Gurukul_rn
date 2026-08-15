@@ -123,6 +123,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [myClassSection, setMyClassSection] = useState<ClassSection | null>(null);
   const [myHomeroomSection, setMyHomeroomSection] = useState<ClassSection | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
+  const [loadingCounts, setLoadingCounts] = useState(true);
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
@@ -201,15 +202,18 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   useEffect(() => {
     const load = () => {
-      listStudents(schoolId, 0, 1)
-        .then((res) => setCounts((prev) => ({ ...prev, students: res.totalElements })))
-        .catch(() => setCounts((prev) => ({ ...prev, students: null })));
-      listEmployees(schoolId, 0, 1)
-        .then((res) => setCounts((prev) => ({ ...prev, employees: res.totalElements })))
-        .catch(() => setCounts((prev) => ({ ...prev, employees: null })));
-      listVendors(schoolId)
-        .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
-        .catch(() => setCounts((prev) => ({ ...prev, vendors: null })));
+      setLoadingCounts(true);
+      Promise.allSettled([
+        listStudents(schoolId, 0, 1)
+          .then((res) => setCounts((prev) => ({ ...prev, students: res.totalElements })))
+          .catch(() => setCounts((prev) => ({ ...prev, students: null }))),
+        listEmployees(schoolId, 0, 1)
+          .then((res) => setCounts((prev) => ({ ...prev, employees: res.totalElements })))
+          .catch(() => setCounts((prev) => ({ ...prev, employees: null }))),
+        listVendors(schoolId)
+          .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
+          .catch(() => setCounts((prev) => ({ ...prev, vendors: null }))),
+      ]).finally(() => setLoadingCounts(false));
     };
     const unsubscribe = navigation.addListener('focus', load);
     load();
@@ -260,9 +264,9 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
         {!isStudent && !isTeacher && (
           <View style={styles.statRow}>
-            <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} />
-            <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} />
-            <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} />
+            <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />
+            <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} loading={loadingCounts} />
+            <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} loading={loadingCounts} />
           </View>
         )}
 

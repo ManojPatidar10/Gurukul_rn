@@ -54,6 +54,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
@@ -88,12 +89,15 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
 
   const handleSend = async () => {
     const content = draft.trim();
-    if (!content) return;
+    if (!content || sending) return;
     setDraft('');
+    setSending(true);
     try {
       await sendMessage(session.token, schoolId, conversationId, content);
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -221,8 +225,8 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
           onChangeText={setDraft}
           multiline
         />
-        <Pressable style={styles.sendButton} onPress={handleSend} disabled={uploading}>
-          <Text style={styles.sendButtonText}>Send</Text>
+        <Pressable style={styles.sendButton} onPress={handleSend} disabled={uploading || sending}>
+          {sending ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.sendButtonText}>Send</Text>}
         </Pressable>
       </View>
     </KeyboardAvoidingView>

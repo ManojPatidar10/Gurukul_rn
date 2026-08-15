@@ -28,10 +28,14 @@ export function QuestionAuthorScreen({ navigation }: Props) {
   const [correctOption, setCorrectOption] = useState<QuizOption>('A');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingOptions, setLoadingOptions] = useState(true);
 
   useEffect(() => {
-    listSubjects(schoolId).then(setSubjects).catch(() => setSubjects([]));
-    listClassNames(schoolId).then(setClassNames).catch(() => setClassNames([]));
+    setLoadingOptions(true);
+    Promise.all([
+      listSubjects(schoolId).then(setSubjects).catch(() => setSubjects([])),
+      listClassNames(schoolId).then(setClassNames).catch(() => setClassNames([])),
+    ]).finally(() => setLoadingOptions(false));
   }, [schoolId]);
 
   const canSubmit =
@@ -67,32 +71,38 @@ export function QuestionAuthorScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title="Add a quiz question" onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <Text style={styles.fieldLabel}>Subject</Text>
-        <View style={styles.chips}>
-          {subjects.map((subject) => (
-            <Pressable
-              key={subject.id}
-              style={[styles.chip, subjectId === subject.id && styles.chipSelected]}
-              onPress={() => setSubjectId(subject.id)}
-            >
-              <Text style={[styles.chipText, subjectId === subject.id && styles.chipTextSelected]}>{subject.name}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {loadingOptions ? (
+          <ActivityIndicator color={colors.primary} style={styles.loading} />
+        ) : (
+          <>
+            <Text style={styles.fieldLabel}>Subject</Text>
+            <View style={styles.chips}>
+              {subjects.map((subject) => (
+                <Pressable
+                  key={subject.id}
+                  style={[styles.chip, subjectId === subject.id && styles.chipSelected]}
+                  onPress={() => setSubjectId(subject.id)}
+                >
+                  <Text style={[styles.chipText, subjectId === subject.id && styles.chipTextSelected]}>{subject.name}</Text>
+                </Pressable>
+              ))}
+            </View>
 
-        <Text style={styles.fieldLabel}>Class</Text>
-        <View style={styles.chips}>
-          {classNames.map((name) => (
-            <Pressable
-              key={name}
-              style={[styles.chip, className === name && styles.chipSelected]}
-              onPress={() => setClassName(name)}
-            >
-              <Text style={[styles.chipText, className === name && styles.chipTextSelected]}>{name}</Text>
-            </Pressable>
-          ))}
-          {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
-        </View>
+            <Text style={styles.fieldLabel}>Class</Text>
+            <View style={styles.chips}>
+              {classNames.map((name) => (
+                <Pressable
+                  key={name}
+                  style={[styles.chip, className === name && styles.chipSelected]}
+                  onPress={() => setClassName(name)}
+                >
+                  <Text style={[styles.chipText, className === name && styles.chipTextSelected]}>{name}</Text>
+                </Pressable>
+              ))}
+              {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
+            </View>
+          </>
+        )}
 
         <LabeledInput label="Question" value={questionText} onChangeText={setQuestionText} multiline placeholder="e.g. What is the capital of India?" />
 
@@ -152,6 +162,7 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   chipTextSelected: { color: colors.white },
   error: { color: colors.error, marginBottom: spacing.md },
+  loading: { marginTop: spacing.xl },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

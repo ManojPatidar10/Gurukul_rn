@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { assignSectionSubject, listSectionSubjects } from '../../api/sectionSubjects';
 import { getEmployee } from '../../api/employees';
@@ -136,7 +136,11 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
           scrollEnabled={false}
           keyExtractor={(item) => item.subjectId}
           ListEmptyComponent={
-            !loading ? <Text style={styles.empty}>No subjects assigned to this section yet.</Text> : null
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
+              <Text style={styles.empty}>No subjects assigned to this section yet.</Text>
+            )
           }
           renderItem={({ item }) => (
             <Pressable
@@ -182,6 +186,7 @@ const styles = StyleSheet.create({
   cancel: { color: colors.textMuted, textAlign: 'center' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  loader: { marginTop: 40 },
   row: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

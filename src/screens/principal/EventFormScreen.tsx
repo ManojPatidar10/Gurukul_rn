@@ -52,6 +52,7 @@ export function EventFormScreen({ navigation }: Props) {
   const [scope, setScope] = useState<EventScope>('SCHOOL');
   const [sectionId, setSectionId] = useState<string | null>(null);
   const [classNames, setClassNames] = useState<string[]>([]);
+  const [loadingClassNames, setLoadingClassNames] = useState(false);
   const [className, setClassName] = useState<string | null>(null);
   const [venue, setVenue] = useState('');
   const [startAt, setStartAt] = useState(() => new Date(Date.now() + 60 * 60 * 1000));
@@ -67,7 +68,12 @@ export function EventFormScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (scope === 'GRADE') listClassNames(schoolId).then(setClassNames).catch(() => setClassNames([]));
+    if (scope !== 'GRADE') return;
+    setLoadingClassNames(true);
+    listClassNames(schoolId)
+      .then(setClassNames)
+      .catch(() => setClassNames([]))
+      .finally(() => setLoadingClassNames(false));
   }, [schoolId, scope]);
 
   const addRegistrationField = () => {
@@ -166,10 +172,16 @@ export function EventFormScreen({ navigation }: Props) {
         )}
         {scope === 'GRADE' && (
           <View style={styles.chips}>
-            {classNames.map((name) => (
-              <Chip key={name} value={name} selected={className === name} onPress={setClassName} label={name} />
-            ))}
-            {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
+            {loadingClassNames ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <>
+                {classNames.map((name) => (
+                  <Chip key={name} value={name} selected={className === name} onPress={setClassName} label={name} />
+                ))}
+                {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
+              </>
+            )}
           </View>
         )}
 

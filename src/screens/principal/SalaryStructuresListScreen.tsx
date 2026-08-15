@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { listSalaryStructures } from '../../api/salaryStructures';
@@ -62,11 +62,13 @@ export function SalaryStructuresListScreen({ navigation }: Props) {
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           ListEmptyComponent={
-            !loading ? (
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
               <Text style={styles.empty}>
                 {error ? t('payroll.salaryStructuresList.loadError') : t('payroll.salaryStructuresList.empty')}
               </Text>
-            ) : null
+            )
           }
           renderItem={({ item }) => (
             <View style={styles.row}>
@@ -106,6 +108,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  loader: { marginTop: 40 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

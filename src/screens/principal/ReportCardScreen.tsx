@@ -56,8 +56,8 @@ export function ReportCardScreen({ route, navigation }: Props) {
             placeholder="Term (e.g. Term 1)"
             placeholderTextColor={colors.textMuted}
           />
-          <Pressable style={styles.viewButton} onPress={() => load(term)} disabled={!term.trim()}>
-            <Text style={styles.viewButtonText}>View</Text>
+          <Pressable style={styles.viewButton} onPress={() => load(term)} disabled={!term.trim() || loading}>
+            {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.viewButtonText}>View</Text>}
           </Pressable>
         </View>
         <View style={styles.chips}>
@@ -69,6 +69,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
                 setTerm(t);
                 load(t);
               }}
+              disabled={loading}
             >
               <Text style={[styles.chipText, term === t && styles.chipTextSelected]}>{t}</Text>
             </Pressable>

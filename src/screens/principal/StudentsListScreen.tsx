@@ -155,7 +155,9 @@ export function StudentsListScreen({ navigation }: Props) {
           onEndReachedThreshold={0.4}
           ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
           ListEmptyComponent={
-            !loading ? (
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
               <Text style={styles.empty}>
                 {error
                   ? t('students.list.loadError')
@@ -163,7 +165,7 @@ export function StudentsListScreen({ navigation }: Props) {
                     ? t('students.list.noSearchResults')
                     : t('students.list.empty')}
               </Text>
-            ) : null
+            )
           }
           renderItem={({ item }) => (
             <StudentRow student={item} onPress={() => navigation.navigate('StudentDetail', { student: item })} />
@@ -190,6 +192,7 @@ const styles = StyleSheet.create({
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   footerLoader: { marginVertical: spacing.md },
+  loader: { marginTop: 40 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
