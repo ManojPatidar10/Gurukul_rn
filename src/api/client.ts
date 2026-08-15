@@ -1,6 +1,6 @@
 import type { ApiResponse, PagedResponse } from './types';
 
-export const BASE_URL = 'http://13.60.11.238:8080';
+export const BASE_URL = 'http://13.203.202.39:8080';
 
 export class ApiError extends Error {}
 
