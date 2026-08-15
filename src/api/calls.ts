@@ -2,6 +2,7 @@ import { api } from './client';
 import type {
   CallLogResponse,
   CallSessionResponse,
+  GoogleMeetStatusResponse,
   MyInviteResponse,
   RsvpRequest,
   ScheduleCallRequest,
@@ -70,4 +71,16 @@ export function listSchoolCallHistory(schoolId: string, page = 0, size = 50) {
     `/api/v1/calls/history/school?page=${page}&size=${size}`,
     schoolId
   );
+}
+
+export function connectGoogleMeet(schoolId: string) {
+  return api.post<string>('/api/v1/calls/google/connect', {}, schoolId);
+}
+
+export function getGoogleMeetStatus(schoolId: string) {
+  return api.get<GoogleMeetStatusResponse>('/api/v1/calls/google/status', schoolId);
+}
+
+export function disconnectGoogleMeet(schoolId: string) {
+  return api.delete<void>('/api/v1/calls/google/disconnect', schoolId);
 }

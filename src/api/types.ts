@@ -1137,6 +1137,11 @@ export interface CallInviteeResponse {
 
 export type CallProvider = 'JITSI' | 'GOOGLE_MEET';
 
+export interface GoogleMeetStatusResponse {
+  connected: boolean;
+  googleEmail: string | null;
+}
+
 export interface ScheduledCallResponse {
   id: string;
   title: string;

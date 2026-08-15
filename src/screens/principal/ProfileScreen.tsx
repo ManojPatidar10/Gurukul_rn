@@ -221,6 +221,12 @@ export function ProfileScreen({ navigation }: Props) {
               )}
             </View>
 
+            {!editing && session.ownerType === 'EMPLOYEE' && (
+              <Pressable style={styles.googleMeetButton} onPress={() => navigation.navigate('ConnectGoogleAccount')}>
+                <Text style={styles.googleMeetButtonText}>Google Meet settings</Text>
+              </Pressable>
+            )}
+
             {!editing && (
               <Pressable style={styles.logoutButton} onPress={logout}>
                 <Text style={styles.logoutButtonText}>{t('common.logOut')}</Text>
@@ -285,6 +291,15 @@ const styles = StyleSheet.create({
   cancelButtonText: { color: colors.textPrimary, fontWeight: '700', fontSize: 15 },
   saveButton: { backgroundColor: colors.primary },
   saveButtonText: { color: colors.white, fontWeight: '700', fontSize: 15 },
+  googleMeetButton: {
+    width: '100%',
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+  },
+  googleMeetButtonText: { color: colors.textPrimary, fontWeight: '700', fontSize: 15 },
   logoutButton: {
     width: '100%',
     marginTop: spacing.md,
