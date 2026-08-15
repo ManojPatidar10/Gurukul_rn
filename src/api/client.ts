@@ -1,6 +1,6 @@
 import type { ApiResponse, PagedResponse } from './types';
 
-export const BASE_URL = 'http://13.126.119.171:8080';
+export const BASE_URL = 'https://api.smartgurukul.org';
 
 export class ApiError extends Error {}
 
