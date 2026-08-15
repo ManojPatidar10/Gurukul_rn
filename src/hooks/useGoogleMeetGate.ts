@@ -10,9 +10,9 @@ interface GoogleMeetGateNavigation {
 
 /**
  * Only an EMPLOYEE session can connect a Google account, and it only applies to calls they
- * start - a student caller has no provider choice to make. Before actually starting a call, this
- * checks whether the caller has connected Google Meet; if not, it asks rather than silently
- * falling back to Jitsi, since that fallback alone was confusing ("why is this still Jitsi?").
+ * start - a student caller has no provider choice to make. Jitsi is not offered as a fallback at
+ * all: an employee who hasn't connected Google Meet is blocked from starting the call and sent
+ * straight to the connect screen instead.
  */
 export function useGoogleMeetGate(schoolId: string, navigation: GoogleMeetGateNavigation) {
   const { session } = useAuth();
@@ -41,11 +41,10 @@ export function useGoogleMeetGate(schoolId: string, navigation: GoogleMeetGateNa
 
       onGateShown?.();
       Alert.alert(
-        'Use Google Meet?',
-        'Connect your Google account to host this call on Google Meet, or continue with the default video call.',
+        'Connect Google Meet to make calls',
+        'You need to connect your Google account before you can start a video call.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Continue with Jitsi', onPress: () => proceed() },
           { text: 'Connect Google account', onPress: () => navigation.navigate('ConnectGoogleAccount') },
         ]
       );
