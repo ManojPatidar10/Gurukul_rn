@@ -1,5 +1,6 @@
 import type {
   Assessment,
+  CallProvider,
   ClassSection,
   Employee,
   FeeAssessment,
@@ -111,7 +112,7 @@ export type PrincipalStackParamList = {
   ScheduleCall: undefined;
   ScheduledCalls: undefined;
   CallHistory: undefined;
-  InCall: { roomName: string; displayName: string; callLogId?: string; scheduledCallId?: string };
+  InCall: { roomName: string; provider: CallProvider; displayName: string; callLogId?: string; scheduledCallId?: string };
   GamificationHub: undefined;
   Leaderboard: undefined;
   HouseWars: undefined;

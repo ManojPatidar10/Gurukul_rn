@@ -49,7 +49,12 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
     setError(null);
     try {
       const call = await startImmediateCall(schoolId, { calleeOwnerType: 'EMPLOYEE', calleeOwnerId: employee.id });
-      navigation.navigate('InCall', { roomName: call.roomName, displayName: employee.name, callLogId: call.callLogId });
+      navigation.navigate('InCall', {
+        roomName: call.roomName,
+        provider: call.provider,
+        displayName: employee.name,
+        callLogId: call.callLogId,
+      });
     } catch (e) {
       setError((e as Error).message);
     } finally {

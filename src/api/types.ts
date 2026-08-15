@@ -1135,6 +1135,8 @@ export interface CallInviteeResponse {
   rsvpStatus: RsvpStatus;
 }
 
+export type CallProvider = 'JITSI' | 'GOOGLE_MEET';
+
 export interface ScheduledCallResponse {
   id: string;
   title: string;
@@ -1142,6 +1144,7 @@ export interface ScheduledCallResponse {
   hostOwnerId: string;
   scheduledAt: string;
   roomName: string;
+  provider: CallProvider;
   status: CallStatus;
   invitees: CallInviteeResponse[];
 }
@@ -1159,6 +1162,7 @@ export interface MyInviteResponse {
 export interface CallSessionResponse {
   callLogId: string;
   roomName: string;
+  provider: CallProvider;
   outcome: CallOutcome;
 }
 
@@ -1191,6 +1195,7 @@ export interface CallEvent {
   callLogId: string | null;
   scheduledCallId: string | null;
   roomName: string | null;
+  provider: CallProvider | null;
   counterpartOwnerType: OwnerType | null;
   counterpartOwnerId: string | null;
   title: string | null;

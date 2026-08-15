@@ -19,10 +19,12 @@ const TERMINAL_EVENT_TYPES = new Set(['CALL_DECLINED', 'CALL_BUSY', 'CALL_MISSED
 /**
  * Jitsi's own server handles all WebRTC signaling/media once this WebView joins the room - see
  * the spec's note on why this is a WebView (Jitsi's react-native-sdk has no Expo config plugin,
- * and this project is a managed/CNG app) rather than the native SDK's conference view.
+ * and this project is a managed/CNG app) rather than the native SDK's conference view. Google
+ * Meet calls reuse the same WebView - roomName is already the full meet.google.com join URL in
+ * that case, so it's used as-is instead of being appended to meet.jit.si.
  */
 export function InCallScreen({ route, navigation }: Props) {
-  const { roomName, displayName, callLogId, scheduledCallId } = route.params;
+  const { roomName, provider, displayName, callLogId, scheduledCallId } = route.params;
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [permissionsGranted, setPermissionsGranted] = useState<boolean | null>(null);
@@ -77,7 +79,10 @@ export function InCallScreen({ route, navigation }: Props) {
     );
   }
 
-  const url = `https://meet.jit.si/${roomName}#config.prejoinConfig.enabled=false&config.disableDeepLinking=true&userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`;
+  const url =
+    provider === 'GOOGLE_MEET'
+      ? roomName
+      : `https://meet.jit.si/${roomName}#config.prejoinConfig.enabled=false&config.disableDeepLinking=true&userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`;
 
   return (
     <View style={styles.root}>

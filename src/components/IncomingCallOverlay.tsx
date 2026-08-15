@@ -56,6 +56,7 @@ export function IncomingCallOverlay({ session, schoolId }: Props) {
       setIncoming(null);
       navigationRef.current?.navigate('InCall', {
         roomName: result.roomName,
+        provider: result.provider,
         displayName: callerName,
         callLogId: incoming.callLogId,
       });

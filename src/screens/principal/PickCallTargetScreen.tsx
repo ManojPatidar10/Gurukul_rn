@@ -41,6 +41,7 @@ export function PickCallTargetScreen({ navigation }: Props) {
       });
       navigation.replace('InCall', {
         roomName: session.roomName,
+        provider: session.provider,
         displayName: target.name,
         callLogId: session.callLogId,
       });
