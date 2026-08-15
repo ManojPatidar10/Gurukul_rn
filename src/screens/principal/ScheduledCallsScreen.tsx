@@ -16,6 +16,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { CallProvider, MyInviteResponse, ScheduledCallResponse } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -30,6 +31,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const confirmBeforeCall = useGoogleMeetGate(schoolId, navigation);
 
   const load = useCallback(() => {
     setError(null);
@@ -126,7 +128,9 @@ export function ScheduledCallsScreen({ navigation }: Props) {
                   <Pressable
                     style={styles.actionButton}
                     disabled={busyId === call.id}
-                    onPress={() => withBusy(call.id, () => startScheduledCall(schoolId, call.id))}
+                    onPress={() =>
+                      confirmBeforeCall(() => withBusy(call.id, () => startScheduledCall(schoolId, call.id)))
+                    }
                   >
                     <Text style={styles.actionText}>Start now</Text>
                   </Pressable>

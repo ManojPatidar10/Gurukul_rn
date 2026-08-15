@@ -19,6 +19,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -47,23 +48,29 @@ export function StudentDetailScreen({ route, navigation }: Props) {
   const [calling, setCalling] = useState(false);
   const [messaging, setMessaging] = useState(false);
   const isSelf = session.ownerType === 'STUDENT' && session.ownerId === student.id;
+  const confirmBeforeCall = useGoogleMeetGate(schoolId, navigation);
 
-  const handleVideoCall = async () => {
+  const handleVideoCall = () => {
     setCalling(true);
     setError(null);
-    try {
-      const call = await startImmediateCall(schoolId, { calleeOwnerType: 'STUDENT', calleeOwnerId: student.id });
-      navigation.navigate('InCall', {
-        roomName: call.roomName,
-        provider: call.provider,
-        displayName: student.name,
-        callLogId: call.callLogId,
-      });
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setCalling(false);
-    }
+    confirmBeforeCall(
+      async () => {
+        try {
+          const call = await startImmediateCall(schoolId, { calleeOwnerType: 'STUDENT', calleeOwnerId: student.id });
+          navigation.navigate('InCall', {
+            roomName: call.roomName,
+            provider: call.provider,
+            displayName: student.name,
+            callLogId: call.callLogId,
+          });
+        } catch (e) {
+          setError((e as Error).message);
+        } finally {
+          setCalling(false);
+        }
+      },
+      () => setCalling(false)
+    );
   };
 
   const handleMessage = async () => {
