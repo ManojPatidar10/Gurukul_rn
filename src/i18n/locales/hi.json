@@ -153,8 +153,6 @@
   },
   "academicHelper": {
     "title": "शैक्षणिक सहायक",
-    "studentMode": "विद्यार्थी",
-    "teacherMode": "शिक्षक",
     "inputPlaceholder": "एक प्रश्न पूछें…",
     "send": "भेजें",
     "thinking": "सोच रहा है…",

@@ -153,8 +153,6 @@
   },
   "academicHelper": {
     "title": "Academic Helper",
-    "studentMode": "Student",
-    "teacherMode": "Teacher",
     "inputPlaceholder": "Ask a question…",
     "send": "Send",
     "thinking": "Thinking…",

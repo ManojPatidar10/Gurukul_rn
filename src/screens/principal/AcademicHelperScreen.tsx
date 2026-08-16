@@ -13,44 +13,45 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { askBedrock, BedrockError, type ChatMessage } from '../../services/bedrock/bedrockClient';
+import { askAi, type AiChatMessage } from '../../api/ai';
+import { ApiError } from '../../api/client';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { useAuth } from '../../context/AuthContext';
+import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AcademicHelper'>;
 
-type Mode = 'student' | 'teacher';
-
-interface Message extends ChatMessage {
+interface Message extends AiChatMessage {
   id: string;
 }
 
-const STUDENT_SYSTEM_PROMPT =
-  'You are a friendly, patient academic tutor helping a school student (grades K-12) understand ' +
-  'concepts and solve homework problems. Explain step by step in simple, encouraging language ' +
-  "appropriate for their level. If the question is ambiguous, ask a clarifying question. Always " +
-  "answer in the same language the student's question is written in.";
-
-const TEACHER_SYSTEM_PROMPT =
-  'You are an expert teaching assistant helping a school teacher with lesson planning, pedagogy, ' +
-  'explaining difficult concepts, drafting quiz/test questions, and classroom management ' +
-  "strategies. Be thorough, professional, and practical. Always answer in the same language the " +
-  "teacher's question is written in.";
-
 const accent = accents.academicHelper;
 
+/**
+ * Open-ended tutoring for students, teaching support for staff. Distinct from HelpdeskBotScreen,
+ * which answers questions about the user's own attendance/fees/subjects using real school data.
+ *
+ * The system prompt used to live here, alongside a student/teacher toggle the user could flip. Both
+ * moved to the backend (AiChatService), which selects the prompt from the caller's role in the JWT.
+ * That toggle was a real hole: a student could switch to teacher mode and ask for complete answer
+ * keys to their own homework.
+ */
 export function AcademicHelperScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const schoolId = useSchoolId();
+  const { session } = useAuth();
   const { showToast } = useToast();
-  const [mode, setMode] = useState<Mode>('student');
-  const [messagesByMode, setMessagesByMode] = useState<Record<Mode, Message[]>>({ student: [], teacher: [] });
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
-  const messages = messagesByMode[mode];
+  // Presentation only - it just picks the empty-state wording. The actual behaviour is decided
+  // server-side from the JWT, so this can't be used to change how the assistant answers.
+  const isStudent = session.ownerType === 'STUDENT';
 
   const handleSend = async () => {
     const question = input.trim();
@@ -58,21 +59,23 @@ export function AcademicHelperScreen({ navigation }: Props) {
 
     const userMessage: Message = { id: `${Date.now()}-u`, role: 'user', content: question };
     const history = [...messages, userMessage];
-    setMessagesByMode((prev) => ({ ...prev, [mode]: history }));
+    setMessages(history);
     setInput('');
     setSending(true);
 
     try {
-      const systemPrompt = mode === 'student' ? STUDENT_SYSTEM_PROMPT : TEACHER_SYSTEM_PROMPT;
-      const reply = await askBedrock(
-        systemPrompt,
+      const response = await askAi(
+        schoolId,
         history.map((m) => ({ role: m.role, content: m.content }))
       );
-      const assistantMessage: Message = { id: `${Date.now()}-a`, role: 'assistant', content: reply };
-      setMessagesByMode((prev) => ({ ...prev, [mode]: [...prev[mode], assistantMessage] }));
+      setMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: 'assistant', content: response.reply }]);
     } catch (e) {
-      const message = e instanceof BedrockError ? e.message : (e as Error).message;
-      showToast(message, 'error');
+      // The backend already returns messages written to be shown to a student or teacher as-is
+      // (unconfigured, rate-limited, provider down), so there's nothing to translate here.
+      showToast(e instanceof ApiError ? e.message : (e as Error).message, 'error');
+      // Drop the unanswered question back into the input so a retry doesn't mean retyping it.
+      setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
+      setInput(question);
     } finally {
       setSending(false);
     }
@@ -81,25 +84,6 @@ export function AcademicHelperScreen({ navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader title={t('academicHelper.title')} onBack={() => navigation.goBack()} />
-
-      <View style={styles.modeRow}>
-        <Pressable
-          style={[styles.modeButton, mode === 'student' && styles.modeButtonActive]}
-          onPress={() => setMode('student')}
-        >
-          <Text style={[styles.modeText, mode === 'student' && styles.modeTextActive]}>
-            {t('academicHelper.studentMode')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.modeButton, mode === 'teacher' && styles.modeButtonActive]}
-          onPress={() => setMode('teacher')}
-        >
-          <Text style={[styles.modeText, mode === 'teacher' && styles.modeTextActive]}>
-            {t('academicHelper.teacherMode')}
-          </Text>
-        </Pressable>
-      </View>
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -114,7 +98,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           ListEmptyComponent={
             <Text style={styles.empty}>
-              {mode === 'student' ? t('academicHelper.emptyStudent') : t('academicHelper.emptyTeacher')}
+              {isStudent ? t('academicHelper.emptyStudent') : t('academicHelper.emptyTeacher')}
             </Text>
           }
           renderItem={({ item }) => (
@@ -158,26 +142,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  modeRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.pill,
-    margin: spacing.lg,
-    marginBottom: spacing.sm,
-    padding: 4,
-  },
-  modeButton: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-  },
-  modeButtonActive: {
-    backgroundColor: accent.base,
-  },
-  modeText: { fontSize: 14, fontWeight: '700', color: colors.textSecondary },
-  modeTextActive: { color: colors.white },
-  listContent: { flexGrow: 1, padding: spacing.lg, paddingTop: spacing.sm },
+  listContent: { flexGrow: 1, padding: spacing.lg, paddingTop: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 60, paddingHorizontal: spacing.xl },
   bubble: {
     maxWidth: '85%',

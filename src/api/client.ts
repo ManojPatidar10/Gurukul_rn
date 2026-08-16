@@ -1,6 +1,10 @@
 import type { ApiResponse, PagedResponse } from './types';
 
-export const BASE_URL = 'https://api.smartgurukul.org';
+// Production by default. Set EXPO_PUBLIC_API_BASE_URL in .env (gitignored) to point a dev build at
+// a local backend - note that from an Android emulator the host machine is 10.0.2.2, not localhost,
+// and from a physical device it's your machine's LAN IP. EXPO_PUBLIC_* values are inlined at bundle
+// time, so changing .env needs Metro restarted with a cleared cache to take effect.
+export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.smartgurukul.org';
 
 export class ApiError extends Error {}
 
