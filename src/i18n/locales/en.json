@@ -25,7 +25,9 @@
     "female": "Female",
     "other": "Other",
     "logOut": "Log out",
-    "profile": "Profile"
+    "profile": "Profile",
+    "copy": "Copy",
+    "copied": "Copied to clipboard"
   },
   "language": {
     "toggleLabel": "Change language",

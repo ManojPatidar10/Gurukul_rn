@@ -1,4 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Clipboard from 'expo-clipboard';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { askAi, type AiChatMessage } from '../../api/ai';
@@ -44,6 +46,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -52,6 +55,11 @@ export function AcademicHelperScreen({ navigation }: Props) {
   // Presentation only - it just picks the empty-state wording. The actual behaviour is decided
   // server-side from the JWT, so this can't be used to change how the assistant answers.
   const isStudent = session.ownerType === 'STUDENT';
+
+  const handleCopy = async (content: string) => {
+    await Clipboard.setStringAsync(content);
+    showToast(t('common.copied'), 'success');
+  };
 
   const handleSend = async () => {
     const question = input.trim();
@@ -102,11 +110,17 @@ export function AcademicHelperScreen({ navigation }: Props) {
             </Text>
           }
           renderItem={({ item }) => (
-            <View style={[styles.bubble, item.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant]}>
-              <Text style={item.role === 'user' ? styles.bubbleTextUser : styles.bubbleTextAssistant}>
+            <Pressable
+              onLongPress={() => handleCopy(item.content)}
+              style={[styles.bubble, item.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant]}
+            >
+              <Text
+                selectable
+                style={item.role === 'user' ? styles.bubbleTextUser : styles.bubbleTextAssistant}
+              >
                 {item.content}
               </Text>
-            </View>
+            </Pressable>
           )}
         />
 
@@ -117,7 +131,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
           </View>
         )}
 
-        <View style={styles.inputRow}>
+        <View style={[styles.inputRow, { paddingBottom: spacing.sm + insets.bottom }]}>
           <TextInput
             style={styles.input}
             value={input}
