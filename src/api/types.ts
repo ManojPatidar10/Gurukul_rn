@@ -564,6 +564,20 @@ export interface ReportCardPublication {
   publishedByEmployeeName: string;
 }
 
+export interface PublishedTerm {
+  term: string;
+  publishedAt: string;
+}
+
+export interface TermSummary {
+  term: string;
+  published: boolean;
+}
+
+export interface BackfillTermResult {
+  assessmentsUpdated: number;
+}
+
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
 
 export interface AttendanceEntryRequest {
