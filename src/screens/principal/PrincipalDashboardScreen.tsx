@@ -43,6 +43,7 @@ const STUDENT_HIDDEN_FEATURES: FeatureId[] = [
   'gradingScale',
   'staffAttendance',
   'registrationInbox',
+  'attendanceDevices',
 ];
 // Managing other staff, vendors, fees, and infra requests are school-admin concerns a teacher has
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
@@ -57,6 +58,7 @@ const TEACHER_HIDDEN_FEATURES: FeatureId[] = [
   'gradingScale',
   'staffAttendance',
   'registrationInbox',
+  'attendanceDevices',
 ];
 
 const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
@@ -82,6 +84,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   registrationInbox: 'RegistrationInbox',
   myAttendance: 'AttendanceHistory',
   myClassFees: 'MyClassFees',
+  attendanceDevices: 'AttendanceDevices',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -147,6 +150,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
     { id: 'registrationInbox', title: t('dashboard.features.registrationInbox.title'), icon: 'user-check', description: t('dashboard.features.registrationInbox.description') },
     { id: 'myClassFees', title: t('dashboard.features.myClassFees.title'), icon: 'file-invoice-dollar', description: t('dashboard.features.myClassFees.description') },
+    { id: 'attendanceDevices', title: t('dashboard.features.attendanceDevices.title'), icon: 'id-card', description: t('dashboard.features.attendanceDevices.description') },
   ];
 
   const visibleFeatures = featureActions

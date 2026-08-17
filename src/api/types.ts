@@ -592,12 +592,15 @@ export interface BulkAttendanceRequest {
   records: AttendanceEntryRequest[];
 }
 
+export type AttendanceMethod = 'RFID' | 'FINGERPRINT' | 'FACE';
+
 export interface StudentAttendanceEntry {
   studentId: string;
   rollNumber: string;
   studentName: string;
   status: AttendanceStatus;
   remarks: string;
+  method: AttendanceMethod | null;
 }
 
 export interface SectionAttendance {
@@ -617,9 +620,10 @@ export interface AttendanceRecord {
   sectionId: string;
   attendanceDate: string;
   status: AttendanceStatus;
-  markedByTeacherId: string;
-  markedByTeacherName: string;
+  markedByTeacherId: string | null;
+  markedByTeacherName: string | null;
   remarks: string;
+  method: AttendanceMethod | null;
 }
 
 export interface StudentAttendanceHistory {
@@ -669,10 +673,11 @@ export interface StaffAttendanceRecord {
   employeeName: string;
   attendanceDate: string;
   status: AttendanceStatus;
-  markedByEmployeeId: string;
-  markedByEmployeeName: string;
+  markedByEmployeeId: string | null;
+  markedByEmployeeName: string | null;
   remarks: string | null;
   selfMarked: boolean;
+  method: AttendanceMethod | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -684,6 +689,7 @@ export interface StaffAttendanceEntry {
   status: AttendanceStatus | null;
   remarks: string | null;
   selfMarked: boolean;
+  method: AttendanceMethod | null;
 }
 
 export interface StaffAttendanceRoster {
@@ -712,6 +718,34 @@ export interface PagedResponse<T> {
 
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 export type OwnerType = 'EMPLOYEE' | 'STUDENT' | 'PARENT';
+
+export interface AttendanceDevice {
+  id: string;
+  name: string;
+  deviceType: AttendanceMethod;
+  active: boolean;
+  lastSeenAt: string | null;
+  createdAt: string;
+}
+
+export interface AttendanceDeviceKey {
+  id: string;
+  name: string;
+  deviceType: AttendanceMethod;
+  /** Only ever present in the create/rotate-key response - never shown again after that. */
+  apiKey: string;
+}
+
+export interface AttendanceIdentifier {
+  id: string;
+  ownerType: OwnerType;
+  ownerId: string;
+  ownerName: string;
+  method: AttendanceMethod;
+  externalId: string;
+  active: boolean;
+  createdAt: string;
+}
 
 export interface LoginRequest {
   username: string;

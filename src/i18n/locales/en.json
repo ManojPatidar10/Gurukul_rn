@@ -9,6 +9,7 @@
     "edit": "Edit",
     "delete": "Delete",
     "deleting": "Deleting…",
+    "remove": "Remove",
     "back": "Back",
     "selectPlaceholder": "Select…",
     "selectDate": "Select date",
@@ -150,6 +151,10 @@
       "myClassFees": {
         "title": "My Class Fees",
         "description": "Fee payment status for students in your class"
+      },
+      "attendanceDevices": {
+        "title": "Attendance Devices",
+        "description": "Register RFID/fingerprint/face devices and enroll student & staff identifiers"
       }
     }
   },
@@ -868,5 +873,47 @@
     "approveTitle": "Approve registration",
     "rejectTitle": "Reject registration",
     "confirmMessage": "{{action}} {{name}}'s registration?"
+  },
+  "attendanceDevices": {
+    "title": "Attendance Devices",
+    "intro": "Register the RFID readers, fingerprint scanners, or face-recognition kiosks installed at your school, then enroll each student/employee's identifier from their profile so a scan marks attendance automatically.",
+    "name": "Device name",
+    "namePlaceholder": "e.g. Main Gate RFID Reader",
+    "deviceType": "Device type",
+    "createButton": "Register device",
+    "addButton": "Register a device",
+    "empty": "No attendance devices registered yet.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "lastSeen": "Last seen",
+    "neverSeen": "Never used yet",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "rotateKey": "Rotate key",
+    "rotateConfirmTitle": "Rotate this device's key?",
+    "rotateConfirmMessage": "The old key stops working immediately. You'll need to update the physical device with the new key.",
+    "rotateConfirmAction": "Rotate",
+    "keyModalTitle": "Device API key",
+    "keyModalWarning": "Copy this now and configure it on the device - it will not be shown again.",
+    "keyModalDone": "I've saved this key",
+    "errors": {
+      "name": "Enter a name for this device."
+    },
+    "method": {
+      "RFID": "RFID",
+      "FINGERPRINT": "Fingerprint",
+      "FACE": "Face recognition"
+    }
+  },
+  "attendanceIdentifiers": {
+    "actionButton": "Attendance devices",
+    "title": "Attendance device identifiers",
+    "subtitle": "Enroll a card/fingerprint/face id so a scan at a registered device marks this person present automatically.",
+    "externalId": "Identifier",
+    "externalIdPlaceholder": "e.g. the RFID card's UID",
+    "enrollButton": "Enroll",
+    "errors": {
+      "externalId": "Enter the identifier reported by the device."
+    }
   }
 }
