@@ -68,6 +68,7 @@ export type AccentKey =
   | 'arena'
   | 'events'
   | 'academicHelper'
+  | 'helpdeskBot'
   | 'teacherTools'
   | 'reportCard'
   | 'gradingScale'
@@ -94,6 +95,7 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   arena: { base: '#7C2D92', light: '#F1E3F5' },
   events: { base: '#0369A1', light: '#DCEEFB' },
   academicHelper: { base: '#0891B2', light: '#DFF4F8' },
+  helpdeskBot: { base: '#0EA5E9', light: '#E0F2FE' },
   teacherTools: { base: '#4F46E5', light: '#E8E6FC' },
   reportCard: { base: '#B45309', light: '#FCEEDB' },
   gradingScale: { base: '#475569', light: '#E7EAEE' },

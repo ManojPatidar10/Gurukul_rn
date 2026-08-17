@@ -33,10 +33,6 @@ export function presignChatAttachment(
   );
 }
 
-export function getOrCreateBotConversation(schoolId: string) {
-  return api.post<Conversation>('/api/v1/chat/bot/conversation', {}, schoolId);
-}
-
 export function createAnnouncement(schoolId: string, req: CreateAnnouncementRequest) {
   return api.post<Announcement>('/api/v1/chat/announcements', req, schoolId);
 }

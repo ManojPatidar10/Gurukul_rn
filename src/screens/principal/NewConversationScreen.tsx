@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createConversation } from '../../api/chat';
-import { listEmployees } from '../../api/employees';
-import { getStudent, listStudents } from '../../api/students';
+import { listAllEmployees } from '../../api/employees';
+import { getStudent, listAllStudents } from '../../api/students';
 import type { OwnerType } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -35,8 +35,8 @@ export function NewConversationScreen({ navigation }: Props) {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      listEmployees(schoolId),
-      listStudents(schoolId),
+      listAllEmployees(schoolId),
+      listAllStudents(schoolId),
       isStudent ? getStudent(schoolId, session.ownerId) : Promise.resolve(null),
     ])
       .then(([employees, students, me]) => {

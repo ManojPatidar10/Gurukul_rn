@@ -1,5 +1,5 @@
 import { FontAwesome5 } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { accents, colors, radius, softShadow, spacing, type AccentKey } from '../theme/colors';
@@ -9,9 +9,10 @@ interface Props {
   icon: string;
   label: string;
   value: number | null;
+  loading?: boolean;
 }
 
-export function StatSummaryCard({ accentKey, icon, label, value }: Props) {
+export function StatSummaryCard({ accentKey, icon, label, value, loading }: Props) {
   const { t } = useTranslation();
   const accent = accents[accentKey];
 
@@ -20,7 +21,11 @@ export function StatSummaryCard({ accentKey, icon, label, value }: Props) {
       <View style={[styles.iconCircle, { backgroundColor: accent.light }]}>
         <FontAwesome5 name={icon} size={14} color={accent.base} />
       </View>
-      <Text style={styles.value}>{value === null ? t('common.emptyValue') : value}</Text>
+      {loading ? (
+        <ActivityIndicator color={accent.base} size="small" style={styles.loading} />
+      ) : (
+        <Text style={styles.value}>{value === null ? t('common.emptyValue') : value}</Text>
+      )}
       <Text style={styles.label} numberOfLines={1}>
         {label}
       </Text>
@@ -49,6 +54,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     color: colors.textPrimary,
+  },
+  loading: {
+    alignSelf: 'flex-start',
+    marginVertical: 2,
   },
   label: {
     fontSize: 11,

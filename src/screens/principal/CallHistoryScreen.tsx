@@ -1,9 +1,8 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { listMyCallHistory, listSchoolCallHistory } from '../../api/calls';
-import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +13,8 @@ import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'CallHistory'>;
 
+const PAGE_SIZE = 50;
+
 export function CallHistoryScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -21,21 +22,42 @@ export function CallHistoryScreen({ navigation }: Props) {
   const [showWholeSchool, setShowWholeSchool] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const load = useCallback(
+    (pageToLoad: number, append: boolean) => {
+      const fetch = showWholeSchool
+        ? listSchoolCallHistory(schoolId, pageToLoad, PAGE_SIZE)
+        : listMyCallHistory(schoolId, pageToLoad, PAGE_SIZE);
+      return fetch
+        .then((res) => {
+          setLogs((prev) => (append ? [...prev, ...res.content] : res.content));
+          setHasNext(res.hasNext);
+          setPage(pageToLoad);
+        })
+        .catch((e) => setError((e as Error).message));
+    },
+    [schoolId, showWholeSchool]
+  );
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const fetch = showWholeSchool ? listSchoolCallHistory(schoolId) : listMyCallHistory(schoolId);
-    fetch
-      .then(setLogs)
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false));
-  }, [schoolId, showWholeSchool]);
+    load(0, false).finally(() => setLoading(false));
+  }, [load]);
+
+  const handleLoadMore = () => {
+    if (!hasNext || loadingMore) return;
+    setLoadingMore(true);
+    load(page + 1, true).finally(() => setLoadingMore(false));
+  };
 
   return (
     <View style={styles.root}>
       <ScreenHeader title="Call history" onBack={() => navigation.goBack()} />
-      <ScreenContainer>
+      <View style={styles.body}>
         {session.role === 'ADMIN' && (
           <View style={styles.toggleRow}>
             <Text
@@ -52,22 +74,34 @@ export function CallHistoryScreen({ navigation }: Props) {
             </Text>
           </View>
         )}
-        {loading && <ActivityIndicator color={colors.primary} />}
         {error && <Text style={styles.error}>{error}</Text>}
-        {!loading && logs.length === 0 && <Text style={styles.empty}>No calls yet.</Text>}
-        {logs.map((log) => (
-          <View key={log.id} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{new Date(log.startedAt).toLocaleString()}</Text>
-              <StatusChip label={log.outcome} variant={outcomeVariant(log.outcome)} />
+        <FlatList
+          data={logs}
+          keyExtractor={(log) => log.id}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
+          ListEmptyComponent={
+            loading ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <Text style={styles.empty}>No calls yet.</Text>
+            )
+          }
+          renderItem={({ item: log }) => (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{new Date(log.startedAt).toLocaleString()}</Text>
+                <StatusChip label={log.outcome} variant={outcomeVariant(log.outcome)} />
+              </View>
+              <Text style={styles.cardMeta}>
+                {log.scheduledCallId ? 'Scheduled call' : 'Immediate call'}
+                {log.durationSeconds != null ? ` · ${Math.round(log.durationSeconds / 60)} min` : ''}
+              </Text>
             </View>
-            <Text style={styles.cardMeta}>
-              {log.scheduledCallId ? 'Scheduled call' : 'Immediate call'}
-              {log.durationSeconds != null ? ` · ${Math.round(log.durationSeconds / 60)} min` : ''}
-            </Text>
-          </View>
-        ))}
-      </ScreenContainer>
+          )}
+        />
+      </View>
     </View>
   );
 }
@@ -81,6 +115,8 @@ function outcomeVariant(outcome: string): 'success' | 'warning' | 'error' | 'neu
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  body: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
+  footerLoader: { marginVertical: spacing.md },
   toggleRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   toggleOption: {
     fontSize: 13,

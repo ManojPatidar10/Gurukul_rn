@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { awardSpotRecognition } from '../../api/houses';
-import { listStudents, searchStudents } from '../../api/students';
+import { listAllStudents, searchStudents } from '../../api/students';
 import type { Student } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -23,6 +23,7 @@ export function AwardRecognitionScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
   const [students, setStudents] = useState<Student[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const [selected, setSelected] = useState<Student | null>(null);
   const [amount, setAmount] = useState(5);
   const [reason, setReason] = useState('');
@@ -30,9 +31,11 @@ export function AwardRecognitionScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    (debouncedQuery ? searchStudents(schoolId, debouncedQuery) : listStudents(schoolId))
+    setLoadingStudents(true);
+    (debouncedQuery ? searchStudents(schoolId, debouncedQuery) : listAllStudents(schoolId))
       .then(setStudents)
-      .catch(() => setStudents([]));
+      .catch(() => setStudents([]))
+      .finally(() => setLoadingStudents(false));
   }, [schoolId, debouncedQuery]);
 
   const canSubmit = selected !== null && reason.trim().length > 0 && amount >= 1 && amount <= 20;
@@ -59,12 +62,16 @@ export function AwardRecognitionScreen({ navigation }: Props) {
           <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}>
             <SearchBar value={query} onChangeText={setQuery} placeholder="Search student by name" />
           </View>
-          {students.map((student) => (
-            <Pressable key={student.id} style={styles.studentRow} onPress={() => setSelected(student)}>
-              <Text style={styles.studentName}>{student.name}</Text>
-              <Text style={styles.studentMeta}>{student.classSectionLabel}</Text>
-            </Pressable>
-          ))}
+          {loadingStudents ? (
+            <ActivityIndicator style={styles.loading} color={colors.primary} />
+          ) : (
+            students.map((student) => (
+              <Pressable key={student.id} style={styles.studentRow} onPress={() => setSelected(student)}>
+                <Text style={styles.studentName}>{student.name}</Text>
+                <Text style={styles.studentMeta}>{student.classSectionLabel}</Text>
+              </Pressable>
+            ))
+          )}
         </ScreenContainer>
       </View>
     );
@@ -125,6 +132,7 @@ const styles = StyleSheet.create({
   },
   studentName: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   studentMeta: { fontSize: 12, color: colors.textMuted },
+  loading: { marginTop: spacing.xl },
   selectedLabel: { fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
   selectedName: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginTop: 2 },
   selectedMeta: { fontSize: 12.5, color: colors.textMuted, marginBottom: spacing.lg },

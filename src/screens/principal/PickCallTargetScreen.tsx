@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useCallTargets, type CallTarget } from '../../hooks/useCallTargets';
+import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -30,25 +31,32 @@ export function PickCallTargetScreen({ navigation }: Props) {
   } = useCallTargets();
   const [callingId, setCallingId] = useState<string | null>(null);
   const [callError, setCallError] = useState<string | null>(null);
+  const confirmBeforeCall = useGoogleMeetGate(schoolId, navigation);
 
-  const handleCall = async (target: CallTarget) => {
+  const handleCall = (target: CallTarget) => {
     setCallingId(target.ownerId);
     setCallError(null);
-    try {
-      const session = await startImmediateCall(schoolId, {
-        calleeOwnerType: target.ownerType,
-        calleeOwnerId: target.ownerId,
-      });
-      navigation.replace('InCall', {
-        roomName: session.roomName,
-        displayName: target.name,
-        callLogId: session.callLogId,
-      });
-    } catch (e) {
-      setCallError((e as Error).message);
-    } finally {
-      setCallingId(null);
-    }
+    confirmBeforeCall(
+      async () => {
+        try {
+          const session = await startImmediateCall(schoolId, {
+            calleeOwnerType: target.ownerType,
+            calleeOwnerId: target.ownerId,
+          });
+          navigation.replace('InCall', {
+            roomName: session.roomName,
+            provider: session.provider,
+            displayName: target.name,
+            callLogId: session.callLogId,
+          });
+        } catch (e) {
+          setCallError((e as Error).message);
+        } finally {
+          setCallingId(null);
+        }
+      },
+      () => setCallingId(null)
+    );
   };
 
   return (

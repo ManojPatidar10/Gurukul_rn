@@ -16,8 +16,9 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
-import type { MyInviteResponse, ScheduledCallResponse } from '../../api/types';
+import type { CallProvider, MyInviteResponse, ScheduledCallResponse } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ScheduledCalls'>;
@@ -30,6 +31,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const confirmBeforeCall = useGoogleMeetGate(schoolId, navigation);
 
   const load = useCallback(() => {
     setError(null);
@@ -83,8 +85,8 @@ export function ScheduledCallsScreen({ navigation }: Props) {
     }
   };
 
-  const joinRoom = (roomName: string, title: string) => {
-    navigation.navigate('InCall', { roomName, displayName: title });
+  const joinRoom = (roomName: string, provider: CallProvider, title: string) => {
+    navigation.navigate('InCall', { roomName, provider, displayName: title });
   };
 
   const joinScheduled = async (scheduledCallId: string, title: string) => {
@@ -92,7 +94,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
     setError(null);
     try {
       const call = await getScheduledCall(schoolId, scheduledCallId);
-      navigation.navigate('InCall', { roomName: call.roomName, displayName: title, scheduledCallId });
+      navigation.navigate('InCall', { roomName: call.roomName, provider: call.provider, displayName: title, scheduledCallId });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -126,7 +128,9 @@ export function ScheduledCallsScreen({ navigation }: Props) {
                   <Pressable
                     style={styles.actionButton}
                     disabled={busyId === call.id}
-                    onPress={() => withBusy(call.id, () => startScheduledCall(schoolId, call.id))}
+                    onPress={() =>
+                      confirmBeforeCall(() => withBusy(call.id, () => startScheduledCall(schoolId, call.id)))
+                    }
                   >
                     <Text style={styles.actionText}>Start now</Text>
                   </Pressable>
@@ -140,7 +144,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
                 </>
               )}
               {call.status === 'STARTED' && (
-                <Pressable style={styles.actionButton} onPress={() => joinRoom(call.roomName, call.title)}>
+                <Pressable style={styles.actionButton} onPress={() => joinRoom(call.roomName, call.provider, call.title)}>
                   <Text style={styles.actionText}>Join</Text>
                 </Pressable>
               )}

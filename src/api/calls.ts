@@ -2,6 +2,7 @@ import { api } from './client';
 import type {
   CallLogResponse,
   CallSessionResponse,
+  GoogleMeetStatusResponse,
   MyInviteResponse,
   RsvpRequest,
   ScheduleCallRequest,
@@ -61,10 +62,25 @@ export function endImmediateCall(schoolId: string, callLogId: string) {
   return api.post<CallSessionResponse>(`/api/v1/calls/${callLogId}/end`, {}, schoolId);
 }
 
-export function listMyCallHistory(schoolId: string) {
-  return api.get<CallLogResponse[]>('/api/v1/calls/history', schoolId);
+export function listMyCallHistory(schoolId: string, page = 0, size = 50) {
+  return api.getPaginated<CallLogResponse>(`/api/v1/calls/history?page=${page}&size=${size}`, schoolId);
 }
 
-export function listSchoolCallHistory(schoolId: string) {
-  return api.get<CallLogResponse[]>('/api/v1/calls/history/school', schoolId);
+export function listSchoolCallHistory(schoolId: string, page = 0, size = 50) {
+  return api.getPaginated<CallLogResponse>(
+    `/api/v1/calls/history/school?page=${page}&size=${size}`,
+    schoolId
+  );
+}
+
+export function connectGoogleMeet(schoolId: string) {
+  return api.post<string>('/api/v1/calls/google/connect', {}, schoolId);
+}
+
+export function getGoogleMeetStatus(schoolId: string) {
+  return api.get<GoogleMeetStatusResponse>('/api/v1/calls/google/status', schoolId);
+}
+
+export function disconnectGoogleMeet(schoolId: string) {
+  return api.delete<void>('/api/v1/calls/google/disconnect', schoolId);
 }

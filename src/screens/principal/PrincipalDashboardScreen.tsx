@@ -117,7 +117,7 @@ interface Counts {
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
-  const { session, logout } = useAuth();
+  const { session } = useAuth();
   const isStudent = session.ownerType === 'STUDENT';
   const isTeacher = session.role === 'TEACHER';
   const [school, setSchool] = useState<School | null>(null);
@@ -126,6 +126,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [myClassSection, setMyClassSection] = useState<ClassSection | null>(null);
   const [myHomeroomSection, setMyHomeroomSection] = useState<ClassSection | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
+  const [loadingCounts, setLoadingCounts] = useState(true);
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
@@ -205,15 +206,18 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   useEffect(() => {
     const load = () => {
-      listStudents(schoolId)
-        .then((rows) => setCounts((prev) => ({ ...prev, students: rows.length })))
-        .catch(() => setCounts((prev) => ({ ...prev, students: null })));
-      listEmployees(schoolId)
-        .then((rows) => setCounts((prev) => ({ ...prev, employees: rows.length })))
-        .catch(() => setCounts((prev) => ({ ...prev, employees: null })));
-      listVendors(schoolId)
-        .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
-        .catch(() => setCounts((prev) => ({ ...prev, vendors: null })));
+      setLoadingCounts(true);
+      Promise.allSettled([
+        listStudents(schoolId, 0, 1)
+          .then((res) => setCounts((prev) => ({ ...prev, students: res.totalElements })))
+          .catch(() => setCounts((prev) => ({ ...prev, students: null }))),
+        listEmployees(schoolId, 0, 1)
+          .then((res) => setCounts((prev) => ({ ...prev, employees: res.totalElements })))
+          .catch(() => setCounts((prev) => ({ ...prev, employees: null }))),
+        listVendors(schoolId)
+          .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
+          .catch(() => setCounts((prev) => ({ ...prev, vendors: null }))),
+      ]).finally(() => setLoadingCounts(false));
     };
     const unsubscribe = navigation.addListener('focus', load);
     load();
@@ -253,20 +257,11 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         }
       />
       <ScreenContainer>
-        <View style={styles.sessionRow}>
-          <Text style={styles.sessionText}>
-            {session.username} · {session.role}
-          </Text>
-          <Pressable onPress={logout}>
-            <Text style={styles.logoutText}>{t('common.logOut')}</Text>
-          </Pressable>
-        </View>
-
         {!isStudent && !isTeacher && (
           <View style={styles.statRow}>
-            <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} />
-            <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} />
-            <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} />
+            <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />
+            <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} loading={loadingCounts} />
+            <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} loading={loadingCounts} />
           </View>
         )}
 
@@ -364,14 +359,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  sessionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  sessionText: { fontSize: 13, color: colors.textMuted },
-  logoutText: { fontSize: 13, color: colors.error, fontWeight: '700' },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

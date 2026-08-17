@@ -3,6 +3,8 @@ import type {
   RegisterParentGoogleRequest,
   RegisterParentRequest,
   RegisterStudentGoogleRequest,
+  RegisterStudentInviteGoogleRequest,
+  RegisterStudentInviteRequest,
   RegisterStudentRequest,
   RegisterTeacherGoogleRequest,
   RegisterTeacherRequest,
@@ -10,6 +12,7 @@ import type {
   RegistrationEntityType,
   RegistrationInboxEntry,
   RegistrationSubmittedResponse,
+  StudentInviteResponse,
   TeacherInviteResponse,
 } from './types';
 
@@ -19,6 +22,18 @@ export function registerStudent(schoolId: string, req: RegisterStudentRequest) {
 
 export function registerStudentWithGoogle(schoolId: string, req: RegisterStudentGoogleRequest) {
   return api.post<RegistrationSubmittedResponse>('/api/v1/register/student/google', req, schoolId);
+}
+
+export function createStudentInvite(schoolId: string, studentId: string) {
+  return api.post<StudentInviteResponse>(`/api/v1/students/${studentId}/invite`, {}, schoolId);
+}
+
+export function registerStudentWithInvite(schoolId: string, req: RegisterStudentInviteRequest) {
+  return api.post<RegistrationSubmittedResponse>('/api/v1/register/student/invite', req, schoolId);
+}
+
+export function registerStudentWithInviteGoogle(schoolId: string, req: RegisterStudentInviteGoogleRequest) {
+  return api.post<RegistrationSubmittedResponse>('/api/v1/register/student/invite/google', req, schoolId);
 }
 
 export function createTeacherInvite(schoolId: string, employeeId: string) {

@@ -1,5 +1,6 @@
 import type {
   Assessment,
+  CallProvider,
   ClassSection,
   Employee,
   FeeAssessment,
@@ -46,6 +47,7 @@ export interface FeatureAction {
 export type PrincipalStackParamList = {
   PrincipalDashboard: undefined;
   Profile: undefined;
+  ConnectGoogleAccount: undefined;
   GlobalSearch: undefined;
   StudentsList: undefined;
   Classmates: undefined;
@@ -113,7 +115,7 @@ export type PrincipalStackParamList = {
   ScheduleCall: undefined;
   ScheduledCalls: undefined;
   CallHistory: undefined;
-  InCall: { roomName: string; displayName: string; callLogId?: string; scheduledCallId?: string };
+  InCall: { roomName: string; provider: CallProvider; displayName: string; callLogId?: string; scheduledCallId?: string };
   GamificationHub: undefined;
   Leaderboard: undefined;
   HouseWars: undefined;

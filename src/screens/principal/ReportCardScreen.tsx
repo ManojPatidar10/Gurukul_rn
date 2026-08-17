@@ -2,23 +2,27 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { getReportCard } from '../../api/reportCards';
-import type { ReportCard } from '../../api/types';
+import { getPublishedTerms, getReportCard } from '../../api/reportCards';
+import type { PublishedTerm, ReportCard } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
 
-const COMMON_TERMS = ['Term 1', 'Term 2', 'Annual'];
+const FALLBACK_TERM = 'Term 1';
 
 export function ReportCardScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const isSelfView = session.role === 'STUDENT' || session.role === 'PARENT';
   const student = route.params.student;
-  const [term, setTerm] = useState(route.params.defaultTerm ?? 'Term 1');
+  const [term, setTerm] = useState(route.params.defaultTerm ?? '');
+  const [publishedTerms, setPublishedTerms] = useState<PublishedTerm[]>([]);
   const [reportCard, setReportCard] = useState<ReportCard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +42,31 @@ export function ReportCardScreen({ route, navigation }: Props) {
   };
 
   useEffect(() => {
-    load(term);
-    // Only auto-load once on mount with the initial term - further loads are user-triggered via
-    // the "View" button, so typing a new term doesn't fire a request per keystroke.
+    if (route.params.defaultTerm) {
+      load(route.params.defaultTerm);
+      return;
+    }
+    // A student/parent opening their own report card is the common case this fixes: rather than
+    // guessing a hardcoded term string that may not match whatever a teacher actually typed at
+    // publish time, ask the backend which terms are actually published and default to the latest.
+    // A teacher/admin previewing a student's card can still freely type any term below (including
+    // an unpublished draft), so falling back to a sensible starting guess for them is fine.
+    getPublishedTerms(schoolId, student.id)
+      .then((terms) => {
+        setPublishedTerms(terms);
+        if (terms.length > 0) {
+          setTerm(terms[0].term);
+          load(terms[0].term);
+        } else if (isSelfView) {
+          setError('No report card has been published for your class yet.');
+        } else {
+          setTerm(FALLBACK_TERM);
+          load(FALLBACK_TERM);
+        }
+      })
+      .catch((e) => setError((e as Error).message));
+    // Only auto-load once on mount - further loads are user-triggered via the "View" button or a
+    // term chip, so typing a new term doesn't fire a request per keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -56,24 +82,27 @@ export function ReportCardScreen({ route, navigation }: Props) {
             placeholder="Term (e.g. Term 1)"
             placeholderTextColor={colors.textMuted}
           />
-          <Pressable style={styles.viewButton} onPress={() => load(term)} disabled={!term.trim()}>
-            <Text style={styles.viewButtonText}>View</Text>
+          <Pressable style={styles.viewButton} onPress={() => load(term)} disabled={!term.trim() || loading}>
+            {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.viewButtonText}>View</Text>}
           </Pressable>
         </View>
-        <View style={styles.chips}>
-          {COMMON_TERMS.map((t) => (
-            <Pressable
-              key={t}
-              style={[styles.chip, term === t && styles.chipSelected]}
-              onPress={() => {
-                setTerm(t);
-                load(t);
-              }}
-            >
-              <Text style={[styles.chipText, term === t && styles.chipTextSelected]}>{t}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {publishedTerms.length > 0 && (
+          <View style={styles.chips}>
+            {publishedTerms.map(({ term: t }) => (
+              <Pressable
+                key={t}
+                style={[styles.chip, term === t && styles.chipSelected]}
+                onPress={() => {
+                  setTerm(t);
+                  load(t);
+                }}
+                disabled={loading}
+              >
+                <Text style={[styles.chipText, term === t && styles.chipTextSelected]}>{t}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {!loading && error && <Text style={styles.error}>{error}</Text>}

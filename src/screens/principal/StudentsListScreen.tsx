@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { listStudents, searchStudents } from '../../api/students';
@@ -17,6 +17,43 @@ import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentsList'>;
 
+const ROW_HEIGHT = 76;
+const PAGE_SIZE = 50;
+
+const StudentRow = memo(function StudentRow({
+  student,
+  onPress,
+}: {
+  student: Student;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Pressable style={styles.row} onPress={onPress}>
+      <AvatarBadge name={student.name} accentKey="students" />
+      <View style={styles.rowMain}>
+        <Text style={styles.rowName}>{student.name}</Text>
+        <Text style={styles.rowMeta}>
+          {t('students.list.rowSubtitle', {
+            roll: student.rollNumber,
+            classSection: student.classSectionLabel || t('common.unassigned'),
+          })}
+        </Text>
+      </View>
+      <StatusChip
+        label={
+          student.status === 'ACTIVE'
+            ? t('common.active')
+            : student.status === 'INACTIVE'
+              ? t('common.inactive')
+              : student.status
+        }
+        variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
+      />
+    </Pressable>
+  );
+});
+
 export function StudentsListScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
@@ -26,33 +63,67 @@ export function StudentsListScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { showToast } = useToast();
 
-  const load = useCallback(() => {
-    setError(null);
-    return (debouncedQuery ? searchStudents(schoolId, debouncedQuery) : listStudents(schoolId))
-      .then(setStudents)
-      .catch((e) => {
-        setError(e.message);
-        showToast(e.message, 'error');
-      });
-  }, [schoolId, debouncedQuery, showToast]);
+  const load = useCallback(
+    (pageToLoad: number, append: boolean) => {
+      setError(null);
+      if (debouncedQuery) {
+        return searchStudents(schoolId, debouncedQuery)
+          .then((rows) => {
+            setStudents(rows);
+            setHasNext(false);
+          })
+          .catch((e) => {
+            setError(e.message);
+            showToast(e.message, 'error');
+          });
+      }
+      return listStudents(schoolId, pageToLoad, PAGE_SIZE)
+        .then((res) => {
+          setStudents((prev) => (append ? [...prev, ...res.content] : res.content));
+          setHasNext(res.hasNext);
+          setPage(pageToLoad);
+        })
+        .catch((e) => {
+          setError(e.message);
+          showToast(e.message, 'error');
+        });
+    },
+    [schoolId, debouncedQuery, showToast]
+  );
 
   useEffect(() => {
+    setLoading(true);
+    load(0, false).finally(() => setLoading(false));
+  }, [load]);
+
+  const hasMounted = useRef(false);
+  useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      // Skip the initial focus event - the mount effect above already loads.
+      if (!hasMounted.current) {
+        hasMounted.current = true;
+        return;
+      }
       setLoading(true);
-      load().finally(() => setLoading(false));
+      load(0, false).finally(() => setLoading(false));
     });
     return unsubscribe;
   }, [navigation, load]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
   const handleRefresh = () => {
     setRefreshing(true);
-    load().finally(() => setRefreshing(false));
+    load(0, false).finally(() => setRefreshing(false));
+  };
+
+  const handleLoadMore = () => {
+    if (!hasNext || loadingMore || debouncedQuery) return;
+    setLoadingMore(true);
+    load(page + 1, true).finally(() => setLoadingMore(false));
   };
 
   return (
@@ -71,8 +142,22 @@ export function StudentsListScreen({ navigation }: Props) {
           data={students}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          removeClippedSubviews
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={7}
+          getItemLayout={(_, index) => ({
+            length: ROW_HEIGHT,
+            offset: ROW_HEIGHT * index,
+            index,
+          })}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
           ListEmptyComponent={
-            !loading ? (
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
               <Text style={styles.empty}>
                 {error
                   ? t('students.list.loadError')
@@ -80,28 +165,10 @@ export function StudentsListScreen({ navigation }: Props) {
                     ? t('students.list.noSearchResults')
                     : t('students.list.empty')}
               </Text>
-            ) : null
+            )
           }
           renderItem={({ item }) => (
-            <Pressable
-              style={styles.row}
-              onPress={() => navigation.navigate('StudentDetail', { student: item })}
-            >
-              <AvatarBadge name={item.name} accentKey="students" />
-              <View style={styles.rowMain}>
-                <Text style={styles.rowName}>{item.name}</Text>
-                <Text style={styles.rowMeta}>
-                  {t('students.list.rowSubtitle', {
-                    roll: item.rollNumber,
-                    classSection: item.classSectionLabel || t('common.unassigned'),
-                  })}
-                </Text>
-              </View>
-              <StatusChip
-                label={item.status === 'ACTIVE' ? t('common.active') : item.status === 'INACTIVE' ? t('common.inactive') : item.status}
-                variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}
-              />
-            </Pressable>
+            <StudentRow student={item} onPress={() => navigation.navigate('StudentDetail', { student: item })} />
           )}
         />
       </View>
@@ -124,6 +191,8 @@ const styles = StyleSheet.create({
   addButtonText: { color: colors.white, fontWeight: '700' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  footerLoader: { marginVertical: spacing.md },
+  loader: { marginTop: 40 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

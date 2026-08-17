@@ -1,8 +1,12 @@
 import { api } from './client';
-import type { ReportCard, ReportCardPublication } from './types';
+import type { PublishedTerm, ReportCard, ReportCardPublication } from './types';
 
 export function getReportCard(schoolId: string, studentId: string, term: string) {
   return api.get<ReportCard>(`/api/v1/students/${studentId}/report-card?term=${encodeURIComponent(term)}`, schoolId);
+}
+
+export function getPublishedTerms(schoolId: string, studentId: string) {
+  return api.get<PublishedTerm[]>(`/api/v1/students/${studentId}/report-card/published-terms`, schoolId);
 }
 
 export function publishReportCards(schoolId: string, sectionId: string, term: string) {

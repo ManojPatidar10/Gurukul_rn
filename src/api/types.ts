@@ -564,6 +564,20 @@ export interface ReportCardPublication {
   publishedByEmployeeName: string;
 }
 
+export interface PublishedTerm {
+  term: string;
+  publishedAt: string;
+}
+
+export interface TermSummary {
+  term: string;
+  published: boolean;
+}
+
+export interface BackfillTermResult {
+  assessmentsUpdated: number;
+}
+
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
 
 export interface AttendanceEntryRequest {
@@ -696,6 +710,12 @@ export interface EmployeeAttendanceHistory {
   records: StaffAttendanceRecord[];
 }
 
+export interface PagedResponse<T> {
+  content: T[];
+  hasNext: boolean;
+  totalElements: number;
+}
+
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 export type OwnerType = 'EMPLOYEE' | 'STUDENT' | 'PARENT';
 
@@ -763,6 +783,21 @@ export interface RegisterStudentRequest {
 }
 
 export type RegisterStudentGoogleRequest = Omit<RegisterStudentRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export interface StudentInviteResponse {
+  code: string;
+  expiresAt: string;
+}
+
+export interface RegisterStudentInviteRequest {
+  inviteCode: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterStudentInviteGoogleRequest = Omit<RegisterStudentInviteRequest, 'username' | 'password'> & {
   idToken: string;
 };
 
@@ -1148,6 +1183,13 @@ export interface CallInviteeResponse {
   rsvpStatus: RsvpStatus;
 }
 
+export type CallProvider = 'JITSI' | 'GOOGLE_MEET';
+
+export interface GoogleMeetStatusResponse {
+  connected: boolean;
+  googleEmail: string | null;
+}
+
 export interface ScheduledCallResponse {
   id: string;
   title: string;
@@ -1155,6 +1197,7 @@ export interface ScheduledCallResponse {
   hostOwnerId: string;
   scheduledAt: string;
   roomName: string;
+  provider: CallProvider;
   status: CallStatus;
   invitees: CallInviteeResponse[];
 }
@@ -1172,6 +1215,7 @@ export interface MyInviteResponse {
 export interface CallSessionResponse {
   callLogId: string;
   roomName: string;
+  provider: CallProvider;
   outcome: CallOutcome;
 }
 
@@ -1204,6 +1248,7 @@ export interface CallEvent {
   callLogId: string | null;
   scheduledCallId: string | null;
   roomName: string | null;
+  provider: CallProvider | null;
   counterpartOwnerType: OwnerType | null;
   counterpartOwnerId: string | null;
   title: string | null;

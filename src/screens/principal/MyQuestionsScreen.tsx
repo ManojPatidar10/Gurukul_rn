@@ -20,13 +20,17 @@ export function MyQuestionsScreen({ navigation }: Props) {
   const { session } = useAuth();
   const [subjectId, setSubjectId] = useState<string | null>(null);
   const [classNames, setClassNames] = useState<string[]>([]);
+  const [loadingClassNames, setLoadingClassNames] = useState(true);
   const [className, setClassName] = useState<string | null>(null);
   const [questions, setQuestions] = useState<QuizQuestionResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listClassNames(schoolId).then(setClassNames).catch(() => setClassNames([]));
+    listClassNames(schoolId)
+      .then(setClassNames)
+      .catch(() => setClassNames([]))
+      .finally(() => setLoadingClassNames(false));
   }, [schoolId]);
 
   useEffect(() => {
@@ -51,16 +55,22 @@ export function MyQuestionsScreen({ navigation }: Props) {
 
         <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>Class</Text>
         <View style={styles.chips}>
-          {classNames.map((name) => (
-            <Text
-              key={name}
-              style={[styles.chip, className === name && styles.chipSelected]}
-              onPress={() => setClassName(name)}
-            >
-              {name}
-            </Text>
-          ))}
-          {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
+          {loadingClassNames ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <>
+              {classNames.map((name) => (
+                <Text
+                  key={name}
+                  style={[styles.chip, className === name && styles.chipSelected]}
+                  onPress={() => setClassName(name)}
+                >
+                  {name}
+                </Text>
+              ))}
+              {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
+            </>
+          )}
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}

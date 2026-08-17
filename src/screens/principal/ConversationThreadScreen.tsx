@@ -1,5 +1,6 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
@@ -26,6 +27,7 @@ import { markConversationRead } from '../../api/unreadStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -48,12 +50,14 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const { conversationId, title } = route.params;
   const schoolId = useSchoolId();
   const { session } = useAuth();
+  const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
@@ -88,12 +92,15 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
 
   const handleSend = async () => {
     const content = draft.trim();
-    if (!content) return;
+    if (!content || sending) return;
     setDraft('');
+    setSending(true);
     try {
       await sendMessage(session.token, schoolId, conversationId, content);
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -151,6 +158,11 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     await uploadAndSend(asset.uri, asset.name, contentType, fileSizeBytes);
   };
 
+  const handleCopy = async (content: string) => {
+    await Clipboard.setStringAsync(content);
+    showToast('Copied to clipboard', 'success');
+  };
+
   const handleAttach = () => {
     Alert.alert('Add attachment', undefined, [
       { text: 'Photo', onPress: handlePickImage },
@@ -165,7 +177,10 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     const isImage = item.attachmentContentType?.startsWith('image/');
     return (
       <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
-        <View style={[styles.bubble, isMine ? styles.bubbleMine : isBot ? styles.bubbleBot : styles.bubbleTheirs]}>
+        <Pressable
+          onLongPress={() => item.content && handleCopy(item.content)}
+          style={[styles.bubble, isMine ? styles.bubbleMine : isBot ? styles.bubbleBot : styles.bubbleTheirs]}
+        >
           {item.attachmentUrl && isImage && (
             <Pressable onPress={() => Linking.openURL(item.attachmentUrl!)}>
               <Image source={{ uri: item.attachmentUrl }} style={styles.attachmentImage} resizeMode="cover" />
@@ -180,11 +195,14 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
             </Pressable>
           )}
           {item.content ? (
-            <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine, item.attachmentUrl && styles.bubbleTextWithAttachment]}>
+            <Text
+              selectable
+              style={[styles.bubbleText, isMine && styles.bubbleTextMine, item.attachmentUrl && styles.bubbleTextWithAttachment]}
+            >
               {item.content}
             </Text>
           ) : null}
-        </View>
+        </Pressable>
       </View>
     );
   };
@@ -221,8 +239,8 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
           onChangeText={setDraft}
           multiline
         />
-        <Pressable style={styles.sendButton} onPress={handleSend} disabled={uploading}>
-          <Text style={styles.sendButtonText}>Send</Text>
+        <Pressable style={styles.sendButton} onPress={handleSend} disabled={uploading || sending}>
+          {sending ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.sendButtonText}>Send</Text>}
         </Pressable>
       </View>
     </KeyboardAvoidingView>
