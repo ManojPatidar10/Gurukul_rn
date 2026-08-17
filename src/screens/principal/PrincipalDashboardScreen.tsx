@@ -114,7 +114,7 @@ interface Counts {
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
-  const { session, logout } = useAuth();
+  const { session } = useAuth();
   const isStudent = session.ownerType === 'STUDENT';
   const isTeacher = session.role === 'TEACHER';
   const [school, setSchool] = useState<School | null>(null);
@@ -253,15 +253,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         }
       />
       <ScreenContainer>
-        <View style={styles.sessionRow}>
-          <Text style={styles.sessionText}>
-            {session.username} · {session.role}
-          </Text>
-          <Pressable onPress={logout}>
-            <Text style={styles.logoutText}>{t('common.logOut')}</Text>
-          </Pressable>
-        </View>
-
         {!isStudent && !isTeacher && (
           <View style={styles.statRow}>
             <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />
@@ -364,14 +355,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  sessionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  sessionText: { fontSize: 13, color: colors.textMuted },
-  logoutText: { fontSize: 13, color: colors.error, fontWeight: '700' },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
