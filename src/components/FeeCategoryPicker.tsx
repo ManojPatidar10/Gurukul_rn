@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { createFeeCategory, listFeeCategories } from '../api/feeCategories';
 import type { FeeCategory } from '../api/types';
+import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 
@@ -12,29 +14,35 @@ interface Props {
 }
 
 export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<FeeCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
+  const { showToast } = useToast();
 
   const load = () => {
     setLoading(true);
-    setError(null);
     listFeeCategories(schoolId)
       .then(setCategories)
-      .catch((e) => setError(e.message))
+      .catch((e) => showToast(e.message, 'error'))
       .finally(() => setLoading(false));
   };
 
   useEffect(load, [schoolId]);
 
   const handleCreate = async () => {
-    if (!code || !name) return;
+    if (!code.trim()) {
+      showToast(t('fees.categories.errors.code'), 'error');
+      return;
+    }
+    if (!name.trim()) {
+      showToast(t('fees.categories.errors.name'), 'error');
+      return;
+    }
     setCreating(true);
-    setError(null);
     try {
       const created = await createFeeCategory(schoolId, { code, name });
       setCategories((prev) => [...prev, created]);
@@ -43,7 +51,7 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
       setCode('');
       setName('');
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setCreating(false);
     }
@@ -53,9 +61,8 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
 
   return (
     <View>
-      {error && <Text style={styles.error}>{error}</Text>}
       {categories.length === 0 && !showCreate && (
-        <Text style={styles.empty}>No fee categories yet.</Text>
+        <Text style={styles.empty}>{t('fees.categoryPicker.empty')}</Text>
       )}
       <View style={styles.chips}>
         {categories.map((cat) => (
@@ -73,18 +80,18 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
 
       {showCreate ? (
         <View style={styles.createForm}>
-          <LabeledInput label="Code" value={code} onChangeText={setCode} placeholder="e.g. TUITION" autoCapitalize="characters" />
-          <LabeledInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Tuition Fee" />
+          <LabeledInput label={t('fees.categoryPicker.code')} required value={code} onChangeText={setCode} placeholder="e.g. TUITION" autoCapitalize="characters" />
+          <LabeledInput label={t('fees.categoryPicker.name')} required value={name} onChangeText={setName} placeholder="e.g. Tuition Fee" />
           <Pressable style={styles.createButton} onPress={handleCreate} disabled={creating}>
-            <Text style={styles.createButtonText}>{creating ? 'Creating…' : 'Create & select'}</Text>
+            <Text style={styles.createButtonText}>{creating ? t('common.creating') : t('common.createAndSelect')}</Text>
           </Pressable>
           <Pressable onPress={() => setShowCreate(false)}>
-            <Text style={styles.cancel}>Cancel</Text>
+            <Text style={styles.cancel}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       ) : (
         <Pressable onPress={() => setShowCreate(true)}>
-          <Text style={styles.addNew}>+ New fee category</Text>
+          <Text style={styles.addNew}>{t('fees.categoryPicker.addNew')}</Text>
         </Pressable>
       )}
     </View>
@@ -93,7 +100,6 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
 
 const styles = StyleSheet.create({
   loading: { marginVertical: spacing.md },
-  error: { color: colors.error, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, marginBottom: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {

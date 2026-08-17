@@ -1,17 +1,26 @@
+import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { startImmediateCall } from '../../api/calls';
+import { createConversation } from '../../api/chat';
 import { createStudentCredential } from '../../api/credentials';
+import { createStudentInvite } from '../../api/registration';
 import { deleteStudent, transferStudentClassSection } from '../../api/students';
 import type { Student } from '../../api/types';
+import { AttendanceIdentifiersPanel } from '../../components/AttendanceIdentifiersPanel';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
+import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -27,14 +36,62 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function StudentDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const isViewerStudent = session.ownerType === 'STUDENT';
+  const isViewerAdmin = session.role === 'ADMIN';
   const [student, setStudent] = useState<Student>(route.params.student);
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [calling, setCalling] = useState(false);
+  const [messaging, setMessaging] = useState(false);
+  const isSelf = session.ownerType === 'STUDENT' && session.ownerId === student.id;
+  const confirmBeforeCall = useGoogleMeetGate(schoolId, navigation);
+
+  const handleVideoCall = () => {
+    setCalling(true);
+    setError(null);
+    confirmBeforeCall(
+      async () => {
+        try {
+          const call = await startImmediateCall(schoolId, { calleeOwnerType: 'STUDENT', calleeOwnerId: student.id });
+          navigation.navigate('InCall', {
+            roomName: call.roomName,
+            provider: call.provider,
+            displayName: student.name,
+            callLogId: call.callLogId,
+          });
+        } catch (e) {
+          setError((e as Error).message);
+        } finally {
+          setCalling(false);
+        }
+      },
+      () => setCalling(false)
+    );
+  };
+
+  const handleMessage = async () => {
+    setMessaging(true);
+    setError(null);
+    try {
+      const conversation = await createConversation(schoolId, {
+        otherPartyOwnerType: 'STUDENT',
+        otherPartyOwnerId: student.id,
+      });
+      navigation.navigate('ConversationThread', { conversationId: conversation.id, title: student.name });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setMessaging(false);
+    }
+  };
 
   const [showCredentials, setShowCredentials] = useState(false);
+  const [showAttendanceIdentifiers, setShowAttendanceIdentifiers] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [creatingCredential, setCreatingCredential] = useState(false);
@@ -54,35 +111,52 @@ export function StudentDetailScreen({ route, navigation }: Props) {
       setCreatingCredential(false);
     }
   };
+  const [showInvite, setShowInvite] = useState(false);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  const handleGenerateInvite = async () => {
+    setGeneratingInvite(true);
+    setInviteError(null);
+    try {
+      const result = await createStudentInvite(schoolId, student.id);
+      setInviteResult(result);
+    } catch (e) {
+      setInviteError((e as Error).message);
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  const { showToast } = useToast();
 
   const handleTransfer = async (classSectionId: string) => {
     setTransferring(true);
-    setError(null);
     try {
       const updated = await transferStudentClassSection(schoolId, student.id, { classSectionId });
       setStudent(updated);
       setShowTransfer(false);
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setTransferring(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete student', `Remove ${student.name}? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('students.detail.deleteTitle'), t('students.detail.deleteMessage', { name: student.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           setDeleting(true);
-          setError(null);
           try {
             await deleteStudent(schoolId, student.id);
             navigation.goBack();
           } catch (e) {
-            setError((e as Error).message);
+            showToast((e as Error).message, 'error');
             setDeleting(false);
           }
         },
@@ -92,53 +166,121 @@ export function StudentDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={student.name} subtitle={`Roll ${student.rollNumber}`} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={student.name}
+        subtitle={t('students.detail.rollLabel', { roll: student.rollNumber })}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         <View style={styles.heroRow}>
           <AvatarBadge name={student.name} accentKey="students" size={56} />
           <View style={styles.heroText}>
             <Text style={styles.heroName}>{student.name}</Text>
-            <StatusChip label={student.status} variant={student.status === 'ACTIVE' ? 'success' : 'neutral'} />
+            <StatusChip
+              label={student.status === 'ACTIVE' ? t('common.active') : student.status}
+              variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
+            />
           </View>
+          {!isSelf && (
+            <View style={styles.heroActions}>
+              <Pressable style={styles.iconButton} onPress={handleVideoCall} disabled={calling}>
+                {calling ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <FontAwesome5 name="video" size={16} color={colors.white} />
+                )}
+              </Pressable>
+              <Pressable style={styles.iconButton} onPress={handleMessage} disabled={messaging}>
+                {messaging ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <FontAwesome5 name="comment-dots" size={16} color={colors.white} />
+                )}
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.card}>
-          <Field label="Class-section" value={student.classSectionLabel} />
-          <Field label="Date of birth" value={student.dob} />
-          <Field label="Gender" value={student.gender} />
-          <Field label="Address" value={student.address} />
-          <Field label="Parent name" value={student.parentName} />
-          <Field label="Parent contact" value={student.parentContact} />
-          <Field label="Admission date" value={student.admissionDate} />
+          <Field label={t('students.detail.classSection')} value={student.classSectionLabel} />
+          <Field label={t('students.detail.dob')} value={student.dob} />
+          <Field label={t('students.detail.gender')} value={student.gender} />
+          {isViewerAdmin && student.registrationNumber && (
+            <Field label={t('students.detail.registrationNumber')} value={student.registrationNumber} />
+          )}
+          {!isViewerStudent && (
+            <>
+              <Field label={t('students.detail.address')} value={student.address} />
+              <Field label={t('students.detail.parentName')} value={student.parentName} />
+              <Field label={t('students.detail.parentContact')} value={student.parentContact} />
+              <Field label={t('students.detail.admissionDate')} value={student.admissionDate} />
+            </>
+          )}
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <View style={styles.actions}>
-          <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentForm', { student })}>
-            <Text style={styles.actionText}>Edit</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => setShowTransfer((v) => !v)}>
-            <Text style={styles.actionText}>{showTransfer ? 'Cancel transfer' : 'Transfer class'}</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
-            <Text style={styles.actionText}>Attendance</Text>
-          </Pressable>
-          <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
-            <Text style={styles.actionText}>{showCredentials ? 'Cancel' : 'Set login credentials'}</Text>
-          </Pressable>
-          <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
-            <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
-          </Pressable>
-        </View>
+        {(isViewerAdmin || !isViewerStudent) && (
+          <View style={styles.actions}>
+            {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentForm', { student })}>
+                <Text style={styles.actionText}>{t('common.edit')}</Text>
+              </Pressable>
+            )}
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentPerformance', { student })}>
+              <Text style={styles.actionText}>{t('performance.title')}</Text>
+            </Pressable>
+            {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => setShowTransfer((v) => !v)}>
+                <Text style={styles.actionText}>
+                  {showTransfer ? t('students.detail.cancelTransfer') : t('students.detail.transferClass')}
+                </Text>
+              </Pressable>
+            )}
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('AttendanceHistory', { student })}>
+              <Text style={styles.actionText}>{t('students.detail.attendance')}</Text>
+            </Pressable>
+            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('ReportCard', { student })}>
+              <Text style={styles.actionText}>Report card</Text>
+            </Pressable>
+            {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
+                <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>
+              </Pressable>
+            )}
+            {isViewerAdmin && (
+              <Pressable style={styles.actionButton} onPress={() => setShowAttendanceIdentifiers((v) => !v)}>
+                <Text style={styles.actionText}>
+                  {showAttendanceIdentifiers ? t('common.cancel') : t('attendanceIdentifiers.actionButton')}
+                </Text>
+              </Pressable>
+            )}
+            {isViewerAdmin && (
+              <Pressable
+                style={styles.actionButton}
+                onPress={() => {
+                  setShowInvite((v) => !v);
+                  if (!showInvite) handleGenerateInvite();
+                }}
+              >
+                <Text style={styles.actionText}>{showInvite ? t('common.cancel') : 'Generate invite code'}</Text>
+              </Pressable>
+            )}
+            {isViewerAdmin && (
+              <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
+                <Text style={styles.deleteText}>{deleting ? t('common.deleting') : t('common.delete')}</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
 
-        {showCredentials && (
+        {isViewerAdmin && showCredentials && (
           <View style={styles.transferPanel}>
             <Text style={styles.transferTitle}>Create student login</Text>
             {createdCredential ? (
               <View>
                 <Text style={styles.success}>
-                  Credential created. Share these with {student.name} — they won't be shown again:
+                  Credential created. Share these with {student.name} — they won&apos;t be shown again:
                 </Text>
                 <View style={styles.credentialBox}>
                   <Text style={styles.credentialLabel}>Username</Text>
@@ -175,15 +317,41 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {isViewerAdmin && showInvite && (
+          <View style={styles.transferPanel}>
+            <Text style={styles.transferTitle}>Student invite code</Text>
+            {generatingInvite && <Text style={styles.transferring}>Generating…</Text>}
+            {inviteError && <Text style={styles.error}>{inviteError}</Text>}
+            {inviteResult && (
+              <View>
+                <Text style={styles.success}>
+                  Share this code with {student.name} to register — it expires{' '}
+                  {new Date(inviteResult.expiresAt).toLocaleString()}:
+                </Text>
+                <View style={styles.credentialBox}>
+                  <Text style={styles.credentialLabel}>Invite code</Text>
+                  <Text style={styles.credentialValue}>{inviteResult.code}</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
         {showTransfer && (
           <View style={styles.transferPanel}>
-            <Text style={styles.transferTitle}>Move to a different class-section</Text>
+            <Text style={styles.transferTitle}>{t('students.detail.moveToClassSection')}</Text>
             <ClassSectionPicker
               schoolId={schoolId}
               selectedId={student.classSectionId}
               onSelect={(cs) => handleTransfer(cs.id)}
             />
-            {transferring && <Text style={styles.transferring}>Transferring…</Text>}
+            {transferring && <Text style={styles.transferring}>{t('students.detail.transferring')}</Text>}
+          </View>
+        )}
+
+        {isViewerAdmin && showAttendanceIdentifiers && (
+          <View style={styles.transferPanel}>
+            <AttendanceIdentifiersPanel ownerType="STUDENT" ownerId={student.id} />
           </View>
         )}
       </ScreenContainer>
@@ -196,7 +364,16 @@ const accent = accents.students;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   heroRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
-  heroText: { marginLeft: spacing.md, gap: spacing.xs },
+  heroActions: { flexDirection: 'row', gap: spacing.sm },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroText: { flex: 1, marginLeft: spacing.md, gap: spacing.xs },
   heroName: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
   card: {
     backgroundColor: colors.surface,
@@ -208,7 +385,6 @@ const styles = StyleSheet.create({
   field: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
-  error: { color: colors.error, marginBottom: spacing.sm },
   actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   actionButton: {
     backgroundColor: accent.light,
@@ -241,4 +417,5 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.5 },
   credentialSubmitText: { color: colors.white, fontWeight: '700' },
+  error: { color: colors.error, marginBottom: spacing.md },
 });

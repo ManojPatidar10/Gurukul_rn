@@ -5,30 +5,50 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 
 import { PrincipalNavigator } from './src/navigation/PrincipalNavigator';
+import { ParentNavigator } from './src/navigation/ParentNavigator';
+import { navigationRef } from './src/navigation/navigationRef';
 import { colors } from './src/theme/colors';
 import { SchoolContext } from './src/context/SchoolContext';
 import { AuthContext } from './src/context/AuthContext';
+import { ToastProvider } from './src/context/ToastContext';
 import { getStoredSchoolId } from './src/api/schoolStorage';
 import { getStoredSession, setStoredSession, clearStoredSession, type Session } from './src/api/authStorage';
 import { setAuthToken } from './src/api/client';
+import { disconnectChatSocket } from './src/api/chatSocket';
+import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
+import { usePushNotifications } from './src/hooks/usePushNotifications';
 import type { SchoolSearchResult } from './src/api/types';
+import { initI18n } from './src/i18n';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
 import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
 import OtpLoginScreen from './src/screens/OtpLoginScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import RoleSelectScreen, { type RegistrationRole } from './src/screens/RoleSelectScreen';
+import RegisterStudentScreen from './src/screens/RegisterStudentScreen';
+import RegisterTeacherScreen from './src/screens/RegisterTeacherScreen';
+import RegisterParentScreen from './src/screens/RegisterParentScreen';
+import RegistrationSubmittedScreen from './src/screens/RegistrationSubmittedScreen';
 
 type PreAuthStep =
   | { name: 'welcome' }
   | { name: 'search' }
   | { name: 'register' }
   | { name: 'otpLogin'; schoolId: string; schoolName?: string }
-  | { name: 'passwordLogin'; schoolId: string; schoolName?: string };
+  | { name: 'passwordLogin'; schoolId: string; schoolName?: string }
+  | { name: 'roleSelect'; schoolId: string; schoolName?: string }
+  | { name: 'registerRole'; schoolId: string; schoolName?: string; role: RegistrationRole }
+  | { name: 'registrationSubmitted'; schoolId: string; schoolName?: string; message: string };
 
 export default function App() {
   const [schoolId, setSchoolId] = useState<string | null | undefined>(undefined);
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [preAuthStep, setPreAuthStep] = useState<PreAuthStep>({ name: 'welcome' });
+  const [i18nReady, setI18nReady] = useState(false);
+
+  useEffect(() => {
+    initI18n().then(() => setI18nReady(true));
+  }, []);
 
   useEffect(() => {
     getStoredSchoolId().then((storedSchoolId) => {
@@ -46,12 +66,19 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    setAuthToken(session?.token ?? null);
+  }, [session]);
+
+  usePushNotifications(schoolId ?? null, session?.token ?? null);
+
   const handleLoggedIn = (next: Session) => {
     setStoredSession(next);
     setSession(next);
   };
 
   const handleLogout = () => {
+    disconnectChatSocket();
     setAuthToken(null);
     clearStoredSession();
     setSession(null);
@@ -68,7 +95,7 @@ export default function App() {
     handleLoggedIn(admin);
   };
 
-  const loading = schoolId === undefined || session === undefined;
+  const loading = schoolId === undefined || session === undefined || !i18nReady;
 
   const renderPreAuth = () => {
     switch (preAuthStep.name) {
@@ -107,6 +134,13 @@ export default function App() {
               })
             }
             onLoggedIn={handleLoggedIn}
+            onRegister={() =>
+              setPreAuthStep({
+                name: 'roleSelect',
+                schoolId: preAuthStep.schoolId,
+                schoolName: preAuthStep.schoolName,
+              })
+            }
           />
         );
       case 'passwordLogin':
@@ -121,6 +155,60 @@ export default function App() {
               })
             }
             onLoggedIn={handleLoggedIn}
+            onRegister={() =>
+              setPreAuthStep({
+                name: 'roleSelect',
+                schoolId: preAuthStep.schoolId,
+                schoolName: preAuthStep.schoolName,
+              })
+            }
+          />
+        );
+      case 'roleSelect':
+        return (
+          <RoleSelectScreen
+            schoolName={preAuthStep.schoolName}
+            onBack={() =>
+              setPreAuthStep({
+                name: 'otpLogin',
+                schoolId: preAuthStep.schoolId,
+                schoolName: preAuthStep.schoolName,
+              })
+            }
+            onSelectRole={(role) =>
+              setPreAuthStep({
+                name: 'registerRole',
+                schoolId: preAuthStep.schoolId,
+                schoolName: preAuthStep.schoolName,
+                role,
+              })
+            }
+          />
+        );
+      case 'registerRole': {
+        const { schoolId: regSchoolId, schoolName, role } = preAuthStep;
+        const onBack = () => setPreAuthStep({ name: 'roleSelect', schoolId: regSchoolId, schoolName });
+        const onSubmitted = (message: string) =>
+          setPreAuthStep({ name: 'registrationSubmitted', schoolId: regSchoolId, schoolName, message });
+        if (role === 'student') {
+          return <RegisterStudentScreen schoolId={regSchoolId} onBack={onBack} onSubmitted={onSubmitted} />;
+        }
+        if (role === 'teacher') {
+          return <RegisterTeacherScreen schoolId={regSchoolId} onBack={onBack} onSubmitted={onSubmitted} />;
+        }
+        return <RegisterParentScreen schoolId={regSchoolId} onBack={onBack} onSubmitted={onSubmitted} />;
+      }
+      case 'registrationSubmitted':
+        return (
+          <RegistrationSubmittedScreen
+            message={preAuthStep.message}
+            onDone={() =>
+              setPreAuthStep({
+                name: 'otpLogin',
+                schoolId: preAuthStep.schoolId,
+                schoolName: preAuthStep.schoolName,
+              })
+            }
           />
         );
     }
@@ -128,21 +216,24 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : !schoolId || !session ? (
-        renderPreAuth()
-      ) : (
-        <SchoolContext.Provider value={schoolId}>
-          <AuthContext.Provider value={{ session, logout: handleLogout }}>
-            <NavigationContainer>
-              <PrincipalNavigator />
-            </NavigationContainer>
-          </AuthContext.Provider>
-        </SchoolContext.Provider>
-      )}
+      <ToastProvider>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : !schoolId || !session ? (
+          renderPreAuth()
+        ) : (
+          <SchoolContext.Provider value={schoolId}>
+            <AuthContext.Provider value={{ session, logout: handleLogout }}>
+              <NavigationContainer ref={navigationRef}>
+                {session.ownerType === 'PARENT' ? <ParentNavigator /> : <PrincipalNavigator />}
+              </NavigationContainer>
+              <IncomingCallOverlay session={session} schoolId={schoolId} />
+            </AuthContext.Provider>
+          </SchoolContext.Provider>
+        )}
+      </ToastProvider>
       <StatusBar style="light" />
     </SafeAreaProvider>
   );

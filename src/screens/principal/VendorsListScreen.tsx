@@ -1,30 +1,37 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listVendors } from '../../api/vendors';
 import type { Vendor } from '../../api/types';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'VendorsList'>;
 
 export function VendorsListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const load = useCallback(() => {
     setError(null);
     return listVendors(schoolId)
       .then(setVendors)
-      .catch((e) => setError(e.message));
-  }, [schoolId]);
+      .catch((e) => {
+        setError(e.message);
+        showToast(e.message, 'error');
+      });
+  }, [schoolId, showToast]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -41,24 +48,24 @@ export function VendorsListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Vendors" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('vendors.list.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         <Pressable style={styles.addButton} onPress={() => navigation.navigate('VendorForm', {})}>
-          <Text style={styles.addButtonText}>+ Add vendor</Text>
+          <Text style={styles.addButtonText}>{t('vendors.list.addButton')}</Text>
         </Pressable>
-
-        {error && <Text style={styles.error}>{error}</Text>}
 
         <FlatList
           data={vendors}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           ListEmptyComponent={
-            !loading ? (
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
               <Text style={styles.empty}>
-                {error ? 'Could not load vendors.' : '0 vendors yet — add the first one.'}
+                {error ? t('vendors.list.loadError') : t('vendors.list.empty')}
               </Text>
-            ) : null
+            )
           }
           renderItem={({ item }) => (
             <Pressable
@@ -68,7 +75,7 @@ export function VendorsListScreen({ navigation }: Props) {
               <AvatarBadge name={item.name} accentKey="vendors" />
               <View style={styles.rowMain}>
                 <Text style={styles.rowName}>{item.name}</Text>
-                <Text style={styles.rowMeta}>{item.contactPhone || item.contactEmail || 'No contact on file'}</Text>
+                <Text style={styles.rowMeta}>{item.contactPhone || item.contactEmail || t('common.noContactOnFile')}</Text>
               </View>
             </Pressable>
           )}
@@ -91,8 +98,8 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
-  error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  loader: { marginTop: 40 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

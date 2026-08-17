@@ -1,24 +1,47 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { listSectionAssessments } from '../../api/assessments';
 import type { Assessment } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAssessmentsList'>;
 
+// Whether the assessment date has passed yet - a full "awaiting results / published" tri-state
+// would need a per-term publication check against the backend; this stays a simple two-state
+// signal computed purely from the date, no extra network calls.
+function examStatus(assessmentDate: string): { label: string; variant: 'info' | 'success' } {
+  const today = new Date().toISOString().slice(0, 10);
+  return assessmentDate > today ? { label: 'Upcoming', variant: 'info' } : { label: 'Completed', variant: 'success' };
+}
+
 export function SectionAssessmentsListScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const canManage = session.ownerType === 'EMPLOYEE';
   const classSection = route.params.classSection;
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+
+  const subjects = useMemo(() => {
+    const names = new Set<string>();
+    assessments.forEach((a) => a.subjectName && names.add(a.subjectName));
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [assessments]);
+
+  const visibleAssessments = useMemo(
+    () => (subjectFilter ? assessments.filter((a) => a.subjectName === subjectFilter) : assessments),
+    [assessments, subjectFilter]
+  );
 
   const load = useCallback(() => {
     setError(null);
@@ -48,40 +71,76 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <View style={styles.body}>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => navigation.navigate('AssessmentForm', { classSection })}
-        >
-          <Text style={styles.addButtonText}>+ New assessment</Text>
-        </Pressable>
+        {canManage && (
+          <Pressable
+            style={styles.addButton}
+            onPress={() => navigation.navigate('AssessmentForm', { classSection })}
+          >
+            <Text style={styles.addButtonText}>+ New assessment</Text>
+          </Pressable>
+        )}
 
         {error && <Text style={styles.error}>{error}</Text>}
 
+        {subjects.length > 1 && (
+          <View style={styles.subjectFilterRow}>
+            <Pressable
+              style={[styles.subjectChip, subjectFilter === null && styles.subjectChipSelected]}
+              onPress={() => setSubjectFilter(null)}
+            >
+              <Text style={[styles.subjectChipText, subjectFilter === null && styles.subjectChipTextSelected]}>All</Text>
+            </Pressable>
+            {subjects.map((subject) => (
+              <Pressable
+                key={subject}
+                style={[styles.subjectChip, subjectFilter === subject && styles.subjectChipSelected]}
+                onPress={() => setSubjectFilter(subject)}
+              >
+                <Text style={[styles.subjectChipText, subjectFilter === subject && styles.subjectChipTextSelected]}>
+                  {subject}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
         <FlatList
-          data={assessments}
+          data={visibleAssessments}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           ListEmptyComponent={
-            !loading ? (
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
               <Text style={styles.empty}>
-                {error ? 'Could not load assessments.' : '0 assessments yet — create the first one.'}
+                {error
+                  ? 'Could not load assessments.'
+                  : subjectFilter
+                    ? `No ${subjectFilter} assessments yet.`
+                    : '0 assessments yet — create the first one.'}
               </Text>
-            ) : null
+            )
           }
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.row}
-              onPress={() => navigation.navigate('AssessmentDetail', { assessment: item, classSection })}
-            >
-              <View style={styles.rowMain}>
-                <Text style={styles.rowName}>{item.title}</Text>
-                <Text style={styles.rowMeta}>
-                  {item.subjectName} · {item.assessmentDate} · Max {item.maxMarks}
-                </Text>
-              </View>
-              <StatusChip label={item.type} variant="neutral" />
-            </Pressable>
-          )}
+          renderItem={({ item }) => {
+            const status = examStatus(item.assessmentDate);
+            return (
+              <Pressable
+                style={styles.row}
+                onPress={() => navigation.navigate('AssessmentDetail', { assessment: item, classSection })}
+              >
+                <View style={styles.rowMain}>
+                  <Text style={styles.rowName}>{item.title}</Text>
+                  <Text style={styles.rowMeta}>
+                    {item.subjectName} · {item.assessmentDate} · Max {item.maxMarks}
+                  </Text>
+                </View>
+                <View style={styles.chipStack}>
+                  <StatusChip label={item.type} variant="neutral" />
+                  <StatusChip label={status.label} variant={status.variant} />
+                </View>
+              </Pressable>
+            );
+          }}
         />
       </View>
     </View>
@@ -101,8 +160,21 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
+  subjectFilterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+  subjectChip: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.surface,
+  },
+  subjectChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  subjectChipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
+  subjectChipTextSelected: { color: colors.white },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  loader: { marginTop: 40 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -116,4 +188,5 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, marginRight: spacing.sm },
   rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  chipStack: { alignItems: 'flex-end', gap: spacing.xs },
 });

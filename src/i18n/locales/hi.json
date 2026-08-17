@@ -1,0 +1,919 @@
+{
+  "common": {
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "saveChanges": "बदलाव सहेजें",
+    "saving": "सहेजा जा रहा है…",
+    "creating": "बनाया जा रहा है…",
+    "createAndSelect": "बनाएं और चुनें",
+    "edit": "संपादित करें",
+    "delete": "हटाएं",
+    "deleting": "हटाया जा रहा है…",
+    "remove": "हटाएं",
+    "back": "वापस",
+    "selectPlaceholder": "चुनें…",
+    "selectDate": "तारीख चुनें",
+    "done": "हो गया",
+    "unassigned": "अनिर्धारित",
+    "noContactOnFile": "कोई संपर्क दर्ज नहीं",
+    "emptyValue": "—",
+    "name": "नाम",
+    "address": "पता",
+    "status": "स्थिति",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय",
+    "male": "पुरुष",
+    "female": "महिला",
+    "other": "अन्य",
+    "logOut": "लॉग आउट",
+    "profile": "प्रोफ़ाइल",
+    "copy": "कॉपी करें",
+    "copied": "क्लिपबोर्ड पर कॉपी हो गया"
+  },
+  "language": {
+    "toggleLabel": "भाषा बदलें",
+    "en": "English",
+    "hi": "हिन्दी"
+  },
+  "schoolSetup": {
+    "title": "अपना स्कूल पंजीकृत करें",
+    "subtitle": "इस डिवाइस के लिए एक बार की सेटअप प्रक्रिया",
+    "intro": "पंजीकरण के तुरंत बाद आपको स्कूल एडमिन के रूप में साइन इन कर दिया जाएगा — नीचे दिया गया फ़ोन नंबर बाद में OTP से साइन इन करने के लिए उपयोग होगा।",
+    "schoolName": "स्कूल का नाम",
+    "address": "पता",
+    "city": "शहर",
+    "state": "राज्य",
+    "pincode": "पिनकोड",
+    "locationHint": "वैकल्पिक: स्कूल का स्थान अभी सेट करें ताकि शिक्षक बाद में परिसर से स्वयं उपस्थिति दर्ज कर सकें। यदि आप अभी वहाँ नहीं हैं, तो इसे खाली छोड़ सकते हैं या बाद में सेट कर सकते हैं, या निर्देशांक मैन्युअल रूप से दर्ज करें।",
+    "useCurrentLocation": "📍 मेरा वर्तमान स्थान उपयोग करें",
+    "latitude": "अक्षांश (वैकल्पिक)",
+    "longitude": "देशांतर (वैकल्पिक)",
+    "locationPermissionDenied": "स्थान अनुमति अस्वीकृत — आप फिर भी मैन्युअल रूप से निर्देशांक दर्ज कर सकते हैं, या इसे छोड़कर बाद में सेट कर सकते हैं।",
+    "contactEmail": "संपर्क ईमेल",
+    "contactPhone": "संपर्क फ़ोन नंबर",
+    "principalName": "प्रधानाचार्य का नाम",
+    "principalPhone": "प्रधानाचार्य का फ़ोन नंबर",
+    "directorName": "निदेशक का नाम",
+    "adminPhone": "आपका फ़ोन नंबर (एडमिन लॉगिन के लिए)",
+    "submit": "स्कूल पंजीकृत करें",
+    "submitting": "पंजीकरण हो रहा है…",
+    "errors": {
+      "pincode": "कृपया मान्य 6 अंकों का पिनकोड दर्ज करें।",
+      "email": "कृपया मान्य संपर्क ईमेल पता दर्ज करें।",
+      "phone": "कृपया मान्य 10 अंकों का संपर्क फ़ोन नंबर दर्ज करें।"
+    }
+  },
+  "dashboard": {
+    "fallbackTitle": "गुरुकुल",
+    "welcome": "नमस्ते, {{name}}",
+    "quickActions": "त्वरित कार्य",
+    "features": {
+      "students": {
+        "title": "विद्यार्थी",
+        "description": "विद्यार्थियों के रिकॉर्ड और कक्षा-सेक्शन प्रबंधित करें"
+      },
+      "employees": {
+        "title": "कर्मचारी",
+        "description": "स्टाफ के रिकॉर्ड प्रबंधित करें"
+      },
+      "vendors": {
+        "title": "विक्रेता",
+        "description": "विक्रेता निर्देशिका प्रबंधित करें"
+      },
+      "fees": {
+        "title": "फीस",
+        "description": "फीस संरचना, बकाया और भुगतान"
+      },
+      "payroll": {
+        "title": "पेरोल",
+        "description": "वेतन संरचना और पेरोल रन"
+      },
+      "academicHelper": {
+        "title": "शैक्षणिक सहायक",
+        "description": "प्रश्न पूछें और तुरंत AI-सहायता प्राप्त करें"
+      },
+      "teacherTools": {
+        "title": "शिक्षक उपकरण",
+        "description": "शिक्षकों के लिए AI क्विज़ जनरेटर और संसाधन अपलोड"
+      },
+      "infraExpenses": {
+        "title": "इंफ्रा व्यय",
+        "description": "इंफ्रास्ट्रक्चर अनुरोध सबमिट, स्वीकृत, खरीद और भुगतान करें"
+      },
+      "classes": {
+        "title": "कक्षाएं",
+        "description": "सेक्शन, विषय, आकलन और उपस्थिति"
+      },
+      "myClassSection": {
+        "title": "मेरा कक्षा-सेक्शन",
+        "description": "आपकी होमरूम कक्षा के लिए उपस्थिति और आकलन"
+      },
+      "calls": {
+        "title": "वीडियो कॉल",
+        "description": "वीडियो कॉल शुरू करें या शेड्यूल करें"
+      },
+      "gamification": {
+        "title": "गेम हब",
+        "description": "XP, स्ट्रीक और लेवल"
+      },
+      "arena": {
+        "title": "गुरुकुल अरीना",
+        "description": "विद्यार्थी चुनौतियों के लिए क्विज़ प्रश्न बैंक बनाएं"
+      },
+      "events": {
+        "title": "स्कूल इवेंट्स",
+        "description": "वार्षिक समारोह, खेल दिवस, प्रतियोगिताएं और अधिक"
+      },
+      "reportCard": {
+        "title": "रिपोर्ट कार्ड",
+        "description": "आपके टर्म के ग्रेड और उपस्थिति"
+      },
+      "myAttendance": {
+        "title": "उपस्थिति देखें",
+        "description": "आपका उपस्थिति कैलेंडर"
+      },
+      "gradingScale": {
+        "title": "ग्रेडिंग स्केल",
+        "description": "अंक-प्रतिशत से अक्षर-ग्रेड बैंड"
+      },
+      "markMyAttendance": {
+        "title": "मेरी उपस्थिति दर्ज करें",
+        "description": "स्कूल परिसर से चेक-इन करें"
+      },
+      "staffAttendance": {
+        "title": "स्टाफ उपस्थिति",
+        "description": "आज का स्टाफ रोस्टर और चेक-इन इतिहास"
+      },
+      "registrationInbox": {
+        "title": "पंजीकरण अनुमोदन",
+        "description": "लंबित विद्यार्थी, शिक्षक और अभिभावक पंजीकरण की समीक्षा करें"
+      },
+      "myClassFees": {
+        "title": "मेरी कक्षा की फीस",
+        "description": "आपकी कक्षा के छात्रों की फीस भुगतान स्थिति"
+      },
+      "attendanceDevices": {
+        "title": "उपस्थिति डिवाइस",
+        "description": "RFID/फिंगरप्रिंट/फेस डिवाइस पंजीकृत करें और छात्र व स्टाफ की पहचान जोड़ें"
+      }
+    }
+  },
+  "academicHelper": {
+    "title": "शैक्षणिक सहायक",
+    "inputPlaceholder": "एक प्रश्न पूछें…",
+    "send": "भेजें",
+    "thinking": "सोच रहा है…",
+    "emptyStudent": "अपनी पढ़ाई के बारे में कुछ भी पूछें — गृहकार्य में मदद, स्पष्टीकरण, या अभ्यास प्रश्न।",
+    "emptyTeacher": "पढ़ाने के बारे में कुछ भी पूछें — पाठ योजना के विचार, स्पष्टीकरण, प्रश्नोत्तरी, या कक्षा प्रबंधन के सुझाव।"
+  },
+  "helpdeskBot": {
+    "title": "हेल्पडेस्क बॉट",
+    "inputPlaceholder": "एक प्रश्न पूछें…",
+    "send": "भेजें",
+    "thinking": "सोच रहा है…",
+    "emptyStudent": "अपनी उपस्थिति, फीस, समय-सारणी, या स्कूल से जुड़ी किसी भी बात के बारे में पूछें।",
+    "emptyTeacher": "स्कूल की नीतियों, प्रक्रियाओं, या किसी भी सहायता के लिए पूछें।"
+  },
+  "students": {
+    "list": {
+      "title": "विद्यार्थी",
+      "addButton": "+ विद्यार्थी नामांकित करें",
+      "loadError": "विद्यार्थियों को लोड नहीं किया जा सका।",
+      "empty": "अभी तक 0 विद्यार्थी — पहले विद्यार्थी को नामांकित करें।",
+      "noSearchResults": "आपकी खोज से कोई विद्यार्थी मेल नहीं खाता।",
+      "rowSubtitle": "रोल {{roll}} · {{classSection}}"
+    },
+    "detail": {
+      "classSection": "कक्षा-सेक्शन",
+      "dob": "जन्म तिथि",
+      "gender": "लिंग",
+      "address": "पता",
+      "parentName": "अभिभावक का नाम",
+      "parentContact": "अभिभावक संपर्क",
+      "admissionDate": "प्रवेश तिथि",
+      "transferClass": "कक्षा स्थानांतरित करें",
+      "cancelTransfer": "स्थानांतरण रद्द करें",
+      "transferring": "स्थानांतरित हो रहा है…",
+      "moveToClassSection": "एक अलग कक्षा-सेक्शन में स्थानांतरित करें",
+      "attendance": "उपस्थिति",
+      "deleteTitle": "विद्यार्थी हटाएं",
+      "deleteMessage": "{{name}} को हटाएं? इसे पूर्ववत नहीं किया जा सकता।",
+      "rollLabel": "रोल {{roll}}"
+    },
+    "form": {
+      "titleEdit": "विद्यार्थी संपादित करें",
+      "titleCreate": "विद्यार्थी नामांकित करें",
+      "rollNumber": "रोल नंबर",
+      "name": "नाम",
+      "dob": "जन्म तिथि",
+      "gender": "लिंग",
+      "address": "पता",
+      "parentName": "अभिभावक का नाम",
+      "parentContact": "अभिभावक संपर्क",
+      "admissionDate": "प्रवेश तिथि",
+      "status": "स्थिति",
+      "classSection": "कक्षा-सेक्शन",
+      "submitCreate": "विद्यार्थी नामांकित करें",
+      "errors": {
+        "parentContact": "कृपया मान्य 10 अंकों का अभिभावक संपर्क नंबर दर्ज करें।",
+        "admissionBeforeDob": "प्रवेश तिथि जन्म तिथि से पहले नहीं हो सकती।"
+      }
+    }
+  },
+  "employees": {
+    "list": {
+      "title": "कर्मचारी",
+      "addButton": "+ कर्मचारी जोड़ें",
+      "loadError": "कर्मचारियों को लोड नहीं किया जा सका।",
+      "empty": "अभी तक 0 कर्मचारी — पहला कर्मचारी जोड़ें।",
+      "noSearchResults": "आपकी खोज से कोई कर्मचारी मेल नहीं खाता।"
+    },
+    "detail": {
+      "designation": "पदनाम",
+      "joinDate": "शामिल होने की तिथि",
+      "bankAccount": "बैंक खाता",
+      "contactPhone": "संपर्क फ़ोन",
+      "salaryHistory": "वेतन इतिहास"
+    },
+    "form": {
+      "titleEdit": "कर्मचारी संपादित करें",
+      "titleCreate": "कर्मचारी जोड़ें",
+      "name": "नाम",
+      "designation": "पदनाम",
+      "joinDate": "शामिल होने की तिथि",
+      "bankAccount": "बैंक खाता",
+      "contactPhone": "संपर्क फ़ोन",
+      "status": "स्थिति",
+      "submitCreate": "कर्मचारी जोड़ें",
+      "errors": {
+        "contactPhone": "कृपया मान्य 10 अंकों का संपर्क फ़ोन नंबर दर्ज करें।",
+        "bankAccount": "बैंक खाता संख्या 9-18 अंकों की होनी चाहिए।"
+      }
+    },
+    "picker": {
+      "empty": "अभी तक कोई कर्मचारी नहीं।",
+      "name": "नाम",
+      "designation": "पदनाम",
+      "joinDate": "शामिल होने की तिथि (YYYY-MM-DD)",
+      "addNew": "+ नया कर्मचारी",
+      "errors": {
+        "name": "नाम दर्ज करें।",
+        "designation": "पदनाम दर्ज करें।",
+        "joinDate": "शामिल होने की तिथि दर्ज करें।"
+      }
+    }
+  },
+  "vendors": {
+    "list": {
+      "title": "विक्रेता",
+      "addButton": "+ विक्रेता जोड़ें",
+      "loadError": "विक्रेताओं को लोड नहीं किया जा सका।",
+      "empty": "अभी तक 0 विक्रेता — पहला विक्रेता जोड़ें।"
+    },
+    "detail": {
+      "contactPhone": "संपर्क फ़ोन",
+      "contactEmail": "संपर्क ईमेल",
+      "bankAccount": "बैंक खाता",
+      "upiId": "यूपीआई आईडी",
+      "address": "पता"
+    },
+    "form": {
+      "titleEdit": "विक्रेता संपादित करें",
+      "titleCreate": "विक्रेता जोड़ें",
+      "name": "नाम",
+      "contactPhone": "संपर्क फ़ोन",
+      "contactEmail": "संपर्क ईमेल",
+      "bankAccount": "बैंक खाता",
+      "upiId": "यूपीआई आईडी",
+      "address": "पता",
+      "submitCreate": "विक्रेता जोड़ें",
+      "errors": {
+        "contactPhone": "कृपया मान्य 10 अंकों का संपर्क फ़ोन नंबर दर्ज करें।",
+        "contactEmail": "कृपया मान्य संपर्क ईमेल पता दर्ज करें।",
+        "bankAccount": "बैंक खाता संख्या 9-18 अंकों की होनी चाहिए।",
+        "upiId": "कृपया मान्य यूपीआई आईडी दर्ज करें, जैसे name@bank।"
+      }
+    }
+  },
+  "fees": {
+    "hub": {
+      "title": "फीस",
+      "categories": {
+        "title": "फीस श्रेणियां",
+        "description": "ट्यूशन, परिवहन, लैब शुल्क, आदि।"
+      },
+      "structures": {
+        "title": "फीस संरचनाएं",
+        "description": "प्रति-कक्षा फीस राशि सेट करें और बकाया बनाएं"
+      },
+      "assessments": {
+        "title": "आकलन और भुगतान",
+        "description": "विद्यार्थी के बकाया देखें और भुगतान दर्ज करें"
+      },
+      "paymentSettings": {
+        "title": "भुगतान सेटिंग्स",
+        "description": "वह बैंक खाता सेट करें जिसमें फीस भुगतान प्राप्त होंगे"
+      }
+    },
+    "categories": {
+      "title": "फीस श्रेणियां",
+      "code": "कोड",
+      "name": "नाम",
+      "addButton": "+ श्रेणी जोड़ें",
+      "createButton": "श्रेणी बनाएं",
+      "loadError": "श्रेणियों को लोड नहीं किया जा सका।",
+      "empty": "अभी तक 0 फीस श्रेणियां — पहली श्रेणी जोड़ें।",
+      "errors": {
+        "code": "श्रेणी कोड दर्ज करें।",
+        "name": "श्रेणी का नाम दर्ज करें।"
+      }
+    },
+    "categoryPicker": {
+      "empty": "अभी तक कोई फीस श्रेणी नहीं।",
+      "code": "कोड",
+      "name": "नाम",
+      "addNew": "+ नई फीस श्रेणी"
+    },
+    "structuresList": {
+      "title": "फीस संरचनाएं",
+      "addButton": "+ नई फीस संरचना",
+      "loadError": "फीस संरचनाओं को लोड नहीं किया जा सका।",
+      "empty": "अभी तक 0 फीस संरचनाएं — पहली संरचना बनाएं।",
+      "rowTitle": "{{className}} - {{section}} ({{academicYear}})",
+      "feeLineCount_one": "{{count}} फीस पंक्ति",
+      "feeLineCount_other": "{{count}} फीस पंक्तियां"
+    },
+    "structureDetail": {
+      "titleFormat": "{{className}} - {{section}}",
+      "feeLines": "फीस पंक्तियां",
+      "lineFormat": "{{name}} ({{code}})",
+      "totalPerStudent": "प्रति विद्यार्थी कुल",
+      "generateButton": "इस कक्षा के लिए आकलन बनाएं",
+      "generating": "बनाया जा रहा है…",
+      "generatedMessage_one": "इस कक्षा-सेक्शन के सक्रिय विद्यार्थियों के लिए {{count}} आकलन बनाया गया।",
+      "generatedMessage_other": "इस कक्षा-सेक्शन के सक्रिय विद्यार्थियों के लिए {{count}} आकलन बनाए गए।"
+    },
+    "structureForm": {
+      "title": "नई फीस संरचना",
+      "classSection": "कक्षा-सेक्शन",
+      "selectedHint": "चयनित: {{label}}",
+      "academicYear": "शैक्षणिक वर्ष",
+      "feeLines": "फीस पंक्तियां",
+      "noCategorySelected": "कोई श्रेणी चयनित नहीं",
+      "remove": "हटाएं",
+      "changeCategory": "श्रेणी बदलें",
+      "chooseCategory": "श्रेणी चुनें",
+      "amount": "राशि",
+      "addLine": "+ फीस पंक्ति जोड़ें",
+      "submit": "फीस संरचना बनाएं",
+      "submitting": "बनाया जा रहा है…",
+      "errors": {
+        "noLines": "कम से कम एक फीस पंक्ति जोड़ें।",
+        "missingCategory": "हर फीस पंक्ति के लिए एक श्रेणी चुनें।",
+        "invalidAmount": "हर फीस पंक्ति के लिए 0 से अधिक राशि दर्ज करें।"
+      }
+    },
+    "assessmentsList": {
+      "title": "आकलन और बकाया",
+      "loadError": "आकलन लोड नहीं किए जा सके।",
+      "empty": "अभी तक 0 आकलन — पहले किसी फीस संरचना से इन्हें बनाएं।",
+      "rowSubtitle": "रोल {{roll}} · बकाया ₹{{due}} में से ₹{{total}}",
+      "summaryTotal": "कुल छात्र",
+      "summaryUnpaidCount": "अवैतनिक",
+      "summaryUnpaidAmount": "बकाया राशि",
+      "searchPlaceholder": "नाम या रोल नंबर से खोजें…"
+    },
+    "myClassFees": {
+      "title": "मेरी कक्षा की फीस",
+      "fullyPaid": "पूर्ण भुगतान",
+      "remaining": "शेष बकाया",
+      "empty": "इस सेक्शन के लिए अभी तक कोई फीस आकलन नहीं है।",
+      "rowSubtitle": "रोल {{roll}} · बकाया ₹{{due}} में से ₹{{total}}"
+    },
+    "assessmentDetail": {
+      "subtitle": "रोल {{roll}} · {{academicYear}}",
+      "totalDue": "कुल बकाया",
+      "totalPaid": "कुल भुगतान",
+      "remainingDue": "शेष बकाया",
+      "dueDate": "देय तिथि",
+      "payFees": "फीस भरें",
+      "payFeesComingSoon": "ऑनलाइन फीस भुगतान जल्द ही आ रहा है।"
+    },
+    "paymentMethods": {
+      "cash": "नकद",
+      "upi": "यूपीआई",
+      "bankTransfer": "बैंक ट्रांसफर",
+      "cheque": "चेक",
+      "card": "कार्ड"
+    },
+    "paymentSettings": {
+      "title": "भुगतान सेटिंग्स",
+      "hint": "विद्यार्थी ऐप से सीधे इसी बैंक खाते में अपनी फीस जमा करते हैं। इसे अपने स्कूल के लिए एक बार सेट करें।",
+      "saved": "भुगतान सेटिंग्स सहेजी गईं।",
+      "errors": {
+        "bankAccountNumber": "एक मान्य बैंक खाता संख्या दर्ज करें (9-18 अंक)।",
+        "bankIfsc": "एक मान्य IFSC कोड दर्ज करें, जैसे SBIN0001234।",
+        "upiVpaOverride": "एक मान्य UPI ID दर्ज करें, जैसे name@oksbi।"
+      },
+      "bankAccountNumber": "बैंक खाता संख्या",
+      "bankIfsc": "IFSC कोड",
+      "bankAccountHolderName": "विद्यार्थियों को दिखने वाला खाताधारक का नाम",
+      "upiVpaOverride": "आपकी वास्तविक UPI ID (भुगतान के लिए आवश्यक)",
+      "upiVpaOverrideHint": "इसके बिना, ऐप आपके खाता संख्या और IFSC से एक UPI ID का अनुमान लगाता है (जैसे 123456789012@sbi) — यह शायद ही कभी एक वास्तविक, काम करने वाला पेयी होता है, इसलिए छात्रों का भुगतान उनके UPI ऐप में एक त्रुटि के साथ विफल हो जाएगा। वही UPI ID दर्ज करें जो आप किसी को सीधे भुगतान करने के लिए देंगे (आपके बैंक के UPI QR कोड के पीछे वाली, जैसे name@oksbi, name@ybl, name@paytm) ताकि यह ठीक हो जाए।",
+      "upiVpaOverrideWarning": "अभी तक कोई वास्तविक UPI ID सेट नहीं है — जब तक आप नीचे एक नहीं जोड़ते, भुगतान विफल होने की संभावना है।"
+    },
+    "receipt": {
+      "title": "भुगतान रसीद",
+      "subtitle": "फीस भुगतान रसीद",
+      "receiptNumber": "रसीद संख्या",
+      "date": "तारीख",
+      "studentName": "विद्यार्थी",
+      "rollNumber": "रोल नंबर",
+      "classSection": "कक्षा",
+      "academicYear": "शैक्षणिक वर्ष",
+      "paymentMethod": "भुगतान का तरीका",
+      "paymentReference": "संदर्भ",
+      "amountPaid": "भुगतान की गई राशि",
+      "shareOrPrint": "रसीद साझा करें / प्रिंट करें",
+      "sharing": "तैयार किया जा रहा है…",
+      "shareTitle": "फीस भुगतान रसीद साझा करें",
+      "shareUnavailable": "इस डिवाइस पर साझा करना उपलब्ध नहीं है।"
+    },
+    "payFees": {
+      "title": "फीस भरें",
+      "amountDue": "देय राशि",
+      "payNow": "अभी भुगतान करें",
+      "tryAgain": "फिर से प्रयास करें",
+      "preparing": "आपका भुगतान तैयार किया जा रहा है…",
+      "openingApp": "आपका भुगतान ऐप खोला जा रहा है…",
+      "confirming": "आपके भुगतान की पुष्टि की जा रही है…",
+      "noUpiAppError": "हम इस डिवाइस पर कोई UPI ऐप स्वतः नहीं खोल सके। आप नीचे मैन्युअल रूप से भुगतान कर सकते हैं।",
+      "manualTitle": "इसके बजाय मैन्युअल रूप से भुगतान करें",
+      "manualHint": "अपना UPI ऐप (जैसे PhonePe, Google Pay) खुद खोलें और इस सटीक राशि को इस UPI आईडी पर भेजें।",
+      "manualUpiId": "UPI आईडी",
+      "manualAmount": "राशि",
+      "manualNote": "इसका स्वतः पता नहीं चलेगा क्योंकि यह इस ऐप से नहीं खोला गया था — भुगतान करने के बाद, नीचे बताएं कि क्या हुआ।",
+      "manualReportButton": "मैंने यह भुगतान पूरा कर लिया है",
+      "caution": "भुगतान पूरा करने के लिए आपको आपके UPI ऐप (जैसे PhonePe) पर ले जाया जाएगा। पूरा होने पर इस स्क्रीन पर वापस आएं।",
+      "subtitle": "{{name}} · रोल {{roll}}",
+      "confirmTitle": "क्या भुगतान सफल हुआ?",
+      "confirmMessage": "हम इसे स्वतः पहचान नहीं सकते — कृपया पुष्टि करें कि आपके UPI ऐप में क्या हुआ।",
+      "confirmYes": "हां, सफल हुआ",
+      "confirmNo": "नहीं, रद्द किया",
+      "confirmUnsure": "पता नहीं",
+      "pendingTitle": "भुगतान पहले से प्रगति में है",
+      "pendingMessage": "आपने इस फीस के लिए पहले ही एक भुगतान शुरू किया है जिसकी अभी पुष्टि नहीं हुई है। फिर भी दोबारा भुगतान करें?",
+      "pendingCancel": "रद्द करें",
+      "pendingContinue": "फिर से भुगतान करें",
+      "resultSuccessTitle": "भुगतान प्रतिक्रिया प्राप्त हुई",
+      "resultTransactionId": "ट्रांजैक्शन आईडी",
+      "resultUnverifiedCaveat": "यह केवल रिपोर्ट की गई जानकारी दर्शाता है, स्वतंत्र रूप से सत्यापित भुगतान नहीं।",
+      "resultPendingMessage": "भुगतान संसाधित किया जा रहा है। अभी दोबारा भुगतान न करें।",
+      "resultFailedMessage": "भुगतान विफल हो गया।",
+      "resultCancelledMessage": "भुगतान रद्द कर दिया गया।",
+      "resultUnknownMessage": "हम भुगतान का परिणाम पुष्ट नहीं कर सके। दोबारा भुगतान करने से पहले बाद में 'मेरी फीस' देखें।"
+    }
+  },
+  "payroll": {
+    "hub": {
+      "title": "पेरोल",
+      "salaryStructures": {
+        "title": "वेतन संरचनाएं",
+        "description": "प्रति कर्मचारी मूल वेतन, भत्ते और कटौती"
+      },
+      "runPayroll": {
+        "title": "पेरोल चलाएं",
+        "description": "एक रन बनाएं, उसे संसाधित करें, और महीने के लिए कर्मचारियों को भुगतान करें"
+      },
+      "overview": {
+        "title": "पेरोल अवलोकन",
+        "description": "हर रन में कितने कर्मचारियों को भुगतान हुआ बनाम अभी भी लंबित है"
+      }
+    },
+    "overview": {
+      "title": "पेरोल अवलोकन",
+      "paidCount": "भुगतान किए गए कर्मचारी",
+      "pendingCount": "लंबित कर्मचारी",
+      "paidAmount": "भुगतान की गई राशि",
+      "pendingAmount": "लंबित राशि",
+      "runsTitle": "रन के अनुसार",
+      "empty": "अभी तक कोई पेरोल रन नहीं है।",
+      "runSubtitle": "{{count}} कर्मचारी"
+    },
+    "salaryStructuresList": {
+      "title": "वेतन संरचनाएं",
+      "addButton": "+ वेतन संरचना जोड़ें",
+      "loadError": "वेतन संरचनाओं को लोड नहीं किया जा सका।",
+      "empty": "अभी तक 0 वेतन संरचनाएं — पहली संरचना जोड़ें।",
+      "rowSubtitle": "मूल वेतन ₹{{basic}} + भत्ते ₹{{allowances}} − कटौती ₹{{deductions}}",
+      "effectiveFrom": "{{date}} से प्रभावी"
+    },
+    "salaryStructureForm": {
+      "title": "वेतन संरचना जोड़ें",
+      "employee": "कर्मचारी",
+      "employeeLabel": "{{name}} ({{designation}})",
+      "selectedHint": "चयनित: {{label}}",
+      "basic": "मूल वेतन",
+      "allowances": "भत्ते",
+      "deductions": "कटौती",
+      "effectiveFrom": "प्रभावी तिथि",
+      "submit": "वेतन संरचना बनाएं",
+      "submitting": "सहेजा जा रहा है…",
+      "errors": {
+        "basic": "मूल वेतन 0 से अधिक होना चाहिए।",
+        "allowances": "भत्ते ऋणात्मक नहीं हो सकते।",
+        "deductions": "कटौती ऋणात्मक नहीं हो सकती।"
+      }
+    },
+    "run": {
+      "title": "पेरोल चलाएं",
+      "month": "महीना",
+      "year": "वर्ष",
+      "createButton": "पेरोल रन बनाएं",
+      "creating": "बनाया जा रहा है…",
+      "processButton": "रन संसाधित करें",
+      "processing": "संसाधित हो रहा है…",
+      "payrollLines": "पेरोल पंक्तियां ({{count}})",
+      "noLines": "कोई पंक्ति उत्पन्न नहीं हुई — सुनिश्चित करें कि कर्मचारियों की वेतन संरचना सेट है।",
+      "payThisRun": "इस रन का भुगतान करें",
+      "paymentMethod": "भुगतान का तरीका",
+      "paymentReference": "भुगतान संदर्भ (वैकल्पिक)",
+      "transactionDate": "लेन-देन की तिथि",
+      "payButton": "रन का भुगतान करें",
+      "paying": "भुगतान हो रहा है…",
+      "paidSuccess": "पेरोल रन का भुगतान सफलतापूर्वक हो गया।",
+      "startNewRun": "नया रन शुरू करें",
+      "months": {
+        "1": "जनवरी",
+        "2": "फरवरी",
+        "3": "मार्च",
+        "4": "अप्रैल",
+        "5": "मई",
+        "6": "जून",
+        "7": "जुलाई",
+        "8": "अगस्त",
+        "9": "सितंबर",
+        "10": "अक्टूबर",
+        "11": "नवंबर",
+        "12": "दिसंबर"
+      }
+    },
+    "payslip": {
+      "title": "वेतन पर्ची",
+      "gross": "सकल वेतन",
+      "deductions": "कटौती",
+      "netPay": "शुद्ध वेतन",
+      "documentReference": "दस्तावेज़ संदर्भ"
+    },
+    "salaryHistory": {
+      "title": "वेतन इतिहास",
+      "empty": "इस कर्मचारी के लिए अभी तक कोई पेरोल इतिहास नहीं है।"
+    }
+  },
+  "classSection": {
+    "picker": {
+      "empty": "अभी तक कोई कक्षा-सेक्शन नहीं।",
+      "className": "कक्षा का नाम",
+      "section": "सेक्शन",
+      "academicYear": "शैक्षणिक वर्ष",
+      "addNew": "+ नया कक्षा-सेक्शन",
+      "errors": {
+        "className": "कक्षा का नाम दर्ज करें।",
+        "section": "एक सेक्शन चुनें।",
+        "academicYear": "एक शैक्षणिक वर्ष चुनें।"
+      }
+    }
+  },
+  "teacherTools": {
+    "picker": {
+      "empty": "अभी तक कोई शिक्षक नहीं है।"
+    },
+    "hub": {
+      "title": "शिक्षक उपकरण",
+      "selectTeacher": "शिक्षक चुनें",
+      "selectClass": "कक्षा-सेक्शन चुनें",
+      "incompleteHint": "जारी रखने के लिए एक शिक्षक और एक कक्षा-सेक्शन चुनें।",
+      "generate": {
+        "title": "संसाधन बनाएं (AI)",
+        "description": "पाठ्यक्रम से क्विज़ या टेस्ट का ड्राफ्ट बनाएं"
+      },
+      "upload": {
+        "title": "संसाधन अपलोड करें",
+        "description": "किताब, नोट्स, वर्कशीट या लिंक साझा करें"
+      }
+    },
+    "generator": {
+      "title": "AI संसाधन जनरेटर",
+      "subjectName": "विषय",
+      "assessmentType": "मूल्यांकन प्रकार",
+      "quizTitle": "शीर्षक",
+      "syllabus": "पाठ्यक्रम / विषय-वस्तु",
+      "difficulty": "कठिनाई स्तर",
+      "questionCount": "प्रश्नों की संख्या",
+      "maxMarks": "कुल अंक",
+      "questionTypes": "प्रश्न प्रकार",
+      "additionalInstructions": "अतिरिक्त निर्देश (वैकल्पिक)",
+      "generateButton": "बनाएं",
+      "generating": "बनाया जा रहा है…",
+      "resultsTitle": "बने हुए प्रश्न",
+      "questionLabel": "प्रश्न {{number}}",
+      "marksLabel": "{{marks}} अंक",
+      "answerLabel": "उत्तर",
+      "explanationLabel": "स्पष्टीकरण",
+      "reviewNote": "AI-निर्मित ड्राफ्ट — विद्यार्थियों को देने से पहले सटीकता जांच लें।",
+      "assessmentTypes": {
+        "QUIZ": "क्विज़",
+        "TEST": "टेस्ट",
+        "EXAM": "परीक्षा",
+        "ASSIGNMENT_CHECK": "असाइनमेंट जांच"
+      },
+      "difficulties": {
+        "EASY": "आसान",
+        "MEDIUM": "मध्यम",
+        "HARD": "कठिन",
+        "MIXED": "मिश्रित"
+      },
+      "questionTypeOptions": {
+        "MCQ": "बहुविकल्पीय",
+        "SHORT_ANSWER": "लघु उत्तर",
+        "LONG_ANSWER": "दीर्घ उत्तर",
+        "TRUE_FALSE": "सही / गलत"
+      },
+      "errors": {
+        "subjectName": "एक विषय दर्ज करें।",
+        "title": "एक शीर्षक दर्ज करें।",
+        "syllabus": "पाठ्यक्रम या विषय-वस्तु दर्ज करें।",
+        "questionCount": "1 से 50 के बीच प्रश्नों की संख्या दर्ज करें।",
+        "maxMarks": "0 से अधिक कुल अंक दर्ज करें।"
+      }
+    },
+    "upload": {
+      "title": "संसाधन अपलोड करें",
+      "subjectName": "विषय",
+      "resourceType": "संसाधन प्रकार",
+      "resourceTitle": "शीर्षक",
+      "description": "विवरण",
+      "availableOffline": "ऑफ़लाइन उपलब्ध",
+      "resourceUrl": "संसाधन URL",
+      "pickFile": "फ़ाइल चुनें",
+      "changeFile": "फ़ाइल बदलें",
+      "noFileSelected": "कोई फ़ाइल चयनित नहीं",
+      "uploadButton": "अपलोड करें",
+      "uploading": "अपलोड हो रहा है…",
+      "addLinkButton": "संसाधन जोड़ें",
+      "adding": "जोड़ा जा रहा है…",
+      "success": "संसाधन जोड़ा गया।",
+      "resourceTypes": {
+        "BOOK": "किताब",
+        "NOTES": "नोट्स",
+        "WORKSHEET": "वर्कशीट",
+        "PRESENTATION": "प्रेजेंटेशन",
+        "VIDEO": "वीडियो",
+        "LINK": "लिंक",
+        "OTHER": "अन्य"
+      },
+      "errors": {
+        "subjectName": "एक विषय दर्ज करें।",
+        "title": "एक शीर्षक दर्ज करें।",
+        "description": "एक विवरण दर्ज करें।",
+        "resourceUrl": "संसाधन URL दर्ज करें।",
+        "file": "अपलोड करने के लिए एक फ़ाइल चुनें।"
+      }
+    }
+  },
+  "validation": {
+    "requiredField": "यह फ़ील्ड आवश्यक है।"
+  },
+  "performance": {
+    "title": "प्रदर्शन",
+    "overall": "कुल प्रदर्शन",
+    "examPerformance": "परीक्षा प्रदर्शन",
+    "examAverage": "भारित परीक्षा औसत: {{value}}%",
+    "attendance": "उपस्थिति",
+    "attendancePercentage": "उपस्थिति: {{value}}%",
+    "monthlyTrend": "मासिक उपस्थिति रुझान",
+    "recordExamResult": "परीक्षा परिणाम दर्ज करें",
+    "examTitle": "परीक्षा शीर्षक",
+    "assessmentType": "प्रकार",
+    "assessmentDate": "तारीख",
+    "maxMarks": "अधिकतम अंक",
+    "marksObtained": "प्राप्त अंक",
+    "subject": "विषय",
+    "teacher": "शिक्षक",
+    "teacherOptional": "शिक्षक (वैकल्पिक)",
+    "selectedTeacher": "चयनित: {{name}}",
+    "saveResult": "परिणाम सहेजें",
+    "resultPerformance": "परिणाम प्रदर्शन",
+    "byClassSection": "कक्षा-सेक्शन अनुसार",
+    "feedback": "फीडबैक",
+    "addFeedback": "फीडबैक जोड़ें",
+    "rating": "रेटिंग (0-5)",
+    "feedbackCategory": "श्रेणी",
+    "comment": "टिप्पणी (वैकल्पिक)",
+    "feedbackDate": "तारीख",
+    "saveFeedback": "फीडबैक सहेजें",
+    "averageRating": "औसत रेटिंग: {{value}}",
+    "feedbackTrend": "रेटिंग रुझान",
+    "feedbackByCategory": "श्रेणी अनुसार",
+    "noData": "अभी तक कोई डेटा नहीं।",
+    "chartType": {
+      "bar": "बार",
+      "line": "लाइन",
+      "pie": "पाई"
+    },
+    "assessmentTypes": {
+      "ASSIGNMENT": "असाइनमेंट",
+      "QUIZ": "प्रश्नोत्तरी",
+      "TEST": "टेस्ट",
+      "EXAM": "परीक्षा"
+    },
+    "attendanceStatus": {
+      "PRESENT": "उपस्थित",
+      "ABSENT": "अनुपस्थित",
+      "LATE": "देर से",
+      "HALF_DAY": "आधा दिन"
+    },
+    "feedbackCategories": {
+      "TEACHING_QUALITY": "शिक्षण गुणवत्ता",
+      "DISCIPLINE": "अनुशासन",
+      "PUNCTUALITY": "समयपालन",
+      "PARENT_FEEDBACK": "अभिभावक फीडबैक",
+      "PEER_REVIEW": "सहकर्मी समीक्षा",
+      "OTHER": "अन्य"
+    },
+    "errors": {
+      "title": "परीक्षा शीर्षक दर्ज करें।",
+      "assessmentDate": "एक तारीख चुनें।",
+      "maxMarks": "0 से अधिक अधिकतम अंक दर्ज करें।",
+      "marksObtained": "प्राप्त अंक दर्ज करें।",
+      "marksExceedMax": "प्राप्त अंक अधिकतम अंक से अधिक नहीं हो सकते।",
+      "subject": "एक विषय चुनें।",
+      "teacher": "एक शिक्षक चुनें।",
+      "rating": "0 से 5 के बीच रेटिंग दर्ज करें।",
+      "feedbackDate": "एक तारीख चुनें।"
+    }
+  },
+  "welcome": {
+    "title": "गुरुकुल",
+    "subtitle": "स्कूल प्रबंधन, आसान बनाया गया",
+    "findSchool": "मेरा स्कूल खोजें",
+    "registerSchool": "नया स्कूल रजिस्टर करें"
+  },
+  "auth": {
+    "signInSubtitle": "जारी रखने के लिए साइन इन करें",
+    "signInWithPhoneSubtitle": "अपने फ़ोन नंबर से साइन इन करें",
+    "username": "उपयोगकर्ता नाम",
+    "password": "पासवर्ड",
+    "signingIn": "साइन इन किया जा रहा है…",
+    "signIn": "साइन इन करें",
+    "or": "या",
+    "continueWithGoogle": "Google से जारी रखें",
+    "newHereCreateAccount": "नए हैं? खाता बनाएं",
+    "phoneNumber": "फ़ोन नंबर",
+    "otp": "OTP",
+    "sendingOtp": "भेजा जा रहा है…",
+    "sendOtp": "OTP भेजें",
+    "verifyingOtp": "सत्यापित किया जा रहा है…",
+    "verifyAndSignIn": "सत्यापित करें और साइन इन करें",
+    "changePhoneNumber": "फ़ोन नंबर बदलें",
+    "useUsernamePassword": "इसके बजाय उपयोगकर्ता नाम और पासवर्ड से साइन इन करें"
+  },
+  "roleSelect": {
+    "createAccount": "खाता बनाएं",
+    "subtitle": "आप किस रूप में रजिस्टर कर रहे हैं?",
+    "student": {
+      "title": "मैं एक विद्यार्थी हूं",
+      "description": "अपने स्कूल द्वारा दिए गए पंजीकरण नंबर से रजिस्टर करें"
+    },
+    "teacher": {
+      "title": "मैं एक शिक्षक हूं",
+      "description": "आपके एडमिन से एक आमंत्रण कोड आवश्यक है"
+    },
+    "parent": {
+      "title": "मैं एक अभिभावक हूं",
+      "description": "अपने बच्चे के पंजीकरण नंबर और आपके दर्ज संपर्क का उपयोग करके लिंक करें"
+    }
+  },
+  "registration": {
+    "yourLogin": "आपका लॉगिन",
+    "usernamePassword": "उपयोगकर्ता नाम और पासवर्ड",
+    "google": "Google",
+    "username": "उपयोगकर्ता नाम",
+    "passwordMin8": "पासवर्ड (कम से कम 8 अक्षर)",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "passwordsDontMatch": "पासवर्ड मेल नहीं खाते।",
+    "googleHint": "आप अपने Google खाते से साइन इन करेंगे।",
+    "submitting": "सबमिट किया जा रहा है…",
+    "continueWithGoogle": "Google से जारी रखें",
+    "submitRegistration": "पंजीकरण सबमिट करें",
+    "teacher": {
+      "title": "शिक्षक पंजीकरण",
+      "subtitle": "आपको अपने एडमिन से एक आमंत्रण कोड चाहिए होगा",
+      "inviteCode": "आमंत्रण कोड",
+      "inviteCodePlaceholder": "जैसे P74BRN7X"
+    },
+    "student": {
+      "title": "विद्यार्थी पंजीकरण",
+      "subtitle": "अपना खाता लिंक करने के लिए अपना पंजीकरण नंबर दर्ज करें",
+      "registrationNumber": "पंजीकरण नंबर",
+      "registrationNumberPlaceholder": "जैसा आपके स्कूल द्वारा दिया गया है"
+    },
+    "parent": {
+      "title": "अभिभावक पंजीकरण",
+      "subtitle": "अपना खाता लिंक करने के लिए अपने बच्चे का पंजीकरण नंबर दर्ज करें",
+      "childRegistrationNumber": "बच्चे का पंजीकरण नंबर",
+      "childRegistrationNumberPlaceholder": "जैसा स्कूल द्वारा दिया गया है",
+      "contactNumber": "आपका दर्ज संपर्क नंबर",
+      "contactNumberPlaceholder": "स्कूल में दर्ज"
+    },
+    "submitted": {
+      "title": "पंजीकरण सबमिट किया गया",
+      "hint": "स्कूल एडमिन द्वारा आपके पंजीकरण की समीक्षा और अनुमोदन के बाद आप साइन इन कर सकेंगे।",
+      "backToSignIn": "साइन इन पर वापस जाएं"
+    }
+  },
+  "schoolSearch": {
+    "title": "अपना स्कूल खोजें",
+    "searchByName": "नाम से खोजें",
+    "placeholder": "जैसे Gurukul",
+    "empty": "कोई स्कूल नहीं मिला।"
+  },
+  "parentHome": {
+    "title": "मेरे बच्चे",
+    "empty": "अभी तक आपके खाते से कोई बच्चा लिंक नहीं है।",
+    "rollAndClass": "रोल {{roll}} · {{classSection}}"
+  },
+  "childDashboard": {
+    "attendance": "उपस्थिति",
+    "fees": "फीस",
+    "reportCard": "रिपोर्ट कार्ड"
+  },
+  "myFees": {
+    "title": "मेरी फीस",
+    "loadError": "आपकी फीस बकाया लोड नहीं की जा सकी।",
+    "empty": "अभी तक कोई फीस आकलन नहीं।",
+    "due": "बकाया ₹{{remaining}} में से ₹{{total}}"
+  },
+  "childFees": {
+    "title": "{{name}} की फीस",
+    "loadError": "फीस बकाया लोड नहीं की जा सकी।",
+    "empty": "अभी तक कोई फीस आकलन नहीं।"
+  },
+  "registrationInbox": {
+    "title": "अभिभावक पंजीकरण अनुमोदन",
+    "shareCode": "यह कोड शिक्षक के साथ साझा करें",
+    "expires": "समाप्ति {{date}}",
+    "pickTeacher": "आमंत्रित करने के लिए शिक्षक चुनें",
+    "generating": "बनाया जा रहा है…",
+    "generateInviteCode": "आमंत्रण कोड बनाएं",
+    "inviteTeacher": "एक शिक्षक को आमंत्रित करें",
+    "empty": "कोई लंबित अभिभावक पंजीकरण नहीं।",
+    "approve": "स्वीकृत करें",
+    "reject": "अस्वीकृत करें",
+    "approveTitle": "पंजीकरण स्वीकृत करें",
+    "rejectTitle": "पंजीकरण अस्वीकृत करें",
+    "confirmMessage": "{{name}} का पंजीकरण {{action}}?"
+  },
+  "attendanceDevices": {
+    "title": "उपस्थिति डिवाइस",
+    "intro": "अपने स्कूल में लगे RFID रीडर, फिंगरप्रिंट स्कैनर या फेस-रिकग्निशन किओस्क पंजीकृत करें, फिर प्रत्येक छात्र/कर्मचारी की पहचान उनकी प्रोफाइल से जोड़ें ताकि स्कैन करने पर उपस्थिति अपने आप दर्ज हो जाए।",
+    "name": "डिवाइस का नाम",
+    "namePlaceholder": "जैसे मुख्य द्वार RFID रीडर",
+    "deviceType": "डिवाइस प्रकार",
+    "createButton": "डिवाइस पंजीकृत करें",
+    "addButton": "डिवाइस पंजीकृत करें",
+    "empty": "अभी तक कोई उपस्थिति डिवाइस पंजीकृत नहीं है।",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय",
+    "lastSeen": "अंतिम उपयोग",
+    "neverSeen": "अभी तक उपयोग नहीं हुआ",
+    "activate": "सक्रिय करें",
+    "deactivate": "निष्क्रिय करें",
+    "rotateKey": "कुंजी बदलें",
+    "rotateConfirmTitle": "इस डिवाइस की कुंजी बदलें?",
+    "rotateConfirmMessage": "पुरानी कुंजी तुरंत काम करना बंद कर देगी। आपको भौतिक डिवाइस पर नई कुंजी अपडेट करनी होगी।",
+    "rotateConfirmAction": "बदलें",
+    "keyModalTitle": "डिवाइस एपीआई कुंजी",
+    "keyModalWarning": "इसे अभी कॉपी करें और डिवाइस पर सेट करें - यह दोबारा नहीं दिखाई जाएगी।",
+    "keyModalDone": "मैंने यह कुंजी सहेज ली है",
+    "errors": {
+      "name": "इस डिवाइस के लिए एक नाम दर्ज करें।"
+    },
+    "method": {
+      "RFID": "RFID",
+      "FINGERPRINT": "फिंगरप्रिंट",
+      "FACE": "फेस रिकग्निशन"
+    }
+  },
+  "attendanceIdentifiers": {
+    "actionButton": "उपस्थिति डिवाइस",
+    "title": "उपस्थिति डिवाइस पहचान",
+    "subtitle": "कार्ड/फिंगरप्रिंट/फेस आईडी जोड़ें ताकि पंजीकृत डिवाइस पर स्कैन करने से यह व्यक्ति अपने आप उपस्थित दर्ज हो जाए।",
+    "externalId": "पहचान",
+    "externalIdPlaceholder": "जैसे RFID कार्ड की UID",
+    "enrollButton": "जोड़ें",
+    "errors": {
+      "externalId": "डिवाइस द्वारा भेजी गई पहचान दर्ज करें।"
+    }
+  }
+}

@@ -32,7 +32,7 @@ export default function InfraCategoryPicker({ schoolId, selectedId, onSelect }: 
       {categories.length === 0 && !error && (
         <Text style={styles.empty}>
           No infrastructure expense categories exist on this school yet — these can only be seeded on the
-          backend (there's no create endpoint for them).
+          backend (there&apos;s no create endpoint for them).
         </Text>
       )}
       <View style={styles.chips}>

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { useAuth } from '../../context/AuthContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -11,7 +12,15 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionDetail'>;
 const accent = accents.classes;
 
 export function SectionDetailScreen({ route, navigation }: Props) {
+  const { session } = useAuth();
   const classSection = route.params.classSection;
+  const canTakeAttendance = session.ownerType === 'EMPLOYEE';
+  const isAdmin = session.role === 'ADMIN';
+  // A class teacher has the same report-card authority as admin for their own section (marks entry
+  // across every subject, publishing - see AssessmentResultService/ReportCardService on the backend),
+  // so the tiles below must be reachable for them too, not just admin.
+  const isClassTeacherOfSection = session.role === 'TEACHER' && classSection.classTeacherId === session.ownerId;
+  const canManageReportCards = isAdmin || isClassTeacherOfSection;
 
   const items: { title: string; description: string; onPress: () => void }[] = [
     {
@@ -29,11 +38,29 @@ export function SectionDetailScreen({ route, navigation }: Props) {
       description: 'Assignments, quizzes, tests, and exams',
       onPress: () => navigation.navigate('SectionAssessmentsList', { classSection }),
     },
-    {
-      title: 'Attendance',
-      description: 'Take or edit attendance for a date',
-      onPress: () => navigation.navigate('AttendanceTake', { classSection }),
-    },
+    ...(canTakeAttendance
+      ? [
+          {
+            title: 'Attendance',
+            description: 'Take attendance for a date, or view history',
+            onPress: () => navigation.navigate('AttendanceTake', { classSection }),
+          },
+        ]
+      : []),
+    ...(canManageReportCards
+      ? [
+          {
+            title: 'Class marks grid',
+            description: 'Every student x subject marks for a term, side by side',
+            onPress: () => navigation.navigate('SectionReportCardsGrid', { classSection }),
+          },
+          {
+            title: 'Publish report cards',
+            description: "Release a term's report cards to every student in this section",
+            onPress: () => navigation.navigate('PublishReportCards', { classSection }),
+          },
+        ]
+      : []),
   ];
 
   return (

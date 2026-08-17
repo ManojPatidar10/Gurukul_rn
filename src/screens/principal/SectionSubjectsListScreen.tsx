@@ -1,12 +1,15 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { assignSectionSubject, listSectionSubjects } from '../../api/sectionSubjects';
+import { getEmployee } from '../../api/employees';
 import type { Employee, Subject, SubjectAssignment } from '../../api/types';
 import EmployeePicker from '../../components/EmployeePicker';
+import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import SubjectPicker from '../../components/SubjectPicker';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -15,6 +18,8 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionSubjectsLis
 
 export function SectionSubjectsListScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
+  const canAssign = session.ownerType === 'EMPLOYEE';
   const classSection = route.params.classSection;
   const [assignments, setAssignments] = useState<SubjectAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +31,20 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [teacherLabel, setTeacherLabel] = useState('');
   const [assigning, setAssigning] = useState(false);
+  const [openingTeacherId, setOpeningTeacherId] = useState<string | null>(null);
+
+  const handleOpenTeacher = async (teacherId: string) => {
+    setOpeningTeacherId(teacherId);
+    setError(null);
+    try {
+      const employee = await getEmployee(schoolId, teacherId);
+      navigation.navigate('EmployeeDetail', { employee });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setOpeningTeacherId(null);
+    }
+  };
 
   const load = useCallback(() => {
     setError(null);
@@ -68,8 +87,8 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
         subtitle="Subjects"
         onBack={() => navigation.goBack()}
       />
-      <View style={styles.body}>
-        {showAssign ? (
+      <ScreenContainer>
+        {canAssign && (showAssign ? (
           <View style={styles.assignForm}>
             <Text style={styles.label}>Subject</Text>
             <SubjectPicker
@@ -108,35 +127,43 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
           <Pressable style={styles.addButton} onPress={() => setShowAssign(true)}>
             <Text style={styles.addButtonText}>+ Assign subject</Text>
           </Pressable>
-        )}
+        ))}
 
         {error && <Text style={styles.error}>{error}</Text>}
 
         <FlatList
           data={assignments}
+          scrollEnabled={false}
           keyExtractor={(item) => item.subjectId}
           ListEmptyComponent={
-            !loading ? <Text style={styles.empty}>No subjects assigned to this section yet.</Text> : null
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
+              <Text style={styles.empty}>No subjects assigned to this section yet.</Text>
+            )
           }
           renderItem={({ item }) => (
-            <View style={styles.row}>
+            <Pressable
+              style={styles.row}
+              onPress={() => handleOpenTeacher(item.teacherId)}
+              disabled={openingTeacherId !== null}
+            >
               <View>
                 <Text style={styles.rowName}>
                   {item.subjectName} ({item.subjectCode})
                 </Text>
                 <Text style={styles.rowMeta}>Teacher: {item.teacherName}</Text>
               </View>
-            </View>
+            </Pressable>
           )}
         />
-      </View>
+      </ScreenContainer>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  body: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
   selectedHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, marginBottom: spacing.sm },
   assignForm: {
@@ -159,6 +186,7 @@ const styles = StyleSheet.create({
   cancel: { color: colors.textMuted, textAlign: 'center' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  loader: { marginTop: 40 },
   row: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

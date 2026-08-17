@@ -15,26 +15,18 @@ export interface School {
   contactPhone: string;
   principalName: string;
   directorName: string;
+  bankAccountNumber: string | null;
+  bankIfsc: string | null;
+  bankAccountHolderName: string | null;
+  upiVpaOverride: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geofenceRadiusMeters: number;
   studentCount: number;
   classSectionCount: number;
   teacherCount: number;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface SchoolRegistrationRequest {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  contactEmail: string;
-  contactPhone: string;
-  principalName: string;
-  directorName: string;
-  adminPhone: string;
-  adminUsername?: string;
-  adminPassword?: string;
 }
 
 export interface SchoolUpdateRequest {
@@ -47,6 +39,35 @@ export interface SchoolUpdateRequest {
   contactPhone: string;
   principalName: string;
   directorName: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+  bankAccountHolderName?: string;
+  upiVpaOverride?: string;
+}
+
+export interface SchoolLocationUpdateRequest {
+  latitude: number;
+  longitude: number;
+  geofenceRadiusMeters: number;
+}
+
+export interface SchoolRegistrationRequest {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  contactEmail: string;
+  contactPhone: string;
+  principalName: string;
+  principalPhone: string;
+  directorName: string;
+  adminPhone: string;
+  adminUsername?: string;
+  adminPassword?: string;
+  latitude?: number;
+  longitude?: number;
+  geofenceRadiusMeters?: number;
 }
 
 export interface SchoolSearchResult {
@@ -68,6 +89,8 @@ export interface ClassSection {
   section: string;
   academicYear: string;
   displayLabel: string;
+  classTeacherId: string | null;
+  classTeacherName: string | null;
 }
 
 export interface ClassSectionRequest {
@@ -80,6 +103,8 @@ export interface Student {
   id: string;
   schoolId: string;
   rollNumber: string;
+  /** Only populated for the ADMIN caller; null for anyone else (teacher, student, parent, unauthenticated). */
+  registrationNumber: string | null;
   name: string;
   dob: string;
   gender: string;
@@ -91,6 +116,8 @@ export interface Student {
   section: string;
   academicYear: string;
   classSectionLabel: string;
+  classTeacherId: string | null;
+  classTeacherName: string | null;
   admissionDate: string;
   status: string;
   createdAt: string;
@@ -98,7 +125,6 @@ export interface Student {
 }
 
 export interface StudentRequest {
-  rollNumber: string;
   name: string;
   dob: string;
   gender: string;
@@ -123,6 +149,7 @@ export interface Employee {
   bankAccount: string;
   contactPhone: string;
   status: string;
+  role: UserRole | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -235,13 +262,83 @@ export interface FeePayment {
   amount: number;
   transactionId: string;
   receiptNumber: string;
+  studentName: string;
+  rollNumber: string;
+  classSectionLabel: string;
+  academicYear: string;
+  schoolName: string;
+  paymentMethod: string;
+  paymentReference: string | null;
+  transactionDate: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface DuesReport {
+  unpaidAssessments: FeeAssessment[];
+  totalUnpaid: number;
   overdueAssessments: FeeAssessment[];
   totalOverdue: number;
+}
+
+export interface PayrollRunSummary {
+  month: number;
+  year: number;
+  status: string;
+  employeeCount: number;
+  totalNet: number;
+}
+
+export interface PayrollOverview {
+  paidEmployeeCount: number;
+  pendingEmployeeCount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  runs: PayrollRunSummary[];
+}
+
+export interface FeePaymentRequestResponse {
+  assessmentId: string;
+  studentName: string;
+  amount: number;
+  payeeName: string;
+  accountNumber: string;
+  ifsc: string;
+  payeeVpa: string;
+  upiUri: string;
+  referenceId: string;
+  generatedAt: string;
+}
+
+export type PaymentAttemptStatus =
+  | 'INITIATED'
+  | 'RESPONSE_SUCCESS'
+  | 'PENDING'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'UNKNOWN'
+  | 'VERIFIED';
+
+export interface PaymentAttempt {
+  id: string;
+  assessmentId: string;
+  transactionRef: string;
+  amount: number;
+  currency: string;
+  status: PaymentAttemptStatus;
+  upiTransactionId: string | null;
+  approvalRefNo: string | null;
+  responseCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentAttemptResultRequest {
+  status: PaymentAttemptStatus;
+  upiTransactionId?: string;
+  approvalRefNo?: string;
+  responseCode?: string;
+  rawResponse?: string;
 }
 
 export interface SalaryStructure {
@@ -388,6 +485,7 @@ export interface Assessment {
   description: string;
   createdByTeacherId: string;
   createdByTeacherName: string;
+  term: string | null;
 }
 
 export interface AssessmentRequest {
@@ -398,6 +496,86 @@ export interface AssessmentRequest {
   maxMarks: number;
   description?: string;
   teacherId: string;
+  term?: string;
+}
+
+export interface AssessmentResultEntry {
+  studentId: string;
+  marksObtained?: number;
+  absent: boolean;
+  remarks?: string;
+}
+
+export interface StudentResult {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  marksObtained: number | null;
+  absent: boolean;
+  remarks: string | null;
+}
+
+export interface AssessmentResults {
+  assessmentId: string;
+  assessmentTitle: string;
+  maxMarks: number;
+  results: StudentResult[];
+}
+
+export interface GradingBand {
+  id: string | null;
+  minPercentage: number;
+  maxPercentage: number;
+  label: string;
+}
+
+export interface SubjectResult {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  maxMarks: number;
+  marksObtained: number;
+  percentage: number;
+  grade: string;
+}
+
+export interface ReportCard {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  term: string;
+  subjects: SubjectResult[];
+  totalMaxMarks: number;
+  totalMarksObtained: number;
+  overallPercentage: number;
+  overallGrade: string;
+  attendancePercentage: number | null;
+  published: boolean;
+  publishedAt: string | null;
+}
+
+export interface ReportCardPublication {
+  classSectionId: string;
+  term: string;
+  publishedAt: string;
+  publishedByEmployeeName: string;
+}
+
+export interface PublishedTerm {
+  term: string;
+  publishedAt: string;
+}
+
+export interface TermSummary {
+  term: string;
+  published: boolean;
+}
+
+export interface BackfillTermResult {
+  assessmentsUpdated: number;
 }
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
@@ -414,12 +592,15 @@ export interface BulkAttendanceRequest {
   records: AttendanceEntryRequest[];
 }
 
+export type AttendanceMethod = 'RFID' | 'FINGERPRINT' | 'FACE';
+
 export interface StudentAttendanceEntry {
   studentId: string;
   rollNumber: string;
   studentName: string;
   status: AttendanceStatus;
   remarks: string;
+  method: AttendanceMethod | null;
 }
 
 export interface SectionAttendance {
@@ -439,9 +620,10 @@ export interface AttendanceRecord {
   sectionId: string;
   attendanceDate: string;
   status: AttendanceStatus;
-  markedByTeacherId: string;
-  markedByTeacherName: string;
+  markedByTeacherId: string | null;
+  markedByTeacherName: string | null;
   remarks: string;
+  method: AttendanceMethod | null;
 }
 
 export interface StudentAttendanceHistory {
@@ -458,12 +640,120 @@ export interface StudentAttendanceHistory {
   records: AttendanceRecord[];
 }
 
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT';
-export type OwnerType = 'EMPLOYEE' | 'STUDENT';
+export interface SectionStudentAttendanceSummary {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+}
+
+export interface SectionAttendanceHistory {
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  from: string | null;
+  to: string | null;
+  students: SectionStudentAttendanceSummary[];
+}
+
+export interface SelfMarkAttendanceRequest {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
+
+export interface StaffAttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  attendanceDate: string;
+  status: AttendanceStatus;
+  markedByEmployeeId: string | null;
+  markedByEmployeeName: string | null;
+  remarks: string | null;
+  selfMarked: boolean;
+  method: AttendanceMethod | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaffAttendanceEntry {
+  employeeId: string;
+  employeeName: string;
+  designation: string;
+  status: AttendanceStatus | null;
+  remarks: string | null;
+  selfMarked: boolean;
+  method: AttendanceMethod | null;
+}
+
+export interface StaffAttendanceRoster {
+  date: string;
+  entries: StaffAttendanceEntry[];
+}
+
+export interface EmployeeAttendanceHistory {
+  employeeId: string;
+  employeeName: string;
+  from: string | null;
+  to: string | null;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+  records: StaffAttendanceRecord[];
+}
+
+export interface PagedResponse<T> {
+  content: T[];
+  hasNext: boolean;
+  totalElements: number;
+}
+
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
+export type OwnerType = 'EMPLOYEE' | 'STUDENT' | 'PARENT';
+
+export interface AttendanceDevice {
+  id: string;
+  name: string;
+  deviceType: AttendanceMethod;
+  active: boolean;
+  lastSeenAt: string | null;
+  createdAt: string;
+}
+
+export interface AttendanceDeviceKey {
+  id: string;
+  name: string;
+  deviceType: AttendanceMethod;
+  /** Only ever present in the create/rotate-key response - never shown again after that. */
+  apiKey: string;
+}
+
+export interface AttendanceIdentifier {
+  id: string;
+  ownerType: OwnerType;
+  ownerId: string;
+  ownerName: string;
+  method: AttendanceMethod;
+  externalId: string;
+  active: boolean;
+  createdAt: string;
+}
 
 export interface LoginRequest {
   username: string;
   password: string;
+}
+
+export interface GoogleLoginRequest {
+  idToken: string;
 }
 
 export interface LoginResponse {
@@ -474,6 +764,85 @@ export interface LoginResponse {
   role: UserRole;
   schoolId: string;
   username: string;
+}
+
+export interface RegistrationSubmittedResponse {
+  entityId: string;
+  message: string;
+}
+
+// Claim-by-reference-key model: admin already created the underlying record (student at
+// enrollment, employee at hiring) - self-registration just proves who you are with a reference
+// key and sets credentials, instead of re-entering data admin already has on file. The exact
+// field name/format for each reference key is pending confirmation from backend - update here
+// once known, screens just bind to these types.
+export interface RegisterStudentRequest {
+  registrationNumber: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterStudentGoogleRequest = Omit<RegisterStudentRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export interface StudentInviteResponse {
+  code: string;
+  expiresAt: string;
+}
+
+export interface RegisterStudentInviteRequest {
+  inviteCode: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterStudentInviteGoogleRequest = Omit<RegisterStudentInviteRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export interface TeacherInviteResponse {
+  code: string;
+  expiresAt: string;
+}
+
+export interface RegisterTeacherRequest {
+  inviteCode: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterTeacherGoogleRequest = Omit<RegisterTeacherRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export interface RegisterParentRequest {
+  studentRegistrationNumber: string;
+  parentContact: string;
+  username: string;
+  password: string;
+}
+
+export type RegisterParentGoogleRequest = Omit<RegisterParentRequest, 'username' | 'password'> & {
+  idToken: string;
+};
+
+export type RegistrationEntityType = 'STUDENT_REGISTRATION' | 'EMPLOYEE_REGISTRATION' | 'PARENT_REGISTRATION';
+
+export interface RegistrationInboxEntry {
+  entityId: string;
+  entityType: RegistrationEntityType;
+  displayName: string;
+  submittedBy: string;
+  submittedAt: string;
+}
+
+export interface RegistrationDecisionRequest {
+  comment?: string;
+}
+
+export interface LinkChildRequest {
+  studentRegistrationNumber: string;
 }
 
 export interface OtpRequest {
@@ -497,4 +866,694 @@ export interface Credential {
   ownerId: string;
   username: string;
   role: UserRole;
+}
+
+export type ConversationType = 'DIRECT' | 'BOT';
+
+export interface ConversationParticipant {
+  ownerType: OwnerType;
+  ownerId: string;
+}
+
+export interface Conversation {
+  id: string;
+  type: ConversationType;
+  participants: ConversationParticipant[];
+}
+
+export interface CreateConversationRequest {
+  otherPartyOwnerType: OwnerType;
+  otherPartyOwnerId: string;
+}
+
+export type SenderKind = 'USER' | 'BOT';
+
+export interface Message {
+  id: string;
+  senderKind: SenderKind;
+  senderOwnerType: OwnerType | null;
+  senderOwnerId: string | null;
+  content: string;
+  sentAt: string;
+  attachmentUrl: string | null;
+  attachmentContentType: string | null;
+  attachmentFileName: string | null;
+}
+
+export interface MessageHistoryResponse {
+  messages: Message[];
+  hasMore: boolean;
+}
+
+export interface PresignChatAttachmentRequest {
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+}
+
+export interface PresignChatAttachmentResponse {
+  uploadUrl: string;
+  objectKey: string;
+  expiresAt: string;
+}
+
+export type AnnouncementScope = 'SCHOOL' | 'CLASS' | 'GRADE';
+
+export interface Announcement {
+  id: string;
+  scope: AnnouncementScope;
+  sectionId: string | null;
+  className: string | null;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface CreateAnnouncementRequest {
+  scope: AnnouncementScope;
+  sectionId?: string;
+  className?: string;
+  title: string;
+  body: string;
+}
+
+export interface GameProfileResponse {
+  totalXp: number;
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+  currentStreakDays: number;
+  longestStreakDays: number;
+}
+
+export type LeagueTier = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND' | 'GURUKUL_MASTER';
+
+export interface LeaderboardEntryResponse {
+  rank: number;
+  studentId: string;
+  name: string;
+  weeklyXp: number;
+  isYou: boolean;
+}
+
+export interface LeaderboardResponse {
+  tier: LeagueTier;
+  classSectionLabel: string;
+  entries: LeaderboardEntryResponse[];
+  yourRank: number;
+  currentStreakDays: number;
+  longestStreakDays: number;
+}
+
+export interface HouseResponse {
+  id: string;
+  name: string;
+  colorHex: string;
+}
+
+export interface CreateHouseRequest {
+  name: string;
+  colorHex: string;
+}
+
+export interface AwardSpotRecognitionRequest {
+  studentId: string;
+  amount: number;
+  reason: string;
+}
+
+export interface HouseStandingResponse {
+  houseId: string;
+  name: string;
+  colorHex: string;
+  totalPoints: number;
+  memberCount: number;
+}
+
+export interface SpotRecognitionFeedItem {
+  studentName: string;
+  houseName: string;
+  amount: number;
+  reason: string;
+  occurredAt: string;
+}
+
+export interface HouseWarsResponse {
+  standings: HouseStandingResponse[];
+  recentFeed: SpotRecognitionFeedItem[];
+  yourHouseId: string | null;
+}
+
+export type QuizOption = 'A' | 'B' | 'C' | 'D';
+export type ChallengeStatus = 'ACTIVE' | 'COMPLETED' | 'EXPIRED';
+
+export interface CreateQuizQuestionRequest {
+  subjectId: string;
+  className: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: QuizOption;
+}
+
+export interface QuizQuestionResponse {
+  id: string;
+  className: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: QuizOption;
+  createdByEmployeeId: string;
+  createdByEmployeeName: string;
+}
+
+export interface PublicQuizQuestionResponse {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+}
+
+export interface CreateChallengeRequest {
+  opponentStudentId: string;
+  subjectId: string;
+}
+
+export interface SubmitAnswerRequest {
+  questionId: string;
+  selectedOption: QuizOption;
+}
+
+export interface SubmitAnswerResponse {
+  correct: boolean;
+  challengeCompleted: boolean;
+  correctOption: QuizOption;
+}
+
+export interface ChallengeSummaryResponse {
+  id: string;
+  subjectName: string;
+  opponentName: string;
+  status: ChallengeStatus;
+  totalQuestions: number;
+  myAnsweredCount: number;
+  opponentAnsweredCount: number;
+  youWon: boolean | null;
+  draw: boolean;
+}
+
+export interface ChallengeDetailResponse {
+  summary: ChallengeSummaryResponse;
+  questions: PublicQuizQuestionResponse[];
+  myAnsweredQuestionIds: string[];
+}
+
+export type PracticeSessionStatus = 'ACTIVE' | 'COMPLETED';
+
+export interface CreatePracticeSessionRequest {
+  subjectId: string;
+}
+
+export interface PracticeSessionResponse {
+  id: string;
+  subjectName: string;
+  status: PracticeSessionStatus;
+  totalQuestions: number;
+  answeredCount: number;
+  correctCount: number;
+  questions: PublicQuizQuestionResponse[];
+  myAnsweredQuestionIds: string[];
+}
+
+export interface SubmitPracticeAnswerRequest {
+  questionId: string;
+  selectedOption: QuizOption;
+}
+
+export interface SubmitPracticeAnswerResponse {
+  correct: boolean;
+  sessionCompleted: boolean;
+  correctOption: QuizOption;
+}
+
+export type BattleRoomStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+
+export interface BattleRoomParticipant {
+  studentId: string;
+  name: string;
+  correctCount: number;
+}
+
+export interface BattleRoomQuestion {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+}
+
+export interface BattleRoomState {
+  id: string;
+  roomCode: string;
+  className: string;
+  subjectName: string;
+  status: BattleRoomStatus;
+  minPlayers: number;
+  maxPlayers: number;
+  joinWindowSeconds: number;
+  joinWindowEndsAt: string;
+  questionCount: number;
+  currentQuestionIndex: number;
+  participants: BattleRoomParticipant[];
+  currentQuestion: BattleRoomQuestion | null;
+  currentBuzzWinnerStudentId: string | null;
+  lastAnswerCorrect: boolean | null;
+  winnerStudentId: string | null;
+  winnerName: string | null;
+}
+
+export interface BattleRoomSummary {
+  id: string;
+  roomCode: string;
+  subjectName: string;
+  className: string;
+  status: 'WAITING' | 'ACTIVE';
+  participantCount: number;
+  maxPlayers: number;
+}
+
+export interface CreateBattleRoomRequest {
+  subjectId: string;
+}
+
+export interface SubmitBattleAnswerRequest {
+  selectedOption: QuizOption;
+}
+
+export type CallStatus = 'SCHEDULED' | 'STARTED' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
+export type RsvpStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+export type CallOutcome = 'IN_PROGRESS' | 'COMPLETED' | 'MISSED' | 'DECLINED' | 'BUSY' | 'CANCELLED';
+
+export interface ScheduleCallRequest {
+  title: string;
+  inviteeOwnerType: OwnerType;
+  inviteeOwnerIds: string[];
+  scheduledAt: string;
+}
+
+export interface RsvpRequest {
+  status: RsvpStatus;
+}
+
+export interface StartImmediateCallRequest {
+  calleeOwnerType: OwnerType;
+  calleeOwnerId: string;
+}
+
+export interface CallInviteeResponse {
+  ownerType: OwnerType;
+  ownerId: string;
+  rsvpStatus: RsvpStatus;
+}
+
+export type CallProvider = 'JITSI' | 'GOOGLE_MEET';
+
+export interface GoogleMeetStatusResponse {
+  connected: boolean;
+  googleEmail: string | null;
+}
+
+export interface ScheduledCallResponse {
+  id: string;
+  title: string;
+  hostOwnerType: OwnerType;
+  hostOwnerId: string;
+  scheduledAt: string;
+  roomName: string;
+  provider: CallProvider;
+  status: CallStatus;
+  invitees: CallInviteeResponse[];
+}
+
+export interface MyInviteResponse {
+  scheduledCallId: string;
+  title: string;
+  hostOwnerType: OwnerType;
+  hostOwnerId: string;
+  scheduledAt: string;
+  status: CallStatus;
+  myRsvpStatus: RsvpStatus;
+}
+
+export interface CallSessionResponse {
+  callLogId: string;
+  roomName: string;
+  provider: CallProvider;
+  outcome: CallOutcome;
+}
+
+export interface CallLogResponse {
+  id: string;
+  scheduledCallId: string | null;
+  callerOwnerType: OwnerType;
+  callerOwnerId: string;
+  calleeOwnerType: OwnerType | null;
+  calleeOwnerId: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number | null;
+  outcome: CallOutcome;
+}
+
+export type CallEventType =
+  | 'INCOMING_CALL'
+  | 'CALL_ACCEPTED'
+  | 'CALL_DECLINED'
+  | 'CALL_BUSY'
+  | 'CALL_MISSED'
+  | 'CALL_CANCELLED'
+  | 'CALL_ENDED'
+  | 'SCHEDULED_CALL_STARTED'
+  | 'SCHEDULED_CALL_REMINDER';
+
+export interface CallEvent {
+  type: CallEventType;
+  callLogId: string | null;
+  scheduledCallId: string | null;
+  roomName: string | null;
+  provider: CallProvider | null;
+  counterpartOwnerType: OwnerType | null;
+  counterpartOwnerId: string | null;
+  title: string | null;
+  scheduledAt: string | null;
+}
+
+export type EventCategory = 'SPORTS' | 'CULTURAL' | 'ACADEMIC' | 'OTHER';
+export type EventScope = 'SCHOOL' | 'CLASS' | 'GRADE';
+// Old finance lifecycle - unrelated to participation, kept separate per backend's note.
+export type EventFinanceStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED';
+export type EventParticipationStatus = 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+export type EventParticipationType = 'RSVP' | 'REGISTRATION' | 'POLL' | 'NONE';
+export type EventRsvpStatus = 'ACCEPTED' | 'DECLINED' | 'MAYBE';
+
+export interface EventRegistrationField {
+  key: string;
+  label: string;
+  required: boolean;
+}
+
+export interface SchoolEvent {
+  id: string;
+  schoolId: string;
+  name: string;
+  description: string;
+  eventDate: string;
+  status: EventFinanceStatus;
+  inflowEnabled: boolean;
+  outflowEnabled: boolean;
+  category: EventCategory | null;
+  scope: EventScope | null;
+  sectionId: string | null;
+  className: string | null;
+  venue: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  participationStatus: EventParticipationStatus | null;
+  participationType: EventParticipationType | null;
+  registrationFields: EventRegistrationField[] | null;
+  myRsvpStatus: EventRsvpStatus | null;
+  myRegistrationAnswers: Record<string, string> | null;
+  createdByEmployeeId: string;
+  createdByEmployeeName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEventRequest {
+  name: string;
+  description: string;
+  eventDate: string;
+  category?: EventCategory;
+  scope?: EventScope;
+  sectionId?: string;
+  className?: string;
+  venue?: string;
+  startAt?: string;
+  endAt?: string;
+  participationType?: EventParticipationType;
+  registrationFields?: EventRegistrationField[];
+}
+
+export interface EventRsvpRequest {
+  status: EventRsvpStatus;
+}
+
+export interface EventRsvpEntry {
+  ownerType: OwnerType;
+  ownerId: string;
+  name: string;
+  status: EventRsvpStatus;
+}
+
+export interface EventRegistrationRequest {
+  answers: Record<string, string>;
+}
+
+export interface EventRegistrationEntry {
+  id: string;
+  ownerType: OwnerType;
+  ownerId: string;
+  name: string;
+  answers: Record<string, string>;
+  submittedAt: string;
+}
+
+export interface CreateEventPollOptionsRequest {
+  options: string[];
+}
+
+export interface EventPollOption {
+  id: string;
+  label: string;
+  voteCount: number;
+}
+
+export interface EventPollResponse {
+  options: EventPollOption[];
+  myVoteOptionId: string | null;
+}
+
+export interface EventPollVoteRequest {
+  optionId: string;
+}
+
+export interface AssessmentResultResponse {
+  id: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  assessmentDate: string;
+  subjectName: string | null;
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  marksObtained: number | null;
+  maxMarks: number;
+  percentage: number;
+  remarks: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type FeedbackCategory =
+  | 'TEACHING_QUALITY'
+  | 'DISCIPLINE'
+  | 'PUNCTUALITY'
+  | 'PARENT_FEEDBACK'
+  | 'PEER_REVIEW'
+  | 'OTHER';
+
+export interface EmployeeFeedbackRequest {
+  rating: number;
+  category: FeedbackCategory;
+  comment?: string;
+  feedbackDate: string;
+  submittedBy?: string;
+}
+
+export interface EmployeeFeedbackResponse {
+  id: string;
+  employeeId: string;
+  rating: number;
+  category: FeedbackCategory;
+  comment: string | null;
+  feedbackDate: string;
+  submittedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TypeBreakdown {
+  type: AssessmentType;
+  averagePercentage: number;
+  count: number;
+}
+
+export interface AttendanceSummary {
+  totalDays: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  halfDayCount: number;
+  attendancePercentage: number;
+}
+
+export interface MonthAttendance {
+  month: string;
+  percentage: number;
+}
+
+export interface StudentPerformanceSummary {
+  studentId: string;
+  studentName: string;
+  rollNumber: string;
+  overallPerformancePercentage: number;
+  examWeightedAveragePercentage: number;
+  byAssessmentType: TypeBreakdown[];
+  examHistory: AssessmentResultResponse[];
+  attendance: AttendanceSummary;
+  attendanceByMonth: MonthAttendance[];
+}
+
+export interface SectionResultBreakdown {
+  sectionId: string;
+  className: string;
+  section: string;
+  averagePercentage: number;
+}
+
+export interface CategoryBreakdown {
+  category: FeedbackCategory;
+  averageRating: number;
+  count: number;
+}
+
+export interface EmployeePerformanceSummary {
+  employeeId: string;
+  employeeName: string;
+  overallResultPercentage: number;
+  byClassSection: SectionResultBreakdown[];
+  averageFeedbackRating: number;
+  feedbackByCategory: CategoryBreakdown[];
+  feedbackHistory: EmployeeFeedbackResponse[];
+}
+
+export interface Teacher {
+  id: string;
+  schoolId: string;
+  employeeCode: string;
+  name: string;
+  email: string;
+  phone: string;
+  qualification: string;
+  specialization: string;
+  joiningDate: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TeacherResourceType = 'BOOK' | 'NOTES' | 'WORKSHEET' | 'PRESENTATION' | 'VIDEO' | 'LINK' | 'OTHER';
+
+export interface TeacherResourceRequest {
+  classSectionId: string;
+  subjectName: string;
+  resourceType: TeacherResourceType;
+  title: string;
+  description: string;
+  resourceUrl: string;
+  availableOffline: boolean;
+}
+
+export interface TeacherResourceUploadFields {
+  classSectionId: string;
+  subjectName: string;
+  resourceType: TeacherResourceType;
+  title: string;
+  description: string;
+  availableOffline: boolean;
+}
+
+export interface TeacherResourceResponse {
+  id: string;
+  schoolId: string;
+  teacherId: string;
+  teacherName: string;
+  classSectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  classSectionLabel: string;
+  subjectName: string;
+  resourceType: TeacherResourceType;
+  title: string;
+  description: string;
+  resourceUrl: string;
+  availableOffline: boolean;
+  fileName: string | null;
+  contentType: string | null;
+  fileSizeBytes: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TeacherAssessmentType = 'QUIZ' | 'TEST' | 'EXAM' | 'ASSIGNMENT_CHECK';
+export type QuizDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'MIXED';
+export type QuestionType = 'MCQ' | 'SHORT_ANSWER' | 'LONG_ANSWER' | 'TRUE_FALSE';
+
+export interface AiQuizGenerationRequest {
+  classSectionId: string;
+  subjectName: string;
+  assessmentType: TeacherAssessmentType;
+  title: string;
+  syllabus: string;
+  difficulty: QuizDifficulty;
+  questionCount: number;
+  maxMarks: number;
+  questionTypes?: QuestionType[];
+  additionalInstructions?: string;
+}
+
+export interface GeneratedQuizQuestion {
+  number: number;
+  questionType: QuestionType;
+  question: string;
+  options: string[];
+  answer: string;
+  explanation: string;
+  marks: number;
+}
+
+export interface AiQuizGenerationResponse {
+  schoolId: string;
+  teacherId: string;
+  teacherName: string;
+  classSectionId: string;
+  classSectionLabel: string;
+  subjectName: string;
+  assessmentType: TeacherAssessmentType;
+  title: string;
+  syllabus: string;
+  difficulty: QuizDifficulty;
+  maxMarks: number;
+  questionCount: number;
+  generatorMode: string;
+  reviewNote: string;
+  questions: GeneratedQuizQuestion[];
 }

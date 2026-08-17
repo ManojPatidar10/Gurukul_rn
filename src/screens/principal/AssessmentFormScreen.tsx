@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createAssessment, updateAssessment } from '../../api/assessments';
 import type { AssessmentType, Employee, Subject } from '../../api/types';
+import { DatePickerField } from '../../components/DatePickerField';
 import EmployeePicker from '../../components/EmployeePicker';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -31,6 +32,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
   const [assessmentDate, setAssessmentDate] = useState(assessment?.assessmentDate ?? '');
   const [maxMarks, setMaxMarks] = useState(assessment ? String(assessment.maxMarks) : '');
   const [description, setDescription] = useState(assessment?.description ?? '');
+  const [term, setTerm] = useState(assessment?.term ?? '');
   const [teacherId, setTeacherId] = useState<string | null>(assessment?.createdByTeacherId ?? null);
   const [teacherLabel, setTeacherLabel] = useState(assessment?.createdByTeacherName ?? '');
   const [submitting, setSubmitting] = useState(false);
@@ -50,6 +52,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
       maxMarks: Number(maxMarks),
       description: description || undefined,
       teacherId,
+      term: term.trim() || undefined,
     };
     try {
       const result = isEdit
@@ -93,13 +96,14 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         />
         {subjectLabel ? <Text style={styles.selectedHint}>Selected: {subjectLabel}</Text> : null}
 
-        <LabeledInput
-          label="Assessment date (YYYY-MM-DD)"
-          value={assessmentDate}
-          onChangeText={setAssessmentDate}
-          placeholder="2026-08-15"
-        />
+        <DatePickerField label="Assessment date" value={assessmentDate} onChange={setAssessmentDate} />
         <LabeledInput label="Max marks" value={maxMarks} onChangeText={setMaxMarks} keyboardType="numeric" />
+        <LabeledInput
+          label="Term (optional, e.g. Term 1 - for report cards)"
+          value={term}
+          onChangeText={setTerm}
+          placeholder="Term 1"
+        />
         <LabeledInput label="Description (optional)" value={description} onChangeText={setDescription} />
 
         <Text style={[styles.label, { marginTop: spacing.md }]}>Teacher</Text>

@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { listSectionsByClass } from '../../api/classSections';
 import type { ClassSection } from '../../api/types';
@@ -49,7 +49,11 @@ export function SectionsListScreen({ route, navigation }: Props) {
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           ListEmptyComponent={
-            !loading ? <Text style={styles.empty}>{error ? 'Could not load sections.' : 'No sections found.'}</Text> : null
+            loading ? (
+              <ActivityIndicator style={styles.loader} color={colors.primary} />
+            ) : (
+              <Text style={styles.empty}>{error ? 'Could not load sections.' : 'No sections found.'}</Text>
+            )
           }
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => navigation.navigate('SectionDetail', { classSection: item })}>
@@ -71,6 +75,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  loader: { marginTop: 40 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

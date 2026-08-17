@@ -1,19 +1,24 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { createSalaryStructure } from '../../api/salaryStructures';
+import DateField from '../../components/DateField';
 import EmployeePicker from '../../components/EmployeePicker';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { isNonNegativeNumber, isPositiveNumber } from '../../utils/validators';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SalaryStructureForm'>;
 
 export function SalaryStructureFormScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [employeeLabel, setEmployeeLabel] = useState('');
@@ -22,14 +27,25 @@ export function SalaryStructureFormScreen({ navigation }: Props) {
   const [deductions, setDeductions] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const canSubmit = !!employeeId && Number(basic) > 0 && !!effectiveFrom;
 
   const handleSubmit = async () => {
     if (!employeeId) return;
+    if (!isPositiveNumber(basic)) {
+      showToast(t('payroll.salaryStructureForm.errors.basic'), 'error');
+      return;
+    }
+    if (allowances && !isNonNegativeNumber(allowances)) {
+      showToast(t('payroll.salaryStructureForm.errors.allowances'), 'error');
+      return;
+    }
+    if (deductions && !isNonNegativeNumber(deductions)) {
+      showToast(t('payroll.salaryStructureForm.errors.deductions'), 'error');
+      return;
+    }
     setSubmitting(true);
-    setError(null);
     try {
       await createSalaryStructure(schoolId, {
         employeeId,
@@ -40,7 +56,7 @@ export function SalaryStructureFormScreen({ navigation }: Props) {
       });
       navigation.goBack();
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -48,37 +64,34 @@ export function SalaryStructureFormScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Add salary structure" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('payroll.salaryStructureForm.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <Text style={styles.label}>Employee</Text>
+        <Text style={styles.label}>{t('payroll.salaryStructureForm.employee')} *</Text>
         <EmployeePicker
           schoolId={schoolId}
           selectedId={employeeId}
           onSelect={(emp) => {
             setEmployeeId(emp.id);
-            setEmployeeLabel(`${emp.name} (${emp.designation})`);
+            setEmployeeLabel(t('payroll.salaryStructureForm.employeeLabel', { name: emp.name, designation: emp.designation }));
           }}
         />
-        {employeeLabel ? <Text style={styles.selectedHint}>Selected: {employeeLabel}</Text> : null}
+        {employeeLabel ? (
+          <Text style={styles.selectedHint}>{t('payroll.salaryStructureForm.selectedHint', { label: employeeLabel })}</Text>
+        ) : null}
 
-        <LabeledInput label="Basic" value={basic} onChangeText={setBasic} keyboardType="numeric" />
-        <LabeledInput label="Allowances" value={allowances} onChangeText={setAllowances} keyboardType="numeric" />
-        <LabeledInput label="Deductions" value={deductions} onChangeText={setDeductions} keyboardType="numeric" />
-        <LabeledInput
-          label="Effective from (YYYY-MM-DD)"
-          value={effectiveFrom}
-          onChangeText={setEffectiveFrom}
-          placeholder="2026-04-01"
-        />
-
-        {error && <Text style={styles.error}>{error}</Text>}
+        <LabeledInput label={t('payroll.salaryStructureForm.basic')} required value={basic} onChangeText={setBasic} keyboardType="numeric" />
+        <LabeledInput label={t('payroll.salaryStructureForm.allowances')} value={allowances} onChangeText={setAllowances} keyboardType="numeric" />
+        <LabeledInput label={t('payroll.salaryStructureForm.deductions')} value={deductions} onChangeText={setDeductions} keyboardType="numeric" />
+        <DateField label={t('payroll.salaryStructureForm.effectiveFrom')} required value={effectiveFrom} onChange={setEffectiveFrom} />
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}
           onPress={handleSubmit}
           disabled={!canSubmit || submitting}
         >
-          <Text style={styles.submitText}>{submitting ? 'Saving…' : 'Create salary structure'}</Text>
+          <Text style={styles.submitText}>
+            {submitting ? t('payroll.salaryStructureForm.submitting') : t('payroll.salaryStructureForm.submit')}
+          </Text>
         </Pressable>
       </ScreenContainer>
     </View>
@@ -89,7 +102,6 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.sm },
   selectedHint: { fontSize: 12, color: colors.textMuted, marginTop: -spacing.xs, marginBottom: spacing.sm },
-  error: { color: colors.error, marginTop: spacing.md },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

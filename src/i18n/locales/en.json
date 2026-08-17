@@ -1,0 +1,919 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "saving": "Saving…",
+    "creating": "Creating…",
+    "createAndSelect": "Create & select",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "remove": "Remove",
+    "back": "Back",
+    "selectPlaceholder": "Select…",
+    "selectDate": "Select date",
+    "done": "Done",
+    "unassigned": "Unassigned",
+    "noContactOnFile": "No contact on file",
+    "emptyValue": "—",
+    "name": "Name",
+    "address": "Address",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "logOut": "Log out",
+    "profile": "Profile",
+    "copy": "Copy",
+    "copied": "Copied to clipboard"
+  },
+  "language": {
+    "toggleLabel": "Change language",
+    "en": "English",
+    "hi": "हिन्दी"
+  },
+  "schoolSetup": {
+    "title": "Register your school",
+    "subtitle": "One-time setup for this device",
+    "intro": "You'll be signed in as the school admin right after registering — your phone number below is used to sign in with an OTP afterwards.",
+    "schoolName": "School name",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "pincode": "Pincode",
+    "locationHint": "Optional: set the school's location now so teachers can self-mark attendance from the premises later. If you're not there right now, you can leave this blank and set it later, or enter coordinates manually.",
+    "useCurrentLocation": "📍 Use my current location",
+    "latitude": "Latitude (optional)",
+    "longitude": "Longitude (optional)",
+    "locationPermissionDenied": "Location permission denied - you can still enter coordinates manually, or skip this and set it later.",
+    "contactEmail": "Contact email",
+    "contactPhone": "Contact phone",
+    "principalName": "Principal name",
+    "principalPhone": "Principal phone",
+    "directorName": "Director name",
+    "adminPhone": "Your phone number (for admin login)",
+    "submit": "Register school",
+    "submitting": "Registering…",
+    "errors": {
+      "pincode": "Enter a valid 6-digit pincode.",
+      "email": "Enter a valid contact email address.",
+      "phone": "Enter a valid 10-digit contact phone number."
+    }
+  },
+  "dashboard": {
+    "fallbackTitle": "Gurukul",
+    "welcome": "Welcome, {{name}}",
+    "quickActions": "Quick Actions",
+    "features": {
+      "students": {
+        "title": "Students",
+        "description": "Manage student records and class-sections"
+      },
+      "employees": {
+        "title": "Employees",
+        "description": "Manage staff records"
+      },
+      "vendors": {
+        "title": "Vendors",
+        "description": "Manage vendor directory"
+      },
+      "fees": {
+        "title": "Fees",
+        "description": "Fee structures, dues, and payments"
+      },
+      "payroll": {
+        "title": "Payroll",
+        "description": "Salary structures and payroll runs"
+      },
+      "academicHelper": {
+        "title": "Academic Helper",
+        "description": "Ask questions and get instant AI-powered help"
+      },
+      "teacherTools": {
+        "title": "Teacher Tools",
+        "description": "AI quiz generator and resource uploads for teachers"
+      },
+      "infraExpenses": {
+        "title": "Infra Expenses",
+        "description": "Submit, approve, purchase, and pay infrastructure requests"
+      },
+      "classes": {
+        "title": "Classes",
+        "description": "Sections, subjects, assessments, and attendance"
+      },
+      "myClassSection": {
+        "title": "My Class Section",
+        "description": "Attendance and assessments for your homeroom class"
+      },
+      "calls": {
+        "title": "Video Calls",
+        "description": "Start or schedule a video call"
+      },
+      "gamification": {
+        "title": "Game Hub",
+        "description": "XP, streaks, and levels"
+      },
+      "arena": {
+        "title": "Gurukul Arena",
+        "description": "Build the quiz question bank for student challenges"
+      },
+      "events": {
+        "title": "School Events",
+        "description": "Annual function, sports meet, competitions, and more"
+      },
+      "reportCard": {
+        "title": "Report Card",
+        "description": "Your term grades and attendance"
+      },
+      "myAttendance": {
+        "title": "View Attendance",
+        "description": "Your attendance calendar"
+      },
+      "gradingScale": {
+        "title": "Grading Scale",
+        "description": "Marks-percentage to letter-grade bands"
+      },
+      "markMyAttendance": {
+        "title": "Mark My Attendance",
+        "description": "Check in from the school premises"
+      },
+      "staffAttendance": {
+        "title": "Staff Attendance",
+        "description": "Today's staff roster and check-in history"
+      },
+      "registrationInbox": {
+        "title": "Registration Approvals",
+        "description": "Review pending student, teacher, and parent registrations"
+      },
+      "myClassFees": {
+        "title": "My Class Fees",
+        "description": "Fee payment status for students in your class"
+      },
+      "attendanceDevices": {
+        "title": "Attendance Devices",
+        "description": "Register RFID/fingerprint/face devices and enroll student & staff identifiers"
+      }
+    }
+  },
+  "academicHelper": {
+    "title": "Academic Helper",
+    "inputPlaceholder": "Ask a question…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "emptyStudent": "Ask me anything about your studies — homework help, explanations, or practice questions.",
+    "emptyTeacher": "Ask me anything about teaching — lesson ideas, explanations, quiz questions, or classroom tips."
+  },
+  "helpdeskBot": {
+    "title": "Helpdesk Bot",
+    "inputPlaceholder": "Ask a question…",
+    "send": "Send",
+    "thinking": "Thinking…",
+    "emptyStudent": "Ask me about your attendance, fees, timetable, or anything else about school.",
+    "emptyTeacher": "Ask me about school policies, processes, or anything you need help with."
+  },
+  "students": {
+    "list": {
+      "title": "Students",
+      "addButton": "+ Enroll student",
+      "loadError": "Could not load students.",
+      "empty": "0 students yet — enroll the first one.",
+      "noSearchResults": "No students match your search.",
+      "rowSubtitle": "Roll {{roll}} · {{classSection}}"
+    },
+    "detail": {
+      "classSection": "Class-section",
+      "dob": "Date of birth",
+      "gender": "Gender",
+      "address": "Address",
+      "parentName": "Parent name",
+      "parentContact": "Parent contact",
+      "admissionDate": "Admission date",
+      "transferClass": "Transfer class",
+      "cancelTransfer": "Cancel transfer",
+      "transferring": "Transferring…",
+      "moveToClassSection": "Move to a different class-section",
+      "attendance": "Attendance",
+      "deleteTitle": "Delete student",
+      "deleteMessage": "Remove {{name}}? This cannot be undone.",
+      "rollLabel": "Roll {{roll}}"
+    },
+    "form": {
+      "titleEdit": "Edit student",
+      "titleCreate": "Enroll student",
+      "rollNumber": "Roll number",
+      "name": "Name",
+      "dob": "Date of birth",
+      "gender": "Gender",
+      "address": "Address",
+      "parentName": "Parent name",
+      "parentContact": "Parent contact",
+      "admissionDate": "Admission date",
+      "status": "Status",
+      "classSection": "Class-section",
+      "submitCreate": "Enroll student",
+      "errors": {
+        "parentContact": "Enter a valid 10-digit parent contact number.",
+        "admissionBeforeDob": "Admission date cannot be before the date of birth."
+      }
+    }
+  },
+  "employees": {
+    "list": {
+      "title": "Employees",
+      "addButton": "+ Add employee",
+      "loadError": "Could not load employees.",
+      "empty": "0 employees yet — add the first one.",
+      "noSearchResults": "No employees match your search."
+    },
+    "detail": {
+      "designation": "Designation",
+      "joinDate": "Join date",
+      "bankAccount": "Bank account",
+      "contactPhone": "Contact phone",
+      "salaryHistory": "Salary history"
+    },
+    "form": {
+      "titleEdit": "Edit employee",
+      "titleCreate": "Add employee",
+      "name": "Name",
+      "designation": "Designation",
+      "joinDate": "Join date",
+      "bankAccount": "Bank account",
+      "contactPhone": "Contact phone",
+      "status": "Status",
+      "submitCreate": "Add employee",
+      "errors": {
+        "contactPhone": "Enter a valid 10-digit contact phone number.",
+        "bankAccount": "Bank account number must be 9-18 digits."
+      }
+    },
+    "picker": {
+      "empty": "No employees yet.",
+      "name": "Name",
+      "designation": "Designation",
+      "joinDate": "Join date (YYYY-MM-DD)",
+      "addNew": "+ New employee",
+      "errors": {
+        "name": "Enter a name.",
+        "designation": "Enter a designation.",
+        "joinDate": "Enter a join date."
+      }
+    }
+  },
+  "vendors": {
+    "list": {
+      "title": "Vendors",
+      "addButton": "+ Add vendor",
+      "loadError": "Could not load vendors.",
+      "empty": "0 vendors yet — add the first one."
+    },
+    "detail": {
+      "contactPhone": "Contact phone",
+      "contactEmail": "Contact email",
+      "bankAccount": "Bank account",
+      "upiId": "UPI ID",
+      "address": "Address"
+    },
+    "form": {
+      "titleEdit": "Edit vendor",
+      "titleCreate": "Add vendor",
+      "name": "Name",
+      "contactPhone": "Contact phone",
+      "contactEmail": "Contact email",
+      "bankAccount": "Bank account",
+      "upiId": "UPI ID",
+      "address": "Address",
+      "submitCreate": "Add vendor",
+      "errors": {
+        "contactPhone": "Enter a valid 10-digit contact phone number.",
+        "contactEmail": "Enter a valid contact email address.",
+        "bankAccount": "Bank account number must be 9-18 digits.",
+        "upiId": "Enter a valid UPI ID, e.g. name@bank."
+      }
+    }
+  },
+  "fees": {
+    "hub": {
+      "title": "Fees",
+      "categories": {
+        "title": "Fee Categories",
+        "description": "Tuition, transport, lab fee, etc."
+      },
+      "structures": {
+        "title": "Fee Structures",
+        "description": "Set per-class fee amounts and generate dues"
+      },
+      "assessments": {
+        "title": "Assessments & Payments",
+        "description": "View student dues and record payments"
+      },
+      "paymentSettings": {
+        "title": "Payment Settings",
+        "description": "Set the bank account fee payments are received into"
+      }
+    },
+    "categories": {
+      "title": "Fee Categories",
+      "code": "Code",
+      "name": "Name",
+      "addButton": "+ Add category",
+      "createButton": "Create category",
+      "loadError": "Could not load categories.",
+      "empty": "0 fee categories yet — add the first one.",
+      "errors": {
+        "code": "Enter a category code.",
+        "name": "Enter a category name."
+      }
+    },
+    "categoryPicker": {
+      "empty": "No fee categories yet.",
+      "code": "Code",
+      "name": "Name",
+      "addNew": "+ New fee category"
+    },
+    "structuresList": {
+      "title": "Fee Structures",
+      "addButton": "+ New fee structure",
+      "loadError": "Could not load fee structures.",
+      "empty": "0 fee structures yet — create the first one.",
+      "rowTitle": "{{className}} - {{section}} ({{academicYear}})",
+      "feeLineCount_one": "{{count}} fee line",
+      "feeLineCount_other": "{{count}} fee lines"
+    },
+    "structureDetail": {
+      "titleFormat": "{{className}} - {{section}}",
+      "feeLines": "Fee lines",
+      "lineFormat": "{{name}} ({{code}})",
+      "totalPerStudent": "Total per student",
+      "generateButton": "Generate assessments for this class",
+      "generating": "Generating…",
+      "generatedMessage_one": "Generated {{count}} assessment for active students in this class-section.",
+      "generatedMessage_other": "Generated {{count}} assessments for active students in this class-section."
+    },
+    "structureForm": {
+      "title": "New fee structure",
+      "classSection": "Class-section",
+      "selectedHint": "Selected: {{label}}",
+      "academicYear": "Academic year",
+      "feeLines": "Fee lines",
+      "noCategorySelected": "No category selected",
+      "remove": "Remove",
+      "changeCategory": "Change category",
+      "chooseCategory": "Choose category",
+      "amount": "Amount",
+      "addLine": "+ Add fee line",
+      "submit": "Create fee structure",
+      "submitting": "Creating…",
+      "errors": {
+        "noLines": "Add at least one fee line.",
+        "missingCategory": "Choose a category for every fee line.",
+        "invalidAmount": "Enter an amount greater than 0 for every fee line."
+      }
+    },
+    "assessmentsList": {
+      "title": "Assessments & Dues",
+      "loadError": "Could not load assessments.",
+      "empty": "0 assessments yet — generate them from a fee structure first.",
+      "rowSubtitle": "Roll {{roll}} · Due ₹{{due}} of ₹{{total}}",
+      "summaryTotal": "Total students",
+      "summaryUnpaidCount": "Unpaid",
+      "summaryUnpaidAmount": "Amount due",
+      "searchPlaceholder": "Search by name or roll number…"
+    },
+    "myClassFees": {
+      "title": "My Class Fees",
+      "fullyPaid": "Fully paid",
+      "remaining": "Remaining due",
+      "empty": "No fee assessments for this section yet.",
+      "rowSubtitle": "Roll {{roll}} · Due ₹{{due}} of ₹{{total}}"
+    },
+    "assessmentDetail": {
+      "subtitle": "Roll {{roll}} · {{academicYear}}",
+      "totalDue": "Total due",
+      "totalPaid": "Total paid",
+      "remainingDue": "Remaining due",
+      "dueDate": "Due date",
+      "payFees": "Pay Fees",
+      "payFeesComingSoon": "Online fee payment is coming soon."
+    },
+    "paymentMethods": {
+      "cash": "Cash",
+      "upi": "UPI",
+      "bankTransfer": "Bank transfer",
+      "cheque": "Cheque",
+      "card": "Card"
+    },
+    "paymentSettings": {
+      "title": "Payment Settings",
+      "hint": "Students pay their fees directly into this bank account from the app. Set it once for your school.",
+      "saved": "Payment settings saved.",
+      "errors": {
+        "bankAccountNumber": "Enter a valid bank account number (9-18 digits).",
+        "bankIfsc": "Enter a valid IFSC code, e.g. SBIN0001234.",
+        "upiVpaOverride": "Enter a valid UPI ID, e.g. name@oksbi."
+      },
+      "bankAccountNumber": "Bank account number",
+      "bankIfsc": "IFSC code",
+      "bankAccountHolderName": "Account holder name shown to students",
+      "upiVpaOverride": "Your real UPI ID (needed for payments to work)",
+      "upiVpaOverrideHint": "Without this, the app guesses a UPI ID from your account number and IFSC (e.g. 123456789012@sbi) — this is rarely a real, working payee, so student payments will fail with an error inside their UPI app. Enter the same UPI ID you'd give someone to pay you directly (the one behind your bank's UPI QR code, e.g. name@oksbi, name@ybl, name@paytm) to fix this.",
+      "upiVpaOverrideWarning": "No real UPI ID set yet — payments will likely fail until you add one below."
+    },
+    "receipt": {
+      "title": "Payment Receipt",
+      "subtitle": "Fee Payment Receipt",
+      "receiptNumber": "Receipt No.",
+      "date": "Date",
+      "studentName": "Student",
+      "rollNumber": "Roll No.",
+      "classSection": "Class",
+      "academicYear": "Academic Year",
+      "paymentMethod": "Payment Method",
+      "paymentReference": "Reference",
+      "amountPaid": "Amount Paid",
+      "shareOrPrint": "Share / Print Receipt",
+      "sharing": "Preparing…",
+      "shareTitle": "Share fee payment receipt",
+      "shareUnavailable": "Sharing isn't available on this device."
+    },
+    "payFees": {
+      "title": "Pay Fees",
+      "amountDue": "Amount due",
+      "payNow": "Pay Now",
+      "tryAgain": "Try Again",
+      "preparing": "Preparing your payment…",
+      "openingApp": "Opening your payment app…",
+      "confirming": "Confirming your payment…",
+      "noUpiAppError": "We couldn't automatically open a UPI app on this device. You can still pay manually below.",
+      "manualTitle": "Pay manually instead",
+      "manualHint": "Open your UPI app (e.g. PhonePe, Google Pay) yourself and send this exact amount to this UPI ID.",
+      "manualUpiId": "UPI ID",
+      "manualAmount": "Amount",
+      "manualNote": "This won't be detected automatically since it wasn't opened from this app - after paying, tell us what happened below.",
+      "manualReportButton": "I've completed this payment",
+      "caution": "You'll be taken to your UPI app (e.g. PhonePe) to complete the payment. Come back to this screen once you're done.",
+      "subtitle": "{{name}} · Roll {{roll}}",
+      "confirmTitle": "Did the payment succeed?",
+      "confirmMessage": "We can't automatically detect this - please confirm what happened in your UPI app.",
+      "confirmYes": "Yes, it succeeded",
+      "confirmNo": "No, cancelled",
+      "confirmUnsure": "Not sure",
+      "pendingTitle": "Payment already in progress",
+      "pendingMessage": "You already started a payment for this fee that hasn't been confirmed yet. Pay again anyway?",
+      "pendingCancel": "Cancel",
+      "pendingContinue": "Pay Again",
+      "resultSuccessTitle": "Payment response received",
+      "resultTransactionId": "Transaction ID",
+      "resultUnverifiedCaveat": "This reflects what was reported, not an independently verified payment.",
+      "resultPendingMessage": "Payment is being processed. Do not make another payment yet.",
+      "resultFailedMessage": "Payment failed.",
+      "resultCancelledMessage": "Payment was cancelled.",
+      "resultUnknownMessage": "We could not confirm the payment result. Check My Fees later before paying again."
+    }
+  },
+  "payroll": {
+    "hub": {
+      "title": "Payroll",
+      "salaryStructures": {
+        "title": "Salary Structures",
+        "description": "Basic, allowances, and deductions per employee"
+      },
+      "runPayroll": {
+        "title": "Run Payroll",
+        "description": "Create a run, process it, and pay employees for the month"
+      },
+      "overview": {
+        "title": "Payroll Overview",
+        "description": "How many employees are paid vs. still pending, across every run"
+      }
+    },
+    "overview": {
+      "title": "Payroll Overview",
+      "paidCount": "Employees paid",
+      "pendingCount": "Employees pending",
+      "paidAmount": "Amount paid",
+      "pendingAmount": "Amount pending",
+      "runsTitle": "By run",
+      "empty": "No payroll runs yet.",
+      "runSubtitle": "{{count}} employees"
+    },
+    "salaryStructuresList": {
+      "title": "Salary Structures",
+      "addButton": "+ Add salary structure",
+      "loadError": "Could not load salary structures.",
+      "empty": "0 salary structures yet — add the first one.",
+      "rowSubtitle": "Basic ₹{{basic}} + Allowances ₹{{allowances}} − Deductions ₹{{deductions}}",
+      "effectiveFrom": "Effective from {{date}}"
+    },
+    "salaryStructureForm": {
+      "title": "Add salary structure",
+      "employee": "Employee",
+      "employeeLabel": "{{name}} ({{designation}})",
+      "selectedHint": "Selected: {{label}}",
+      "basic": "Basic",
+      "allowances": "Allowances",
+      "deductions": "Deductions",
+      "effectiveFrom": "Effective from",
+      "submit": "Create salary structure",
+      "submitting": "Saving…",
+      "errors": {
+        "basic": "Basic must be greater than 0.",
+        "allowances": "Allowances cannot be negative.",
+        "deductions": "Deductions cannot be negative."
+      }
+    },
+    "run": {
+      "title": "Run Payroll",
+      "month": "Month",
+      "year": "Year",
+      "createButton": "Create payroll run",
+      "creating": "Creating…",
+      "processButton": "Process run",
+      "processing": "Processing…",
+      "payrollLines": "Payroll lines ({{count}})",
+      "noLines": "No lines generated — make sure employees have a salary structure set up.",
+      "payThisRun": "Pay this run",
+      "paymentMethod": "Payment method",
+      "paymentReference": "Payment reference (optional)",
+      "transactionDate": "Transaction date",
+      "payButton": "Pay run",
+      "paying": "Paying…",
+      "paidSuccess": "Payroll run paid successfully.",
+      "startNewRun": "Start a new run",
+      "months": {
+        "1": "January",
+        "2": "February",
+        "3": "March",
+        "4": "April",
+        "5": "May",
+        "6": "June",
+        "7": "July",
+        "8": "August",
+        "9": "September",
+        "10": "October",
+        "11": "November",
+        "12": "December"
+      }
+    },
+    "payslip": {
+      "title": "Payslip",
+      "gross": "Gross",
+      "deductions": "Deductions",
+      "netPay": "Net pay",
+      "documentReference": "Document reference"
+    },
+    "salaryHistory": {
+      "title": "Salary History",
+      "empty": "No payroll history yet for this employee."
+    }
+  },
+  "classSection": {
+    "picker": {
+      "empty": "No class-sections yet.",
+      "className": "Class name",
+      "section": "Section",
+      "academicYear": "Academic year",
+      "addNew": "+ New class-section",
+      "errors": {
+        "className": "Enter a class name.",
+        "section": "Choose a section.",
+        "academicYear": "Choose an academic year."
+      }
+    }
+  },
+  "teacherTools": {
+    "picker": {
+      "empty": "No teachers yet."
+    },
+    "hub": {
+      "title": "Teacher Tools",
+      "selectTeacher": "Select teacher",
+      "selectClass": "Select class-section",
+      "incompleteHint": "Select a teacher and a class-section to continue.",
+      "generate": {
+        "title": "Generate Resource (AI)",
+        "description": "Create a quiz or test draft from a syllabus"
+      },
+      "upload": {
+        "title": "Upload Resource",
+        "description": "Share a book, notes, worksheet, or link"
+      }
+    },
+    "generator": {
+      "title": "AI Resource Generator",
+      "subjectName": "Subject",
+      "assessmentType": "Assessment type",
+      "quizTitle": "Title",
+      "syllabus": "Syllabus / topics",
+      "difficulty": "Difficulty",
+      "questionCount": "Number of questions",
+      "maxMarks": "Total marks",
+      "questionTypes": "Question types",
+      "additionalInstructions": "Additional instructions (optional)",
+      "generateButton": "Generate",
+      "generating": "Generating…",
+      "resultsTitle": "Generated questions",
+      "questionLabel": "Q{{number}}",
+      "marksLabel": "{{marks}} marks",
+      "answerLabel": "Answer",
+      "explanationLabel": "Explanation",
+      "reviewNote": "AI-generated draft — review for accuracy before publishing to students.",
+      "assessmentTypes": {
+        "QUIZ": "Quiz",
+        "TEST": "Test",
+        "EXAM": "Exam",
+        "ASSIGNMENT_CHECK": "Assignment check"
+      },
+      "difficulties": {
+        "EASY": "Easy",
+        "MEDIUM": "Medium",
+        "HARD": "Hard",
+        "MIXED": "Mixed"
+      },
+      "questionTypeOptions": {
+        "MCQ": "Multiple choice",
+        "SHORT_ANSWER": "Short answer",
+        "LONG_ANSWER": "Long answer",
+        "TRUE_FALSE": "True / False"
+      },
+      "errors": {
+        "subjectName": "Enter a subject.",
+        "title": "Enter a title.",
+        "syllabus": "Enter the syllabus or topics.",
+        "questionCount": "Enter a number of questions between 1 and 50.",
+        "maxMarks": "Enter total marks greater than 0."
+      }
+    },
+    "upload": {
+      "title": "Upload Resource",
+      "subjectName": "Subject",
+      "resourceType": "Resource type",
+      "resourceTitle": "Title",
+      "description": "Description",
+      "availableOffline": "Available offline",
+      "resourceUrl": "Resource URL",
+      "pickFile": "Choose a file",
+      "changeFile": "Change file",
+      "noFileSelected": "No file selected",
+      "uploadButton": "Upload",
+      "uploading": "Uploading…",
+      "addLinkButton": "Add resource",
+      "adding": "Adding…",
+      "success": "Resource added.",
+      "resourceTypes": {
+        "BOOK": "Book",
+        "NOTES": "Notes",
+        "WORKSHEET": "Worksheet",
+        "PRESENTATION": "Presentation",
+        "VIDEO": "Video",
+        "LINK": "Link",
+        "OTHER": "Other"
+      },
+      "errors": {
+        "subjectName": "Enter a subject.",
+        "title": "Enter a title.",
+        "description": "Enter a description.",
+        "resourceUrl": "Enter a resource URL.",
+        "file": "Choose a file to upload."
+      }
+    }
+  },
+  "validation": {
+    "requiredField": "This field is required."
+  },
+  "performance": {
+    "title": "Performance",
+    "overall": "Overall performance",
+    "examPerformance": "Exam performance",
+    "examAverage": "Weighted exam average: {{value}}%",
+    "attendance": "Attendance",
+    "attendancePercentage": "Attendance: {{value}}%",
+    "monthlyTrend": "Monthly attendance trend",
+    "recordExamResult": "Record exam result",
+    "examTitle": "Exam title",
+    "assessmentType": "Type",
+    "assessmentDate": "Date",
+    "subject": "Subject",
+    "maxMarks": "Max marks",
+    "marksObtained": "Marks obtained",
+    "teacher": "Teacher",
+    "teacherOptional": "Teacher (optional)",
+    "selectedTeacher": "Selected: {{name}}",
+    "saveResult": "Save result",
+    "resultPerformance": "Result performance",
+    "byClassSection": "By class-section",
+    "feedback": "Feedback",
+    "addFeedback": "Add feedback",
+    "rating": "Rating (0-5)",
+    "feedbackCategory": "Category",
+    "comment": "Comment (optional)",
+    "feedbackDate": "Date",
+    "saveFeedback": "Save feedback",
+    "averageRating": "Average rating: {{value}}",
+    "feedbackTrend": "Rating trend",
+    "feedbackByCategory": "By category",
+    "noData": "No data yet.",
+    "chartType": {
+      "bar": "Bar",
+      "line": "Line",
+      "pie": "Pie"
+    },
+    "assessmentTypes": {
+      "ASSIGNMENT": "Assignment",
+      "QUIZ": "Quiz",
+      "TEST": "Test",
+      "EXAM": "Exam"
+    },
+    "attendanceStatus": {
+      "PRESENT": "Present",
+      "ABSENT": "Absent",
+      "LATE": "Late",
+      "HALF_DAY": "Half day"
+    },
+    "feedbackCategories": {
+      "TEACHING_QUALITY": "Teaching quality",
+      "DISCIPLINE": "Discipline",
+      "PUNCTUALITY": "Punctuality",
+      "PARENT_FEEDBACK": "Parent feedback",
+      "PEER_REVIEW": "Peer review",
+      "OTHER": "Other"
+    },
+    "errors": {
+      "title": "Enter an exam title.",
+      "assessmentDate": "Select a date.",
+      "maxMarks": "Enter a max marks value greater than 0.",
+      "marksObtained": "Enter the marks obtained.",
+      "marksExceedMax": "Marks obtained cannot exceed max marks.",
+      "subject": "Choose a subject.",
+      "teacher": "Choose a teacher.",
+      "rating": "Enter a rating between 0 and 5.",
+      "feedbackDate": "Select a date."
+    }
+  },
+  "welcome": {
+    "title": "Gurukul",
+    "subtitle": "School management, made simple",
+    "findSchool": "Find my school",
+    "registerSchool": "Register a new school"
+  },
+  "auth": {
+    "signInSubtitle": "Sign in to continue",
+    "signInWithPhoneSubtitle": "Sign in with your phone number",
+    "username": "Username",
+    "password": "Password",
+    "signingIn": "Signing in…",
+    "signIn": "Sign in",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "newHereCreateAccount": "New here? Create an account",
+    "phoneNumber": "Phone number",
+    "otp": "OTP",
+    "sendingOtp": "Sending…",
+    "sendOtp": "Send OTP",
+    "verifyingOtp": "Verifying…",
+    "verifyAndSignIn": "Verify & sign in",
+    "changePhoneNumber": "Change phone number",
+    "useUsernamePassword": "Sign in with username & password instead"
+  },
+  "roleSelect": {
+    "createAccount": "Create an account",
+    "subtitle": "Who are you registering as?",
+    "student": {
+      "title": "I'm a student",
+      "description": "Register with the registration number given by your school"
+    },
+    "teacher": {
+      "title": "I'm a teacher",
+      "description": "Requires an invite code from your admin"
+    },
+    "parent": {
+      "title": "I'm a parent",
+      "description": "Link using your child's registration number and your contact on file"
+    }
+  },
+  "registration": {
+    "yourLogin": "Your login",
+    "usernamePassword": "Username & password",
+    "google": "Google",
+    "username": "Username",
+    "passwordMin8": "Password (min 8 characters)",
+    "confirmPassword": "Confirm password",
+    "passwordsDontMatch": "Passwords don't match.",
+    "googleHint": "You'll sign in with your Google account.",
+    "submitting": "Submitting…",
+    "continueWithGoogle": "Continue with Google",
+    "submitRegistration": "Submit registration",
+    "teacher": {
+      "title": "Teacher registration",
+      "subtitle": "You'll need an invite code from your admin",
+      "inviteCode": "Invite code",
+      "inviteCodePlaceholder": "e.g. P74BRN7X"
+    },
+    "student": {
+      "title": "Student registration",
+      "subtitle": "Enter your registration number to link your account",
+      "registrationNumber": "Registration number",
+      "registrationNumberPlaceholder": "e.g. as given by your school"
+    },
+    "parent": {
+      "title": "Parent registration",
+      "subtitle": "Enter your child's registration number to link your account",
+      "childRegistrationNumber": "Child's registration number",
+      "childRegistrationNumberPlaceholder": "e.g. as given by the school",
+      "contactNumber": "Your contact number on file",
+      "contactNumberPlaceholder": "Registered with the school"
+    },
+    "submitted": {
+      "title": "Registration submitted",
+      "hint": "You'll be able to sign in once a school admin reviews and approves your registration.",
+      "backToSignIn": "Back to sign in"
+    }
+  },
+  "schoolSearch": {
+    "title": "Find your school",
+    "searchByName": "Search by name",
+    "placeholder": "e.g. Gurukul",
+    "empty": "No schools found."
+  },
+  "parentHome": {
+    "title": "My Children",
+    "empty": "No children linked to your account yet.",
+    "rollAndClass": "Roll {{roll}} · {{classSection}}"
+  },
+  "childDashboard": {
+    "attendance": "Attendance",
+    "fees": "Fees",
+    "reportCard": "Report Card"
+  },
+  "myFees": {
+    "title": "My Fees",
+    "loadError": "Could not load your fee dues.",
+    "empty": "No fee assessments yet.",
+    "due": "Due ₹{{remaining}} of ₹{{total}}"
+  },
+  "childFees": {
+    "title": "{{name}}'s Fees",
+    "loadError": "Could not load fee dues.",
+    "empty": "No fee assessments yet."
+  },
+  "registrationInbox": {
+    "title": "Parent Registration Approvals",
+    "shareCode": "Share this code with the teacher",
+    "expires": "Expires {{date}}",
+    "pickTeacher": "Pick the teacher to invite",
+    "generating": "Generating…",
+    "generateInviteCode": "Generate invite code",
+    "inviteTeacher": "Invite a teacher",
+    "empty": "No pending parent registrations.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveTitle": "Approve registration",
+    "rejectTitle": "Reject registration",
+    "confirmMessage": "{{action}} {{name}}'s registration?"
+  },
+  "attendanceDevices": {
+    "title": "Attendance Devices",
+    "intro": "Register the RFID readers, fingerprint scanners, or face-recognition kiosks installed at your school, then enroll each student/employee's identifier from their profile so a scan marks attendance automatically.",
+    "name": "Device name",
+    "namePlaceholder": "e.g. Main Gate RFID Reader",
+    "deviceType": "Device type",
+    "createButton": "Register device",
+    "addButton": "Register a device",
+    "empty": "No attendance devices registered yet.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "lastSeen": "Last seen",
+    "neverSeen": "Never used yet",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "rotateKey": "Rotate key",
+    "rotateConfirmTitle": "Rotate this device's key?",
+    "rotateConfirmMessage": "The old key stops working immediately. You'll need to update the physical device with the new key.",
+    "rotateConfirmAction": "Rotate",
+    "keyModalTitle": "Device API key",
+    "keyModalWarning": "Copy this now and configure it on the device - it will not be shown again.",
+    "keyModalDone": "I've saved this key",
+    "errors": {
+      "name": "Enter a name for this device."
+    },
+    "method": {
+      "RFID": "RFID",
+      "FINGERPRINT": "Fingerprint",
+      "FACE": "Face recognition"
+    }
+  },
+  "attendanceIdentifiers": {
+    "actionButton": "Attendance devices",
+    "title": "Attendance device identifiers",
+    "subtitle": "Enroll a card/fingerprint/face id so a scan at a registered device marks this person present automatically.",
+    "externalId": "Identifier",
+    "externalIdPlaceholder": "e.g. the RFID card's UID",
+    "enrollButton": "Enroll",
+    "errors": {
+      "externalId": "Enter the identifier reported by the device."
+    }
+  }
+}

@@ -1,8 +1,10 @@
 import type {
   Assessment,
+  CallProvider,
   ClassSection,
   Employee,
   FeeAssessment,
+  FeePayment,
   FeeStructure,
   InfraExpenseRequest,
   PayrollLine,
@@ -17,7 +19,23 @@ export type FeatureId =
   | 'fees'
   | 'payroll'
   | 'infraExpenses'
-  | 'classes';
+  | 'classes'
+  | 'myClassSection'
+  | 'calls'
+  | 'gamification'
+  | 'houses'
+  | 'arena'
+  | 'events'
+  | 'academicHelper'
+  | 'teacherTools'
+  | 'reportCard'
+  | 'gradingScale'
+  | 'markMyAttendance'
+  | 'staffAttendance'
+  | 'myAttendance'
+  | 'registrationInbox'
+  | 'myClassFees'
+  | 'attendanceDevices';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -28,7 +46,12 @@ export interface FeatureAction {
 
 export type PrincipalStackParamList = {
   PrincipalDashboard: undefined;
+  Profile: undefined;
+  ConnectGoogleAccount: undefined;
+  GlobalSearch: undefined;
   StudentsList: undefined;
+  Classmates: undefined;
+  MyStudents: undefined;
   StudentDetail: { student: Student };
   StudentForm: { student?: Student };
   EmployeesList: undefined;
@@ -44,13 +67,18 @@ export type PrincipalStackParamList = {
   FeeStructureForm: undefined;
   FeeStructureDetail: { feeStructure: FeeStructure };
   FeeAssessmentsList: undefined;
+  MyFees: undefined;
   FeeAssessmentDetail: { assessment: FeeAssessment };
-  FeePaymentForm: { assessment: FeeAssessment };
+  PayFees: { assessment: FeeAssessment };
+  FeePaymentSettings: undefined;
+  PaymentReceipt: { payment: FeePayment };
   PayrollHub: undefined;
   SalaryStructuresList: undefined;
   SalaryStructureForm: undefined;
   PayrollRun: undefined;
   PayslipDetail: { payrollLine: PayrollLine };
+  PayrollOverview: undefined;
+  MyClassFees: { classSection: ClassSection };
   InfraExpensesList: undefined;
   InfraExpenseDetail: { request: InfraExpenseRequest };
   InfraExpenseForm: undefined;
@@ -62,6 +90,52 @@ export type PrincipalStackParamList = {
   SectionAssessmentsList: { classSection: ClassSection };
   AssessmentForm: { classSection: ClassSection; assessment?: Assessment };
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
+  AssessmentResults: { assessment: Assessment };
   AttendanceTake: { classSection: ClassSection };
-  AttendanceHistory: { student: Student };
+  AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
+  RegistrationInbox: undefined;
+  ParentHome: undefined;
+  ChildDashboard: { student: Pick<Student, 'id' | 'name'> };
+  ChildFees: { student: Pick<Student, 'id' | 'name'> };
+  ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
+  PublishReportCards: { classSection: ClassSection };
+  SectionReportCardsGrid: { classSection: ClassSection };
+  GradingScale: undefined;
+  MarkMyAttendance: undefined;
+  SchoolLocationSettings: undefined;
+  StaffAttendance: undefined;
+  EmployeeAttendanceHistory: { employee: Pick<Employee, 'id' | 'name'> };
+  AttendanceDevices: undefined;
+  ConversationsList: undefined;
+  NewConversation: undefined;
+  ConversationThread: { conversationId: string; title: string };
+  HelpdeskBot: undefined;
+  VideoCallHub: undefined;
+  PickCallTarget: undefined;
+  ScheduleCall: undefined;
+  ScheduledCalls: undefined;
+  CallHistory: undefined;
+  InCall: { roomName: string; provider: CallProvider; displayName: string; callLogId?: string; scheduledCallId?: string };
+  GamificationHub: undefined;
+  Leaderboard: undefined;
+  HouseWars: undefined;
+  AwardRecognition: undefined;
+  Arena: undefined;
+  NewChallenge: undefined;
+  ChallengeDetail: { challengeId: string };
+  QuestionAuthor: undefined;
+  MyQuestions: undefined;
+  BattleRoomMatch: undefined;
+  BattleRoom: { roomId: string };
+  PracticeStart: undefined;
+  PracticeSession: { sessionId: string };
+  EventsList: undefined;
+  EventDetail: { eventId: string };
+  EventForm: undefined;
+  AcademicHelper: undefined;
+  StudentPerformance: { student: Student };
+  TeacherPerformance: { employee: Employee };
+  TeacherToolsHub: undefined;
+  ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
+  ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
 };

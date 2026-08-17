@@ -3,12 +3,16 @@ import { colors, radius, spacing } from '../theme/colors';
 
 interface Props extends TextInputProps {
   label: string;
+  required?: boolean;
 }
 
-export default function LabeledInput({ label, style, ...rest }: Props) {
+export default function LabeledInput({ label, required, style, ...rest }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>
+        {label}
+        {required && <Text style={styles.required}> *</Text>}
+      </Text>
       <TextInput style={[styles.input, style]} placeholderTextColor={colors.textMuted} {...rest} />
     </View>
   );
@@ -26,6 +30,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
+  required: { color: colors.error },
   input: {
     borderWidth: 0,
     borderRadius: radius.lg,

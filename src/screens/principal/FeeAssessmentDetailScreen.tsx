@@ -1,9 +1,12 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -19,17 +22,21 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
+  const { session } = useAuth();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
   const assessment = route.params.assessment;
   const fullyPaid = assessment.remainingDue <= 0;
   const paidPercent = assessment.totalDue > 0
     ? Math.min(100, Math.round((assessment.totalPaid / assessment.totalDue) * 100))
     : 0;
+  const canPayFees = session.ownerType === 'STUDENT';
 
   return (
     <View style={styles.root}>
       <ScreenHeader
         title={assessment.studentName}
-        subtitle={`Roll ${assessment.rollNumber} · ${assessment.academicYear}`}
+        subtitle={t('fees.assessmentDetail.subtitle', { roll: assessment.rollNumber, academicYear: assessment.academicYear })}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
@@ -39,25 +46,25 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
 
         <View style={styles.card}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressLabel}>Paid</Text>
+            <Text style={styles.progressLabel}>{t('fees.assessmentDetail.totalPaid')}</Text>
             <Text style={styles.progressPercent}>{paidPercent}%</Text>
           </View>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${paidPercent}%` }, fullyPaid && styles.progressFillComplete]} />
           </View>
 
-          <Field label="Total due" value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
-          <Field label="Total paid" value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
-          <Field label="Remaining due" value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
-          <Field label="Due date" value={assessment.dueDate} />
+          <Field label={t('fees.assessmentDetail.totalDue')} value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
+          <Field label={t('fees.assessmentDetail.totalPaid')} value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
+          <Field label={t('fees.assessmentDetail.remainingDue')} value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
+          <Field label={t('fees.assessmentDetail.dueDate')} value={assessment.dueDate} />
         </View>
 
-        {!fullyPaid && (
+        {!fullyPaid && canPayFees && (
           <Pressable
             style={styles.payButton}
-            onPress={() => navigation.navigate('FeePaymentForm', { assessment })}
+            onPress={() => showToast(t('fees.assessmentDetail.payFeesComingSoon'), 'info')}
           >
-            <Text style={styles.payButtonText}>Record payment</Text>
+            <Text style={styles.payButtonText}>{t('fees.assessmentDetail.payFees')}</Text>
           </Pressable>
         )}
       </ScreenContainer>

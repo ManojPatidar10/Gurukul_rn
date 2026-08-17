@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -10,23 +11,30 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayrollHub'>;
 
 const accent = accents.payroll;
 
-const items: { route: keyof PrincipalStackParamList; title: string; description: string }[] = [
-  {
-    route: 'SalaryStructuresList',
-    title: 'Salary Structures',
-    description: 'Basic, allowances, and deductions per employee',
-  },
-  {
-    route: 'PayrollRun',
-    title: 'Run Payroll',
-    description: 'Create a run, process it, and pay employees for the month',
-  },
-];
-
 export function PayrollHubScreen({ navigation }: Props) {
+  const { t } = useTranslation();
+
+  const items: { route: keyof PrincipalStackParamList; title: string; description: string }[] = [
+    {
+      route: 'SalaryStructuresList',
+      title: t('payroll.hub.salaryStructures.title'),
+      description: t('payroll.hub.salaryStructures.description'),
+    },
+    {
+      route: 'PayrollRun',
+      title: t('payroll.hub.runPayroll.title'),
+      description: t('payroll.hub.runPayroll.description'),
+    },
+    {
+      route: 'PayrollOverview',
+      title: t('payroll.hub.overview.title'),
+      description: t('payroll.hub.overview.description'),
+    },
+  ];
+
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Payroll" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('payroll.hub.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {items.map((item) => (
           <Pressable

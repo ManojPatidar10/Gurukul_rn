@@ -1,9 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { requestOtp, verifyOtp } from '../api/auth';
 import { setAuthToken } from '../api/client';
+import { LanguageSwitch } from '../components/LanguageSwitch';
+import { Logo } from '../components/Logo';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
@@ -14,9 +18,12 @@ interface Props {
   onBack: () => void;
   onUsePassword: () => void;
   onLoggedIn: (session: Session) => void;
+  onRegister?: () => void;
 }
 
-export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePassword, onLoggedIn }: Props) {
+export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePassword, onLoggedIn, onRegister }: Props) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -56,16 +63,17 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
         <Pressable onPress={onBack} style={styles.backButton}>
           <Text style={styles.backText}>←</Text>
         </Pressable>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>G</Text>
+        <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
+          <LanguageSwitch />
         </View>
-        <Text style={styles.title}>{schoolName ?? 'Sign in'}</Text>
-        <Text style={styles.subtitle}>Sign in with your phone number</Text>
+        <Logo width={120} onDarkBackground />
+        <Text style={styles.title}>{schoolName ?? t('auth.signIn')}</Text>
+        <Text style={styles.subtitle}>{t('auth.signInWithPhoneSubtitle')}</Text>
       </LinearGradient>
 
       <View style={styles.form}>
         <LabeledInput
-          label="Phone number"
+          label={t('auth.phoneNumber')}
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
@@ -73,10 +81,14 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
         />
 
         {otpSent && (
-          <LabeledInput label="OTP" value={otp} onChangeText={setOtp} keyboardType="number-pad" placeholder="1234" />
+          <LabeledInput label={t('auth.otp')} value={otp} onChangeText={setOtp} keyboardType="number-pad" placeholder="1234" />
         )}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && (
+          <Text style={[styles.error, error.includes('pending admin approval') && styles.pendingNotice]}>
+            {error}
+          </Text>
+        )}
 
         {!otpSent ? (
           <Pressable
@@ -84,7 +96,7 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
             onPress={handleRequestOtp}
             disabled={!phone || submitting}
           >
-            <Text style={styles.submitText}>{submitting ? 'Sending…' : 'Send OTP'}</Text>
+            <Text style={styles.submitText}>{submitting ? t('auth.sendingOtp') : t('auth.sendOtp')}</Text>
           </Pressable>
         ) : (
           <>
@@ -93,17 +105,22 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
               onPress={handleVerifyOtp}
               disabled={!otp || submitting}
             >
-              <Text style={styles.submitText}>{submitting ? 'Verifying…' : 'Verify & sign in'}</Text>
+              <Text style={styles.submitText}>{submitting ? t('auth.verifyingOtp') : t('auth.verifyAndSignIn')}</Text>
             </Pressable>
             <Pressable onPress={() => setOtpSent(false)} style={styles.linkButton}>
-              <Text style={styles.linkText}>Change phone number</Text>
+              <Text style={styles.linkText}>{t('auth.changePhoneNumber')}</Text>
             </Pressable>
           </>
         )}
 
         <Pressable onPress={onUsePassword} style={styles.linkButton}>
-          <Text style={styles.linkText}>Sign in with username & password instead</Text>
+          <Text style={styles.linkText}>{t('auth.useUsernamePassword')}</Text>
         </Pressable>
+        {onRegister && (
+          <Pressable onPress={onRegister} style={styles.linkButton}>
+            <Text style={styles.linkText}>{t('auth.newHereCreateAccount')}</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -131,20 +148,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backText: { color: colors.white, fontSize: 18, fontWeight: '700' },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+  languageSwitchWrapper: {
+    position: 'absolute',
+    right: spacing.lg,
   },
-  badgeText: { color: colors.white, fontSize: 28, fontWeight: '800' },
   title: { color: colors.white, fontSize: 22, fontWeight: '800', paddingHorizontal: spacing.lg, textAlign: 'center' },
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
+  pendingNotice: { color: colors.warning, fontWeight: '600' },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

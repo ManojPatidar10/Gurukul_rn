@@ -1,6 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LanguageSwitch } from '../components/LanguageSwitch';
+import { Logo } from '../components/Logo';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 
 interface Props {
@@ -9,22 +13,25 @@ interface Props {
 }
 
 export default function WelcomeScreen({ onFindSchool, onRegisterSchool }: Props) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.root}>
       <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>G</Text>
+        <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.sm }]}>
+          <LanguageSwitch />
         </View>
-        <Text style={styles.title}>Gurukul</Text>
-        <Text style={styles.subtitle}>School management, made simple</Text>
+        <Logo width={200} onDarkBackground />
+        <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>
       </LinearGradient>
 
       <View style={styles.actions}>
         <Pressable style={styles.primaryButton} onPress={onFindSchool}>
-          <Text style={styles.primaryButtonText}>Find my school</Text>
+          <Text style={styles.primaryButtonText}>{t('welcome.findSchool')}</Text>
         </Pressable>
         <Pressable style={styles.secondaryButton} onPress={onRegisterSchool}>
-          <Text style={styles.secondaryButtonText}>Register a new school</Text>
+          <Text style={styles.secondaryButtonText}>{t('welcome.registerSchool')}</Text>
         </Pressable>
       </View>
     </View>
@@ -41,17 +48,10 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.xl,
     ...shadow,
   },
-  badge: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+  languageSwitchWrapper: {
+    position: 'absolute',
+    right: spacing.lg,
   },
-  badgeText: { color: colors.white, fontSize: 28, fontWeight: '800' },
-  title: { color: colors.white, fontSize: 26, fontWeight: '800' },
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   actions: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.md },
   primaryButton: {

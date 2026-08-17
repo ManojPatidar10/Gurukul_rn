@@ -1,17 +1,22 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { createFeeStructure } from '../../api/feeStructures';
 import type { FeeCategory } from '../../api/types';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
+import Dropdown from '../../components/Dropdown';
 import FeeCategoryPicker from '../../components/FeeCategoryPicker';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { ACADEMIC_YEAR_OPTIONS } from '../../constants/academicYear';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { isPositiveNumber } from '../../utils/validators';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructureForm'>;
 
@@ -22,6 +27,7 @@ interface LineDraft {
 }
 
 export function FeeStructureFormScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [classSectionId, setClassSectionId] = useState<string | null>(null);
   const [classSectionLabel, setClassSectionLabel] = useState('');
@@ -29,7 +35,7 @@ export function FeeStructureFormScreen({ navigation }: Props) {
   const [lines, setLines] = useState<LineDraft[]>([]);
   const [pickerForIndex, setPickerForIndex] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const addLine = () => {
     setLines((prev) => [...prev, { feeCategoryId: '', feeCategoryLabel: '', amount: '' }]);
@@ -44,7 +50,13 @@ export function FeeStructureFormScreen({ navigation }: Props) {
   const setLineCategory = (index: number, category: FeeCategory) => {
     setLines((prev) =>
       prev.map((line, i) =>
-        i === index ? { ...line, feeCategoryId: category.id, feeCategoryLabel: `${category.name} (${category.code})` } : line
+        i === index
+          ? {
+              ...line,
+              feeCategoryId: category.id,
+              feeCategoryLabel: t('fees.structureDetail.lineFormat', { name: category.name, code: category.code }),
+            }
+          : line
       )
     );
     setPickerForIndex(null);
@@ -62,8 +74,19 @@ export function FeeStructureFormScreen({ navigation }: Props) {
 
   const handleSubmit = async () => {
     if (!classSectionId) return;
+    if (lines.length === 0) {
+      showToast(t('fees.structureForm.errors.noLines'), 'error');
+      return;
+    }
+    if (lines.some((line) => !line.feeCategoryId)) {
+      showToast(t('fees.structureForm.errors.missingCategory'), 'error');
+      return;
+    }
+    if (lines.some((line) => !isPositiveNumber(line.amount))) {
+      showToast(t('fees.structureForm.errors.invalidAmount'), 'error');
+      return;
+    }
     setSubmitting(true);
-    setError(null);
     try {
       const created = await createFeeStructure(schoolId, {
         classSectionId,
@@ -72,7 +95,7 @@ export function FeeStructureFormScreen({ navigation }: Props) {
       });
       navigation.replace('FeeStructureDetail', { feeStructure: created });
     } catch (e) {
-      setError((e as Error).message);
+      showToast((e as Error).message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -80,9 +103,9 @@ export function FeeStructureFormScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="New fee structure" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('fees.structureForm.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <Text style={styles.label}>Class-section</Text>
+        <Text style={styles.label}>{t('fees.structureForm.classSection')} *</Text>
         <ClassSectionPicker
           schoolId={schoolId}
           selectedId={classSectionId}
@@ -92,24 +115,27 @@ export function FeeStructureFormScreen({ navigation }: Props) {
             if (!academicYear) setAcademicYear(cs.academicYear);
           }}
         />
-        {classSectionLabel ? <Text style={styles.selectedHint}>Selected: {classSectionLabel}</Text> : null}
+        {classSectionLabel ? (
+          <Text style={styles.selectedHint}>{t('fees.structureForm.selectedHint', { label: classSectionLabel })}</Text>
+        ) : null}
 
-        <LabeledInput
-          label="Academic year"
+        <Dropdown
+          label={t('fees.structureForm.academicYear')}
+          required
           value={academicYear}
-          onChangeText={setAcademicYear}
-          placeholder="e.g. 2026-2027"
+          options={ACADEMIC_YEAR_OPTIONS}
+          onSelect={setAcademicYear}
         />
 
-        <Text style={styles.label}>Fee lines</Text>
+        <Text style={styles.label}>{t('fees.structureForm.feeLines')} *</Text>
         {lines.map((line, index) => (
           <View key={index} style={styles.lineCard}>
             <View style={styles.lineHeader}>
               <Text style={styles.lineTitle}>
-                {line.feeCategoryLabel || 'No category selected'}
+                {line.feeCategoryLabel || t('fees.structureForm.noCategorySelected')}
               </Text>
               <Pressable onPress={() => removeLine(index)}>
-                <Text style={styles.removeText}>Remove</Text>
+                <Text style={styles.removeText}>{t('fees.structureForm.remove')}</Text>
               </Pressable>
             </View>
 
@@ -118,13 +144,13 @@ export function FeeStructureFormScreen({ navigation }: Props) {
             ) : (
               <Pressable onPress={() => setPickerForIndex(index)}>
                 <Text style={styles.changeCategory}>
-                  {line.feeCategoryId ? 'Change category' : 'Choose category'}
+                  {line.feeCategoryId ? t('fees.structureForm.changeCategory') : t('fees.structureForm.chooseCategory')}
                 </Text>
               </Pressable>
             )}
 
             <View style={styles.amountRow}>
-              <Text style={styles.amountLabel}>Amount</Text>
+              <Text style={styles.amountLabel}>{t('fees.structureForm.amount')} *</Text>
               <TextInput
                 style={styles.amountInput}
                 value={line.amount}
@@ -138,17 +164,15 @@ export function FeeStructureFormScreen({ navigation }: Props) {
         ))}
 
         <Pressable style={styles.addLineButton} onPress={addLine}>
-          <Text style={styles.addLineText}>+ Add fee line</Text>
+          <Text style={styles.addLineText}>{t('fees.structureForm.addLine')}</Text>
         </Pressable>
-
-        {error && <Text style={styles.error}>{error}</Text>}
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}
           onPress={handleSubmit}
           disabled={!canSubmit || submitting}
         >
-          <Text style={styles.submitText}>{submitting ? 'Creating…' : 'Create fee structure'}</Text>
+          <Text style={styles.submitText}>{submitting ? t('fees.structureForm.submitting') : t('fees.structureForm.submit')}</Text>
         </Pressable>
       </ScreenContainer>
     </View>
@@ -185,7 +209,6 @@ const styles = StyleSheet.create({
   },
   addLineButton: { marginBottom: spacing.lg },
   addLineText: { color: colors.primary, fontWeight: '600' },
-  error: { color: colors.error, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

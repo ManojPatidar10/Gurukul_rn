@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { searchSchools } from '../api/schools';
 import type { SchoolSearchResult } from '../api/types';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SchoolSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,9 +42,9 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Find your school" onBack={onBack} />
+      <ScreenHeader title={t('schoolSearch.title')} onBack={onBack} />
       <View style={styles.body}>
-        <LabeledInput label="Search by name" value={query} onChangeText={setQuery} placeholder="e.g. Gurukul" />
+        <LabeledInput label={t('schoolSearch.searchByName')} value={query} onChangeText={setQuery} placeholder={t('schoolSearch.placeholder')} />
 
         {loading && <ActivityIndicator style={styles.loading} />}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -51,7 +53,7 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
           data={results}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
-            !loading ? <Text style={styles.empty}>No schools found.</Text> : null
+            !loading ? <Text style={styles.empty}>{t('schoolSearch.empty')}</Text> : null
           }
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => onSelect(item)}>

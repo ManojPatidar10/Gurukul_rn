@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gurukul — School management, made simple</title>
+  <meta name="description" content="Gurukul is a school management app for attendance, fees, communication, and more — built for principals, teachers, students, and parents." />
+  <link rel="icon" href="./assets/favicon.png" />
+  <style>
+    :root {
+      --primary: #7C3AED;
+      --primary-dark: #5B21B6;
+      --magenta: #C026D3;
+      --bg: #F6F3FC;
+      --surface: #FFFFFF;
+      --text: #1F1B2E;
+      --text-muted: #6B6478;
+      --border: #E6DFF7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header.nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: var(--text); }
+    .brand img { width: 36px; height: 36px; border-radius: 10px; }
+    .nav-links { display: flex; gap: 28px; font-weight: 600; font-size: 14px; }
+    .nav-links a { color: var(--text-muted); }
+    .nav-links a:hover { color: var(--primary); }
+
+    .hero {
+      background: linear-gradient(135deg, var(--primary), var(--magenta));
+      color: #fff;
+      padding: 48px 24px 56px;
+      text-align: center;
+      border-radius: 0 0 32px 32px;
+    }
+    .hero h1 {
+      font-size: clamp(30px, 5vw, 48px);
+      font-weight: 800;
+      margin: 0 0 12px;
+    }
+    .hero p {
+      font-size: clamp(15px, 2vw, 18px);
+      color: rgba(255,255,255,0.9);
+      max-width: 560px;
+      margin: 0 auto 24px;
+    }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 26px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-light { background: #fff; color: var(--primary); }
+    .btn-light:hover { background: #F3EEFC; }
+    .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.6); }
+    .btn-outline:hover { background: rgba(255,255,255,0.12); }
+    .btn-disabled {
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.75);
+      cursor: not-allowed;
+    }
+
+    .mockups {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+    .mockups img {
+      width: 220px;
+      border-radius: 20px;
+      box-shadow: 0 24px 48px rgba(31, 27, 46, 0.35);
+    }
+
+    section { padding: 44px 24px; }
+    .section-title {
+      text-align: center;
+      font-size: clamp(24px, 4vw, 34px);
+      font-weight: 800;
+      margin: 0 0 8px;
+    }
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 28px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 20px;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+    }
+    .feature-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: #EFE8FC;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 { font-size: 16px; margin: 0 0 8px; }
+    .feature-card p { font-size: 13.5px; color: var(--text-muted); margin: 0; }
+
+    .cta {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 32px;
+      text-align: center;
+    }
+    .store-note { color: var(--text-muted); font-size: 13.5px; margin-top: 14px; }
+
+    footer {
+      padding: 28px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+    .footer-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
+    .footer-links a { color: var(--text); font-weight: 600; }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      section { padding: 36px 20px; }
+    }
+    @media (max-width: 480px) {
+      .hero-actions .btn { font-size: 13.5px; padding: 12px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <div class="brand">
+      <img src="./assets/icon.png" alt="Gurukul logo" />
+      Gurukul
+    </div>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="./money-features.html">How fees &amp; payroll work</a>
+      <a href="#get-app">Get the app</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>School management, made simple.</h1>
+    <p>Gurukul brings attendance, fees, communication, and student engagement into one app — for principals, teachers, students, and parents.</p>
+    <div class="hero-actions">
+      <a class="btn btn-light" href="#contact">Get in touch</a>
+      <a class="btn btn-outline" href="#get-app">Get the app</a>
+    </div>
+    <div class="mockups">
+      <img src="./assets/principal-dashboard-mockup.png" alt="Gurukul principal dashboard" />
+      <img src="./assets/teacher-dashboard-mockup.png" alt="Gurukul teacher dashboard" />
+      <img src="./assets/student-dashboard-mockup.png" alt="Gurukul student dashboard" />
+    </div>
+  </section>
+
+  <section id="features">
+    <h2 class="section-title">Everything a school needs, in one place</h2>
+    <p class="section-subtitle">Built for the whole school community — not just the office.</p>
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Attendance</h3>
+        <p>Live student and staff attendance, class-wise breakdowns, and a full calendar history for every student, teacher, and parent.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💳</div>
+        <h3>Fees &amp; Payroll</h3>
+        <p>Fee structures, dues, and payments for parents to track — plus payroll and salary history for staff.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📞</div>
+        <h3>Video Calls &amp; Messaging</h3>
+        <p>Reach a teacher, principal, or classmate directly with in-app video calls and real-time chat, including photo and PDF attachments.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎉</div>
+        <h3>School Events</h3>
+        <p>Annual functions, sports meets, and competitions — with RSVPs, registration forms, and polls, all in the app.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>Gamification</h3>
+        <p>XP, streaks, leaderboards, and live quiz battles that make learning something students actually look forward to.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👨‍👩‍👧</div>
+        <h3>Parent access</h3>
+        <p>Parents get their own account to check attendance, fees, and report cards for each of their children — no extra paperwork.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="get-app">
+    <div class="cta">
+      <h2 class="section-title" style="margin-bottom: 8px;">Get the Gurukul app</h2>
+      <p class="section-subtitle" style="margin-bottom: 28px;">We're finishing up final checks before launch.</p>
+      <button class="btn btn-disabled" disabled>Coming soon to Google Play</button>
+      <p class="store-note">Already using Gurukul at your school? Ask your admin for an invite.</p>
+    </div>
+  </section>
+
+  <section id="contact">
+    <h2 class="section-title">Get in touch</h2>
+    <p class="section-subtitle">Questions, feedback, or want Gurukul at your school? We'd love to hear from you.</p>
+    <div class="cta" style="max-width: 620px;">
+      <div class="hero-actions">
+        <a class="btn btn-light" style="background:#EFE8FC; color: var(--primary-dark);" href="mailto:Founders@smartgurukul.org">
+          ✉️&nbsp; Founders@smartgurukul.org
+        </a>
+        <a class="btn btn-light" style="background:#EFE8FC; color: var(--primary-dark);" href="https://www.instagram.com/smart__gurukul?igsh=ejJ3aXFsMzNia2g0" target="_blank" rel="noopener noreferrer">
+          📸&nbsp; @smart__gurukul
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-links">
+      <a href="#features">Features</a>
+      <a href="./money-features.html">How fees &amp; payroll work</a>
+      <a href="#get-app">Get the app</a>
+      <a href="#contact">Contact</a>
+      <a href="./privacy.html">Privacy Policy</a>
+      <a href="mailto:Founders@smartgurukul.org">Email</a>
+      <a href="https://www.instagram.com/smart__gurukul?igsh=ejJ3aXFsMzNia2g0" target="_blank" rel="noopener noreferrer">Instagram</a>
+    </div>
+    &copy; <span id="year"></span> Gurukul. All rights reserved.
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
