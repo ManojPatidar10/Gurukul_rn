@@ -17,6 +17,11 @@ export function createConversation(schoolId: string, req: CreateConversationRequ
   return api.post<Conversation>('/api/v1/chat/conversations', req, schoolId);
 }
 
+/** Gets (or creates, on first use) the caller's own private Helpdesk BOT conversation. */
+export function getOrCreateBotConversation(schoolId: string) {
+  return api.post<Conversation>('/api/v1/chat/bot/conversation', {}, schoolId);
+}
+
 export function getConversationMessages(schoolId: string, conversationId: string, page = 0) {
   return api.get<MessageHistoryResponse>(`/api/v1/chat/conversations/${conversationId}/messages?page=${page}`, schoolId);
 }

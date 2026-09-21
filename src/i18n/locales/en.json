@@ -11,6 +11,7 @@
     "deleting": "Deleting…",
     "remove": "Remove",
     "back": "Back",
+    "retry": "Retry",
     "selectPlaceholder": "Select…",
     "selectDate": "Select date",
     "done": "Done",
@@ -167,12 +168,7 @@
     "emptyTeacher": "Ask me anything about teaching — lesson ideas, explanations, quiz questions, or classroom tips."
   },
   "helpdeskBot": {
-    "title": "Helpdesk Bot",
-    "inputPlaceholder": "Ask a question…",
-    "send": "Send",
-    "thinking": "Thinking…",
-    "emptyStudent": "Ask me about your attendance, fees, timetable, or anything else about school.",
-    "emptyTeacher": "Ask me about school policies, processes, or anything you need help with."
+    "title": "Helpdesk Bot"
   },
   "students": {
     "list": {
