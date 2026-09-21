@@ -57,7 +57,7 @@ export function CircularCountdown({
 
 const styles = StyleSheet.create({
   centerLabel: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

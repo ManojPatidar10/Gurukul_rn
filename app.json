@@ -10,7 +10,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.gurukul.rn",
       "infoPlist": {
-        "LSApplicationQueriesSchemes": ["upi", "phonepe", "gpay"]
+        "LSApplicationQueriesSchemes": [
+          "upi",
+          "phonepe",
+          "gpay"
+        ]
       }
     },
     "android": {
@@ -58,7 +62,9 @@
       "./plugins/withCleartextTraffic.js",
       "./plugins/withUpiIntentQueries.js",
       "expo-localization",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
