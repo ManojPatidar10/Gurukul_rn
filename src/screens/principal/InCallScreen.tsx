@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Camera } from 'expo-camera';
-import { Audio } from 'expo-av';
+import { requestRecordingPermissionsAsync } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -31,7 +31,7 @@ export function InCallScreen({ route, navigation }: Props) {
   const endedRef = useRef(false);
 
   useEffect(() => {
-    Promise.all([Camera.requestCameraPermissionsAsync(), Audio.requestPermissionsAsync()]).then(
+    Promise.all([Camera.requestCameraPermissionsAsync(), requestRecordingPermissionsAsync()]).then(
       ([camera, mic]) => setPermissionsGranted(camera.status === 'granted' && mic.status === 'granted')
     );
   }, []);
