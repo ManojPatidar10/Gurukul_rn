@@ -215,6 +215,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       ) : (
         <FlatList
           ref={listRef}
+          style={styles.list}
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
@@ -250,7 +251,8 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: spacing.xl },
-  listContent: { padding: spacing.lg, gap: spacing.sm },
+  list: { flex: 1 },
+  listContent: { padding: spacing.lg, paddingBottom: spacing.xl, gap: spacing.sm },
   bubbleRow: { flexDirection: 'row', justifyContent: 'flex-start' },
   bubbleRowMine: { justifyContent: 'flex-end' },
   bubble: {

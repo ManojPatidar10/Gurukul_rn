@@ -100,6 +100,14 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title="Mark My Attendance" onBack={() => navigation.goBack()} />
       <ScreenContainer>
+        {session.role === 'ADMIN' && (
+          <Pressable
+            style={styles.locationLink}
+            onPress={() => navigation.navigate('SchoolLocationSettings')}
+          >
+            <Text style={styles.locationLinkText}>📍 Update school location &amp; radius</Text>
+          </Pressable>
+        )}
         <View style={styles.card}>
           {status === 'checking' ? (
             <ActivityIndicator color={colors.primary} />
@@ -151,6 +159,13 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  locationLink: {
+    alignSelf: 'flex-end',
+    marginTop: spacing.lg,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  locationLinkText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
