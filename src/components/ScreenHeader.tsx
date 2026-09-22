@@ -35,7 +35,7 @@ export function ScreenHeader({ title, subtitle, onBack, rightAction }: ScreenHea
           </View>
         )}
         <View style={styles.titleBlock}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={styles.title} numberOfLines={2}>
             {title}
           </Text>
           {subtitle ? (
@@ -92,8 +92,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: '800',
+    lineHeight: 23,
   },
   subtitle: {
     color: 'rgba(255,255,255,0.85)',
