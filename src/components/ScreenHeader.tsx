@@ -44,7 +44,7 @@ export function ScreenHeader({ title, subtitle, onBack, rightAction }: ScreenHea
             </Text>
           ) : null}
         </View>
-        {rightAction ?? <LanguageSwitch />}
+        <View style={styles.rightActionWrap}>{rightAction ?? <LanguageSwitch />}</View>
       </View>
     </LinearGradient>
   );
@@ -84,6 +84,11 @@ const styles = StyleSheet.create({
   },
   titleBlock: {
     flex: 1,
+    flexShrink: 1,
+    overflow: 'hidden',
+  },
+  rightActionWrap: {
+    flexShrink: 0,
   },
   title: {
     color: '#FFFFFF',
