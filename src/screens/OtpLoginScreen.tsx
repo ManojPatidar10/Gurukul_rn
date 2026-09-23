@@ -81,7 +81,10 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
         />
 
         {otpSent && (
-          <LabeledInput label={t('auth.otp')} value={otp} onChangeText={setOtp} keyboardType="number-pad" placeholder="1234" />
+          <>
+            <Text style={styles.otpHint}>{t('auth.otpSentViaWhatsapp')}</Text>
+            <LabeledInput label={t('auth.otp')} value={otp} onChangeText={setOtp} keyboardType="number-pad" placeholder="••••" />
+          </>
         )}
 
         {error && (
@@ -156,6 +159,7 @@ const styles = StyleSheet.create({
   subtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   form: { padding: spacing.lg, paddingTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
+  otpHint: { color: colors.textSecondary, fontSize: 13, marginBottom: spacing.sm },
   pendingNotice: { color: colors.warning, fontWeight: '600' },
   submit: {
     backgroundColor: colors.primary,

@@ -775,6 +775,7 @@
     "newHereCreateAccount": "नए हैं? खाता बनाएं",
     "phoneNumber": "फ़ोन नंबर",
     "otp": "OTP",
+    "otpSentViaWhatsapp": "हमने आपके WhatsApp पर एक कोड भेजा है। यह 5 मिनट में समाप्त हो जाएगा।",
     "sendingOtp": "भेजा जा रहा है…",
     "sendOtp": "OTP भेजें",
     "verifyingOtp": "सत्यापित किया जा रहा है…",

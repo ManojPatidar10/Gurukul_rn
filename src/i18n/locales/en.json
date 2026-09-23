@@ -775,6 +775,7 @@
     "newHereCreateAccount": "New here? Create an account",
     "phoneNumber": "Phone number",
     "otp": "OTP",
+    "otpSentViaWhatsapp": "We sent a code to your WhatsApp. It expires in 5 minutes.",
     "sendingOtp": "Sending…",
     "sendOtp": "Send OTP",
     "verifyingOtp": "Verifying…",
