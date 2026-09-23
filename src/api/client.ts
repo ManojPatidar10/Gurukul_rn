@@ -14,6 +14,11 @@ export function setAuthToken(token: string | null) {
   currentToken = token;
 }
 
+/** For requests made outside `api` (e.g. file downloads) that still need the bearer token. */
+export function getAuthToken(): string | null {
+  return currentToken;
+}
+
 // Countdowns tied to a server-issued deadline (e.g. a Battle Room's joinWindowEndsAt) must not be
 // compared against the device's own Date.now() - phone clocks routinely drift by seconds to
 // minutes, which shows up as different participants seeing different countdowns for the same
