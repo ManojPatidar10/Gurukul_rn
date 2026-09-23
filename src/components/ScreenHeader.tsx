@@ -11,11 +11,28 @@ interface ScreenHeaderProps {
   subtitle?: string;
   onBack?: () => void;
   rightAction?: ReactNode;
+  /**
+   * Render the title/subtitle on their own full-width line below the badge + actions row, instead of
+   * squeezed between them. Use when rightAction is wide (several icons) and the title would truncate.
+   */
+  stacked?: boolean;
 }
 
-export function ScreenHeader({ title, subtitle, onBack, rightAction }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, onBack, rightAction, stacked = false }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const initial = (title ?? '').trim().charAt(0).toUpperCase() || '?';
+  const titleBlock = (
+    <View style={styles.titleBlock}>
+      <Text style={styles.title} numberOfLines={2}>
+        {title}
+      </Text>
+      {subtitle ? (
+        <Text style={styles.subtitle} numberOfLines={stacked ? 2 : 1}>
+          {subtitle}
+        </Text>
+      ) : null}
+    </View>
+  );
 
   return (
     <LinearGradient
@@ -34,18 +51,10 @@ export function ScreenHeader({ title, subtitle, onBack, rightAction }: ScreenHea
             <Text style={styles.badgeText}>{initial}</Text>
           </View>
         )}
-        <View style={styles.titleBlock}>
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-          {subtitle ? (
-            <Text style={styles.subtitle} numberOfLines={1}>
-              {subtitle}
-            </Text>
-          ) : null}
-        </View>
+        {stacked ? <View style={styles.spacer} /> : titleBlock}
         <View style={styles.rightActionWrap}>{rightAction ?? <LanguageSwitch />}</View>
       </View>
+      {stacked ? <View style={styles.stackedTitleBlock}>{titleBlock}</View> : null}
     </LinearGradient>
   );
 }
@@ -87,13 +96,21 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     overflow: 'hidden',
   },
+  spacer: {
+    flex: 1,
+  },
+  stackedTitleBlock: {
+    flexDirection: 'row',
+    marginTop: spacing.md,
+  },
   rightActionWrap: {
     flexShrink: 0,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: '800',
+    lineHeight: 23,
   },
   subtitle: {
     color: 'rgba(255,255,255,0.85)',
