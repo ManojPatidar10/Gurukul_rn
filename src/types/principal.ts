@@ -35,7 +35,9 @@ export type FeatureId =
   | 'myAttendance'
   | 'registrationInbox'
   | 'myClassFees'
-  | 'attendanceDevices';
+  | 'attendanceDevices'
+  | 'activityLog'
+  | 'attendanceExport';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -106,6 +108,8 @@ export type PrincipalStackParamList = {
   StaffAttendance: undefined;
   EmployeeAttendanceHistory: { employee: Pick<Employee, 'id' | 'name'> };
   AttendanceDevices: undefined;
+  ActivityLog: undefined;
+  AttendanceExport: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };

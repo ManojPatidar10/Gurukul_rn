@@ -11,7 +11,9 @@ import { MarkMyAttendanceScreen } from '../screens/principal/MarkMyAttendanceScr
 import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocationSettingsScreen';
 import { StaffAttendanceScreen } from '../screens/principal/StaffAttendanceScreen';
 import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAttendanceHistoryScreen';
+import { ActivityLogScreen } from '../screens/principal/ActivityLogScreen';
 import { AttendanceDevicesScreen } from '../screens/principal/AttendanceDevicesScreen';
+import { AttendanceExportScreen } from '../screens/principal/AttendanceExportScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { RegistrationInboxScreen } from '../screens/principal/RegistrationInboxScreen';
 import { SectionAttendanceScreen } from '../screens/principal/SectionAttendanceScreen';
@@ -162,6 +164,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="StaffAttendance" component={StaffAttendanceScreen} />
         <Stack.Screen name="EmployeeAttendanceHistory" component={EmployeeAttendanceHistoryScreen} />
         <Stack.Screen name="AttendanceDevices" component={AttendanceDevicesScreen} />
+        <Stack.Screen name="ActivityLog" component={ActivityLogScreen} />
+        <Stack.Screen name="AttendanceExport" component={AttendanceExportScreen} />
         <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
         <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />

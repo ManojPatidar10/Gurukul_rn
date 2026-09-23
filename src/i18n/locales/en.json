@@ -156,6 +156,14 @@
       "attendanceDevices": {
         "title": "Attendance Devices",
         "description": "Register RFID/fingerprint/face devices and enroll student & staff identifiers"
+      },
+      "activityLog": {
+        "title": "Activity Log",
+        "description": "Who changed what, and when"
+      },
+      "attendanceExport": {
+        "title": "Export Attendance",
+        "description": "Download student or staff attendance as a spreadsheet"
       }
     }
   },
@@ -910,6 +918,44 @@
     "enrollButton": "Enroll",
     "errors": {
       "externalId": "Enter the identifier reported by the device."
+    }
+  },
+  "activityLog": {
+    "title": "Activity Log",
+    "intro": "Every record created, edited or deleted in your school, with who did it and what changed. Tap an entry to see the changes.",
+    "allTypes": "All",
+    "by": "By {{name}} ({{role}})",
+    "showChanges": "Show {{count}} field(s)",
+    "hideChanges": "Hide changes",
+    "noFieldChanges": "No field details recorded",
+    "recordId": "Record ID: {{id}}",
+    "empty": "No activity recorded yet.",
+    "action": {
+      "CREATE": "Created",
+      "UPDATE": "Edited",
+      "DELETE": "Deleted"
+    }
+  },
+  "attendanceExport": {
+    "title": "Export Attendance",
+    "intro": "Download attendance for a date range as an Excel (.xlsx) sheet, then save it or share it to WhatsApp, email or Drive.",
+    "whose": "Whose attendance",
+    "type": {
+      "STUDENT": "Students",
+      "STAFF": "Staff"
+    },
+    "classSection": "Class-section",
+    "allSections": "All classes",
+    "from": "From",
+    "to": "To",
+    "columnsNote": "Includes status, who marked it, the time it was marked and the time it was last changed.",
+    "exportButton": "Export sheet",
+    "shareTitle": "Share attendance sheet",
+    "savedTo": "Saved to {{path}}",
+    "errors": {
+      "order": "'To' date must be on or after the 'From' date",
+      "tooLong": "Pick a range of at most {{days}} days",
+      "failed": "Export failed: {{message}}"
     }
   }
 }
