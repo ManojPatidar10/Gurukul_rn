@@ -235,7 +235,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       <ScreenHeader
         title={school?.name ?? t('dashboard.fallbackTitle')}
         subtitle={t('dashboard.welcome', { name: myName ?? session.username })}
-        stacked
         showBadge={false}
         rightAction={
           <View style={styles.headerActions}>
