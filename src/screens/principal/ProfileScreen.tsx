@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getEmployee, updateEmployee } from '../../api/employees';
 import { getStudent, updateStudent } from '../../api/students';
@@ -19,6 +20,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'Profile'>;
 
 export function ProfileScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
   const { language, languages, setLanguage } = useLanguage();
@@ -254,7 +256,7 @@ export function ProfileScreen({ navigation }: Props) {
         onRequestClose={() => setLanguageMenuOpen(false)}
       >
         <Pressable style={styles.languageBackdrop} onPress={() => setLanguageMenuOpen(false)}>
-          <View style={styles.languageMenu}>
+          <View style={[styles.languageMenu, { paddingBottom: insets.bottom + spacing.md }]}>
             {languages.map((lang) => (
               <Pressable
                 key={lang.code}
@@ -351,19 +353,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   languageValue: { color: colors.primary, fontWeight: '700', fontSize: 14 },
-  languageBackdrop: { flex: 1 },
+  languageBackdrop: { flex: 1, justifyContent: 'flex-end' },
   languageMenu: {
-    alignSelf: 'center',
-    marginTop: 'auto',
-    marginBottom: 'auto',
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.xs,
-    minWidth: 160,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingVertical: spacing.sm,
   },
   languageOption: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
   },
   languageOptionActive: { backgroundColor: colors.primaryLight },
   languageOptionText: { fontSize: 15, color: colors.textPrimary },
