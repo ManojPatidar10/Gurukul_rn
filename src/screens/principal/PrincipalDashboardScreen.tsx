@@ -11,7 +11,6 @@ import { getStudent, listStudents } from '../../api/students';
 import type { ClassSection, Employee, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
-import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatSummaryCard } from '../../components/StatSummaryCard';
@@ -237,9 +236,9 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         title={school?.name ?? t('dashboard.fallbackTitle')}
         subtitle={t('dashboard.welcome', { name: myName ?? session.username })}
         stacked
+        showBadge={false}
         rightAction={
           <View style={styles.headerActions}>
-            <LanguageSwitch />
             <Pressable
               style={styles.headerChatButton}
               onPress={() => navigation.navigate('GlobalSearch')}

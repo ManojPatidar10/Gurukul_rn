@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getEmployee, updateEmployee } from '../../api/employees';
@@ -11,6 +11,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useLanguage } from '../../i18n/useLanguage';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -20,6 +21,9 @@ export function ProfileScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session, logout } = useAuth();
+  const { language, languages, setLanguage } = useLanguage();
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const currentLanguageLabel = languages.find((l) => l.code === language)?.nativeLabel ?? language.toUpperCase();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
@@ -221,6 +225,13 @@ export function ProfileScreen({ navigation }: Props) {
               )}
             </View>
 
+            {!editing && (
+              <Pressable style={styles.languageRow} onPress={() => setLanguageMenuOpen(true)}>
+                <Text style={styles.googleMeetButtonText}>{t('language.toggleLabel')}</Text>
+                <Text style={styles.languageValue}>{currentLanguageLabel}</Text>
+              </Pressable>
+            )}
+
             {!editing && session.ownerType === 'EMPLOYEE' && (
               <Pressable style={styles.googleMeetButton} onPress={() => navigation.navigate('ConnectGoogleAccount')}>
                 <Text style={styles.googleMeetButtonText}>Google Meet settings</Text>
@@ -235,6 +246,34 @@ export function ProfileScreen({ navigation }: Props) {
           </View>
         )}
       </ScreenContainer>
+
+      <Modal
+        visible={languageMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageMenuOpen(false)}
+      >
+        <Pressable style={styles.languageBackdrop} onPress={() => setLanguageMenuOpen(false)}>
+          <View style={styles.languageMenu}>
+            {languages.map((lang) => (
+              <Pressable
+                key={lang.code}
+                style={[styles.languageOption, lang.code === language && styles.languageOptionActive]}
+                onPress={() => {
+                  setLanguage(lang.code);
+                  setLanguageMenuOpen(false);
+                }}
+              >
+                <Text
+                  style={[styles.languageOptionText, lang.code === language && styles.languageOptionTextActive]}
+                >
+                  {lang.nativeLabel}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -300,6 +339,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   googleMeetButtonText: { color: colors.textPrimary, fontWeight: '700', fontSize: 15 },
+  languageRow: {
+    width: '100%',
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceMuted,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  languageValue: { color: colors.primary, fontWeight: '700', fontSize: 14 },
+  languageBackdrop: { flex: 1 },
+  languageMenu: {
+    alignSelf: 'center',
+    marginTop: 'auto',
+    marginBottom: 'auto',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.xs,
+    minWidth: 160,
+  },
+  languageOption: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  languageOptionActive: { backgroundColor: colors.primaryLight },
+  languageOptionText: { fontSize: 15, color: colors.textPrimary },
+  languageOptionTextActive: { color: colors.primary, fontWeight: '700' },
   logoutButton: {
     width: '100%',
     marginTop: spacing.md,

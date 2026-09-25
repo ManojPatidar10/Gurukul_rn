@@ -16,9 +16,18 @@ interface ScreenHeaderProps {
    * squeezed between them. Use when rightAction is wide (several icons) and the title would truncate.
    */
   stacked?: boolean;
+  /** Set false to omit the leading initial-letter badge on a root screen (no onBack). Defaults to true. */
+  showBadge?: boolean;
 }
 
-export function ScreenHeader({ title, subtitle, onBack, rightAction, stacked = false }: ScreenHeaderProps) {
+export function ScreenHeader({
+  title,
+  subtitle,
+  onBack,
+  rightAction,
+  stacked = false,
+  showBadge = true,
+}: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const initial = (title ?? '').trim().charAt(0).toUpperCase() || '?';
   const titleBlock = (
@@ -46,11 +55,11 @@ export function ScreenHeader({ title, subtitle, onBack, rightAction, stacked = f
           <TouchableOpacity onPress={onBack} style={styles.badge} accessibilityRole="button">
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-        ) : (
+        ) : showBadge ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{initial}</Text>
           </View>
-        )}
+        ) : null}
         {stacked ? <View style={styles.spacer} /> : titleBlock}
         <View style={styles.rightActionWrap}>{rightAction ?? <LanguageSwitch />}</View>
       </View>
