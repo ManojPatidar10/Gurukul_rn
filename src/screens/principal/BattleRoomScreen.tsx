@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { getBattleRoom, startBattleRoom } from '../../api/battleRooms';
 import { sendBattleAnswer, subscribeToBattleRoom } from '../../api/battleRoomSocket';
 import { serverNow } from '../../api/client';
-import type { BattleRoomState, QuizOption } from '../../api/types';
+import type { BattleQuestionResult, BattleRoomQuestion, BattleRoomState, QuizOption } from '../../api/types';
 import { CircularCountdown } from '../../components/CircularCountdown';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -24,6 +24,54 @@ const OPTIONS: { key: QuizOption; field: 'optionA' | 'optionB' | 'optionC' | 'op
   { key: 'D', field: 'optionD' },
 ];
 
+function optionText(question: BattleRoomQuestion | undefined, option: QuizOption): string | undefined {
+  const entry = OPTIONS.find((o) => o.key === option);
+  return question && entry ? question[entry.field] : undefined;
+}
+
+/**
+ * The closed question's own text/options are gone from currentQuestion by the time lastResult
+ * arrives (the next question takes its place), so the reveal can only show more than a bare letter
+ * for the correct option if the question was cached client-side while it was still live.
+ */
+function ResultReveal({
+  title,
+  result,
+  question,
+  myStudentId,
+}: {
+  title: string;
+  result: BattleQuestionResult;
+  question: BattleRoomQuestion | undefined;
+  myStudentId: string;
+}) {
+  const correctText = optionText(question, result.correctOption);
+  return (
+    <>
+      <Text style={styles.revealTitle}>
+        {title}: {result.correctOption}
+        {correctText ? ` — ${correctText}` : ''}
+      </Text>
+      {result.results.map((r) => (
+        <View key={r.studentId} style={styles.revealRow}>
+          <Text style={styles.revealName} numberOfLines={1}>
+            {r.studentId === myStudentId ? 'You' : r.name}
+          </Text>
+          <View
+            style={[
+              styles.revealChip,
+              !r.answered ? styles.revealChipNeutral : r.correct ? styles.revealChipCorrect : styles.revealChipWrong,
+            ]}
+          >
+            <Text style={styles.revealChipText}>{r.answered ? r.selectedOption : '—'}</Text>
+          </View>
+          <Text style={styles.revealPoints}>+{r.points}</Text>
+        </View>
+      ))}
+    </>
+  );
+}
+
 export function BattleRoomScreen({ route, navigation }: Props) {
   const { roomId } = route.params;
   const schoolId = useSchoolId();
@@ -36,6 +84,9 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   const [hasAnsweredCurrent, setHasAnsweredCurrent] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  // A question's own text/options only ever arrive while it's live (currentQuestion) - cache each one
+  // by id so the reveal can still show the correct option's actual value once lastResult replaces it.
+  const [questionCache, setQuestionCache] = useState<Record<string, BattleRoomQuestion>>({});
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -77,6 +128,12 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   useEffect(() => {
     setHasAnsweredCurrent(false);
   }, [room?.currentQuestionIndex]);
+
+  useEffect(() => {
+    const q = room?.currentQuestion;
+    if (!q) return;
+    setQuestionCache((prev) => (prev[q.id] ? prev : { ...prev, [q.id]: q }));
+  }, [room?.currentQuestion]);
 
   const startsAt = room?.currentQuestionStartsAt ? new Date(room.currentQuestionStartsAt).getTime() : null;
   const endsAt = room?.currentQuestionEndsAt ? new Date(room.currentQuestionEndsAt).getTime() : null;
@@ -198,27 +255,12 @@ export function BattleRoomScreen({ route, navigation }: Props) {
 
             {inRevealPause && room.lastResult ? (
               <View style={styles.card}>
-                <Text style={styles.revealTitle}>Correct answer: {room.lastResult.correctOption}</Text>
-                {room.lastResult.results.map((r) => (
-                  <View key={r.studentId} style={styles.revealRow}>
-                    <Text style={styles.revealName} numberOfLines={1}>
-                      {r.studentId === myStudentId ? 'You' : r.name}
-                    </Text>
-                    <View
-                      style={[
-                        styles.revealChip,
-                        !r.answered
-                          ? styles.revealChipNeutral
-                          : r.correct
-                            ? styles.revealChipCorrect
-                            : styles.revealChipWrong,
-                      ]}
-                    >
-                      <Text style={styles.revealChipText}>{r.answered ? r.selectedOption : '—'}</Text>
-                    </View>
-                    <Text style={styles.revealPoints}>+{r.points}</Text>
-                  </View>
-                ))}
+                <ResultReveal
+                  title="Correct answer"
+                  result={room.lastResult}
+                  question={questionCache[room.lastResult.questionId]}
+                  myStudentId={myStudentId}
+                />
                 <Text style={styles.waitingSubtitle}>
                   Next question in {Math.max(0, Math.ceil(((startsAt ?? now) - now) / 1000))}…
                 </Text>
@@ -278,29 +320,12 @@ export function BattleRoomScreen({ route, navigation }: Props) {
             ))}
             {room.lastResult && (
               <View style={[styles.card, styles.finalResultCard]}>
-                <Text style={styles.revealTitle}>
-                  Final question — correct answer: {room.lastResult.correctOption}
-                </Text>
-                {room.lastResult.results.map((r) => (
-                  <View key={r.studentId} style={styles.revealRow}>
-                    <Text style={styles.revealName} numberOfLines={1}>
-                      {r.studentId === myStudentId ? 'You' : r.name}
-                    </Text>
-                    <View
-                      style={[
-                        styles.revealChip,
-                        !r.answered
-                          ? styles.revealChipNeutral
-                          : r.correct
-                            ? styles.revealChipCorrect
-                            : styles.revealChipWrong,
-                      ]}
-                    >
-                      <Text style={styles.revealChipText}>{r.answered ? r.selectedOption : '—'}</Text>
-                    </View>
-                    <Text style={styles.revealPoints}>+{r.points}</Text>
-                  </View>
-                ))}
+                <ResultReveal
+                  title="Final question — correct answer"
+                  result={room.lastResult}
+                  question={questionCache[room.lastResult.questionId]}
+                  myStudentId={myStudentId}
+                />
               </View>
             )}
           </View>
