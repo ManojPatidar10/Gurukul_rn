@@ -103,6 +103,13 @@ export function ProfileScreen({ navigation }: Props) {
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} />}
         {error && <Text style={styles.error}>{error}</Text>}
+        {/* The profile can fail to load (e.g. a login whose employee/student record no longer
+            exists in this school) - logging out must still be possible, or the user is stuck. */}
+        {!loading && (error || !(employee || student)) && (
+          <Pressable style={styles.logoutButton} onPress={logout}>
+            <Text style={styles.logoutButtonText}>{t('common.logOut')}</Text>
+          </Pressable>
+        )}
         {!loading && !error && (employee || student) && (
           <View style={styles.card}>
             <View style={styles.avatar}>
