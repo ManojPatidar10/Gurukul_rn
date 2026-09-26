@@ -1119,6 +1119,24 @@ export interface BattleRoomQuestion {
   optionD: string;
 }
 
+export type BattleQuestionOutcome = 'ANSWERED' | 'TIMED_OUT';
+
+/**
+ * Revealed once a question closes (answered or timed out), for every participant - never sent for
+ * the question still in play. `answeredByStudentId`/`answeredByName`/`selectedOption`/`correct` are
+ * null when `outcome` is `TIMED_OUT`; `correctOption` is always set.
+ */
+export interface BattleQuestionResult {
+  questionIndex: number;
+  questionId: string;
+  outcome: BattleQuestionOutcome;
+  answeredByStudentId: string | null;
+  answeredByName: string | null;
+  selectedOption: QuizOption | null;
+  correctOption: QuizOption;
+  correct: boolean | null;
+}
+
 export interface BattleRoomState {
   id: string;
   roomCode: string;
@@ -1133,8 +1151,16 @@ export interface BattleRoomState {
   currentQuestionIndex: number;
   participants: BattleRoomParticipant[];
   currentQuestion: BattleRoomQuestion | null;
+  /**
+   * When buzzing opens for currentQuestion. While this is in the future (the reveal pause after the
+   * previous question), hide currentQuestion, show lastResult's banner, and count down to this
+   * instead - the server rejects buzzes until then.
+   */
+  currentQuestionStartsAt: string | null;
   currentBuzzWinnerStudentId: string | null;
+  /** @deprecated Use lastResult.correct - this can point at the wrong question once completed. */
   lastAnswerCorrect: boolean | null;
+  lastResult: BattleQuestionResult | null;
   winnerStudentId: string | null;
   winnerName: string | null;
 }

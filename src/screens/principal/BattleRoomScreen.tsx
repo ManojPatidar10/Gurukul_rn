@@ -1,12 +1,12 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getBattleRoom, startBattleRoom } from '../../api/battleRooms';
 import { sendBattleAnswer, sendBuzz, subscribeToBattleRoom } from '../../api/battleRoomSocket';
 import { serverNow } from '../../api/client';
-import type { BattleRoomState, QuizOption } from '../../api/types';
+import type { BattleQuestionResult, BattleRoomState, QuizOption } from '../../api/types';
 import { CircularCountdown } from '../../components/CircularCountdown';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -24,6 +24,15 @@ const OPTIONS: { key: QuizOption; field: 'optionA' | 'optionB' | 'optionC' | 'op
   { key: 'D', field: 'optionD' },
 ];
 
+function resultBannerText(result: BattleQuestionResult, myStudentId: string): string {
+  if (result.outcome === 'TIMED_OUT') {
+    return `Time's up! Correct answer: ${result.correctOption}`;
+  }
+  const who = result.answeredByStudentId === myStudentId ? 'You' : (result.answeredByName ?? 'Someone');
+  const verdict = result.correct ? 'correct' : 'wrong';
+  return `${who} answered: ${verdict} (correct: ${result.correctOption})`;
+}
+
 export function BattleRoomScreen({ route, navigation }: Props) {
   const { roomId } = route.params;
   const schoolId = useSchoolId();
@@ -32,11 +41,10 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [now, setNow] = useState(() => serverNow());
+  const [hasAnsweredCurrent, setHasAnsweredCurrent] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
-  const prevQuestionIndexRef = useRef<number | undefined>(undefined);
-  const questionFade = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -73,30 +81,22 @@ export function BattleRoomScreen({ route, navigation }: Props) {
     return () => clearInterval(interval);
   }, [room?.status, room?.joinWindowEndsAt]);
 
-  // The backend's lastAnswerCorrect flag doesn't say which question it was for, and can still be
-  // set to the previous result even after currentQuestionIndex has already advanced. If the index
-  // just changed, that result belongs to the question we're leaving - never show it for the new
-  // one. Also fades the question card so moving to the next question reads as a clear transition
-  // instead of the text just silently swapping.
+  // A student can only answer once per question, but the server's next state doesn't arrive
+  // instantly - disable the options as soon as they tap one rather than waiting for the round trip.
   useEffect(() => {
-    if (!room) return;
-    const indexChanged =
-      prevQuestionIndexRef.current !== undefined && prevQuestionIndexRef.current !== room.currentQuestionIndex;
-    prevQuestionIndexRef.current = room.currentQuestionIndex;
+    setHasAnsweredCurrent(false);
+  }, [room?.currentQuestionIndex]);
 
-    if (indexChanged) {
-      setShowFeedback(false);
-      questionFade.setValue(0);
-      Animated.timing(questionFade, { toValue: 1, duration: 250, useNativeDriver: true }).start();
-      return;
-    }
+  const startsAt = room?.currentQuestionStartsAt ? new Date(room.currentQuestionStartsAt).getTime() : null;
+  const inRevealPause = startsAt !== null && startsAt > now;
 
-    if (room.lastAnswerCorrect !== null) {
-      setShowFeedback(true);
-      const timeout = setTimeout(() => setShowFeedback(false), 2200);
-      return () => clearTimeout(timeout);
-    }
-  }, [room?.currentQuestionIndex, room?.lastAnswerCorrect, questionFade]);
+  // While the next question is in its reveal pause, count down to currentQuestionStartsAt so the
+  // question (and buzzing) reappears the moment the server actually allows it.
+  useEffect(() => {
+    if (!inRevealPause) return;
+    const interval = setInterval(() => setNow(serverNow()), 250);
+    return () => clearInterval(interval);
+  }, [inRevealPause]);
 
   const myStudentId = session.ownerId;
   const iWonBuzz = room?.currentBuzzWinnerStudentId === myStudentId;
@@ -104,7 +104,10 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   const buzzWinnerName = room?.participants.find((p) => p.studentId === room.currentBuzzWinnerStudentId)?.name;
 
   const handleBuzz = () => sendBuzz(session.token, schoolId, roomId);
-  const handleAnswer = (option: QuizOption) => sendBattleAnswer(session.token, schoolId, roomId, option);
+  const handleAnswer = (option: QuizOption) => {
+    setHasAnsweredCurrent(true);
+    sendBattleAnswer(session.token, schoolId, roomId, option);
+  };
 
   const handleStartNow = async () => {
     setStarting(true);
@@ -204,18 +207,29 @@ export function BattleRoomScreen({ route, navigation }: Props) {
               })}
             </View>
 
-            {room.currentQuestion ? (
-              <Animated.View style={[styles.card, { opacity: questionFade }]}>
+            {inRevealPause && room.lastResult ? (
+              <View style={styles.card}>
+                <Text
+                  style={
+                    room.lastResult.outcome === 'TIMED_OUT'
+                      ? styles.resultTimedOut
+                      : room.lastResult.correct
+                        ? styles.resultCorrect
+                        : styles.resultWrong
+                  }
+                >
+                  {resultBannerText(room.lastResult, myStudentId)}
+                </Text>
+                <Text style={styles.waitingSubtitle}>
+                  Next question in {Math.max(0, Math.ceil(((startsAt ?? now) - now) / 1000))}…
+                </Text>
+              </View>
+            ) : room.currentQuestion ? (
+              <View style={styles.card}>
                 <Text style={styles.questionIndex}>
                   Question {room.currentQuestionIndex + 1} of {room.questionCount}
                 </Text>
                 <Text style={styles.questionText}>{room.currentQuestion.questionText}</Text>
-
-                {showFeedback && room.lastAnswerCorrect !== null && (
-                  <Text style={room.lastAnswerCorrect ? styles.resultCorrect : styles.resultWrong}>
-                    {room.lastAnswerCorrect ? '✅ Correct!' : '❌ Not quite.'}
-                  </Text>
-                )}
 
                 {!room.currentBuzzWinnerStudentId ? (
                   <Pressable style={styles.buzzButton} onPress={handleBuzz}>
@@ -224,7 +238,12 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                 ) : iWonBuzz ? (
                   <View style={styles.optionsList}>
                     {OPTIONS.map(({ key, field }) => (
-                      <Pressable key={key} style={styles.optionButton} onPress={() => handleAnswer(key)}>
+                      <Pressable
+                        key={key}
+                        style={[styles.optionButton, hasAnsweredCurrent && styles.optionButtonDisabled]}
+                        onPress={() => handleAnswer(key)}
+                        disabled={hasAnsweredCurrent}
+                      >
                         <Text style={styles.optionKey}>{key}</Text>
                         <Text style={styles.optionText}>{room.currentQuestion![field]}</Text>
                       </Pressable>
@@ -233,7 +252,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                 ) : (
                   someoneElseBuzzed && <Text style={styles.buzzWinnerText}>{buzzWinnerName} is answering…</Text>
                 )}
-              </Animated.View>
+              </View>
             ) : (
               <View style={styles.card}>
                 <ActivityIndicator color={gameColors.ember} />
@@ -255,6 +274,20 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                   {p.name} — {p.correctCount} correct
                 </Text>
               ))}
+            {room.lastResult && (
+              <Text
+                style={[
+                  styles.finalResultText,
+                  room.lastResult.outcome === 'TIMED_OUT'
+                    ? styles.resultTimedOut
+                    : room.lastResult.correct
+                      ? styles.resultCorrect
+                      : styles.resultWrong,
+                ]}
+              >
+                Final question — {resultBannerText(room.lastResult, myStudentId)}
+              </Text>
+            )}
           </View>
         )}
 
@@ -312,8 +345,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     alignSelf: 'flex-start',
   },
-  resultCorrect: { color: colors.success, fontWeight: '700', marginBottom: spacing.md },
-  resultWrong: { color: colors.error, fontWeight: '700', marginBottom: spacing.md },
+  resultCorrect: { color: colors.success, fontWeight: '700', marginBottom: spacing.md, textAlign: 'center' },
+  resultWrong: { color: colors.error, fontWeight: '700', marginBottom: spacing.md, textAlign: 'center' },
+  resultTimedOut: { color: colors.textMuted, fontWeight: '700', marginBottom: spacing.md, textAlign: 'center' },
+  finalResultText: { marginTop: spacing.md },
   buzzButton: {
     width: '100%',
     backgroundColor: gameColors.ember,
@@ -332,6 +367,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.md,
   },
+  optionButtonDisabled: { opacity: 0.5 },
   optionKey: { fontWeight: '800', color: gameColors.ember, width: 20 },
   optionText: { color: colors.textPrimary, fontSize: 14, flex: 1 },
   table: {
