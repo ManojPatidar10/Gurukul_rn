@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getBattleRoom, startBattleRoom } from '../../api/battleRooms';
-import { sendBattleAnswer, sendBuzz, subscribeToBattleRoom } from '../../api/battleRoomSocket';
+import { sendBattleAnswer, subscribeToBattleRoom } from '../../api/battleRoomSocket';
 import { serverNow } from '../../api/client';
-import type { BattleQuestionResult, BattleRoomState, QuizOption } from '../../api/types';
+import type { BattleRoomState, QuizOption } from '../../api/types';
 import { CircularCountdown } from '../../components/CircularCountdown';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -23,15 +23,6 @@ const OPTIONS: { key: QuizOption; field: 'optionA' | 'optionB' | 'optionC' | 'op
   { key: 'C', field: 'optionC' },
   { key: 'D', field: 'optionD' },
 ];
-
-function resultBannerText(result: BattleQuestionResult, myStudentId: string): string {
-  if (result.outcome === 'TIMED_OUT') {
-    return `Time's up! Correct answer: ${result.correctOption}`;
-  }
-  const who = result.answeredByStudentId === myStudentId ? 'You' : (result.answeredByName ?? 'Someone');
-  const verdict = result.correct ? 'correct' : 'wrong';
-  return `${who} answered: ${verdict} (correct: ${result.correctOption})`;
-}
 
 export function BattleRoomScreen({ route, navigation }: Props) {
   const { roomId } = route.params;
@@ -82,28 +73,27 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   }, [room?.status, room?.joinWindowEndsAt]);
 
   // A student can only answer once per question, but the server's next state doesn't arrive
-  // instantly - disable the options as soon as they tap one rather than waiting for the round trip.
+  // instantly - lock the options as soon as they tap one rather than waiting for the round trip.
   useEffect(() => {
     setHasAnsweredCurrent(false);
   }, [room?.currentQuestionIndex]);
 
   const startsAt = room?.currentQuestionStartsAt ? new Date(room.currentQuestionStartsAt).getTime() : null;
+  const endsAt = room?.currentQuestionEndsAt ? new Date(room.currentQuestionEndsAt).getTime() : null;
   const inRevealPause = startsAt !== null && startsAt > now;
 
-  // While the next question is in its reveal pause, count down to currentQuestionStartsAt so the
-  // question (and buzzing) reappears the moment the server actually allows it.
+  // Ticks every 250ms whenever there's a live countdown to track (the reveal pause before a
+  // question opens, or the answer window while one is live) so both count down smoothly.
   useEffect(() => {
-    if (!inRevealPause) return;
+    if (!room || room.status !== 'ACTIVE') return;
     const interval = setInterval(() => setNow(serverNow()), 250);
     return () => clearInterval(interval);
-  }, [inRevealPause]);
+  }, [room?.status, room?.currentQuestionIndex]);
 
   const myStudentId = session.ownerId;
-  const iWonBuzz = room?.currentBuzzWinnerStudentId === myStudentId;
-  const someoneElseBuzzed = !!room?.currentBuzzWinnerStudentId && !iWonBuzz;
-  const buzzWinnerName = room?.participants.find((p) => p.studentId === room.currentBuzzWinnerStudentId)?.name;
+  const me = room?.participants.find((p) => p.studentId === myStudentId);
+  const myAnswered = hasAnsweredCurrent || me?.answeredCurrentQuestion === true;
 
-  const handleBuzz = () => sendBuzz(session.token, schoolId, roomId);
   const handleAnswer = (option: QuizOption) => {
     setHasAnsweredCurrent(true);
     sendBattleAnswer(session.token, schoolId, roomId, option);
@@ -191,17 +181,16 @@ export function BattleRoomScreen({ route, navigation }: Props) {
             <View style={styles.table}>
               {room.participants.map((p) => {
                 const isMe = p.studentId === myStudentId;
-                const hasBuzz = p.studentId === room.currentBuzzWinnerStudentId;
                 return (
-                  <View key={p.studentId} style={[styles.seat, hasBuzz && styles.seatBuzzed]}>
-                    <View style={[styles.seatAvatar, hasBuzz && styles.seatAvatarBuzzed]}>
+                  <View key={p.studentId} style={[styles.seat, p.answeredCurrentQuestion && styles.seatAnswered]}>
+                    <View style={[styles.seatAvatar, p.answeredCurrentQuestion && styles.seatAvatarAnswered]}>
                       <Text style={styles.seatAvatarText}>{p.name.trim().charAt(0).toUpperCase()}</Text>
                     </View>
                     <Text style={styles.seatName} numberOfLines={1}>
                       {isMe ? 'You' : p.name}
                     </Text>
-                    <Text style={styles.seatScore}>{p.correctCount} pts</Text>
-                    {hasBuzz && <Text style={styles.seatBuzzLabel}>BUZZED</Text>}
+                    <Text style={styles.seatScore}>{p.points} pts</Text>
+                    {p.answeredCurrentQuestion && <Text style={styles.seatAnsweredLabel}>LOCKED IN</Text>}
                   </View>
                 );
               })}
@@ -209,49 +198,64 @@ export function BattleRoomScreen({ route, navigation }: Props) {
 
             {inRevealPause && room.lastResult ? (
               <View style={styles.card}>
-                <Text
-                  style={
-                    room.lastResult.outcome === 'TIMED_OUT'
-                      ? styles.resultTimedOut
-                      : room.lastResult.correct
-                        ? styles.resultCorrect
-                        : styles.resultWrong
-                  }
-                >
-                  {resultBannerText(room.lastResult, myStudentId)}
-                </Text>
+                <Text style={styles.revealTitle}>Correct answer: {room.lastResult.correctOption}</Text>
+                {room.lastResult.results.map((r) => (
+                  <View key={r.studentId} style={styles.revealRow}>
+                    <Text style={styles.revealName} numberOfLines={1}>
+                      {r.studentId === myStudentId ? 'You' : r.name}
+                    </Text>
+                    <View
+                      style={[
+                        styles.revealChip,
+                        !r.answered
+                          ? styles.revealChipNeutral
+                          : r.correct
+                            ? styles.revealChipCorrect
+                            : styles.revealChipWrong,
+                      ]}
+                    >
+                      <Text style={styles.revealChipText}>{r.answered ? r.selectedOption : '—'}</Text>
+                    </View>
+                    <Text style={styles.revealPoints}>+{r.points}</Text>
+                  </View>
+                ))}
                 <Text style={styles.waitingSubtitle}>
                   Next question in {Math.max(0, Math.ceil(((startsAt ?? now) - now) / 1000))}…
                 </Text>
               </View>
             ) : room.currentQuestion ? (
               <View style={styles.card}>
-                <Text style={styles.questionIndex}>
-                  Question {room.currentQuestionIndex + 1} of {room.questionCount}
-                </Text>
+                <View style={styles.questionHeaderRow}>
+                  <Text style={styles.questionIndex}>
+                    Question {room.currentQuestionIndex + 1} of {room.questionCount}
+                  </Text>
+                  {endsAt !== null && (
+                    <CircularCountdown
+                      totalSeconds={10}
+                      remainingSeconds={Math.max(0, (endsAt - now) / 1000)}
+                      size={32}
+                      strokeWidth={4}
+                      color={gameColors.ember}
+                      trackColor={colors.border}
+                    />
+                  )}
+                </View>
                 <Text style={styles.questionText}>{room.currentQuestion.questionText}</Text>
 
-                {!room.currentBuzzWinnerStudentId ? (
-                  <Pressable style={styles.buzzButton} onPress={handleBuzz}>
-                    <Text style={styles.buzzButtonText}>BUZZ IN</Text>
-                  </Pressable>
-                ) : iWonBuzz ? (
-                  <View style={styles.optionsList}>
-                    {OPTIONS.map(({ key, field }) => (
-                      <Pressable
-                        key={key}
-                        style={[styles.optionButton, hasAnsweredCurrent && styles.optionButtonDisabled]}
-                        onPress={() => handleAnswer(key)}
-                        disabled={hasAnsweredCurrent}
-                      >
-                        <Text style={styles.optionKey}>{key}</Text>
-                        <Text style={styles.optionText}>{room.currentQuestion![field]}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                ) : (
-                  someoneElseBuzzed && <Text style={styles.buzzWinnerText}>{buzzWinnerName} is answering…</Text>
-                )}
+                <View style={styles.optionsList}>
+                  {OPTIONS.map(({ key, field }) => (
+                    <Pressable
+                      key={key}
+                      style={[styles.optionButton, myAnswered && styles.optionButtonDisabled]}
+                      onPress={() => handleAnswer(key)}
+                      disabled={myAnswered}
+                    >
+                      <Text style={styles.optionKey}>{key}</Text>
+                      <Text style={styles.optionText}>{room.currentQuestion![field]}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                {myAnswered && <Text style={styles.buzzWinnerText}>Waiting for others…</Text>}
               </View>
             ) : (
               <View style={styles.card}>
@@ -267,26 +271,37 @@ export function BattleRoomScreen({ route, navigation }: Props) {
           <View style={styles.card}>
             <FontAwesome5 name="trophy" size={28} color={gameColors.gold} />
             <Text style={styles.waitingTitle}>{room.winnerName ?? 'Battle'} wins!</Text>
-            {[...room.participants]
-              .sort((a, b) => b.correctCount - a.correctCount)
-              .map((p) => (
-                <Text key={p.studentId} style={styles.participantRow}>
-                  {p.name} — {p.correctCount} correct
-                </Text>
-              ))}
-            {room.lastResult && (
-              <Text
-                style={[
-                  styles.finalResultText,
-                  room.lastResult.outcome === 'TIMED_OUT'
-                    ? styles.resultTimedOut
-                    : room.lastResult.correct
-                      ? styles.resultCorrect
-                      : styles.resultWrong,
-                ]}
-              >
-                Final question — {resultBannerText(room.lastResult, myStudentId)}
+            {room.participants.map((p) => (
+              <Text key={p.studentId} style={styles.participantRow}>
+                {p.name} — {p.points} pts ({p.correctCount} correct)
               </Text>
+            ))}
+            {room.lastResult && (
+              <View style={[styles.card, styles.finalResultCard]}>
+                <Text style={styles.revealTitle}>
+                  Final question — correct answer: {room.lastResult.correctOption}
+                </Text>
+                {room.lastResult.results.map((r) => (
+                  <View key={r.studentId} style={styles.revealRow}>
+                    <Text style={styles.revealName} numberOfLines={1}>
+                      {r.studentId === myStudentId ? 'You' : r.name}
+                    </Text>
+                    <View
+                      style={[
+                        styles.revealChip,
+                        !r.answered
+                          ? styles.revealChipNeutral
+                          : r.correct
+                            ? styles.revealChipCorrect
+                            : styles.revealChipWrong,
+                      ]}
+                    >
+                      <Text style={styles.revealChipText}>{r.answered ? r.selectedOption : '—'}</Text>
+                    </View>
+                    <Text style={styles.revealPoints}>+{r.points}</Text>
+                  </View>
+                ))}
+              </View>
             )}
           </View>
         )}
@@ -336,7 +351,13 @@ const styles = StyleSheet.create({
   },
   startNowButtonText: { color: colors.white, fontWeight: '800', fontSize: 15 },
   startError: { color: colors.error, fontSize: 12.5, marginTop: spacing.sm, textAlign: 'center' },
-  questionIndex: { fontSize: 12, color: colors.textMuted, alignSelf: 'flex-start' },
+  questionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  questionIndex: { fontSize: 12, color: colors.textMuted },
   questionText: {
     fontSize: 17,
     fontWeight: '700',
@@ -345,18 +366,28 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     alignSelf: 'flex-start',
   },
-  resultCorrect: { color: colors.success, fontWeight: '700', marginBottom: spacing.md, textAlign: 'center' },
-  resultWrong: { color: colors.error, fontWeight: '700', marginBottom: spacing.md, textAlign: 'center' },
-  resultTimedOut: { color: colors.textMuted, fontWeight: '700', marginBottom: spacing.md, textAlign: 'center' },
-  finalResultText: { marginTop: spacing.md },
-  buzzButton: {
-    width: '100%',
-    backgroundColor: gameColors.ember,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.lg,
+  revealTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
+  revealRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
   },
-  buzzButtonText: { color: colors.white, fontWeight: '800', fontSize: 20, letterSpacing: 1 },
+  revealName: { flex: 1, fontSize: 14, color: colors.textPrimary },
+  revealChip: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  revealChipNeutral: { backgroundColor: colors.surfaceMuted },
+  revealChipCorrect: { backgroundColor: colors.success },
+  revealChipWrong: { backgroundColor: colors.error },
+  revealChipText: { color: colors.white, fontWeight: '800', fontSize: 13 },
+  revealPoints: { fontSize: 13, fontWeight: '700', color: colors.textMuted, width: 36, textAlign: 'right' },
+  finalResultCard: { width: '100%', marginTop: spacing.md, ...softShadow },
   buzzWinnerText: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic', paddingVertical: spacing.md },
   optionsList: { width: '100%', gap: spacing.sm },
   optionButton: {
@@ -386,7 +417,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     alignItems: 'center',
   },
-  seatBuzzed: { borderColor: gameColors.ember, backgroundColor: '#FFF1EC' },
+  seatAnswered: { borderColor: gameColors.jade, backgroundColor: '#EAFBF3' },
   seatAvatar: {
     width: 36,
     height: 36,
@@ -396,14 +427,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
-  seatAvatarBuzzed: { backgroundColor: gameColors.ember },
+  seatAvatarAnswered: { backgroundColor: gameColors.jade },
   seatAvatarText: { color: colors.primary, fontWeight: '800', fontSize: 14 },
   seatName: { fontSize: 12.5, fontWeight: '700', color: colors.textPrimary, maxWidth: 84 },
   seatScore: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
-  seatBuzzLabel: {
+  seatAnsweredLabel: {
     fontSize: 9,
     fontWeight: '800',
-    color: gameColors.ember,
+    color: gameColors.jade,
     letterSpacing: 0.5,
     marginTop: 2,
   },

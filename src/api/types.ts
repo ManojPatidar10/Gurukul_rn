@@ -1107,7 +1107,11 @@ export type BattleRoomStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 export interface BattleRoomParticipant {
   studentId: string;
   name: string;
+  /** Total score: each correct answer earns 1-10 by speed, wrong answers 0. */
+  points: number;
   correctCount: number;
+  /** Whether they've locked in an answer to currentQuestion - never whether it's right. */
+  answeredCurrentQuestion: boolean;
 }
 
 export interface BattleRoomQuestion {
@@ -1119,22 +1123,24 @@ export interface BattleRoomQuestion {
   optionD: string;
 }
 
-export type BattleQuestionOutcome = 'ANSWERED' | 'TIMED_OUT';
+/** One participant's outcome on a closed question. `selectedOption`/`responseMs` are null when they didn't answer in time. */
+export interface BattlePlayerResult {
+  studentId: string;
+  name: string;
+  answered: boolean;
+  selectedOption: QuizOption | null;
+  correct: boolean;
+  points: number;
+  responseMs: number | null;
+}
 
-/**
- * Revealed once a question closes (answered or timed out), for every participant - never sent for
- * the question still in play. `answeredByStudentId`/`answeredByName`/`selectedOption`/`correct` are
- * null when `outcome` is `TIMED_OUT`; `correctOption` is always set.
- */
+/** Revealed once a question closes, for every participant - never sent for the question still in play. */
 export interface BattleQuestionResult {
   questionIndex: number;
   questionId: string;
-  outcome: BattleQuestionOutcome;
-  answeredByStudentId: string | null;
-  answeredByName: string | null;
-  selectedOption: QuizOption | null;
   correctOption: QuizOption;
-  correct: boolean | null;
+  /** One row per participant, fastest correct answer first. */
+  results: BattlePlayerResult[];
 }
 
 export interface BattleRoomState {
@@ -1149,17 +1155,17 @@ export interface BattleRoomState {
   joinWindowEndsAt: string;
   questionCount: number;
   currentQuestionIndex: number;
+  /** Ordered by points, highest first. */
   participants: BattleRoomParticipant[];
   currentQuestion: BattleRoomQuestion | null;
   /**
-   * When buzzing opens for currentQuestion. While this is in the future (the reveal pause after the
-   * previous question), hide currentQuestion, show lastResult's banner, and count down to this
-   * instead - the server rejects buzzes until then.
+   * When answering opens for currentQuestion. While this is in the future (the reveal pause after
+   * the previous question), hide currentQuestion, show lastResult, and count down to this instead -
+   * the server rejects answers until then.
    */
   currentQuestionStartsAt: string | null;
-  currentBuzzWinnerStudentId: string | null;
-  /** @deprecated Use lastResult.correct - this can point at the wrong question once completed. */
-  lastAnswerCorrect: boolean | null;
+  /** When answering closes for currentQuestion - the question closes earlier if everyone answers. */
+  currentQuestionEndsAt: string | null;
   lastResult: BattleQuestionResult | null;
   winnerStudentId: string | null;
   winnerName: string | null;

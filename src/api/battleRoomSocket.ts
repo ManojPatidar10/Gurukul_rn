@@ -27,11 +27,6 @@ export async function subscribeToBattleRoom(
   };
 }
 
-export async function sendBuzz(token: string, schoolId: string, roomId: string) {
-  const activeClient = await ensureClient(token, schoolId);
-  activeClient.publish({ destination: `/app/battle-rooms/${roomId}/buzz`, body: '' });
-}
-
 export async function sendBattleAnswer(
   token: string,
   schoolId: string,
