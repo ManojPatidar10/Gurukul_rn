@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import { registerDeviceToken } from '../api/notifications';
+import { FEATURE_FLAGS } from '../config/featureFlags';
 import { navigationRef } from '../navigation/navigationRef';
 
 Notifications.setNotificationHandler({
@@ -72,7 +73,7 @@ export function usePushNotifications(schoolId: string | null, sessionKey: string
       if (!navigationRef.isReady() || !data?.type) return;
       if (data.type === 'NEW_MESSAGE') {
         navigationRef.navigate('ConversationsList');
-      } else if (data.type === 'SCHEDULED_CALL_STARTED') {
+      } else if (data.type === 'SCHEDULED_CALL_STARTED' && FEATURE_FLAGS.videoCalls) {
         navigationRef.navigate('ScheduledCalls');
       }
       // INCOMING_CALL and ANNOUNCEMENT: no dedicated deep link (a still-ringing call is handled

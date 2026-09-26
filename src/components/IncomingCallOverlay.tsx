@@ -7,6 +7,7 @@ import { getEmployee } from '../api/employees';
 import { getStudent } from '../api/students';
 import type { Session } from '../api/authStorage';
 import type { CallEvent } from '../api/types';
+import { FEATURE_FLAGS } from '../config/featureFlags';
 import { navigationRef } from '../navigation/navigationRef';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 
@@ -27,6 +28,7 @@ export function IncomingCallOverlay({ session, schoolId }: Props) {
   const incomingCallLogIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!FEATURE_FLAGS.videoCalls) return;
     let unsubscribe: (() => void) | undefined;
     subscribeToMyCallEvents(session.token, schoolId, session.ownerType, session.ownerId, (event) => {
       if (event.type === 'INCOMING_CALL') {

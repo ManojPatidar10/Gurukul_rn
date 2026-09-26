@@ -14,6 +14,7 @@ import { FeatureTile } from '../../components/FeatureTile';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatSummaryCard } from '../../components/StatSummaryCard';
+import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, spacing } from '../../theme/colors';
@@ -159,6 +160,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   ];
 
   const visibleFeatures = featureActions
+    .filter((feature) => FEATURE_FLAGS.videoCalls || feature.id !== 'calls')
     .filter((feature) => {
       if (feature.id === 'myClassSection' || feature.id === 'myClassFees') return isTeacher && !!myHomeroomSection;
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';

@@ -17,6 +17,7 @@ import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
@@ -183,13 +184,15 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           </View>
           {!isSelf && (
             <View style={styles.heroActions}>
-              <Pressable style={styles.iconButton} onPress={handleVideoCall} disabled={calling}>
-                {calling ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <FontAwesome5 name="video" size={16} color={colors.white} />
-                )}
-              </Pressable>
+              {FEATURE_FLAGS.videoCalls && (
+                <Pressable style={styles.iconButton} onPress={handleVideoCall} disabled={calling}>
+                  {calling ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <FontAwesome5 name="video" size={16} color={colors.white} />
+                  )}
+                </Pressable>
+              )}
               <Pressable style={styles.iconButton} onPress={handleMessage} disabled={messaging}>
                 {messaging ? (
                   <ActivityIndicator color={colors.white} size="small" />
