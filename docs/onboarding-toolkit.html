@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>School Onboarding Toolkit — Gurukul</title>
+  <meta name="description" content="A step-by-step toolkit for schools joining Gurukul: register your school, set up classes and staff, invite teachers, students and parents, and run the school day to day." />
+  <link rel="icon" href="./assets/favicon.png" />
+  <style>
+    :root {
+      --primary: #7C3AED;
+      --primary-dark: #5B21B6;
+      --magenta: #C026D3;
+      --bg: #F6F3FC;
+      --surface: #FFFFFF;
+      --tint: #EFE8FC;
+      --text: #1F1B2E;
+      --text-muted: #6B6478;
+      --border: #E6DFF7;
+      --ok: #15803D;
+      --ok-tint: #E8F6EC;
+      --warn: #B45309;
+      --warn-tint: #FDF3E4;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { max-width: 100%; display: block; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+    /* ---------- Top nav (same as homepage) ---------- */
+    header.nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; max-width: 1080px; margin: 0 auto;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: var(--text); }
+    .brand:hover { text-decoration: none; }
+    .brand img { width: 36px; height: 36px; border-radius: 10px; }
+    .nav-links { display: flex; gap: 28px; font-weight: 600; font-size: 14px; }
+    .nav-links a { color: var(--text-muted); }
+    .nav-links a:hover { color: var(--primary); text-decoration: none; }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      background: linear-gradient(135deg, var(--primary), var(--magenta));
+      color: #fff; padding: 44px 24px 52px; border-radius: 0 0 32px 32px;
+    }
+    .hero-inner { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1.3fr 1fr; gap: 32px; align-items: center; }
+    .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .85; margin: 0 0 10px; }
+    .hero h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; margin: 0 0 14px; line-height: 1.1; }
+    .hero p.lede { font-size: clamp(15px, 2vw, 18px); color: rgba(255,255,255,.92); margin: 0 0 22px; max-width: 34em; }
+    .hero-facts { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 24px; padding: 0; list-style: none; }
+    .hero-facts li { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 600; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; font-family: inherit; }
+    .btn:hover { text-decoration: none; }
+    .btn-light { background: #fff; color: var(--primary); }
+    .btn-light:hover { background: #F3EEFC; }
+    .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.6); }
+    .btn-outline:hover { background: rgba(255,255,255,.12); }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-phones { display: flex; justify-content: center; gap: 14px; }
+    .hero-phones img { width: 46%; max-width: 200px; border-radius: 22px; box-shadow: 0 24px 48px rgba(31,27,46,.35); }
+    .hero-phones img:nth-child(2) { transform: translateY(22px); }
+
+    /* ---------- Layout ---------- */
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    section { padding: 48px 0 8px; }
+    .section-title { font-size: clamp(24px, 4vw, 32px); font-weight: 800; margin: 0 0 6px; }
+    .section-sub { color: var(--text-muted); margin: 0 0 24px; max-width: 44em; }
+
+    /* ---------- Sticky stage bar ---------- */
+    .stagebar {
+      position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+      background: rgba(246,243,252,.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .stagebar-inner { max-width: 1080px; margin: 0 auto; padding: 10px 24px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+    .stagebar-inner::-webkit-scrollbar { display: none; }
+    .stagebar a {
+      flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px; border-radius: 999px; font-size: 13.5px; font-weight: 700;
+      color: var(--text-muted); background: var(--surface); border: 1px solid var(--border);
+    }
+    .stagebar a:hover { color: var(--primary); border-color: var(--primary); text-decoration: none; }
+    .stagebar a.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .stagebar .n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--tint); color: var(--primary-dark); font-size: 11.5px; }
+    .stagebar a.active .n { background: rgba(255,255,255,.25); color: #fff; }
+
+    /* ---------- Roles ---------- */
+    .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .role {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 22px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .role .ico { width: 44px; height: 44px; border-radius: 14px; background: var(--tint); display: grid; place-items: center; font-size: 22px; }
+    .role h3 { margin: 4px 0 0; font-size: 17px; }
+    .role p { margin: 0; color: var(--text-muted); font-size: 14px; }
+    .role .go { margin-top: auto; padding-top: 6px; font-weight: 700; font-size: 14px; }
+
+    /* ---------- Prep kit ---------- */
+    .kit { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .kit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 22px 24px; }
+    .kit-card h3 { margin: 0 0 4px; font-size: 16px; }
+    .kit-card .when { font-size: 12.5px; color: var(--text-muted); margin: 0 0 12px; font-weight: 600; }
+    .kit-card ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
+    .kit-card li { margin: 4px 0; }
+    .kit-card li small { color: var(--text-muted); }
+
+    /* ---------- Stage ---------- */
+    .stage { padding-top: 56px; }
+    .stage-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 22px; }
+    .stage-num {
+      flex: 0 0 auto; width: 52px; height: 52px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--magenta)); color: #fff;
+      display: grid; place-items: center; font-weight: 800; font-size: 22px;
+    }
+    .stage-head h2 { margin: 0; font-size: clamp(22px, 3.6vw, 30px); font-weight: 800; line-height: 1.15; }
+    .stage-head p { margin: 4px 0 0; color: var(--text-muted); }
+    .who { display: inline-block; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--primary-dark); background: var(--tint); border-radius: 999px; padding: 3px 10px; margin-bottom: 6px; }
+
+    .step {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
+      padding: 26px; margin-bottom: 18px;
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: start;
+    }
+    .step.no-shots { grid-template-columns: minmax(0, 1fr); }
+    .step-label { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--magenta); margin: 0 0 4px; }
+    .step h3 { margin: 0 0 10px; font-size: 20px; line-height: 1.25; }
+    .step p { margin: 0 0 12px; }
+    .step ol, .step ul { margin: 0 0 14px; padding-left: 20px; }
+    .step li { margin: 5px 0; }
+
+    .path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 13.5px; }
+    .path span { background: var(--tint); color: var(--primary-dark); border-radius: 8px; padding: 3px 10px; font-weight: 700; }
+    .path i { font-style: normal; color: var(--text-muted); }
+
+    .tap { font-weight: 700; color: var(--primary-dark); background: var(--tint); border-radius: 6px; padding: 0 6px; white-space: nowrap; }
+
+    .note { border-radius: 14px; padding: 12px 14px; font-size: 14px; margin: 0 0 12px; display: flex; gap: 10px; }
+    .note b { flex: 0 0 auto; }
+    .note.tip { background: var(--tint); }
+    .note.warn { background: var(--warn-tint); color: #6B3A06; }
+    .done { background: var(--ok-tint); color: #14532D; border-radius: 14px; padding: 10px 14px; font-size: 14px; font-weight: 600; display: flex; gap: 10px; align-items: flex-start; margin: 0; }
+    .done::before { content: "✓"; flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center; font-size: 12px; margin-top: 1px; }
+
+    .shots { display: flex; gap: 14px; }
+    .shot { width: 200px; margin: 0; }
+    .shot img { width: 100%; border-radius: 22px; border: 6px solid #1F1B2E; box-shadow: 0 16px 32px -12px rgba(31,27,46,.35); background: #fff; cursor: zoom-in; }
+    .shot figcaption { font-size: 12.5px; color: var(--text-muted); text-align: center; margin-top: 8px; }
+
+    /* ---------- Gallery ---------- */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 20px; }
+    .gallery .shot { width: auto; }
+    .gallery figcaption b { display: block; color: var(--text); font-size: 13.5px; }
+
+    /* ---------- Checklist ---------- */
+    .checklist { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 26px; }
+    .cl-top { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .progress { flex: 1 1 240px; }
+    .progress-bar { height: 10px; background: var(--tint); border-radius: 999px; overflow: hidden; }
+    .progress-bar div { height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), var(--magenta)); transition: width .25s ease; }
+    .progress-text { font-size: 13.5px; color: var(--text-muted); margin-top: 6px; font-weight: 600; }
+    .cl-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-soft { background: var(--tint); color: var(--primary-dark); font-size: 14px; padding: 9px 16px; }
+    .btn-soft:hover { background: #E4D9FA; }
+    .cl-group { margin-top: 14px; }
+    .cl-group h4 { margin: 0 0 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+    .cl-item { display: flex; gap: 12px; align-items: flex-start; padding: 9px 10px; border-radius: 12px; cursor: pointer; }
+    .cl-item:hover { background: var(--bg); }
+    .cl-item input { width: 20px; height: 20px; accent-color: var(--primary); margin: 2px 0 0; flex: 0 0 auto; cursor: pointer; }
+    .cl-item span { font-size: 14.5px; }
+    .cl-item input:checked + span { color: var(--text-muted); text-decoration: line-through; }
+
+    /* ---------- FAQ ---------- */
+    .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 0 20px; margin-bottom: 10px; }
+    .faq summary { cursor: pointer; font-weight: 700; padding: 16px 0; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; color: var(--primary); font-size: 20px; line-height: 1; }
+    .faq details[open] summary::after { content: "–"; }
+    .faq details p { margin: 0 0 16px; color: var(--text-muted); }
+
+    .cta { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 34px 28px; text-align: center; margin-top: 8px; }
+    .cta .hero-actions { justify-content: center; }
+    .cta .btn-light { background: var(--tint); color: var(--primary-dark); }
+
+    footer { padding: 36px 24px 28px; text-align: center; color: var(--text-muted); font-size: 13.5px; }
+    .footer-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
+    .footer-links a { color: var(--text); font-weight: 600; }
+
+    /* ---------- Lightbox ---------- */
+    .lightbox { position: fixed; inset: 0; background: rgba(20,16,32,.86); display: grid; place-items: center; z-index: 50; padding: 24px; cursor: zoom-out; }
+    .lightbox img { max-height: 92vh; width: auto; border-radius: 24px; border: 6px solid #1F1B2E; }
+
+    @media (max-width: 860px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-phones { display: none; }
+      .step { grid-template-columns: minmax(0, 1fr); }
+      .shots { overflow-x: auto; padding-bottom: 6px; }
+      .shot { flex: 0 0 170px; width: 170px; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .step { padding: 20px; }
+      .wrap { padding: 0 16px; }
+      .stagebar-inner { padding: 10px 16px; }
+    }
+    @media print {
+      header.nav, .hero-actions, .stagebar, .cl-actions, footer, .cta, .lightbox { display: none !important; }
+      body { background: #fff; }
+      .hero { background: none; color: var(--text); border-radius: 0; padding: 0 0 12px; }
+      .hero p.lede { color: var(--text-muted); }
+      .hero-facts li { border-color: var(--border); }
+      .step, .kit-card, .role, .checklist { break-inside: avoid; box-shadow: none; }
+      .shot img { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <a class="brand" href="./index.html">
+      <img src="./assets/icon.png" alt="Gurukul logo" />
+      Gurukul
+    </a>
+    <nav class="nav-links">
+      <a href="./index.html#features">Features</a>
+      <a href="./onboarding-toolkit.html" style="color: var(--primary);">Onboarding toolkit</a>
+      <a href="./money-features.html">How fees &amp; payroll work</a>
+      <a href="./index.html#contact">Contact</a>
+    </nav>
+  </header>
+
+  <section class="hero" style="padding-top: 44px;">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">School onboarding toolkit</p>
+        <h1>Get your school live on Gurukul in an afternoon.</h1>
+        <p class="lede">A walkthrough of every step, from registering your school to the first morning attendance, with real screens from the app. Follow it in order, or jump to the part for your role.</p>
+        <ul class="hero-facts">
+          <li>📋 4 stages</li>
+          <li>⏱ About 2–3 hours for the admin</li>
+          <li>📱 Android app · English &amp; हिन्दी</li>
+        </ul>
+        <div class="hero-actions">
+          <a class="btn btn-light" href="#prepare">Start with the prep kit</a>
+          <a class="btn btn-outline" href="#checklist">Open the checklist</a>
+        </div>
+      </div>
+      <div class="hero-phones" aria-hidden="true">
+        <img src="./assets/toolkit/01-welcome.jpg" alt="" />
+        <img src="./assets/toolkit/12-student-home.jpg" alt="" />
+      </div>
+    </div>
+  </section>
+
+  <nav class="stagebar" aria-label="Toolkit sections">
+    <div class="stagebar-inner">
+      <a href="#prepare"><span class="n">0</span>Prepare</a>
+      <a href="#stage-1"><span class="n">1</span>Register</a>
+      <a href="#stage-2"><span class="n">2</span>Build your school</a>
+      <a href="#stage-3"><span class="n">3</span>Invite people</a>
+      <a href="#stage-4"><span class="n">4</span>Run day to day</a>
+      <a href="#students-parents"><span class="n">★</span>What students see</a>
+      <a href="#checklist"><span class="n">✓</span>Checklist</a>
+      <a href="#faq"><span class="n">?</span>FAQ</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+
+    <!-- ================= Roles ================= -->
+    <section id="roles">
+      <h2 class="section-title">Who does what</h2>
+      <p class="section-sub">Gurukul has four kinds of accounts. The school admin sets everything up first, then everyone else joins in a few minutes.</p>
+      <div class="roles">
+        <div class="role">
+          <div class="ico">🏫</div>
+          <h3>School admin / Principal</h3>
+          <p>Registers the school, adds classes, students and staff, sets up fees and payroll, and approves everyone who joins.</p>
+          <a class="go" href="#stage-1">Stages 1–4 →</a>
+        </div>
+        <div class="role">
+          <div class="ico">👩‍🏫</div>
+          <h3>Teacher</h3>
+          <p>Joins with an invite code from the admin, then takes attendance, creates assessments and builds quizzes.</p>
+          <a class="go" href="#step-teacher-invite">Joining as a teacher →</a>
+        </div>
+        <div class="role">
+          <div class="ico">🎒</div>
+          <h3>Student</h3>
+          <p>Signs in with the phone number on their school record and sees classes, fees, attendance, report cards and games.</p>
+          <a class="go" href="#students-parents">What students see →</a>
+        </div>
+        <div class="role">
+          <div class="ico">👨‍👩‍👧</div>
+          <h3>Parent</h3>
+          <p>Links to their child with the child's registration number and the contact number the school has on file.</p>
+          <a class="go" href="#step-parent">Joining as a parent →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Stage 0: Prepare ================= -->
+    <section id="prepare" class="stage">
+      <div class="stage-head">
+        <div class="stage-num">0</div>
+        <div>
+          <span class="who">Admin · before you open the app</span>
+          <h2>Prepare your details</h2>
+          <p>Setup goes fastest if you collect these first. A simple spreadsheet is enough.</p>
+        </div>
+      </div>
+      <div class="kit">
+        <div class="kit-card">
+          <h3>🏫 School details</h3>
+          <p class="when">Needed in Stage 1 · about 5 minutes</p>
+          <ul>
+            <li>School name and full address</li>
+            <li>City, state and 6-digit pincode</li>
+            <li>Contact email and a 10-digit contact phone</li>
+            <li>Principal's name and phone, and director's name</li>
+            <li>The admin's own phone number <small>(needs WhatsApp, because that's where sign-in codes go)</small></li>
+            <li>School location <small>(optional; you can set it later from the premises)</small></li>
+          </ul>
+        </div>
+        <div class="kit-card">
+          <h3>🎒 Classes &amp; students</h3>
+          <p class="when">Needed in Stage 2</p>
+          <ul>
+            <li>List of classes and sections for the academic year <small>(e.g. Grade 8 – A, 2025-26)</small></li>
+            <li>For each student: name, roll number, date of birth, gender, address</li>
+            <li>Parent's name and <b>10-digit parent contact number</b> <small>(this is how the family signs in)</small></li>
+            <li>Admission date</li>
+          </ul>
+        </div>
+        <div class="kit-card">
+          <h3>👩‍🏫 Staff, fees &amp; payroll</h3>
+          <p class="when">Needed in Stages 2 and 4</p>
+          <ul>
+            <li>For each staff member: name, designation, join date, contact phone</li>
+            <li>Bank account number <small>(9–18 digits) if you'll run payroll</small></li>
+            <li>Fee heads <small>(tuition, transport, lab…)</small> and the amount per class</li>
+            <li>Each employee's basic pay, allowances and deductions</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Stage 1: Register ================= -->
+    <section id="stage-1" class="stage">
+      <div class="stage-head">
+        <div class="stage-num">1</div>
+        <div>
+          <span class="who">Admin · about 10 minutes</span>
+          <h2>Register your school and sign in</h2>
+          <p>You only do this once. Registering makes you the school's first admin.</p>
+        </div>
+      </div>
+
+      <article class="step" id="step-register">
+        <div>
+          <p class="step-label">Step 1.1</p>
+          <h3>Open the app and choose "Register a new school"</h3>
+          <div class="path"><span>Welcome</span><i>→</i><span>Register a new school</span></div>
+          <p>The Welcome screen has two buttons. <span class="tap">Find my school</span> is for people joining a school that is already on Gurukul. As the admin, tap <span class="tap">Register a new school</span>.</p>
+          <p>Fill in the school name, address, city, state and pincode. Every field marked <b>*</b> is required.</p>
+          <div class="note tip"><b>🌐</b><span>Tap the <b>EN</b> button in the top corner of any screen to switch the app to हिन्दी.</span></div>
+          <p class="done">You're on the "Register your school" form with the address filled in.</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="./assets/toolkit/01-welcome.jpg" alt="Gurukul Welcome screen with Find my school and Register a new school buttons" loading="lazy" /><figcaption>Welcome</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/02-register-school.jpg" alt="Register your school form with name, address, city, state and pincode filled in" loading="lazy" /><figcaption>School details</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="step">
+        <div>
+          <p class="step-label">Step 1.2</p>
+          <h3>Add the location and contacts, then tap "Register school"</h3>
+          <ol>
+            <li><b>Location (optional).</b> If you're at school, tap <span class="tap">📍 Use my current location</span>. Otherwise type the latitude and longitude, or leave both blank and set them later. Teachers use this to mark their own attendance from the campus.</li>
+            <li><b>Contacts.</b> Enter the contact email and phone, the principal's name and phone, and the director's name.</li>
+            <li><b>Your phone number (for admin login).</b> Enter the number you'll sign in with. Use a number that has WhatsApp.</li>
+            <li>Tap <span class="tap">Register school</span>.</li>
+          </ol>
+          <div class="note warn"><b>⚠️</b><span>Double-check the admin phone number. Sign-in codes are sent to it on WhatsApp, and it's the only way into the admin account.</span></div>
+          <p class="done">The app signs you straight in as admin and opens your school's dashboard.</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="./assets/toolkit/03-register-contacts.jpg" alt="Lower half of the register form: location, contact email and phone, principal, director and admin phone" loading="lazy" /><figcaption>Location &amp; contacts</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="step" id="step-signin">
+        <div>
+          <p class="step-label">Step 1.3</p>
+          <h3>Signing in next time (for everyone)</h3>
+          <div class="path"><span>Find my school</span><i>→</i><span>Search by name</span><i>→</i><span>Send OTP</span><i>→</i><span>Verify &amp; sign in</span></div>
+          <ol>
+            <li>Tap <span class="tap">Find my school</span> and type part of the school's name.</li>
+            <li>Pick your school, enter your 10-digit phone number and tap <span class="tap">Send OTP</span>.</li>
+            <li>A 4-digit code arrives on <b>WhatsApp</b>. Type it in and tap <span class="tap">Verify &amp; sign in</span>.</li>
+          </ol>
+          <div class="note tip"><b>⏱</b><span>Codes expire after 5 minutes. If one expires, tap <span class="tap">Change phone number</span> and send a new one. People who were given a username and password can use <span class="tap">Sign in with username &amp; password instead</span>.</span></div>
+          <p class="done">The phone remembers your school, so next time you go straight to sign-in.</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="./assets/toolkit/04-find-school.jpg" alt="Find your school search screen showing a matching school" loading="lazy" /><figcaption>Find your school</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/06-enter-otp.jpg" alt="Sign in screen after the code was sent, with an OTP field and Verify and sign in button" loading="lazy" /><figcaption>Enter the WhatsApp code</figcaption></figure>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================= Stage 2: Build ================= -->
+    <section id="stage-2" class="stage">
+      <div class="stage-head">
+        <div class="stage-num">2</div>
+        <div>
+          <span class="who">Admin · 1–2 hours depending on school size</span>
+          <h2>Build your school</h2>
+          <p>Everything here starts from a tile on the admin dashboard. The order matters: students and staff must exist before anyone can link to them.</p>
+        </div>
+      </div>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Step 2.1</p>
+          <h3>Enroll students (and create class-sections along the way)</h3>
+          <div class="path"><span>Dashboard</span><i>→</i><span>Students</span><i>→</i><span>+ Enroll student</span></div>
+          <ol>
+            <li>Tap the <span class="tap">Students</span> tile, then <span class="tap">+ Enroll student</span>.</li>
+            <li>Enter the roll number, name, date of birth, gender, address, parent name, <b>parent contact</b> and admission date.</li>
+            <li>Under <b>Class-section</b>, choose the student's class. If it doesn't exist yet, tap <span class="tap">+ New class-section</span> and enter the class name, section and academic year. It's then ready for the next student too.</li>
+            <li>Tap <span class="tap">Enroll student</span>. Repeat for each student.</li>
+          </ol>
+          <div class="note warn"><b>📱</b><span>The <b>parent contact</b> number is important. The family signs in with this number and a WhatsApp code, so make sure it's the parent's real, active number. If several children share one number, the app asks "Who's using the app?" at sign-in.</span></div>
+          <p class="done">The Students list shows every student with their roll number and class-section.</p>
+        </div>
+      </article>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Step 2.2</p>
+          <h3>Add your staff</h3>
+          <div class="path"><span>Dashboard</span><i>→</i><span>Employees</span><i>→</i><span>+ Add employee</span></div>
+          <p>Add every teacher and staff member with their name, designation, join date, contact phone and (for payroll) bank account number. <b>Teachers must be added here first.</b> The teacher invite code in Stage 3 is created for a specific employee.</p>
+          <p class="done">The Employees list shows all your staff.</p>
+        </div>
+      </article>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Step 2.3</p>
+          <h3>Check subjects, the grading scale and the school location</h3>
+          <ul>
+            <li><b>Subjects:</b> <span class="tap">Classes</span> → choose a class → a section → <span class="tap">Subjects</span> shows each subject and its assigned teacher.</li>
+            <li><b>Grading scale:</b> the <span class="tap">Grading Scale</span> tile sets which marks percentage maps to which letter grade on report cards.</li>
+            <li><b>School location:</b> if you skipped it during registration, open <span class="tap">Mark My Attendance</span> → <span class="tap">School Location</span> while you're on campus, tap <span class="tap">📍 Use my current location</span>, then <span class="tap">Save location</span>.</li>
+            <li><b>Optional hardware:</b> if you have RFID, fingerprint or face-recognition devices, register them under <span class="tap">Attendance Devices</span> so a scan marks attendance automatically.</li>
+          </ul>
+          <p class="done">Your classes show the right subjects, and teachers can check in from campus.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================= Stage 3: Invite ================= -->
+    <section id="stage-3" class="stage">
+      <div class="stage-head">
+        <div class="stage-num">3</div>
+        <div>
+          <span class="who">Admin + teachers, students &amp; parents</span>
+          <h2>Invite your people</h2>
+          <p>Everyone joins from the same starting point: <b>Find my school → New here? Create an account</b>. They then choose who they are.</p>
+        </div>
+      </div>
+
+      <article class="step" id="step-teacher-invite">
+        <div>
+          <p class="step-label">Step 3.1</p>
+          <h3>Invite teachers with a code</h3>
+          <p><b>Admin:</b> open <span class="tap">Registration Approvals</span> → <span class="tap">Invite a teacher</span>, pick the teacher from your employee list and tap <span class="tap">Generate invite code</span>. Send the code (it looks like <code>P74BRN7X</code>) to the teacher on WhatsApp. The code has an expiry date, shown on screen.</p>
+          <p><b>Teacher:</b> <span class="tap">Find my school</span> → choose the school → <span class="tap">New here? Create an account</span> → <span class="tap">I'm a teacher</span>. Enter the invite code, choose a username and password (at least 8 characters), and tap <span class="tap">Submit registration</span>.</p>
+          <p class="done">The teacher's registration is submitted. They can sign in once it's approved (Step 3.3).</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="./assets/toolkit/07-create-account.jpg" alt="Create an account screen asking who you are registering as: student, teacher or parent" loading="lazy" /><figcaption>Choose a role</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/08-teacher-registration.jpg" alt="Teacher registration form with invite code, username and password" loading="lazy" /><figcaption>Teacher registration</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="step" id="step-parent">
+        <div>
+          <p class="step-label">Step 3.2</p>
+          <h3>Students and parents</h3>
+          <p><b>Easiest way:</b> once a student is enrolled with a parent contact number, the family can sign in straight away with that number and a WhatsApp code (Step 1.3). No form is needed.</p>
+          <p><b>To create a username and password instead</b>, go to <span class="tap">New here? Create an account</span>, then:</p>
+          <ul>
+            <li><span class="tap">I'm a student</span>: enter the <b>registration number</b> given by the school (or an invite code), then choose a username and password.</li>
+            <li><span class="tap">I'm a parent</span>: enter the <b>child's registration number</b> and <b>your contact number on file</b> with the school, then choose a username and password.</li>
+          </ul>
+          <div class="note tip"><b>👨‍👩‍👧</b><span>Parents with more than one child at the school see a "Who's using the app?" screen at sign-in, and can switch any time from <span class="tap">Profile</span> → <span class="tap">Switch child</span>.</span></div>
+          <p class="done">Families can see their child's dashboard, or their registration is waiting for approval.</p>
+        </div>
+        <div class="shots">
+          <figure class="shot"><img src="./assets/toolkit/10-parent-registration.jpg" alt="Parent registration form with child's registration number and contact number on file" loading="lazy" /><figcaption>Parent registration</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/11-whos-using.jpg" alt="Who's using the app screen listing several children linked to one phone number" loading="lazy" /><figcaption>One number, several children</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Step 3.3</p>
+          <h3>Approve registrations</h3>
+          <div class="path"><span>Dashboard</span><i>→</i><span>Registration Approvals</span></div>
+          <p>Every registration submitted through the forms waits here. Tap <span class="tap">Approve</span> or <span class="tap">Reject</span> for each one. Until then, the person sees "Registration submitted: you'll be able to sign in once a school admin reviews and approves your registration."</p>
+          <p class="done">The Registration Approvals list is empty and everyone can sign in.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================= Stage 4: Run ================= -->
+    <section id="stage-4" class="stage">
+      <div class="stage-head">
+        <div class="stage-num">4</div>
+        <div>
+          <span class="who">Admin &amp; teachers · ongoing</span>
+          <h2>Run the school day to day</h2>
+          <p>Once people are in, these are the everyday jobs. Each one is a tile on the dashboard.</p>
+        </div>
+      </div>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Daily</p>
+          <h3>📋 Attendance</h3>
+          <ul>
+            <li><b>Students:</b> <span class="tap">Classes</span> (or a teacher's <span class="tap">My Class Section</span>) → section → <span class="tap">Attendance</span>. Mark present, absent, late or half day.</li>
+            <li><b>Teachers:</b> <span class="tap">Mark My Attendance</span> checks them in from the school premises.</li>
+            <li><b>Admin:</b> <span class="tap">Staff Attendance</span> shows today's staff roster, and <span class="tap">Export Attendance</span> downloads an Excel sheet for any date range to share on WhatsApp, email or Drive.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Once per term, then as payments come in</p>
+          <h3>💳 Fees</h3>
+          <div class="path"><span>Fees</span><i>→</i><span>Fee Categories</span><i>→</i><span>Fee Structures</span><i>→</i><span>Generate</span><i>→</i><span>Assessments &amp; Payments</span></div>
+          <ol>
+            <li><span class="tap">Fee Categories</span>: add your fee heads, such as tuition, transport or lab fee.</li>
+            <li><span class="tap">Fee Structures</span> → <span class="tap">+ New fee structure</span>: pick a class-section, add a fee line per category with its amount, and create it.</li>
+            <li>Open the structure and tap <span class="tap">Generate assessments for this class</span>. Every active student in that section gets a bill.</li>
+            <li><span class="tap">Assessments &amp; Payments</span>: see who owes what and record payments as they come in. Set the receiving bank account under <span class="tap">Payment Settings</span>.</li>
+          </ol>
+          <p>More detail: <a href="./money-features.html">How fees &amp; payroll work</a>.</p>
+        </div>
+      </article>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Monthly</p>
+          <h3>💰 Payroll</h3>
+          <p><span class="tap">Payroll</span> → <span class="tap">Salary Structures</span>: set each employee's basic pay, allowances and deductions. Each month, <span class="tap">Run Payroll</span> creates the run, processes it and marks employees paid. <span class="tap">Payroll Overview</span> shows paid and pending staff across runs. Teachers see their own payslips.</p>
+        </div>
+      </article>
+
+      <article class="step no-shots">
+        <div>
+          <p class="step-label">Through the year</p>
+          <h3>📝 Assessments, report cards, events &amp; more</h3>
+          <ul>
+            <li><b>Assessments &amp; marks:</b> <span class="tap">Classes</span> → section → <span class="tap">Assessments</span>. Use <span class="tap">Class marks grid</span> to see everyone's marks together.</li>
+            <li><b>Report cards:</b> section → <span class="tap">Publish report cards</span>. Students and parents then see them under <span class="tap">Report Card</span>.</li>
+            <li><b>School Events:</b> announce the annual function, sports meet or exams with RSVPs, registration forms and polls.</li>
+            <li><b>Gurukul Arena:</b> teachers build the quiz question bank that powers students' Battle Room, Arena and Practice games.</li>
+            <li><b>Messages:</b> the chat icon at the top of the dashboard opens conversations with teachers, parents and students.</li>
+            <li><b>Activity Log:</b> the admin can see who changed what, and when.</li>
+          </ul>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================= Student / parent view ================= -->
+    <section id="students-parents" class="stage">
+      <div class="stage-head">
+        <div class="stage-num">★</div>
+        <div>
+          <span class="who">Share this with families</span>
+          <h2>What students &amp; parents see</h2>
+          <p>After signing in, students get their own dashboard scoped to their class. Tap any screen to enlarge it.</p>
+        </div>
+      </div>
+      <div class="gallery">
+        <figure class="shot"><img src="./assets/toolkit/12-student-home.jpg" alt="Student dashboard with quick-action tiles" loading="lazy" /><figcaption><b>Dashboard</b>Everything in one place</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/16-my-class.jpg" alt="My Class screen with students, subjects and assessments" loading="lazy" /><figcaption><b>My Class</b>Students, subjects, assessments</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/14-my-teachers.jpg" alt="Subjects list with each subject's teacher" loading="lazy" /><figcaption><b>My Teachers</b>Who teaches each subject</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/15-my-fees.jpg" alt="My Fees screen showing dues for the academic year" loading="lazy" /><figcaption><b>My Fees</b>Dues and payment history</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/21-attendance.jpg" alt="Attendance calendar with present, absent, late and half-day legend" loading="lazy" /><figcaption><b>View Attendance</b>Calendar or list view</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/20-report-card.jpg" alt="Report card screen with a term selector" loading="lazy" /><figcaption><b>Report Card</b>Appears once published</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/18-events.jpg" alt="School Events list" loading="lazy" /><figcaption><b>School Events</b>What's coming up</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/17-game-hub.jpg" alt="Game Hub with level, streak, leaderboard, house wars, battle room, arena and practice" loading="lazy" /><figcaption><b>Game Hub</b>XP, streaks, quiz battles</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/19-academic-helper.jpg" alt="Academic Helper answering a question about photosynthesis" loading="lazy" /><figcaption><b>Academic Helper</b>AI homework help</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/13-classmates.jpg" alt="My Classmates list filtered by section" loading="lazy" /><figcaption><b>My Classmates</b>Search by name or section</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/22-profile.jpg" alt="Profile screen with details, change language, switch child and log out" loading="lazy" /><figcaption><b>Profile</b>Language, switch child, log out</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ================= Checklist ================= -->
+    <section id="checklist" class="stage">
+      <div class="stage-head">
+        <div class="stage-num">✓</div>
+        <div>
+          <span class="who">Admin</span>
+          <h2>Go-live checklist</h2>
+          <p>Tick items off as you go. Your progress is saved in this browser, and you can print the page to keep a paper copy.</p>
+        </div>
+      </div>
+      <div class="checklist">
+        <div class="cl-top">
+          <div class="progress">
+            <div class="progress-bar"><div id="cl-bar"></div></div>
+            <div class="progress-text" id="cl-text">0 of 0 done</div>
+          </div>
+          <div class="cl-actions">
+            <button class="btn btn-soft" type="button" id="cl-print">🖨 Print</button>
+            <button class="btn btn-soft" type="button" id="cl-reset">Reset</button>
+          </div>
+        </div>
+        <div id="cl-list"></div>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ================= -->
+    <section id="faq" class="stage faq">
+      <div class="stage-head">
+        <div class="stage-num">?</div>
+        <div>
+          <h2>Common questions</h2>
+          <p>Quick fixes for the things new schools ask about most.</p>
+        </div>
+      </div>
+      <details>
+        <summary>The app says "Invalid or expired OTP".</summary>
+        <p>Codes expire after 5 minutes, and only the newest one works. Tap "Change phone number", check the number, and tap "Send OTP" again. Then enter the latest code from WhatsApp.</p>
+      </details>
+      <details>
+        <summary>I didn't get a code on WhatsApp.</summary>
+        <p>The code goes to WhatsApp, not SMS, so the number must have WhatsApp. Check that the number matches the one on the school record: the admin phone given at registration, or the parent contact on the student's record. If it doesn't match, ask the admin to fix it.</p>
+      </details>
+      <details>
+        <summary>A parent or teacher says they "can't sign in yet".</summary>
+        <p>If they used the Create an account form, their registration is waiting for approval. The admin approves it under Registration Approvals.</p>
+      </details>
+      <details>
+        <summary>A teacher's invite code isn't working.</summary>
+        <p>Invite codes expire. The date is shown when you generate one. Generate a new code for that teacher from Registration Approvals → Invite a teacher.</p>
+      </details>
+      <details>
+        <summary>I can't find my school in "Find my school".</summary>
+        <p>Search by part of the name, for example "Sunrise" instead of "Sunrise Public School, Jaipur". If it still doesn't appear, the school hasn't been registered yet. The admin needs to complete Stage 1 first.</p>
+      </details>
+      <details>
+        <summary>Can the app be used in Hindi?</summary>
+        <p>Yes. Tap the EN button at the top of any screen, or go to Profile → Change language, and choose हिन्दी.</p>
+      </details>
+      <details>
+        <summary>Teachers can't mark their own attendance.</summary>
+        <p>Self check-in only works on the school premises, so the school location must be set. The admin sets it once from Mark My Attendance → School Location while on campus.</p>
+      </details>
+    </section>
+
+    <section>
+      <div class="cta">
+        <h2 class="section-title">Need a hand getting set up?</h2>
+        <p class="section-sub" style="margin: 0 auto 22px;">We're happy to walk your admin through onboarding on a call.</p>
+        <div class="hero-actions">
+          <a class="btn btn-light" href="mailto:Founders@smartgurukul.org">✉️&nbsp; Founders@smartgurukul.org</a>
+          <a class="btn btn-light" href="https://www.instagram.com/smart__gurukul?igsh=ejJ3aXFsMzNia2g0" target="_blank" rel="noopener noreferrer">📸&nbsp; @smart__gurukul</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="./index.html">Home</a>
+      <a href="./onboarding-toolkit.html">Onboarding toolkit</a>
+      <a href="./money-features.html">How fees &amp; payroll work</a>
+      <a href="./privacy.html">Privacy Policy</a>
+      <a href="mailto:Founders@smartgurukul.org">Email</a>
+    </div>
+    &copy; <span id="year"></span> Gurukul. All rights reserved.
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ---------- Checklist ----------
+    const CHECKLIST = [
+      ['Prepare', [
+        'School details, contacts and admin WhatsApp number collected',
+        'Class-section list for this academic year',
+        'Student list with parent contact numbers',
+        'Staff list with designation, phone and bank account',
+      ]],
+      ['Stage 1 · Register', [
+        'School registered and admin signed in',
+        'School location set (at registration or later)',
+      ]],
+      ['Stage 2 · Build', [
+        'All class-sections created',
+        'All students enrolled with correct parent contact numbers',
+        'All staff added as employees',
+        'Subjects and teachers checked for each section',
+        'Grading scale reviewed',
+      ]],
+      ['Stage 3 · Invite', [
+        'Invite code sent to every teacher',
+        'Parents told how to sign in with their number',
+        'Registration Approvals list cleared',
+      ]],
+      ['Stage 4 · Go live', [
+        'First day of student attendance taken',
+        'Fee categories and structures created and assessments generated',
+        'Salary structures added for payroll',
+        'First school event or announcement published',
+      ]],
+    ];
+    const KEY = 'gurukul-onboarding-checklist-v1';
+    let state = {};
+    try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+    const list = document.getElementById('cl-list');
+    let total = 0;
+    CHECKLIST.forEach(([group, items], gi) => {
+      const g = document.createElement('div');
+      g.className = 'cl-group';
+      const h = document.createElement('h4');
+      h.textContent = group;
+      g.appendChild(h);
+      items.forEach((text, ii) => {
+        const id = gi + '-' + ii;
+        total++;
+        const label = document.createElement('label');
+        label.className = 'cl-item';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.checked = !!state[id];
+        box.addEventListener('change', () => { state[id] = box.checked; save(); update(); });
+        const span = document.createElement('span');
+        span.textContent = text;
+        label.append(box, span);
+        g.appendChild(label);
+      });
+      list.appendChild(g);
+    });
+    function update() {
+      const done = Object.values(state).filter(Boolean).length;
+      document.getElementById('cl-bar').style.width = (done / total * 100) + '%';
+      document.getElementById('cl-text').textContent =
+        done === total ? `All ${total} done. Your school is live! 🎉` : `${done} of ${total} done`;
+    }
+    update();
+    document.getElementById('cl-reset').addEventListener('click', () => {
+      state = {}; save();
+      list.querySelectorAll('input').forEach((b) => { b.checked = false; });
+      update();
+    });
+    document.getElementById('cl-print').addEventListener('click', () => window.print());
+
+    // ---------- Lightbox ----------
+    document.querySelectorAll('.shot img').forEach((img) => {
+      img.addEventListener('click', () => {
+        const box = document.createElement('div');
+        box.className = 'lightbox';
+        const big = document.createElement('img');
+        big.src = img.src; big.alt = img.alt;
+        box.appendChild(big);
+        const close = () => { box.remove(); document.removeEventListener('keydown', onKey); };
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+        box.addEventListener('click', close);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(box);
+      });
+    });
+
+    // ---------- Highlight current stage in the sticky bar ----------
+    const links = [...document.querySelectorAll('.stagebar a')];
+    const targets = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((en) => {
+          if (!en.isIntersecting) return;
+          links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id));
+        });
+      }, { rootMargin: '-45% 0px -50% 0px' });
+      targets.forEach((t) => io.observe(t));
+    }
+  </script>
+</body>
+</html>
