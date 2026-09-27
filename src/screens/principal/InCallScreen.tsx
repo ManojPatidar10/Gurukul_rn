@@ -39,14 +39,14 @@ export function InCallScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (!callLogId) return;
     let unsubscribe: (() => void) | undefined;
-    subscribeToMyCallEvents(session.token, schoolId, session.ownerType, session.ownerId, (event) => {
+    subscribeToMyCallEvents(schoolId, session.ownerType, session.ownerId, (event) => {
       if (event.callLogId !== callLogId || !TERMINAL_EVENT_TYPES.has(event.type)) return;
       if (endedRef.current) return;
       endedRef.current = true;
       Alert.alert('Call ended', outcomeMessage(event.type), [{ text: 'OK', onPress: () => navigation.goBack() }]);
     }).then((unsub) => (unsubscribe = unsub));
     return () => unsubscribe?.();
-  }, [callLogId, schoolId, session.token, session.ownerType, session.ownerId, navigation]);
+  }, [callLogId, schoolId, session.ownerType, session.ownerId, navigation]);
 
   const handleEnd = async () => {
     if (endedRef.current) return;

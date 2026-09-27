@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, getRefreshToken } from './client';
 import type {
   AuthProfile,
   GoogleLoginRequest,
@@ -35,6 +35,15 @@ export function listProfiles(schoolId: string) {
   return api.get<AuthProfile[]>('/api/v1/auth/profiles', schoolId);
 }
 
-export function switchProfile(schoolId: string, req: SwitchProfileRequest) {
-  return api.post<LoginResponse>('/api/v1/auth/profiles/switch', req, schoolId);
+/**
+ * Sends the current refresh token so the backend ends the old profile's session. It's read lazily,
+ * at send time, because the request may first refresh an about-to-expire access token - which
+ * rotates the refresh token, and sending the old one would look like a replayed (stolen) token.
+ */
+export function switchProfile(schoolId: string, req: Omit<SwitchProfileRequest, 'refreshToken'>) {
+  return api.post<LoginResponse>(
+    '/api/v1/auth/profiles/switch',
+    () => ({ ...req, refreshToken: getRefreshToken() ?? undefined }),
+    schoolId
+  );
 }

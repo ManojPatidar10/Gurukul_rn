@@ -764,6 +764,11 @@ export interface LoginResponse {
   role: UserRole;
   schoolId: string;
   username: string;
+  // Absent on sessions saved by app builds from before refresh tokens existed - those keep working
+  // until their access token's first 401, then send the user to login once.
+  refreshToken?: string;
+  accessTokenExpiresAt?: string;
+  refreshTokenExpiresAt?: string;
 }
 
 export interface RegistrationSubmittedResponse {
@@ -891,6 +896,7 @@ export interface SelectProfileRequest {
 export interface SwitchProfileRequest {
   ownerType: AuthProfileOwnerType;
   ownerId: string;
+  refreshToken?: string;
 }
 
 export interface CredentialRequest {

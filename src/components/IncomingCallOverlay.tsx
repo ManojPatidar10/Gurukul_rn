@@ -30,7 +30,7 @@ export function IncomingCallOverlay({ session, schoolId }: Props) {
   useEffect(() => {
     if (!FEATURE_FLAGS.videoCalls) return;
     let unsubscribe: (() => void) | undefined;
-    subscribeToMyCallEvents(session.token, schoolId, session.ownerType, session.ownerId, (event) => {
+    subscribeToMyCallEvents(schoolId, session.ownerType, session.ownerId, (event) => {
       if (event.type === 'INCOMING_CALL') {
         incomingCallLogIdRef.current = event.callLogId;
         setIncoming(event);
@@ -47,7 +47,7 @@ export function IncomingCallOverlay({ session, schoolId }: Props) {
       }
     }).then((unsub) => (unsubscribe = unsub));
     return () => unsubscribe?.();
-  }, [session.token, session.ownerType, session.ownerId, schoolId]);
+  }, [session.ownerType, session.ownerId, schoolId]);
 
   const handleAccept = async () => {
     if (!incoming?.callLogId) return;

@@ -12,13 +12,12 @@ const subscriptions = new Map<string, StompSubscription>();
  * as chatSocket.ts rather than opening a second WebSocket.
  */
 export async function subscribeToMyCallEvents(
-  token: string,
   schoolId: string,
   ownerType: OwnerType,
   ownerId: string,
   onEvent: (event: CallEvent) => void
 ): Promise<() => void> {
-  const activeClient = await ensureClient(token, schoolId);
+  const activeClient = await ensureClient(schoolId);
   const destination = `/topic/users/${schoolId}/${ownerType}/${ownerId}/calls`;
 
   subscriptions.get(destination)?.unsubscribe();

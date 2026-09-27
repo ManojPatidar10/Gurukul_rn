@@ -1,6 +1,6 @@
 import { File, Paths } from 'expo-file-system';
 
-import { BASE_URL, getAuthToken } from './client';
+import { BASE_URL, ensureFreshAccessToken, getAuthToken } from './client';
 
 export type AttendanceExportType = 'STUDENT' | 'STAFF';
 
@@ -21,6 +21,7 @@ export async function downloadAttendanceExport(
   const query = new URLSearchParams({ type: params.type, from: params.from, to: params.to });
   if (params.sectionId) query.set('sectionId', params.sectionId);
 
+  await ensureFreshAccessToken();
   const headers: Record<string, string> = { 'X-School-Id': schoolId };
   const token = getAuthToken();
   if (token) headers.Authorization = `Bearer ${token}`;

@@ -1,6 +1,6 @@
 import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs';
 
-import { BASE_URL } from './client';
+import { BASE_URL, ensureFreshAccessToken, getAuthToken } from './client';
 import type { Announcement, Message } from './types';
 
 const WS_URL = BASE_URL.replace(/^http/, 'ws') + '/ws/websocket';
@@ -10,16 +10,22 @@ let connecting: Promise<Client> | null = null;
 const subscriptions = new Map<string, StompSubscription>();
 
 /** Exported so callSocket.ts can share this one connection instead of opening a second WebSocket. */
-export function ensureClient(token: string, schoolId: string): Promise<Client> {
+export function ensureClient(schoolId: string): Promise<Client> {
   if (client && client.active) return Promise.resolve(client);
   if (connecting) return connecting;
 
   connecting = new Promise((resolve, reject) => {
     const next = new Client({
       brokerURL: WS_URL,
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-        'X-School-Id': schoolId,
+      // Runs before the first connect and every automatic reconnect, so a reconnect after the
+      // access token was silently refreshed (or after it expired while the app sat in the
+      // background) authenticates with the current token, not the one from when this was created.
+      beforeConnect: async () => {
+        await ensureFreshAccessToken().catch(() => {});
+        next.connectHeaders = {
+          Authorization: `Bearer ${getAuthToken() ?? ''}`,
+          'X-School-Id': schoolId,
+        };
       },
       forceBinaryWSFrames: true,
       appendMissingNULLonIncoming: true,
@@ -44,12 +50,11 @@ export function ensureClient(token: string, schoolId: string): Promise<Client> {
 }
 
 export async function subscribeToConversation(
-  token: string,
   schoolId: string,
   conversationId: string,
   onMessage: (message: Message) => void
 ): Promise<() => void> {
-  const activeClient = await ensureClient(token, schoolId);
+  const activeClient = await ensureClient(schoolId);
   const destination = `/topic/conversations/${conversationId}`;
 
   subscriptions.get(destination)?.unsubscribe();
@@ -71,13 +76,12 @@ export interface SendMessageAttachment {
 }
 
 export async function sendMessage(
-  token: string,
   schoolId: string,
   conversationId: string,
   content: string,
   attachment?: SendMessageAttachment
 ) {
-  const activeClient = await ensureClient(token, schoolId);
+  const activeClient = await ensureClient(schoolId);
   activeClient.publish({
     destination: `/app/conversations/${conversationId}/messages`,
     body: JSON.stringify({ content: content || undefined, ...attachment }),
@@ -85,12 +89,11 @@ export async function sendMessage(
 }
 
 async function subscribeToDestination(
-  token: string,
   schoolId: string,
   destination: string,
   onAnnouncement: (announcement: Announcement) => void
 ): Promise<() => void> {
-  const activeClient = await ensureClient(token, schoolId);
+  const activeClient = await ensureClient(schoolId);
 
   subscriptions.get(destination)?.unsubscribe();
   const subscription = activeClient.subscribe(destination, (frame: IMessage) => {
@@ -105,32 +108,28 @@ async function subscribeToDestination(
 }
 
 export function subscribeToSchoolAnnouncements(
-  token: string,
   schoolId: string,
   onAnnouncement: (announcement: Announcement) => void
 ): Promise<() => void> {
-  return subscribeToDestination(token, schoolId, `/topic/schools/${schoolId}/announcements`, onAnnouncement);
+  return subscribeToDestination(schoolId, `/topic/schools/${schoolId}/announcements`, onAnnouncement);
 }
 
 export function subscribeToSectionAnnouncements(
-  token: string,
   schoolId: string,
   sectionId: string,
   onAnnouncement: (announcement: Announcement) => void
 ): Promise<() => void> {
-  return subscribeToDestination(token, schoolId, `/topic/sections/${sectionId}/announcements`, onAnnouncement);
+  return subscribeToDestination(schoolId, `/topic/sections/${sectionId}/announcements`, onAnnouncement);
 }
 
 /** className must have spaces replaced with underscores per the backend contract ("Grade 6" -> "Grade_6"). */
 export function subscribeToGradeAnnouncements(
-  token: string,
   schoolId: string,
   className: string,
   onAnnouncement: (announcement: Announcement) => void
 ): Promise<() => void> {
   const encodedClassName = className.replace(/ /g, '_');
   return subscribeToDestination(
-    token,
     schoolId,
     `/topic/schools/${schoolId}/classes/${encodedClassName}/announcements`,
     onAnnouncement

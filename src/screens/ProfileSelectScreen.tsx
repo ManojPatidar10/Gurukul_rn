@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { selectProfile } from '../api/auth';
-import { ApiError, setAuthToken } from '../api/client';
+import { ApiError, setAuthSession } from '../api/client';
 import type { Session } from '../api/authStorage';
 import type { AuthProfile } from '../api/types';
 import { Logo } from '../components/Logo';
@@ -37,7 +37,7 @@ export default function ProfileSelectScreen({ schoolId, schoolName, selectionTok
         ownerType: profile.ownerType,
         ownerId: profile.ownerId,
       });
-      setAuthToken(session.token);
+      setAuthSession(session);
       onSelected(session);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
