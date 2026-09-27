@@ -6,7 +6,14 @@ import type { ApiResponse, PagedResponse } from './types';
 // time, so changing .env needs Metro restarted with a cleared cache to take effect.
 export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.smartgurukul.org';
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status?: number
+  ) {
+    super(message);
+  }
+}
 
 let currentToken: string | null = null;
 
@@ -60,7 +67,7 @@ async function rawRequest(
   const json = await response.json();
 
   if (!response.ok || !json.success) {
-    throw new ApiError(json.message ?? `Request failed with status ${response.status}`);
+    throw new ApiError(json.message ?? `Request failed with status ${response.status}`, response.status);
   }
 
   return json;

@@ -17,12 +17,13 @@ import { setAuthToken } from './src/api/client';
 import { disconnectChatSocket } from './src/api/chatSocket';
 import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
-import type { SchoolSearchResult } from './src/api/types';
+import type { AuthProfile, SchoolSearchResult } from './src/api/types';
 import { initI18n } from './src/i18n';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
 import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
 import OtpLoginScreen from './src/screens/OtpLoginScreen';
+import ProfileSelectScreen from './src/screens/ProfileSelectScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RoleSelectScreen, { type RegistrationRole } from './src/screens/RoleSelectScreen';
 import RegisterStudentScreen from './src/screens/RegisterStudentScreen';
@@ -35,6 +36,7 @@ type PreAuthStep =
   | { name: 'search' }
   | { name: 'register' }
   | { name: 'otpLogin'; schoolId: string; schoolName?: string }
+  | { name: 'profileSelect'; schoolId: string; schoolName?: string; selectionToken: string; profiles: AuthProfile[] }
   | { name: 'passwordLogin'; schoolId: string; schoolName?: string }
   | { name: 'roleSelect'; schoolId: string; schoolName?: string }
   | { name: 'registerRole'; schoolId: string; schoolName?: string; role: RegistrationRole }
@@ -83,6 +85,16 @@ export default function App() {
     clearStoredSession();
     setSession(null);
     setPreAuthStep(schoolId ? { name: 'otpLogin', schoolId } : { name: 'welcome' });
+  };
+
+  // Switching to a sibling/self profile keeps the same phone-number login but swaps identity - the
+  // old socket connection was authenticated as the previous owner, so it must be torn down before
+  // usePushNotifications (keyed on session.token) re-registers the device under the new one.
+  const handleSwitchProfile = (next: Session) => {
+    disconnectChatSocket();
+    setAuthToken(next.token);
+    setStoredSession(next);
+    setSession(next);
   };
 
   const handleSchoolSelected = (school: SchoolSearchResult) => {
@@ -134,9 +146,35 @@ export default function App() {
               })
             }
             onLoggedIn={handleLoggedIn}
+            onProfileSelectionRequired={(selectionToken, profiles) =>
+              setPreAuthStep({
+                name: 'profileSelect',
+                schoolId: preAuthStep.schoolId,
+                schoolName: preAuthStep.schoolName,
+                selectionToken,
+                profiles,
+              })
+            }
             onRegister={() =>
               setPreAuthStep({
                 name: 'roleSelect',
+                schoolId: preAuthStep.schoolId,
+                schoolName: preAuthStep.schoolName,
+              })
+            }
+          />
+        );
+      case 'profileSelect':
+        return (
+          <ProfileSelectScreen
+            schoolId={preAuthStep.schoolId}
+            schoolName={preAuthStep.schoolName}
+            selectionToken={preAuthStep.selectionToken}
+            profiles={preAuthStep.profiles}
+            onSelected={handleLoggedIn}
+            onBack={() =>
+              setPreAuthStep({
+                name: 'otpLogin',
                 schoolId: preAuthStep.schoolId,
                 schoolName: preAuthStep.schoolName,
               })
@@ -225,7 +263,7 @@ export default function App() {
           renderPreAuth()
         ) : (
           <SchoolContext.Provider value={schoolId}>
-            <AuthContext.Provider value={{ session, logout: handleLogout }}>
+            <AuthContext.Provider value={{ session, logout: handleLogout, switchProfile: handleSwitchProfile }}>
               <NavigationContainer ref={navigationRef}>
                 {session.ownerType === 'PARENT' ? <ParentNavigator /> : <PrincipalNavigator />}
               </NavigationContainer>

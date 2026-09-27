@@ -4,6 +4,7 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { listProfiles } from '../../api/auth';
 import { getEmployee, updateEmployee } from '../../api/employees';
 import { getStudent, updateStudent } from '../../api/students';
 import type { Employee, Student } from '../../api/types';
@@ -32,6 +33,7 @@ export function ProfileScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [hasOtherProfiles, setHasOtherProfiles] = useState(false);
 
   const [name, setName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -58,6 +60,15 @@ export function ProfileScreen({ navigation }: Props) {
   };
 
   useEffect(load, [schoolId, session.ownerId, session.ownerType]);
+
+  // "Switch child" only matters when this phone number is linked to more than one profile -
+  // most logins are a single profile, so this quietly no-ops for them rather than showing a
+  // button that just leads to an empty list.
+  useEffect(() => {
+    listProfiles(schoolId)
+      .then((profiles) => setHasOtherProfiles(profiles.length > 1))
+      .catch(() => setHasOtherProfiles(false));
+  }, [schoolId, session.ownerId, session.ownerType]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -247,6 +258,12 @@ export function ProfileScreen({ navigation }: Props) {
               </Pressable>
             )}
 
+            {!editing && hasOtherProfiles && (
+              <Pressable style={styles.switchChildButton} onPress={() => navigation.navigate('SwitchChild')}>
+                <Text style={styles.googleMeetButtonText}>{t('switchChild.buttonLabel')}</Text>
+              </Pressable>
+            )}
+
             {!editing && (
               <Pressable style={styles.logoutButton} onPress={logout}>
                 <Text style={styles.logoutButtonText}>{t('common.logOut')}</Text>
@@ -348,6 +365,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   googleMeetButtonText: { color: colors.textPrimary, fontWeight: '700', fontSize: 15 },
+  switchChildButton: {
+    width: '100%',
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+  },
   languageRow: {
     width: '100%',
     marginTop: spacing.md,

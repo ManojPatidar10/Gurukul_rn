@@ -49,6 +49,7 @@ export interface FeatureAction {
 export type PrincipalStackParamList = {
   PrincipalDashboard: undefined;
   Profile: undefined;
+  SwitchChild: undefined;
   ConnectGoogleAccount: undefined;
   GlobalSearch: undefined;
   StudentsList: undefined;

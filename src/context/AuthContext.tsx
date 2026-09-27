@@ -4,6 +4,7 @@ import type { Session } from '../api/authStorage';
 interface AuthContextValue {
   session: Session;
   logout: () => void;
+  switchProfile: (session: Session) => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

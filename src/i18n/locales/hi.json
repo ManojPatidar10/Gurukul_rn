@@ -781,7 +781,25 @@
     "verifyingOtp": "सत्यापित किया जा रहा है…",
     "verifyAndSignIn": "सत्यापित करें और साइन इन करें",
     "changePhoneNumber": "फ़ोन नंबर बदलें",
-    "useUsernamePassword": "इसके बजाय उपयोगकर्ता नाम और पासवर्ड से साइन इन करें"
+    "useUsernamePassword": "इसके बजाय उपयोगकर्ता नाम और पासवर्ड से साइन इन करें",
+    "whoIsUsingApp": "ऐप किसका उपयोग कर रहा है?",
+    "chooseProfileSubtitle": "यह फ़ोन नंबर एक से अधिक प्रोफ़ाइल से जुड़ा है",
+    "classAndSection": "कक्षा {{className}}-{{section}}",
+    "rollNumber": "रोल {{rollNumber}}",
+    "teacherRole": "शिक्षक",
+    "adminRole": "प्रिंसिपल/एडमिन",
+    "alumniBadge": "पूर्व छात्र",
+    "withdrawnBadge": "नामांकन रद्द",
+    "selectionExpired": "सत्र समाप्त हो गया। कृपया नया OTP मांगें।",
+    "profileNotLinked": "वह प्रोफ़ाइल इस फ़ोन नंबर से जुड़ी नहीं है।"
+  },
+  "switchChild": {
+    "buttonLabel": "बच्चा बदलें",
+    "title": "बच्चा बदलें",
+    "subtitle": "चुनें कि आप ऐप किसके रूप में देख रहे हैं",
+    "currentBadge": "वर्तमान",
+    "noOtherProfiles": "इस फ़ोन नंबर से कोई अन्य प्रोफ़ाइल जुड़ी नहीं है।",
+    "switchFailed": "प्रोफ़ाइल बदल नहीं सका। कृपया पुनः प्रयास करें।"
   },
   "roleSelect": {
     "createAccount": "खाता बनाएं",

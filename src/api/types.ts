@@ -854,6 +854,45 @@ export interface OtpVerifyRequest {
   otp: string;
 }
 
+// A phone number shared by siblings (or a teacher who is also a parent) resolves to more than one
+// profile - verify/select-profile/switch all use this same shape so the UI can render one card
+// component across the pre-login picker and the post-login "switch child" screen.
+export type AuthProfileOwnerType = 'STUDENT' | 'EMPLOYEE';
+export type AuthProfileRole = 'STUDENT' | 'TEACHER' | 'ADMIN';
+export type AuthProfileStatus = 'ACTIVE' | 'ALUMNI' | 'WITHDRAWN';
+
+export interface AuthProfile {
+  ownerType: AuthProfileOwnerType;
+  ownerId: string;
+  name: string;
+  role: AuthProfileRole;
+  className: string | null;
+  section: string | null;
+  rollNumber: string | null;
+  status: AuthProfileStatus | null;
+  current: boolean;
+}
+
+// `token` and the other login fields are only meaningful when profileSelectionRequired is false -
+// otherwise they're a login for profiles[0], kept only so an app build without the picker still
+// works (see PR #110 on the backend).
+export interface OtpVerifyResponse extends LoginResponse {
+  profileSelectionRequired: boolean;
+  selectionToken?: string;
+  profiles?: AuthProfile[];
+}
+
+export interface SelectProfileRequest {
+  selectionToken: string;
+  ownerType: AuthProfileOwnerType;
+  ownerId: string;
+}
+
+export interface SwitchProfileRequest {
+  ownerType: AuthProfileOwnerType;
+  ownerId: string;
+}
+
 export interface CredentialRequest {
   username: string;
   password: string;

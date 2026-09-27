@@ -11,6 +11,7 @@ import { Logo } from '../components/Logo';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
+import type { AuthProfile } from '../api/types';
 
 interface Props {
   schoolId: string;
@@ -18,10 +19,19 @@ interface Props {
   onBack: () => void;
   onUsePassword: () => void;
   onLoggedIn: (session: Session) => void;
+  onProfileSelectionRequired: (selectionToken: string, profiles: AuthProfile[]) => void;
   onRegister?: () => void;
 }
 
-export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePassword, onLoggedIn, onRegister }: Props) {
+export default function OtpLoginScreen({
+  schoolId,
+  schoolName,
+  onBack,
+  onUsePassword,
+  onLoggedIn,
+  onProfileSelectionRequired,
+  onRegister,
+}: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
@@ -47,9 +57,13 @@ export default function OtpLoginScreen({ schoolId, schoolName, onBack, onUsePass
     setSubmitting(true);
     setError(null);
     try {
-      const session = await verifyOtp(schoolId, { phone, otp });
-      setAuthToken(session.token);
-      onLoggedIn(session);
+      const response = await verifyOtp(schoolId, { phone, otp });
+      if (response.profileSelectionRequired && response.selectionToken && response.profiles) {
+        onProfileSelectionRequired(response.selectionToken, response.profiles);
+        return;
+      }
+      setAuthToken(response.token);
+      onLoggedIn(response);
     } catch (e) {
       setError((e as Error).message);
     } finally {

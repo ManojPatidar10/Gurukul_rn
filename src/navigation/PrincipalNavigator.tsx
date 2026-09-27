@@ -72,6 +72,7 @@ import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
 import { ConnectGoogleAccountScreen } from '../screens/principal/ConnectGoogleAccountScreen';
 import { ProfileScreen } from '../screens/principal/ProfileScreen';
+import { SwitchChildScreen } from '../screens/principal/SwitchChildScreen';
 import { GlobalSearchScreen } from '../screens/principal/GlobalSearchScreen';
 import { ResourceGeneratorScreen } from '../screens/principal/ResourceGeneratorScreen';
 import { ResourceUploadScreen } from '../screens/principal/ResourceUploadScreen';
@@ -108,6 +109,7 @@ export function PrincipalNavigator() {
     >
         <Stack.Screen name="PrincipalDashboard" component={PrincipalDashboardScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="SwitchChild" component={SwitchChildScreen} />
         <Stack.Screen name="ConnectGoogleAccount" component={ConnectGoogleAccountScreen} />
         <Stack.Screen name="GlobalSearch" component={GlobalSearchScreen} />
         <Stack.Screen name="StudentsList" component={StudentsListScreen} />

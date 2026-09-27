@@ -781,7 +781,25 @@
     "verifyingOtp": "Verifying…",
     "verifyAndSignIn": "Verify & sign in",
     "changePhoneNumber": "Change phone number",
-    "useUsernamePassword": "Sign in with username & password instead"
+    "useUsernamePassword": "Sign in with username & password instead",
+    "whoIsUsingApp": "Who's using the app?",
+    "chooseProfileSubtitle": "This phone number is linked to more than one profile",
+    "classAndSection": "Class {{className}}-{{section}}",
+    "rollNumber": "Roll {{rollNumber}}",
+    "teacherRole": "Teacher",
+    "adminRole": "Principal/Admin",
+    "alumniBadge": "Alumni",
+    "withdrawnBadge": "Withdrawn",
+    "selectionExpired": "Session expired. Please request a new OTP.",
+    "profileNotLinked": "That profile isn't linked to this phone number."
+  },
+  "switchChild": {
+    "buttonLabel": "Switch child",
+    "title": "Switch child",
+    "subtitle": "Choose who you're viewing the app as",
+    "currentBadge": "Current",
+    "noOtherProfiles": "No other profiles are linked to this phone number.",
+    "switchFailed": "Couldn't switch profile. Please try again."
   },
   "roleSelect": {
     "createAccount": "Create an account",
