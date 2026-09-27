@@ -12,7 +12,7 @@ import { colors } from './src/theme/colors';
 import { SchoolContext } from './src/context/SchoolContext';
 import { AuthContext } from './src/context/AuthContext';
 import { ToastProvider, useToast } from './src/context/ToastContext';
-import { getStoredSchoolId } from './src/api/schoolStorage';
+import { getStoredSchoolId, setStoredSchoolId } from './src/api/schoolStorage';
 import { getStoredSession, setStoredSession, clearStoredSession, type Session } from './src/api/authStorage';
 import {
   getAuthToken,
@@ -171,6 +171,9 @@ export default function App() {
 
   const handleSchoolSelected = (school: SchoolSearchResult) => {
     setSchoolId(school.id);
+    // Persist it like SchoolSetupScreen does - otherwise an app restart has a stored session but no
+    // school, and drops the user back on the pre-login screens.
+    setStoredSchoolId(school.id);
     setPreAuthStep({ name: 'otpLogin', schoolId: school.id, schoolName: school.name });
   };
 
