@@ -764,6 +764,7 @@
     "registerSchool": "Register a new school"
   },
   "auth": {
+    "sessionExpired": "Your session expired, please log in again.",
     "signInSubtitle": "Sign in to continue",
     "signInWithPhoneSubtitle": "Sign in with your phone number",
     "username": "Username",

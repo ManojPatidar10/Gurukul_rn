@@ -65,7 +65,8 @@
           "microphonePermission": "Smart Gurukul uses your microphone for video calls."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

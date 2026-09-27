@@ -764,6 +764,7 @@
     "registerSchool": "नया स्कूल रजिस्टर करें"
   },
   "auth": {
+    "sessionExpired": "आपका सत्र समाप्त हो गया है, कृपया फिर से लॉग इन करें।",
     "signInSubtitle": "जारी रखने के लिए साइन इन करें",
     "signInWithPhoneSubtitle": "अपने फ़ोन नंबर से साइन इन करें",
     "username": "उपयोगकर्ता नाम",

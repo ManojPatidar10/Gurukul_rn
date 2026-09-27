@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
@@ -10,10 +11,19 @@ import { navigationRef } from './src/navigation/navigationRef';
 import { colors } from './src/theme/colors';
 import { SchoolContext } from './src/context/SchoolContext';
 import { AuthContext } from './src/context/AuthContext';
-import { ToastProvider } from './src/context/ToastContext';
+import { ToastProvider, useToast } from './src/context/ToastContext';
 import { getStoredSchoolId } from './src/api/schoolStorage';
 import { getStoredSession, setStoredSession, clearStoredSession, type Session } from './src/api/authStorage';
-import { setAuthToken } from './src/api/client';
+import {
+  getAuthToken,
+  getRefreshToken,
+  onSessionExpired,
+  onSessionRefreshed,
+  refreshSession,
+  revokeRefreshToken,
+  SessionExpiredError,
+  setAuthSession,
+} from './src/api/client';
 import { disconnectChatSocket } from './src/api/chatSocket';
 import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
@@ -42,11 +52,26 @@ type PreAuthStep =
   | { name: 'registerRole'; schoolId: string; schoolName?: string; role: RegistrationRole }
   | { name: 'registrationSubmitted'; schoolId: string; schoolName?: string; message: string };
 
+function hasPassed(isoTime?: string) {
+  return !!isoTime && new Date(isoTime).getTime() <= Date.now();
+}
+
+/** Lives inside ToastProvider (which App itself renders) so it can show the session-expired toast. */
+function SessionExpiredToast({ notice }: { notice: number }) {
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+  useEffect(() => {
+    if (notice > 0) showToast(t('auth.sessionExpired'), 'info');
+  }, [notice, showToast, t]);
+  return null;
+}
+
 export default function App() {
   const [schoolId, setSchoolId] = useState<string | null | undefined>(undefined);
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [preAuthStep, setPreAuthStep] = useState<PreAuthStep>({ name: 'welcome' });
   const [i18nReady, setI18nReady] = useState(false);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(0);
 
   useEffect(() => {
     initI18n().then(() => setI18nReady(true));
@@ -61,38 +86,85 @@ export default function App() {
     });
   }, []);
 
+  // The client module owns the live session once it's set (it rotates the tokens on every silent
+  // refresh), so App only hands it a new session at login/switch/logout and follows its refreshes -
+  // never the other way round, which could put back an already-used refresh token.
+  const sessionExpiredRef = useRef<() => void>(() => {});
   useEffect(() => {
-    getStoredSession().then((stored) => {
-      if (stored) setAuthToken(stored.token);
-      setSession(stored);
-    });
+    onSessionRefreshed(setSession);
+    onSessionExpired(() => sessionExpiredRef.current());
+    return () => {
+      onSessionRefreshed(null);
+      onSessionExpired(null);
+    };
   }, []);
 
   useEffect(() => {
-    setAuthToken(session?.token ?? null);
-  }, [session]);
+    (async () => {
+      const stored = await getStoredSession().catch(() => null);
+      if (!stored) {
+        setSession(null);
+        return;
+      }
+      if (stored.refreshToken && hasPassed(stored.refreshTokenExpiresAt)) {
+        await clearStoredSession();
+        setSession(null);
+        setSessionExpiredNotice((n) => n + 1);
+        return;
+      }
+      setAuthSession(stored);
+      // Access token already expired: renew it behind the splash so home doesn't open onto a wall
+      // of failing requests. Offline is fine - keep the stored session, the next request retries.
+      if (stored.refreshToken && hasPassed(stored.accessTokenExpiresAt)) {
+        try {
+          setSession(await refreshSession());
+          return;
+        } catch (e) {
+          if (e instanceof SessionExpiredError) return; // handleSessionExpired has already run
+        }
+      }
+      setSession(stored);
+    })();
+  }, []);
 
   usePushNotifications(schoolId ?? null, session ?? null);
 
   const handleLoggedIn = (next: Session) => {
+    setAuthSession(next);
     setStoredSession(next);
     setSession(next);
   };
 
-  const handleLogout = () => {
+  const endSession = () => {
     disconnectChatSocket();
-    setAuthToken(null);
+    setAuthSession(null);
     clearStoredSession();
     setSession(null);
     setPreAuthStep(schoolId ? { name: 'otpLogin', schoolId } : { name: 'welcome' });
   };
 
+  const handleLogout = () => {
+    const refreshToken = getRefreshToken();
+    if (refreshToken) revokeRefreshToken(refreshToken);
+    endSession();
+  };
+
+  // Several requests can fail on the same dead session at once - only the first one logs out.
+  const handleSessionExpired = () => {
+    if (!getAuthToken()) return;
+    endSession();
+    setSessionExpiredNotice((n) => n + 1);
+  };
+  useEffect(() => {
+    sessionExpiredRef.current = handleSessionExpired;
+  });
+
   // Switching to a sibling/self profile keeps the same phone-number login but swaps identity - the
   // old socket connection was authenticated as the previous owner, so it must be torn down before
-  // usePushNotifications (keyed on session.token) re-registers the device under the new one.
+  // usePushNotifications (keyed on the session's owner) re-registers the device under the new one.
   const handleSwitchProfile = (next: Session) => {
     disconnectChatSocket();
-    setAuthToken(next.token);
+    setAuthSession(next);
     setStoredSession(next);
     setSession(next);
   };
@@ -255,6 +327,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ToastProvider>
+        <SessionExpiredToast notice={sessionExpiredNotice} />
         {loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color={colors.primary} />

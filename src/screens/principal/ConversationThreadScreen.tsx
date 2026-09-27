@@ -71,7 +71,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       .catch((e) => setError((e as Error).message))
       .finally(() => setLoading(false));
 
-    subscribeToConversation(session.token, schoolId, conversationId, (message) => {
+    subscribeToConversation(schoolId, conversationId, (message) => {
       setMessages((prev) => [...prev, message]);
     })
       .then((unsub) => {
@@ -83,7 +83,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       cancelled = true;
       unsubscribe?.();
     };
-  }, [schoolId, conversationId, session.token]);
+  }, [schoolId, conversationId]);
 
   useEffect(() => {
     const last = messages[messages.length - 1];
@@ -96,7 +96,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     setDraft('');
     setSending(true);
     try {
-      await sendMessage(session.token, schoolId, conversationId, content);
+      await sendMessage(schoolId, conversationId, content);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -118,7 +118,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         fileSizeBytes,
       });
       await uploadFile(presigned.uploadUrl, uri, contentType);
-      await sendMessage(session.token, schoolId, conversationId, draft.trim(), {
+      await sendMessage(schoolId, conversationId, draft.trim(), {
         attachmentObjectKey: presigned.objectKey,
         attachmentContentType: contentType,
         attachmentFileName: fileName,

@@ -99,7 +99,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
       .catch((e) => setError((e as Error).message))
       .finally(() => setLoading(false));
 
-    subscribeToBattleRoom(session.token, schoolId, roomId, setRoom)
+    subscribeToBattleRoom(schoolId, roomId, setRoom)
       .then((unsub) => {
         unsubscribe = unsub;
       })
@@ -109,7 +109,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
       cancelled = true;
       unsubscribe?.();
     };
-  }, [schoolId, roomId, session.token]);
+  }, [schoolId, roomId]);
 
   useEffect(() => {
     if (!room || room.status !== 'WAITING') return;
@@ -153,7 +153,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
 
   const handleAnswer = (option: QuizOption) => {
     setHasAnsweredCurrent(true);
-    sendBattleAnswer(session.token, schoolId, roomId, option);
+    sendBattleAnswer(schoolId, roomId, option);
   };
 
   const handleStartNow = async () => {

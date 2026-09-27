@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { login } from '../api/auth';
-import { setAuthToken } from '../api/client';
+import { setAuthSession } from '../api/client';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Logo } from '../components/Logo';
 import LabeledInput from '../components/LabeledInput';
@@ -34,7 +34,7 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
     setError(null);
     try {
       const session = await login(schoolId, { username, password });
-      setAuthToken(session.token);
+      setAuthSession(session);
       onLoggedIn(session);
     } catch (e) {
       setError((e as Error).message);

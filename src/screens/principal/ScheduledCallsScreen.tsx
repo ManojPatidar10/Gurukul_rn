@@ -58,7 +58,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
   // left open in the background.
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
-    subscribeToMyCallEvents(session.token, schoolId, session.ownerType, session.ownerId, (event) => {
+    subscribeToMyCallEvents(schoolId, session.ownerType, session.ownerId, (event) => {
       if (event.type !== 'SCHEDULED_CALL_STARTED' || !event.scheduledCallId) return;
       setHosted((prev) =>
         prev.map((call) => (call.id === event.scheduledCallId ? { ...call, status: 'STARTED' } : call))
@@ -70,7 +70,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
       );
     }).then((unsub) => (unsubscribe = unsub));
     return () => unsubscribe?.();
-  }, [session.token, session.ownerType, session.ownerId, schoolId]);
+  }, [session.ownerType, session.ownerId, schoolId]);
 
   const withBusy = async (id: string, action: () => Promise<unknown>) => {
     setBusyId(id);

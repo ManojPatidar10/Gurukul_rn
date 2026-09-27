@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { requestOtp, verifyOtp } from '../api/auth';
-import { setAuthToken } from '../api/client';
+import { setAuthSession } from '../api/client';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Logo } from '../components/Logo';
 import LabeledInput from '../components/LabeledInput';
@@ -62,7 +62,7 @@ export default function OtpLoginScreen({
         onProfileSelectionRequired(response.selectionToken, response.profiles);
         return;
       }
-      setAuthToken(response.token);
+      setAuthSession(response);
       onLoggedIn(response);
     } catch (e) {
       setError((e as Error).message);

@@ -7,12 +7,11 @@ const subscriptions = new Map<string, StompSubscription>();
 
 /** Reuses the same shared STOMP connection as chatSocket.ts rather than opening a second WebSocket. */
 export async function subscribeToBattleRoom(
-  token: string,
   schoolId: string,
   roomId: string,
   onState: (state: BattleRoomState) => void
 ): Promise<() => void> {
-  const activeClient = await ensureClient(token, schoolId);
+  const activeClient = await ensureClient(schoolId);
   const destination = `/topic/battle-rooms/${roomId}`;
 
   subscriptions.get(destination)?.unsubscribe();
@@ -28,12 +27,11 @@ export async function subscribeToBattleRoom(
 }
 
 export async function sendBattleAnswer(
-  token: string,
   schoolId: string,
   roomId: string,
   selectedOption: 'A' | 'B' | 'C' | 'D'
 ) {
-  const activeClient = await ensureClient(token, schoolId);
+  const activeClient = await ensureClient(schoolId);
   activeClient.publish({
     destination: `/app/battle-rooms/${roomId}/answer`,
     body: JSON.stringify({ selectedOption }),

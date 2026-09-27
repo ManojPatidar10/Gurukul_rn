@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 import type { Session } from '../api/authStorage';
@@ -35,7 +35,9 @@ Notifications.setNotificationHandler({
  * (once we do have one) is a real problem though, so that's logged instead.
  */
 export function usePushNotifications(schoolId: string | null, session: Session | null) {
-  const sessionKey = session?.token ?? null;
+  // Keyed on who is signed in, not on the access token - that now rotates on every silent refresh,
+  // and re-registering the device each time would be pointless churn.
+  const sessionKey = session ? `${session.schoolId}:${session.ownerType}:${session.ownerId}` : null;
 
   useEffect(() => {
     if (!schoolId || !sessionKey || !Device.isDevice) return;
@@ -87,14 +89,23 @@ export function usePushNotifications(schoolId: string | null, session: Session |
       cancelled = true;
       tokenSubscription.remove();
     };
-    // sessionKey changes on every login/logout (a fresh session should re-register under the new
-    // owner) - schoolId alone wouldn't catch switching accounts within the same school.
+    // sessionKey changes on every login, logout and profile switch (a new owner should re-register
+    // the device) - schoolId alone wouldn't catch switching accounts within the same school.
   }, [schoolId, sessionKey]);
 
+  // The listener only needs the signed-in owner, so a token refresh (a new session object, same
+  // owner) mustn't tear it down and re-run the cold-start check below.
+  const sessionRef = useRef(session);
   useEffect(() => {
-    if (!session) return;
+    sessionRef.current = session;
+  }, [session]);
+
+  useEffect(() => {
+    if (!sessionKey) return;
 
     const handleResponse = (response: Notifications.NotificationResponse) => {
+      const session = sessionRef.current;
+      if (!session) return;
       const data = response.notification.request.content.data as Record<string, unknown> | undefined;
       if (!navigationRef.isReady() || !data?.type) return;
 
@@ -132,5 +143,5 @@ export function usePushNotifications(schoolId: string | null, session: Session |
       }
     });
     return () => subscription.remove();
-  }, [session]);
+  }, [sessionKey]);
 }
