@@ -30,9 +30,16 @@ jobs:
 
       - name: Build iOS (simulator)
         run: |
+          # expo prebuild names the workspace and scheme after app.json's expo.name with spaces
+          # removed ("Smart Gurukul" -> SmartGurukul). Discover it instead of hardcoding it, so
+          # renaming the app can't break this build again (it did after d1c164f and #92).
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -n 1)
+          if [ -z "$WORKSPACE" ]; then echo "No .xcworkspace found under ios/" >&2; exit 1; fi
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Building workspace $WORKSPACE, scheme $SCHEME"
           xcodebuild \
-            -workspace ios/Gurukul.xcworkspace \
-            -scheme Gurukul \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath ios/build \
