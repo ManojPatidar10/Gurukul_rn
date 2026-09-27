@@ -70,7 +70,7 @@ export default function App() {
     setAuthToken(session?.token ?? null);
   }, [session]);
 
-  usePushNotifications(schoolId ?? null, session?.token ?? null);
+  usePushNotifications(schoolId ?? null, session ?? null);
 
   const handleLoggedIn = (next: Session) => {
     setStoredSession(next);
