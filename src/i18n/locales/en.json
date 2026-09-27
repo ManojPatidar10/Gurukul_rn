@@ -65,7 +65,7 @@
     }
   },
   "dashboard": {
-    "fallbackTitle": "Gurukul",
+    "fallbackTitle": "Smart Gurukul",
     "welcome": "Welcome, {{name}}",
     "quickActions": "Quick Actions",
     "features": {
@@ -758,7 +758,7 @@
     }
   },
   "welcome": {
-    "title": "Gurukul",
+    "title": "Smart Gurukul",
     "subtitle": "School management, made simple",
     "findSchool": "Find my school",
     "registerSchool": "Register a new school"

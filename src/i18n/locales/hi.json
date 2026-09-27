@@ -65,7 +65,7 @@
     }
   },
   "dashboard": {
-    "fallbackTitle": "गुरुकुल",
+    "fallbackTitle": "स्मार्ट गुरुकुल",
     "welcome": "नमस्ते, {{name}}",
     "quickActions": "त्वरित कार्य",
     "features": {
@@ -758,7 +758,7 @@
     }
   },
   "welcome": {
-    "title": "गुरुकुल",
+    "title": "स्मार्ट गुरुकुल",
     "subtitle": "स्कूल प्रबंधन, आसान बनाया गया",
     "findSchool": "मेरा स्कूल खोजें",
     "registerSchool": "नया स्कूल रजिस्टर करें"

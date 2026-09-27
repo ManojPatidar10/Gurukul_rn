@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Gurukul",
+    "name": "Smart Gurukul",
     "slug": "gurukul-rn",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,7 +21,7 @@
       "package": "com.gurukul.rn",
       "versionCode": 2,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#7C3AED",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -42,13 +42,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Gurukul uses your camera for video calls."
+          "cameraPermission": "Smart Gurukul uses your camera for video calls."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Gurukul uses your location to confirm you're at the school when self-marking attendance."
+          "locationWhenInUsePermission": "Smart Gurukul uses your location to confirm you're at the school when self-marking attendance."
         }
       ],
       "expo-font",
@@ -62,7 +62,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Gurukul uses your microphone for video calls."
+          "microphonePermission": "Smart Gurukul uses your microphone for video calls."
         }
       ],
       "expo-asset"
