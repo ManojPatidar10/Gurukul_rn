@@ -69,7 +69,7 @@
     .btn-outline:hover { background: rgba(255,255,255,.12); }
     .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
     .hero-phones { display: flex; justify-content: center; gap: 14px; }
-    .hero-phones img { width: 46%; max-width: 200px; border-radius: 22px; box-shadow: 0 24px 48px rgba(31,27,46,.35); }
+    .hero-phones img { width: 46%; height: auto; max-width: 200px; border-radius: 22px; box-shadow: 0 24px 48px rgba(31,27,46,.35); }
     .hero-phones img:nth-child(2) { transform: translateY(22px); }
 
     /* ---------- Layout ---------- */
@@ -156,7 +156,7 @@
 
     .shots { display: flex; gap: 14px; }
     .shot { width: 200px; margin: 0; }
-    .shot img { width: 100%; border-radius: 22px; border: 6px solid #1F1B2E; box-shadow: 0 16px 32px -12px rgba(31,27,46,.35); background: #fff; cursor: zoom-in; }
+    .shot img { width: 100%; height: auto; border-radius: 22px; border: 6px solid #1F1B2E; box-shadow: 0 16px 32px -12px rgba(31,27,46,.35); background: #fff; cursor: zoom-in; }
     .shot figcaption { font-size: 12.5px; color: var(--text-muted); text-align: center; margin-top: 8px; }
 
     /* ---------- Gallery ---------- */
@@ -258,8 +258,8 @@
         </div>
       </div>
       <div class="hero-phones" aria-hidden="true">
-        <img src="./assets/toolkit/01-welcome.jpg" alt="" />
-        <img src="./assets/toolkit/12-student-home.jpg" alt="" />
+        <img src="./assets/toolkit/01-welcome.jpg" width="540" height="1212" alt="" />
+        <img src="./assets/toolkit/12-student-home.jpg" width="540" height="1212" alt="" />
       </div>
     </div>
   </section>
@@ -379,8 +379,8 @@
           <p class="done">You're on the "Register your school" form with the address filled in.</p>
         </div>
         <div class="shots">
-          <figure class="shot"><img src="./assets/toolkit/01-welcome.jpg" alt="Gurukul Welcome screen with Find my school and Register a new school buttons" loading="lazy" /><figcaption>Welcome</figcaption></figure>
-          <figure class="shot"><img src="./assets/toolkit/02-register-school.jpg" alt="Register your school form with name, address, city, state and pincode filled in" loading="lazy" /><figcaption>School details</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/01-welcome.jpg" width="540" height="1212" alt="Gurukul Welcome screen with Find my school and Register a new school buttons" loading="lazy" /><figcaption>Welcome</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/02-register-school.jpg" width="540" height="1212" alt="Register your school form with name, address, city, state and pincode filled in" loading="lazy" /><figcaption>School details</figcaption></figure>
         </div>
       </article>
 
@@ -398,7 +398,7 @@
           <p class="done">The app signs you straight in as admin and opens your school's dashboard.</p>
         </div>
         <div class="shots">
-          <figure class="shot"><img src="./assets/toolkit/03-register-contacts.jpg" alt="Lower half of the register form: location, contact email and phone, principal, director and admin phone" loading="lazy" /><figcaption>Location &amp; contacts</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/03-register-contacts.jpg" width="540" height="1212" alt="Lower half of the register form: location, contact email and phone, principal, director and admin phone" loading="lazy" /><figcaption>Location &amp; contacts</figcaption></figure>
         </div>
       </article>
 
@@ -416,8 +416,8 @@
           <p class="done">The phone remembers your school, so next time you go straight to sign-in.</p>
         </div>
         <div class="shots">
-          <figure class="shot"><img src="./assets/toolkit/04-find-school.jpg" alt="Find your school search screen showing a matching school" loading="lazy" /><figcaption>Find your school</figcaption></figure>
-          <figure class="shot"><img src="./assets/toolkit/06-enter-otp.jpg" alt="Sign in screen after the code was sent, with an OTP field and Verify and sign in button" loading="lazy" /><figcaption>Enter the WhatsApp code</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/04-find-school.jpg" width="540" height="1212" alt="Find your school search screen showing a matching school" loading="lazy" /><figcaption>Find your school</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/06-enter-otp.jpg" width="540" height="1212" alt="Sign in screen after the code was sent, with an OTP field and Verify and sign in button" loading="lazy" /><figcaption>Enter the WhatsApp code</figcaption></figure>
         </div>
       </article>
     </section>
@@ -494,8 +494,8 @@
           <p class="done">The teacher's registration is submitted. They can sign in once it's approved (Step 3.3).</p>
         </div>
         <div class="shots">
-          <figure class="shot"><img src="./assets/toolkit/07-create-account.jpg" alt="Create an account screen asking who you are registering as: student, teacher or parent" loading="lazy" /><figcaption>Choose a role</figcaption></figure>
-          <figure class="shot"><img src="./assets/toolkit/08-teacher-registration.jpg" alt="Teacher registration form with invite code, username and password" loading="lazy" /><figcaption>Teacher registration</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/07-create-account.jpg" width="540" height="1212" alt="Create an account screen asking who you are registering as: student, teacher or parent" loading="lazy" /><figcaption>Choose a role</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/08-teacher-registration.jpg" width="540" height="1212" alt="Teacher registration form with invite code, username and password" loading="lazy" /><figcaption>Teacher registration</figcaption></figure>
         </div>
       </article>
 
@@ -513,8 +513,8 @@
           <p class="done">Families can see their child's dashboard, or their registration is waiting for approval.</p>
         </div>
         <div class="shots">
-          <figure class="shot"><img src="./assets/toolkit/10-parent-registration.jpg" alt="Parent registration form with child's registration number and contact number on file" loading="lazy" /><figcaption>Parent registration</figcaption></figure>
-          <figure class="shot"><img src="./assets/toolkit/11-whos-using.jpg" alt="Who's using the app screen listing several children linked to one phone number" loading="lazy" /><figcaption>One number, several children</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/10-parent-registration.jpg" width="540" height="1212" alt="Parent registration form with child's registration number and contact number on file" loading="lazy" /><figcaption>Parent registration</figcaption></figure>
+          <figure class="shot"><img src="./assets/toolkit/11-whos-using.jpg" width="540" height="1212" alt="Who's using the app screen listing several children linked to one phone number" loading="lazy" /><figcaption>One number, several children</figcaption></figure>
         </div>
       </article>
 
@@ -602,17 +602,17 @@
         </div>
       </div>
       <div class="gallery">
-        <figure class="shot"><img src="./assets/toolkit/12-student-home.jpg" alt="Student dashboard with quick-action tiles" loading="lazy" /><figcaption><b>Dashboard</b>Everything in one place</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/16-my-class.jpg" alt="My Class screen with students, subjects and assessments" loading="lazy" /><figcaption><b>My Class</b>Students, subjects, assessments</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/14-my-teachers.jpg" alt="Subjects list with each subject's teacher" loading="lazy" /><figcaption><b>My Teachers</b>Who teaches each subject</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/15-my-fees.jpg" alt="My Fees screen showing dues for the academic year" loading="lazy" /><figcaption><b>My Fees</b>Dues and payment history</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/21-attendance.jpg" alt="Attendance calendar with present, absent, late and half-day legend" loading="lazy" /><figcaption><b>View Attendance</b>Calendar or list view</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/20-report-card.jpg" alt="Report card screen with a term selector" loading="lazy" /><figcaption><b>Report Card</b>Appears once published</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/18-events.jpg" alt="School Events list" loading="lazy" /><figcaption><b>School Events</b>What's coming up</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/17-game-hub.jpg" alt="Game Hub with level, streak, leaderboard, house wars, battle room, arena and practice" loading="lazy" /><figcaption><b>Game Hub</b>XP, streaks, quiz battles</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/19-academic-helper.jpg" alt="Academic Helper answering a question about photosynthesis" loading="lazy" /><figcaption><b>Academic Helper</b>AI homework help</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/13-classmates.jpg" alt="My Classmates list filtered by section" loading="lazy" /><figcaption><b>My Classmates</b>Search by name or section</figcaption></figure>
-        <figure class="shot"><img src="./assets/toolkit/22-profile.jpg" alt="Profile screen with details, change language, switch child and log out" loading="lazy" /><figcaption><b>Profile</b>Language, switch child, log out</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/12-student-home.jpg" width="540" height="1212" alt="Student dashboard with quick-action tiles" loading="lazy" /><figcaption><b>Dashboard</b>Everything in one place</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/16-my-class.jpg" width="540" height="1212" alt="My Class screen with students, subjects and assessments" loading="lazy" /><figcaption><b>My Class</b>Students, subjects, assessments</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/14-my-teachers.jpg" width="540" height="1212" alt="Subjects list with each subject's teacher" loading="lazy" /><figcaption><b>My Teachers</b>Who teaches each subject</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/15-my-fees.jpg" width="540" height="1212" alt="My Fees screen showing dues for the academic year" loading="lazy" /><figcaption><b>My Fees</b>Dues and payment history</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/21-attendance.jpg" width="540" height="1212" alt="Attendance calendar with present, absent, late and half-day legend" loading="lazy" /><figcaption><b>View Attendance</b>Calendar or list view</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/20-report-card.jpg" width="540" height="1212" alt="Report card screen with a term selector" loading="lazy" /><figcaption><b>Report Card</b>Appears once published</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/18-events.jpg" width="540" height="1212" alt="School Events list" loading="lazy" /><figcaption><b>School Events</b>What's coming up</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/17-game-hub.jpg" width="540" height="1212" alt="Game Hub with level, streak, leaderboard, house wars, battle room, arena and practice" loading="lazy" /><figcaption><b>Game Hub</b>XP, streaks, quiz battles</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/19-academic-helper.jpg" width="540" height="1212" alt="Academic Helper answering a question about photosynthesis" loading="lazy" /><figcaption><b>Academic Helper</b>AI homework help</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/13-classmates.jpg" width="540" height="1212" alt="My Classmates list filtered by section" loading="lazy" /><figcaption><b>My Classmates</b>Search by name or section</figcaption></figure>
+        <figure class="shot"><img src="./assets/toolkit/22-profile.jpg" width="540" height="1212" alt="Profile screen with details, change language, switch child and log out" loading="lazy" /><figcaption><b>Profile</b>Language, switch child, log out</figcaption></figure>
       </div>
     </section>
 
