@@ -22,6 +22,7 @@ Key facts:
 - [Parent app](https://smartgurukul.org/parent-app.html): what parents see and how they sign in
 - [Compare](https://smartgurukul.org/compare.html): Smart Gurukul vs. typical school management software, including gaps
 - [Fees, payroll and expenses](https://smartgurukul.org/money-features.html): how the money features work for each role
+- [School onboarding toolkit](https://smartgurukul.org/onboarding-toolkit.html): step-by-step guide to registering a school, setting up classes and staff, and inviting teachers, students and parents
 - [Hindi homepage](https://smartgurukul.org/hi/): स्मार्ट गुरुकुल हिंदी में
 
 ## Optional

@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>School Onboarding Toolkit — Gurukul</title>
+  <title>School Onboarding Toolkit | Smart Gurukul</title>
   <meta name="description" content="A step-by-step toolkit for schools joining Gurukul: register your school, set up classes and staff, invite teachers, students and parents, and run the school day to day." />
-  <link rel="icon" href="./assets/favicon.png" />
+  <link rel="icon" href="./assets/brand/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="./assets/brand/favicon-48.png" sizes="48x48" />
+  <link rel="apple-touch-icon" href="./assets/brand/apple-touch-180.png" />
   <style>
     :root {
       --primary: #7C3AED;
@@ -143,6 +145,7 @@
     .path i { font-style: normal; color: var(--text-muted); }
 
     .tap { font-weight: 700; color: var(--primary-dark); background: var(--tint); border-radius: 6px; padding: 0 6px; white-space: nowrap; }
+    @media (max-width: 400px) { .tap { white-space: normal; -webkit-box-decoration-break: clone; box-decoration-break: clone; } }
 
     .note { border-radius: 14px; padding: 12px 14px; font-size: 14px; margin: 0 0 12px; display: flex; gap: 10px; }
     .note b { flex: 0 0 auto; }
@@ -227,8 +230,8 @@
 
   <header class="nav">
     <a class="brand" href="./index.html">
-      <img src="./assets/icon.png" alt="Gurukul logo" />
-      Gurukul
+      <img src="./assets/brand/mark.svg" alt="" />
+      Smart Gurukul
     </a>
     <nav class="nav-links">
       <a href="./index.html#features">Features</a>
