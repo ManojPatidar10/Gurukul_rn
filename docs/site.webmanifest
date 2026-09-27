@@ -1,0 +1,10 @@
+{
+  "name": "Smart Gurukul",
+  "short_name": "Smart Gurukul",
+  "description": "AI + School + Games: the school app for Indian schools.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#171334",
+  "theme_color": "#171334",
+  "icons": [{ "src": "/assets/logo-512.png", "sizes": "512x512", "type": "image/png" }]
+}

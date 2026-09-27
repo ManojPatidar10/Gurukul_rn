@@ -1,0 +1,95 @@
+<!--meta {
+  "path": "gps-attendance.html",
+  "crumb": "GPS attendance",
+  "title": "GPS Attendance App for Schools — No Biometric Machine",
+  "description": "Staff mark attendance from their phone, accepted only inside your school's GPS geofence and checked on our server. Class attendance, calendars and export too.",
+  "priority": "0.9"
+} -->
+<section class="page-hero" style="--glow:#2FE0A0">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Smart Gurukul</a> › GPS attendance</nav>
+    <p class="eyebrow">School</p>
+    <h1>GPS attendance for schools, with no machine to buy</h1>
+    <p class="lead">Teachers and staff mark themselves present from their own phone, but only when they are actually on campus. Class attendance takes a teacher a few taps. Everything lands in one record the principal and parents can see.</p>
+    <div class="hero-actions" style="margin-top:26px"><a class="btn btn-gold" href="index.html#demo">Book a free demo</a></div>
+  </div>
+</section>
+
+<section style="padding-bottom:0">
+  <div class="wrap">
+    <div class="answer"><p><strong>In short:</strong> geofenced attendance means the school sets its location and a radius (100 metres by default). When a staff member taps <em>Mark my attendance</em>, the phone sends its GPS position and <strong>our server, not the phone</strong>, checks the distance to the school. Inside the radius, they’re marked present; outside, it’s refused and shows how far away they are.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="feature-row">
+      <div class="fr-media" style="--glow:#D6F8EA"><div class="phone"><img src="assets/img/gps-attendance.webp" width="540" height="1216" loading="lazy" alt="Mark My Attendance screen showing 'You're marked present' and a monthly attendance calendar"></div></div>
+      <div style="--c:var(--jade-dark)">
+        <p class="eyebrow" style="color:var(--jade-dark)">Staff attendance</p>
+        <h2 style="font-size:clamp(1.6rem,3.4vw,2.3rem)">How geofenced check-in works</h2>
+        <ol class="checks" style="counter-reset:none">
+          <li><strong>Set the school’s location once.</strong> The principal taps “use my current location” on campus and sets the radius.</li>
+          <li><strong>Staff check in from their phone.</strong> One tap on arrival; the phone shares its GPS position.</li>
+          <li><strong>The server decides.</strong> Distance is calculated on our server from the school’s stored coordinates, so the phone can’t simply declare itself “inside”.</li>
+          <li><strong>History is automatic.</strong> Each person gets a monthly calendar of present, absent, late and half-day.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="dark">
+  <div class="wrap">
+    <div class="section-head"><p class="eyebrow">Compare</p><h2>GPS geofence vs. biometric machine</h2></div>
+    <div class="table-wrap" style="background:var(--ink-soft);border-color:var(--ink-line)">
+      <table class="compare" style="color:#fff">
+        <thead><tr><th scope="col" style="background:var(--ink-soft)"></th><th scope="col" style="background:var(--ink-soft)">Biometric / RFID machine</th><th scope="col" class="us" style="background:var(--violet)">Smart Gurukul GPS</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Hardware cost</th><td>Buy, install and maintain a device</td><td class="us" style="background:transparent">None: uses staff phones</td></tr>
+          <tr><th scope="row">Queues at the gate</th><td>Everyone uses one device</td><td class="us" style="background:transparent">Each person checks in on their own phone</td></tr>
+          <tr><th scope="row">Proof of presence</th><td>Finger, face or card at the device</td><td class="us" style="background:transparent">Server-checked location within the campus radius</td></tr>
+          <tr><th scope="row">Reports</th><td>Often exported from the device software</td><td class="us" style="background:transparent">Live in the app, with calendars and export</td></tr>
+          <tr><th scope="row">Already own devices?</th><td>—</td><td class="us" style="background:transparent">Connect them through our attendance device API</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap prose">
+    <h2>Student attendance, too</h2>
+    <p>Teachers take class attendance from their phone in a few taps: present, absent, late or half-day. Students earn XP and keep their streak for every day they’re present, which is the link between attendance and <a href="gamified-learning.html">gamified learning</a>.</p>
+    <ul>
+      <li><strong>Section-wise history</strong> for class teachers and the principal.</li>
+      <li><strong>A calendar for every student</strong>, visible to the student and their parents in the <a href="parent-app.html">parent app</a>.</li>
+      <li><strong>Attendance export</strong> for records and inspections.</li>
+    </ul>
+    <h2>Connecting existing attendance devices</h2>
+    <p>Schools that already use RFID cards, fingerprint or face-recognition devices don’t have to throw them away. Smart Gurukul has an attendance device API that devices can send events to; the hookup for a specific brand is set up per school during onboarding.</p>
+  </div>
+</section>
+
+<section style="background:var(--surface);border-block:1px solid var(--line)">
+  <div class="wrap">
+    <div class="section-head center"><p class="eyebrow">FAQ</p><h2>GPS attendance: common questions</h2></div>
+    <div class="faq">
+      <details class="qa"><summary>How does GPS attendance work for teachers?</summary><p>The school sets its location and a radius. A teacher taps “Mark my attendance” on arrival, the phone sends its GPS position, and the server checks the distance to the school. Inside the radius they are marked present; outside, the check-in is refused.</p></details>
+      <details class="qa"><summary>Can staff fake their location?</summary><p>The in/out decision is made on the server from the school’s stored coordinates, never by the phone, and the location and accuracy of every check-in are recorded. As with any GPS system, a determined person using special spoofing tools on their phone is harder to rule out than with a biometric device.</p></details>
+      <details class="qa"><summary>What radius should a school use?</summary><p>The default is 100 metres from the point you set. Larger campuses can increase it from the school’s location settings.</p></details>
+      <details class="qa"><summary>Do we need a biometric machine?</summary><p>No. GPS attendance uses staff phones. If you already have RFID, fingerprint or face devices, they can connect through our attendance device API.</p></details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 style="font-size:1.5rem">Explore more</h2>
+    <div class="related">
+      <a href="parent-app.html">Parent app<span>Attendance, fees and report cards</span></a>
+      <a href="ai-for-schools.html">AI for schools<span>Ask for anyone’s attendance percentage</span></a>
+      <a href="school-erp-alternative.html">Smart Gurukul vs. ERP<span>An honest comparison</span></a>
+    </div>
+  </div>
+</section>
