@@ -6,7 +6,15 @@ import { useTranslation } from 'react-i18next';
 import { ApiError } from '../../api/client';
 import { createFeePaymentRequest } from '../../api/feePaymentRequest';
 import { findPendingPaymentAttempt, recordPaymentAttemptResult } from '../../api/paymentAttempts';
-import type { FeePaymentRequestResponse, PaymentAttempt, PaymentAttemptStatus } from '../../api/types';
+import { createRazorpayOrder, getPaymentGatewayStatus, verifyRazorpayPayment } from '../../api/razorpay';
+import type {
+  FeePaymentRequestResponse,
+  PaymentAttempt,
+  PaymentAttemptStatus,
+  PaymentGatewayStatus,
+  RazorpayOrder,
+} from '../../api/types';
+import { RazorpayCheckoutModal, type RazorpayCheckoutResult } from '../../components/RazorpayCheckoutModal';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -16,20 +24,64 @@ import { resolvePaymentAppUrl } from '../../utils/upiPaymentLinks';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayFees'>;
 
-type Stage = 'idle' | 'creating' | 'awaitingReturn' | 'reporting' | 'result' | 'error';
+type Stage =
+  | 'loading'
+  | 'idle'
+  | 'creating'
+  | 'checkout'
+  | 'verifying'
+  | 'awaitingReturn'
+  | 'reporting'
+  | 'result'
+  | 'error';
 
 const accent = accents.fees;
 
+/**
+ * Two payment routes live here, and which one is offered is the backend's decision, not this
+ * screen's guess: it answers /fee-payments/gateway with RAZORPAY when merchant credentials are
+ * configured and UPI_INTENT otherwise.
+ *
+ * - RAZORPAY: server-created order, Razorpay's hosted checkout, then server-side verification. The
+ *   app never learns the outcome by asking the user.
+ * - UPI_INTENT (fallback, pre-gateway): a upi:// deep link that hands off to whatever UPI app is
+ *   installed and returns nothing. The only way this app can learn what happened is to ask, which
+ *   is exactly as unreliable as it sounds - hence the caveats in the result copy on that path.
+ */
 export function PayFeesScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const assessment = route.params.assessment;
 
-  const [stage, setStage] = useState<Stage>('idle');
+  const [stage, setStage] = useState<Stage>('loading');
+  const [gateway, setGateway] = useState<PaymentGatewayStatus | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentRequest, setPaymentRequest] = useState<FeePaymentRequestResponse | null>(null);
+  const [razorpayOrder, setRazorpayOrder] = useState<RazorpayOrder | null>(null);
   const [resultAttempt, setResultAttempt] = useState<PaymentAttempt | null>(null);
   const returnHandled = useRef(false);
+
+  const usesGateway = gateway?.provider === 'RAZORPAY';
+
+  useEffect(() => {
+    let cancelled = false;
+    getPaymentGatewayStatus(schoolId)
+      .then((status) => {
+        if (cancelled) return;
+        setGateway(status);
+        setStage('idle');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Falling back rather than blocking: an older backend has no such endpoint, and the
+        // UPI-intent path is the behaviour that existed before the gateway and still works.
+        setGateway({ provider: 'UPI_INTENT', verifiedPaymentsAvailable: false });
+        setStage('idle');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [schoolId]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
@@ -43,10 +95,10 @@ export function PayFeesScreen({ route, navigation }: Props) {
   }, [stage, paymentRequest]);
 
   /**
-   * React Native's Linking API can only fire-and-forget open the UPI app (startActivity) - it
-   * cannot capture a real ActivityResult the way native Android code could, so there is no
-   * automatic, verified answer to "did the payment succeed?" here. The user's own report is
-   * recorded as exactly that - self-reported - never presented as independently verified. See
+   * UPI-intent path only. React Native's Linking API can only fire-and-forget open the UPI app
+   * (startActivity) - it cannot capture a real ActivityResult the way native Android code could, so
+   * there is no automatic, verified answer to "did the payment succeed?" here. The user's own report
+   * is recorded as exactly that - self-reported - never presented as independently verified. See
    * PaymentAttemptStatus (backend) for why RESPONSE_SUCCESS is kept distinct from VERIFIED.
    */
   const promptForOutcome = (request: FeePaymentRequestResponse) => {
@@ -104,13 +156,65 @@ export function PayFeesScreen({ route, navigation }: Props) {
     }
   };
 
+  const startRazorpayPayment = async () => {
+    setErrorMessage(null);
+    setStage('creating');
+    try {
+      const order = await createRazorpayOrder(schoolId, assessment.id);
+      setRazorpayOrder(order);
+      setStage('checkout');
+    } catch (e) {
+      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      setErrorMessage(message);
+      setStage('error');
+    }
+  };
+
+  /**
+   * A "success" from Checkout is only a claim until the backend re-derives the signature and
+   * re-fetches the payment from Razorpay, so the fee is never shown as paid on this word alone.
+   */
+  const handleCheckoutResult = async (result: RazorpayCheckoutResult) => {
+    if (result.kind === 'dismissed') {
+      setRazorpayOrder(null);
+      setStage('idle');
+      return;
+    }
+    if (result.kind === 'failed') {
+      setRazorpayOrder(null);
+      setErrorMessage(result.reason ?? t('fees.payFees.resultFailedMessage'));
+      setStage('error');
+      return;
+    }
+
+    setRazorpayOrder(null);
+    setStage('verifying');
+    try {
+      const attempt = await verifyRazorpayPayment(schoolId, {
+        razorpayOrderId: result.razorpayOrderId,
+        razorpayPaymentId: result.razorpayPaymentId,
+        razorpaySignature: result.razorpaySignature,
+      });
+      setResultAttempt(attempt);
+      setStage('result');
+    } catch (e) {
+      // The money may well have been taken - verification is a separate network call, and Razorpay's
+      // webhook will reconcile this server-side within minutes regardless. Telling the student to
+      // retry here is how double payments happen, so the copy explicitly says not to.
+      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      setErrorMessage(`${t('fees.payFees.verifyFailedMessage')}\n\n${message}`);
+      setStage('error');
+    }
+  };
+
   const handlePay = async () => {
+    const start = usesGateway ? startRazorpayPayment : startPayment;
     try {
       const pending = await findPendingPaymentAttempt(schoolId, assessment.id);
       if (pending) {
         Alert.alert(t('fees.payFees.pendingTitle'), t('fees.payFees.pendingMessage'), [
           { text: t('fees.payFees.pendingCancel'), style: 'cancel' },
-          { text: t('fees.payFees.pendingContinue'), onPress: startPayment },
+          { text: t('fees.payFees.pendingContinue'), onPress: start },
         ]);
         return;
       }
@@ -118,18 +222,21 @@ export function PayFeesScreen({ route, navigation }: Props) {
       // Non-fatal - if the pending-attempt check itself fails, fall through to a normal attempt
       // rather than blocking the student from paying at all.
     }
-    await startPayment();
+    await start();
   };
 
   const handleRetry = () => {
     setErrorMessage(null);
     setPaymentRequest(null);
+    setRazorpayOrder(null);
     setResultAttempt(null);
     returnHandled.current = false;
     setStage('idle');
   };
 
   const handleDone = () => navigation.navigate('MyFees');
+
+  const isBusy = stage === 'creating' || stage === 'awaitingReturn' || stage === 'reporting' || stage === 'verifying';
 
   return (
     <View style={styles.root}>
@@ -146,6 +253,12 @@ export function PayFeesScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {stage === 'loading' && (
+          <View style={styles.statusCard}>
+            <ActivityIndicator color={colors.primary} size="large" />
+          </View>
+        )}
+
         {(stage === 'idle' || stage === 'error') && (
           <>
             {stage === 'error' && errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
@@ -155,7 +268,11 @@ export function PayFeesScreen({ route, navigation }: Props) {
               </Text>
             </Pressable>
 
-            {stage === 'error' && paymentRequest && (
+            {usesGateway && stage === 'idle' && <Text style={styles.secureNote}>{t('fees.payFees.secureNote')}</Text>}
+
+            {/* Manual fallback is meaningful only on the UPI-intent path, where there is a VPA to
+                copy and self-reporting is the only source of truth. */}
+            {!usesGateway && stage === 'error' && paymentRequest && (
               <View style={styles.manualCard}>
                 <Text style={styles.manualTitle}>{t('fees.payFees.manualTitle')}</Text>
                 <Text style={styles.manualHint}>{t('fees.payFees.manualHint')}</Text>
@@ -176,19 +293,34 @@ export function PayFeesScreen({ route, navigation }: Props) {
           </>
         )}
 
-        {(stage === 'creating' || stage === 'awaitingReturn' || stage === 'reporting') && (
+        {isBusy && (
           <View style={styles.statusCard}>
             <ActivityIndicator color={colors.primary} size="large" />
             <Text style={styles.statusText}>
               {stage === 'creating' && t('fees.payFees.preparing')}
               {stage === 'awaitingReturn' && t('fees.payFees.openingApp')}
               {stage === 'reporting' && t('fees.payFees.confirming')}
+              {stage === 'verifying' && t('fees.payFees.verifying')}
             </Text>
           </View>
         )}
 
         {stage === 'result' && resultAttempt && (
           <View style={styles.resultCard}>
+            {/* VERIFIED is reachable only through the gateway - it means the backend confirmed the
+                capture with Razorpay, so unlike RESPONSE_SUCCESS it carries no caveat. */}
+            {resultAttempt.status === 'VERIFIED' && (
+              <>
+                <Text style={[styles.resultTitle, styles.resultSuccess]}>{t('fees.payFees.resultVerifiedTitle')}</Text>
+                <Text style={styles.resultAmount}>₹{resultAttempt.amount.toLocaleString('en-IN')}</Text>
+                <Text style={styles.resultLine}>{t('fees.payFees.resultVerifiedSubtitle')}</Text>
+                {resultAttempt.razorpayPaymentId && (
+                  <Text style={styles.resultLine}>
+                    {t('fees.payFees.resultReference')}: {resultAttempt.razorpayPaymentId}
+                  </Text>
+                )}
+              </>
+            )}
             {resultAttempt.status === 'RESPONSE_SUCCESS' && (
               <>
                 <Text style={[styles.resultTitle, styles.resultSuccess]}>{t('fees.payFees.resultSuccessTitle')}</Text>
@@ -205,7 +337,12 @@ export function PayFeesScreen({ route, navigation }: Props) {
               <Text style={styles.resultTitle}>{t('fees.payFees.resultPendingMessage')}</Text>
             )}
             {resultAttempt.status === 'FAILED' && (
-              <Text style={[styles.resultTitle, styles.resultFailed]}>{t('fees.payFees.resultFailedMessage')}</Text>
+              <>
+                <Text style={[styles.resultTitle, styles.resultFailed]}>{t('fees.payFees.resultFailedMessage')}</Text>
+                {resultAttempt.failureReason && (
+                  <Text style={styles.resultLine}>{resultAttempt.failureReason}</Text>
+                )}
+              </>
             )}
             {resultAttempt.status === 'CANCELLED' && (
               <Text style={[styles.resultTitle, styles.resultFailed]}>{t('fees.payFees.resultCancelledMessage')}</Text>
@@ -215,20 +352,28 @@ export function PayFeesScreen({ route, navigation }: Props) {
             )}
 
             {(resultAttempt.status === 'FAILED' || resultAttempt.status === 'CANCELLED') && (
-              <Pressable style={styles.payButton} onPress={handleRetry}>
+              <Pressable style={[styles.payButton, styles.resultButton]} onPress={handleRetry}>
                 <Text style={styles.payButtonText}>{t('fees.payFees.tryAgain')}</Text>
               </Pressable>
             )}
             {resultAttempt.status !== 'FAILED' && resultAttempt.status !== 'CANCELLED' && (
-              <Pressable style={styles.payButton} onPress={handleDone}>
+              <Pressable style={[styles.payButton, styles.resultButton]} onPress={handleDone}>
                 <Text style={styles.payButtonText}>{t('common.done')}</Text>
               </Pressable>
             )}
           </View>
         )}
 
-        <Text style={styles.caution}>{t('fees.payFees.caution')}</Text>
+        {stage !== 'loading' && (
+          <Text style={styles.caution}>
+            {usesGateway ? t('fees.payFees.cautionGateway') : t('fees.payFees.caution')}
+          </Text>
+        )}
       </ScreenContainer>
+
+      {stage === 'checkout' && razorpayOrder && (
+        <RazorpayCheckoutModal order={razorpayOrder} onResult={handleCheckoutResult} />
+      )}
     </View>
   );
 }
@@ -254,6 +399,13 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   payButtonText: { color: colors.white, fontWeight: '700', fontSize: 16 },
+  resultButton: { alignSelf: 'stretch', marginTop: spacing.lg },
+  secureNote: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.md,
+  },
   manualCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -290,7 +442,7 @@ const styles = StyleSheet.create({
   resultSuccess: { color: colors.success },
   resultFailed: { color: colors.error },
   resultAmount: { fontSize: 28, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.sm },
-  resultLine: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs },
+  resultLine: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs, textAlign: 'center' },
   resultCaveat: {
     fontSize: 12,
     color: colors.textMuted,

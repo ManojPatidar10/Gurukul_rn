@@ -400,8 +400,7 @@
       "totalPaid": "Total paid",
       "remainingDue": "Remaining due",
       "dueDate": "Due date",
-      "payFees": "Pay Fees",
-      "payFeesComingSoon": "Online fee payment is coming soon."
+      "payFees": "Pay Fees"
     },
     "paymentMethods": {
       "cash": "Cash",
@@ -475,7 +474,14 @@
       "resultPendingMessage": "Payment is being processed. Do not make another payment yet.",
       "resultFailedMessage": "Payment failed.",
       "resultCancelledMessage": "Payment was cancelled.",
-      "resultUnknownMessage": "We could not confirm the payment result. Check My Fees later before paying again."
+      "resultUnknownMessage": "We could not confirm the payment result. Check My Fees later before paying again.",
+      "secureNote": "Payments are handled securely by Razorpay. Your card, UPI PIN and bank details are entered on their page and are never seen by this app.",
+      "verifying": "Verifying your payment…",
+      "resultVerifiedTitle": "Payment successful",
+      "resultVerifiedSubtitle": "Your fee has been updated.",
+      "resultReference": "Payment reference",
+      "verifyFailedMessage": "Your payment may still have gone through. If money was deducted it will be confirmed automatically within a few minutes — please do not pay again. Check My Fees shortly.",
+      "cautionGateway": "You'll complete the payment on Razorpay's secure page. Your fee is marked paid only after the payment is confirmed with them."
     }
   },
   "payroll": {

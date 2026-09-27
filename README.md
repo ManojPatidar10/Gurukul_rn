@@ -24,7 +24,13 @@ A React Native (Expo) app for **Digital School** — starting with the Trustee /
 
 - Node.js 20+
 - npm
-- [Expo Go](https://expo.dev/go) on a physical device, or Android Studio / Xcode for emulators
+- Android Studio (SDK + an AVD), or Xcode for the iOS simulator
+
+> **Expo Go will not run this app.** It depends on native modules that aren't in the Go
+> runtime (`@react-native-google-signin`, `expo-camera`, `react-native-webview`) and on config
+> plugins under `plugins/`, so it needs a **development build** — hence `expo start --dev-client`
+> in `npm start`. Build one once with `npx expo run:android` (or EAS), after which
+> `npm run android` just reconnects to it.
 
 ## Setup
 
@@ -42,13 +48,53 @@ npm start
 
 # Android emulator or device
 npm run android
-c
+
 # iOS simulator (macOS only)
 npm run ios
 
 # Web browser
 npm run web
 ```
+
+### Against a local backend
+
+By default the app talks to production (`https://api.smartgurukul.org`). To point it at a backend
+running on your own machine:
+
+```bash
+# 1. Emulator. `emulator` is not on PATH by default.
+$ANDROID_HOME/emulator/emulator -avd "$($ANDROID_HOME/emulator/emulator -list-avds | head -1)" &
+
+# 2. Backend (separate terminal). In-memory H2, so it starts empty every time.
+cd ../backend && set -a; . ./.env.local; set +a && ./mvnw spring-boot:run
+
+# 3. Demo data - a student login and a payable fee. Re-run after every backend restart.
+cd ../backend && ./scripts/seed-demo-fees.sh
+
+# 4. The app.
+cd ../frontend && npm run android
+```
+
+`.env` should contain `EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8080` — `10.0.2.2` is how the
+Android emulator reaches the host's localhost. On a **physical device** use your machine's LAN IP
+instead, or forward the ports with
+`adb reverse tcp:8081 tcp:8081 && adb reverse tcp:8080 tcp:8080`.
+
+`EXPO_PUBLIC_*` values are inlined at bundle time, so changing `.env` needs Metro restarted with a
+cleared cache: `npx expo start -c`.
+
+### Gotchas
+
+- **`app.json` declares no `scheme`**, so launching via a deep link (`adb shell am start -d
+  com.gurukul.rn://...`) fails with "unable to resolve Intent". Open the app from the launcher and
+  pick the dev server from the list instead.
+- **Fast Refresh resets React state but Android keeps native `TextInput` text.** After editing a
+  file, a login form can look filled while the component's state is empty, so submitting silently
+  does nothing. Force-stop and relaunch rather than reusing the form.
+- **The emulator has no UPI app installed**, so the fee-payment deep link can never resolve and you
+  always get the "pay manually" fallback. Testing the real UPI handoff needs a physical device with
+  PhonePe/GPay. Razorpay Checkout works fine on the emulator (see
+  `../backend/docs/razorpay-setup.md`).
 
 ## Scripts
 

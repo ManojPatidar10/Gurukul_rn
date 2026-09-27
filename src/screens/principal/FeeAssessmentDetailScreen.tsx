@@ -6,7 +6,6 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -24,7 +23,6 @@ function Field({ label, value }: { label: string; value: string }) {
 export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const { session } = useAuth();
   const { t } = useTranslation();
-  const { showToast } = useToast();
   const assessment = route.params.assessment;
   const fullyPaid = assessment.remainingDue <= 0;
   const paidPercent = assessment.totalDue > 0
@@ -62,7 +60,7 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
         {!fullyPaid && canPayFees && (
           <Pressable
             style={styles.payButton}
-            onPress={() => showToast(t('fees.assessmentDetail.payFeesComingSoon'), 'info')}
+            onPress={() => navigation.navigate('PayFees', { assessment })}
           >
             <Text style={styles.payButtonText}>{t('fees.assessmentDetail.payFees')}</Text>
           </Pressable>

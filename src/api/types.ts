@@ -319,6 +319,8 @@ export type PaymentAttemptStatus =
   | 'UNKNOWN'
   | 'VERIFIED';
 
+export type PaymentProvider = 'UPI_INTENT' | 'RAZORPAY';
+
 export interface PaymentAttempt {
   id: string;
   assessmentId: string;
@@ -331,6 +333,43 @@ export interface PaymentAttempt {
   responseCode: string | null;
   createdAt: string;
   updatedAt: string;
+  provider: PaymentProvider;
+  razorpayPaymentId: string | null;
+  paymentMethod: string | null;
+  failureReason: string | null;
+}
+
+// Which payment route the backend can currently offer. Asked once before showing a Pay button, so
+// the app never starts a payment and then discovers the gateway isn't configured.
+export interface PaymentGatewayStatus {
+  provider: PaymentProvider;
+  verifiedPaymentsAvailable: boolean;
+}
+
+// Everything Razorpay Checkout needs. Note keyId arrives from the server rather than being baked
+// into the bundle - switching test/live keys is then a backend config change, not an app release.
+// It is a publishable identifier, not a secret; the key secret never leaves the backend.
+export interface RazorpayOrder {
+  assessmentId: string;
+  transactionRef: string;
+  orderId: string;
+  keyId: string;
+  amountPaise: number;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  prefillName: string | null;
+  prefillEmail: string | null;
+  prefillContact: string | null;
+}
+
+// The three fields Checkout hands back on success. Passed straight through to the backend, which
+// re-derives the signature and re-fetches the payment - nothing here is trusted by itself.
+export interface RazorpayVerifyRequest {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
 }
 
 export interface PaymentAttemptResultRequest {
