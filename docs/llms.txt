@@ -1,30 +1,27 @@
 # Smart Gurukul
 
-> Smart Gurukul (smartgurukul.org) is an AI-powered, gamified school app for Indian K-12 schools. It combines three things in one mobile app: AI (an AI Helpdesk that answers school-data questions in English, Hindi or Hinglish, and an Academic Helper for teaching notes, lesson plans and student doubts), school operations (GPS-geofenced staff attendance with no hardware, class attendance, fees, payroll, exams, report cards, chat and video calls), and games (XP, daily streaks, weekly leagues, House Wars, live Battle Room quizzes and 1v1 Arena challenges). It serves principals/admins, teachers, students and parents, and is built for private budget-to-mid-fee CBSE and State Board schools across India, including school groups.
+> Smart Gurukul (smartgurukul.org) is an AI-powered, gamified school app for Indian schools. Tagline: "Your whole school, connected." (Hindi: "पूरा स्कूल, एक ऐप पर जुड़ा।"). It brings AI (an AI helpdesk assistant inside the app), school work (GPS teacher attendance with no hardware, class attendance, fees, basic payroll, exams and report cards, chat, video calls and events) and games (XP, streaks, weekly leagues, House Wars, Battle Room quizzes and 1v1 Arena challenges) into one app for principals, teachers, students and parents. It is made for private CBSE and State Board schools across India, including school groups, and is built by an IIT-BHU team.
 
 Key facts:
-- Brand: Smart Gurukul (the app shows "Gurukul"). Website: https://smartgurukul.org. Contact: sales@smartgurukul.org. Instagram: @smart__gurukul.
-- Positioning: "AI + School + Games". Unlike a traditional school ERP, which is an office record-keeping tool, Smart Gurukul is designed so teachers, students and parents use it daily.
-- Attendance: staff mark attendance from their own phone; the server checks the phone's GPS position against the school's geofence (100 m radius by default). No biometric machine is needed. Existing RFID/fingerprint/face devices can connect through an attendance device API (integration set up per school).
-- AI Helpdesk: admins ask in plain language (e.g. "how many students haven't paid fees?", a teacher's attendance percentage, unpaid salaries, enrolment) and get answers from live school data. It uses a fixed set of vetted, school-scoped lookups, not free-form database queries. Replies in the language of the question: English, Hindi or Hinglish.
-- Academic Helper: AI teaching assistant for teachers (teaching notes, lesson plans, following CBSE/NCERT or a State Board pattern) and an AI tutor for students.
-- Gamification: one XP score earned from attendance, assessment results, quiz wins, teacher-awarded participation and streak bonuses. It drives daily streaks, weekly leagues (Bronze up to Gurukul Master), and House Wars. Battle Room is a live group quiz scored on speed; Gurukul Arena is an asynchronous 1v1 quiz challenge using teacher-written questions.
-- Parents: the same app with a parent login; one login covers all their children, with attendance calendars, fee dues and receipts, and published report cards. Parents sign in with a one-time code.
-- Languages: English and Hindi app interface.
-- Onboarding: the Smart Gurukul team imports the school's existing Excel registers; teachers and parents join with invite codes and one-time login codes; schools can run a 1-month pilot.
-- Pricing: per student per year, quoted after a demo.
-- Platforms: Android (Google Play listing coming soon); iPhone in testing.
-- Not available yet (roadmap): timetable, homework, online fee payment gateway, transport/bus tracking, SMS alerts, admission enquiries, ID cards, parent–teacher chat, report-card PDFs, badges. Not planned yet: hostel, library, inventory, statutory payroll (PF/ESI/TDS).
+- Brand: Smart Gurukul. Website: https://smartgurukul.org. Contact: sales@smartgurukul.org. Instagram: @smart__gurukul.
+- Positioning: AI + School + Games. Most school management software is an office record-keeping tool; Smart Gurukul is designed so teachers, students and parents use it every day.
+- Attendance: the class teacher marks daily student attendance in the app (present, absent, late, half-day). Teachers check in by GPS at school from their own phone; the distance to the school's saved location is checked on the server (100 m radius by default). No biometric hardware is needed.
+- AI: an AI helpdesk assistant inside the app. Teachers use it for teaching notes and explanations; principals and office staff ask about school records; students get help with topics. It uses a fixed set of checked, school-scoped lookups rather than writing its own database queries.
+- Games: one XP score earned from attendance, assessment results, quiz wins and teacher-awarded participation. It drives streaks, weekly leagues (Bronze up to Gurukul Master) and House Wars. Battle Room is a live group quiz; Gurukul Arena is a 1v1 quiz challenge. Quiz battles use questions written by teachers.
+- Parents: the same app with a parent login. Parents see their child's attendance, fees and report card, in Hindi or English; all their children are on one login; sign-in is by one-time code.
+- Languages: the app works in English and Hindi.
+- Getting started: free 1-month pilot. The Smart Gurukul team imports the school's student register and trains staff. Pricing is shared after a demo.
+- Coming soon: parent chat and parent alerts, online fee payment, timetable, homework, transport and bus tracking, SMS, ID cards, admissions, AI quiz generation, PDF report cards. Not available yet: hostel, library, statutory payroll (PF/ESI/TDS).
 
 ## Pages
 
-- [Home](https://smartgurukul.org/): overview of AI + School + Games, roles, comparison, onboarding, FAQ and demo booking
-- [AI for schools](https://smartgurukul.org/ai-for-schools.html): AI Helpdesk and Academic Helper, and how school data is protected
+- [Home](https://smartgurukul.org/): AI + School + Games overview, roles, comparison, getting started, FAQ and demo booking
+- [AI for schools](https://smartgurukul.org/ai-for-schools.html): the AI helpdesk assistant for teachers, office staff and students
 - [Gamified learning](https://smartgurukul.org/gamified-learning.html): XP, streaks, leagues, House Wars, Battle Room and Arena
-- [GPS attendance](https://smartgurukul.org/gps-attendance.html): how geofenced staff attendance works, compared with biometric machines
+- [GPS attendance](https://smartgurukul.org/gps-attendance.html): how GPS teacher check-in works, compared with biometric machines
 - [Parent app](https://smartgurukul.org/parent-app.html): what parents see and how they sign in
-- [Smart Gurukul vs. school ERP](https://smartgurukul.org/school-erp-alternative.html): an honest feature comparison, including gaps
-- [Fees, payroll and infrastructure](https://smartgurukul.org/money-features.html): how the money features work for each role
+- [Compare](https://smartgurukul.org/compare.html): Smart Gurukul vs. typical school management software, including gaps
+- [Fees, payroll and expenses](https://smartgurukul.org/money-features.html): how the money features work for each role
 - [Hindi homepage](https://smartgurukul.org/hi/): स्मार्ट गुरुकुल हिंदी में
 
 ## Optional

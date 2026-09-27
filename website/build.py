@@ -29,11 +29,12 @@ ORG = {
     "name": BRAND,
     "alternateName": ["SmartGurukul", "Smart Gurukul App"],
     "url": f"{SITE}/",
-    "logo": f"{SITE}/assets/logo-512.png",
+    "logo": f"{SITE}/assets/brand/icon-512.png",
+    "slogan": "Your whole school, connected.",
     "email": EMAIL,
     "sameAs": [INSTAGRAM],
     "areaServed": {"@type": "Country", "name": "India"},
-    "description": "Smart Gurukul makes an AI-powered, gamified school app for Indian K-12 schools.",
+    "description": "Smart Gurukul makes an AI-powered, gamified school app for Indian K-12 schools, built by an IIT-BHU team.",
 }
 SOFTWARE = {
     "@type": "SoftwareApplication",
@@ -47,24 +48,25 @@ SOFTWARE = {
     "url": f"{SITE}/",
     "image": f"{SITE}/assets/og-image.png",
     "description": (
-        "Smart Gurukul is a school app for Indian schools that combines AI (a bilingual AI helpdesk "
-        "and an AI academic helper), school operations (GPS geofenced attendance, fees, payroll, "
-        "exams and report cards, chat and video calls) and game-based learning (XP, streaks, "
-        "leagues, House Wars, live quiz battles) for principals, teachers, students and parents."
+        "Smart Gurukul connects the whole school in one app. It combines AI (an AI helpdesk "
+        "assistant for staff and students), school operations (GPS attendance with no hardware, "
+        "fees, payroll, exams and report cards, chat, video calls and events) and game-based "
+        "learning (XP, streaks, leagues, House Wars, quiz battles) for principals, teachers, "
+        "students and parents, in English and Hindi."
     ),
     "featureList": [
-        "AI helpdesk that answers school-data questions in English, Hindi or Hinglish",
-        "AI academic helper for teaching notes, lesson plans and student doubts",
-        "GPS geofenced staff attendance with no hardware",
+        "AI helpdesk assistant inside the app for staff and students",
+        "AI help for teachers preparing teaching notes and explanations",
+        "GPS check-in attendance for teachers, with no biometric hardware",
         "Class attendance marked from a phone, with history calendars",
         "Fee structures, dues tracking and receipts",
         "Payroll runs, salary structures and payslips",
         "Exams, grading scales and report cards",
         "Parent app with multi-child access",
-        "In-app chat, announcements and video calls",
+        "Chat, announcements and video calls for staff and students",
         "XP, daily streaks, weekly leagues and House Wars",
         "Live Battle Room quizzes and 1v1 Arena challenges",
-        "School events with RSVPs, registrations and polls",
+        "School events with RSVP",
         "Activity log and attendance export",
     ],
 }
@@ -82,7 +84,7 @@ NAV = [
     ("gamified-learning.html", "Games", "गेम्स"),
     ("gps-attendance.html", "GPS Attendance", "GPS हाज़िरी"),
     ("parent-app.html", "Parent App", "पैरेंट ऐप"),
-    ("school-erp-alternative.html", "Why not an ERP?", "ERP क्यों नहीं?"),
+    ("compare.html", "Compare", "तुलना"),
 ]
 
 MENU_ICON = ('<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
@@ -115,9 +117,8 @@ def header(meta):
     return f"""<a class="skip" href="#main">{'मुख्य सामग्री पर जाएं' if hi else 'Skip to content'}</a>
 <header class="site-header">
   <div class="wrap nav">
-    <a class="brand" href="{home}" aria-label="{BRAND} home">
-      <img src="{rel(p, 'assets/logo-mark.webp')}" width="38" height="38" alt="">
-      <span>Smart <b>Gurukul</b></span>
+    <a class="brand" href="{home}">
+      <img src="{rel(p, 'assets/brand/lockup-hindi.svg' if hi else 'assets/brand/lockup-horizontal.svg')}" width="{144 if hi else 193}" height="40" alt="{'स्मार्ट गुरुकुल' if hi else BRAND}">
     </a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-label="Menu">{MENU_ICON}</button>
     <ul class="nav-links">{''.join(links)}</ul>
@@ -137,8 +138,9 @@ def footer(meta):
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="brand" href="{r('index.html')}"><img src="{r('assets/logo-mark.webp')}" width="38" height="38" alt=""><span>Smart <b>Gurukul</b></span></a>
-        <p style="margin-top:14px;max-width:34ch">{'एआई, स्कूल और गेम्स — भारत के स्कूलों के लिए एक ऐप।' if hi else 'AI + School + Games. One app for Indian schools: principals, teachers, students and parents.'}</p>
+        <a class="brand" href="{r('hi/index.html' if hi else 'index.html')}"><img src="{r('assets/brand/lockup-hindi-reversed.svg' if hi else 'assets/brand/lockup-horizontal-reversed.svg')}" width="{137 if hi else 183}" height="38" alt="{'स्मार्ट गुरुकुल' if hi else BRAND}"></a>
+        <p class="foot-tagline">{'पूरा स्कूल, एक ऐप पर जुड़ा।' if hi else 'Your whole school, connected.'}</p>
+        <p style="max-width:34ch">{'AI, स्कूल और गेम्स — प्रिंसिपल, शिक्षक, छात्र और अभिभावक, सब एक ऐप पर। IIT-BHU की टीम द्वारा बनाया गया।' if hi else 'AI + School + Games for principals, teachers, students and parents. Built by an IIT-BHU team.'}</p>
       </div>
       <div>
         <h4>{'प्रोडक्ट' if hi else 'Product'}</h4>
@@ -153,7 +155,7 @@ def footer(meta):
       <div>
         <h4>{'तुलना करें' if hi else 'Compare'}</h4>
         <ul>
-          <li><a href="{r('school-erp-alternative.html')}">vs. traditional school ERP</a></li>
+          <li><a href="{r('compare.html')}">{'दूसरे सॉफ़्टवेयर से तुलना' if hi else 'vs. other school software'}</a></li>
           <li><a href="{r('index.html')}#faq">FAQ</a></li>
           <li><a href="{r('hi/index.html')}" lang="hi">हिन्दी</a></li>
         </ul>
@@ -163,7 +165,7 @@ def footer(meta):
         <ul>
           <li><a href="mailto:{EMAIL}">{EMAIL}</a></li>
           <li><a href="{INSTAGRAM}" rel="noopener" target="_blank">Instagram @smart__gurukul</a></li>
-          <li><a href="{r('index.html')}#demo">{'डेमो बुक करें' if hi else 'Book a free demo'}</a></li>
+          <li><a href="{r('hi/index.html' if hi else 'index.html')}#demo">{'मुफ़्त डेमो बुक करें' if hi else 'Book a free demo'}</a></li>
           <li><a href="{r('privacy.html')}">Privacy policy</a></li>
         </ul>
       </div>
@@ -232,8 +234,7 @@ def head(meta, body):
                     f'<link rel="alternate" hreflang="hi-IN" href="{SITE}/{hi_url}">\n'
                     f'<link rel="alternate" hreflang="x-default" href="{SITE}/{en_url}">\n')
     robots = "noindex, follow" if meta.get("noindex") else "index, follow, max-image-preview:large, max-snippet:-1"
-    fonts = ("family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800"
-             + ("&family=Noto+Sans+Devanagari:wght@400;600;700;800" if lang == "hi" else ""))
+    fonts = "family=Poppins:wght@500;600;700&family=Mukta:wght@400;500;600;700;800"
     og_img = f"{SITE}/assets/og-image.png"
     return f"""<!doctype html>
 <html lang="{lang}">
@@ -244,9 +245,10 @@ def head(meta, body):
 <meta name="description" content="{html.escape(desc)}">
 <meta name="robots" content="{robots}">
 <link rel="canonical" href="{url}">
-{hreflang}<meta name="theme-color" content="#171334">
-<link rel="icon" href="{rel(p, 'assets/favicon.png')}" type="image/png">
-<link rel="apple-touch-icon" href="{rel(p, 'assets/logo-512.png')}">
+{hreflang}<meta name="theme-color" content="#7C3AED">
+<link rel="icon" href="{rel(p, 'assets/brand/favicon.svg')}" type="image/svg+xml">
+<link rel="icon" href="{rel(p, 'assets/brand/favicon-48.png')}" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="{rel(p, 'assets/brand/apple-touch-180.png')}">
 <link rel="manifest" href="{rel(p, 'site.webmanifest')}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{BRAND}">

@@ -1,10 +1,13 @@
 {
   "name": "Smart Gurukul",
   "short_name": "Smart Gurukul",
-  "description": "AI + School + Games: the school app for Indian schools.",
+  "description": "Your whole school, connected. AI + School + Games for Indian schools.",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#171334",
-  "theme_color": "#171334",
-  "icons": [{ "src": "/assets/logo-512.png", "sizes": "512x512", "type": "image/png" }]
+  "background_color": "#FFFFFF",
+  "theme_color": "#7C3AED",
+  "icons": [
+    { "src": "/assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
 }
