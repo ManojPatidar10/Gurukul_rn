@@ -977,5 +977,29 @@
       "tooLong": "अधिकतम {{days}} दिनों की सीमा चुनें",
       "failed": "निर्यात विफल: {{message}}"
     }
+  },
+  "notifications": {
+    "channels": {
+      "general": {
+        "name": "सामान्य",
+        "description": "आपके स्कूल से अन्य अपडेट"
+      },
+      "messages": {
+        "name": "संदेश",
+        "description": "आपको भेजे गए चैट संदेश"
+      },
+      "announcements": {
+        "name": "घोषणाएँ",
+        "description": "आपके स्कूल की सूचनाएँ"
+      },
+      "calls": {
+        "name": "वीडियो कॉल",
+        "description": "आने वाली, छूटी हुई और निर्धारित वीडियो कॉल"
+      },
+      "academics": {
+        "name": "रिपोर्ट कार्ड और परिणाम",
+        "description": "जब रिपोर्ट कार्ड जारी हो"
+      }
+    }
   }
 }
