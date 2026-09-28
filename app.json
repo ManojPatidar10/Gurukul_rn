@@ -19,6 +19,7 @@
     },
     "android": {
       "package": "com.gurukul.rn",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#7C3AED",
