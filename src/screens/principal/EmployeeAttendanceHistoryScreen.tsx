@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeAttendanceHistory'>;
 type ViewMode = 'calendar' | 'list';
@@ -43,7 +44,7 @@ export function EmployeeAttendanceHistoryScreen({ route, navigation }: Props) {
   useEffect(() => {
     getEmployeeAttendanceHistory(schoolId, employee.id)
       .then(setHistory)
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingHistory(false));
   }, [schoolId, employee.id]);
 
@@ -52,7 +53,7 @@ export function EmployeeAttendanceHistoryScreen({ route, navigation }: Props) {
     const { from, to } = monthRange(month);
     getEmployeeAttendanceHistory(schoolId, employee.id, from, to)
       .then(setMonthHistory)
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingMonth(false));
   }, [schoolId, employee.id, month]);
 

@@ -11,6 +11,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { defaultDay, slotsForDay } from '../../utils/timetable';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyTimetable'>;
 
@@ -41,7 +42,7 @@ export function MyTimetableScreen({ route, navigation }: Props) {
         setTimetable(tt);
         setDay(defaultDay(tt.days));
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, classSection, student?.id]);
 

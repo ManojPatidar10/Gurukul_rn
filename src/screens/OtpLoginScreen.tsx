@@ -12,6 +12,7 @@ import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
 import type { AuthProfile } from '../api/types';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -47,7 +48,7 @@ export default function OtpLoginScreen({
       await requestOtp(schoolId, { phone });
       setOtpSent(true);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -65,7 +66,7 @@ export default function OtpLoginScreen({
       setAuthSession(response);
       onLoggedIn(response);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

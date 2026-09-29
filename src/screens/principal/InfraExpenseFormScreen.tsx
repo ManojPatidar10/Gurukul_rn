@@ -10,6 +10,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'InfraExpenseForm'>;
 
@@ -36,7 +37,7 @@ export function InfraExpenseFormScreen({ navigation }: Props) {
       });
       navigation.replace('InfraExpenseDetail', { request: created });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

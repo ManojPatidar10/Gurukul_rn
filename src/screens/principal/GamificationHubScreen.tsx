@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, gameColors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'GamificationHub'>;
 
@@ -42,7 +43,7 @@ export function GamificationHubScreen({ navigation }: Props) {
     setError(null);
     getMyGameProfile(schoolId)
       .then(setProfile)
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId]);
 

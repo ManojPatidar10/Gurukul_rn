@@ -15,6 +15,7 @@ import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
 import { isValidEmail, isValidPhone, isValidPincode } from '../utils/validators';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   onBack?: () => void;
@@ -62,7 +63,7 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
       setLatitude(String(position.coords.latitude));
       setLongitude(String(position.coords.longitude));
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setLocating(false);
     }
@@ -98,12 +99,12 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
         try {
           await uploadSchoolLogo(school.id, logo);
         } catch (e) {
-          showToast(t('schoolSetup.logoUploadFailed', { message: (e as Error).message }), 'error');
+          showToast(t('schoolSetup.logoUploadFailed', { message: getErrorMessage(e) }), 'error');
         }
       }
       onRegistered(school.id, admin);
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSubmitting(false);
     }

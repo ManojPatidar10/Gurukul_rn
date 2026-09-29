@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PaymentReceipt'>;
 
@@ -78,7 +79,7 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
       }
       await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: t('fees.receipt.shareTitle') });
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSharing(false);
     }

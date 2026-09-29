@@ -14,6 +14,7 @@ import { useSchoolId } from '../context/SchoolContext';
 import { useToast } from '../context/ToastContext';
 import { colors, radius, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
+import { getErrorMessage } from '../api/errorMessage';
 
 const METHODS: AttendanceMethod[] = ['RFID', 'FINGERPRINT', 'FACE'];
 
@@ -38,7 +39,7 @@ export function AttendanceIdentifiersPanel({ ownerType, ownerId }: Props) {
   const load = useCallback(() => {
     list(schoolId, ownerId)
       .then(setIdentifiers)
-      .catch((e) => showToast((e as Error).message, 'error'));
+      .catch((e) => showToast(getErrorMessage(e), 'error'));
   }, [list, schoolId, ownerId, showToast]);
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export function AttendanceIdentifiersPanel({ ownerType, ownerId }: Props) {
       setExternalId('');
       await load();
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSaving(false);
     }
@@ -67,7 +68,7 @@ export function AttendanceIdentifiersPanel({ ownerType, ownerId }: Props) {
       await removeAttendanceIdentifier(schoolId, identifierId);
       await load();
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     }
   };
 

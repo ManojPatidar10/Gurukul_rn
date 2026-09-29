@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, gameColors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'BattleRoom'>;
 
@@ -96,14 +97,14 @@ export function BattleRoomScreen({ route, navigation }: Props) {
       .then((state) => {
         if (!cancelled) setRoom(state);
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
 
     subscribeToBattleRoom(schoolId, roomId, setRoom)
       .then((unsub) => {
         unsubscribe = unsub;
       })
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
 
     return () => {
       cancelled = true;
@@ -165,7 +166,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
     } catch (e) {
       // "no longer waiting" just means someone else already started it (or the window expired) -
       // the STOMP subscription is already about to push that same state, nothing to show the user.
-      const message = (e as Error).message;
+      const message = getErrorMessage(e);
       if (!message.includes('no longer waiting')) setStartError(message);
     } finally {
       setStarting(false);

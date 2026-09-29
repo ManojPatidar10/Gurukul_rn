@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentDetail'>;
 
@@ -43,7 +44,7 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
             await deleteAssessment(schoolId, assessment.id);
             navigation.goBack();
           } catch (e) {
-            setError((e as Error).message);
+            setError(getErrorMessage(e));
             setDeleting(false);
           }
         },

@@ -13,6 +13,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { isValidBankAccount, isValidIfsc, isValidUpiId } from '../../utils/validators';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeePaymentSettings'>;
 
@@ -37,7 +38,7 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
         setBankAccountHolderName(s.bankAccountHolderName ?? s.name);
         setUpiVpaOverride(s.upiVpaOverride ?? '');
       })
-      .catch((e) => showToast((e as Error).message, 'error'))
+      .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoading(false));
   }, [schoolId]);
 
@@ -75,7 +76,7 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
       setSchool(updated);
       showToast(t('fees.paymentSettings.saved'), 'success');
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSaving(false);
     }

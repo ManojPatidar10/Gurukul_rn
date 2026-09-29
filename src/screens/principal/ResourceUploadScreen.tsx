@@ -15,6 +15,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ResourceUpload'>;
 
@@ -103,7 +104,7 @@ export function ResourceUploadScreen({ route, navigation }: Props) {
       showToast(t('teacherTools.upload.success'), 'success');
       navigation.goBack();
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
       showToast(message, 'error');
     } finally {
       setSubmitting(false);

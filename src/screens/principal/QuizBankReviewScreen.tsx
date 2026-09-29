@@ -14,6 +14,7 @@ import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { OPTION_LETTERS, toBankDraft, toBankInput, validateBankDraft, type BankDraft } from '../../utils/quizBank';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'QuizBankReview'>;
 
@@ -70,7 +71,7 @@ export function QuizBankReviewScreen({ route, navigation }: Props) {
       showToast(t('teacherTools.bank.saved', { count: saved.length }), 'success');
       navigation.goBack();
     } catch (e) {
-      showToast(e instanceof ApiError ? e.message : (e as Error).message, 'error');
+      showToast(e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e), 'error');
     } finally {
       setSaving(false);
     }

@@ -16,6 +16,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { isNotBefore, isValidPhone } from '../../utils/validators';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentForm'>;
 
@@ -73,7 +74,7 @@ export function StudentFormScreen({ route, navigation }: Props) {
         : await createStudent(schoolId, form);
       navigation.replace('StudentDetail', { student: result });
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSubmitting(false);
     }

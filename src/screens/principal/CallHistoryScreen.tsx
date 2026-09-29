@@ -10,6 +10,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { CallLogResponse } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'CallHistory'>;
 
@@ -37,7 +38,7 @@ export function CallHistoryScreen({ navigation }: Props) {
           setHasNext(res.hasNext);
           setPage(pageToLoad);
         })
-        .catch((e) => setError((e as Error).message));
+        .catch((e) => setError(getErrorMessage(e)));
     },
     [schoolId, showWholeSchool]
   );

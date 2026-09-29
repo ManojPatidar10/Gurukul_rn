@@ -8,6 +8,7 @@ import LabeledInput from '../components/LabeledInput';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   onBack: () => void;
@@ -26,7 +27,7 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
     setError(null);
     searchSchools(name || undefined)
       .then(setResults)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   };
 

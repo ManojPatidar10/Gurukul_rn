@@ -14,6 +14,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentsList'>;
 
@@ -78,8 +79,8 @@ export function StudentsListScreen({ navigation }: Props) {
             setHasNext(false);
           })
           .catch((e) => {
-            setError(e.message);
-            showToast(e.message, 'error');
+            setError(getErrorMessage(e));
+            showToast(getErrorMessage(e), 'error');
           });
       }
       return listStudents(schoolId, pageToLoad, PAGE_SIZE)
@@ -89,8 +90,8 @@ export function StudentsListScreen({ navigation }: Props) {
           setPage(pageToLoad);
         })
         .catch((e) => {
-          setError(e.message);
-          showToast(e.message, 'error');
+          setError(getErrorMessage(e));
+          showToast(getErrorMessage(e), 'error');
         });
     },
     [schoolId, debouncedQuery, showToast]

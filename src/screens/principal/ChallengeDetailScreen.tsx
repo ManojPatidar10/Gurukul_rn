@@ -9,6 +9,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ChallengeDetail'>;
 
@@ -34,7 +35,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
     setError(null);
     return getChallenge(schoolId, challengeId)
       .then(setDetail)
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, challengeId]);
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
       const result = await submitAnswer(schoolId, challengeId, { questionId, selectedOption: selected });
       setAnswered({ questionId, selected, correct: result.correct, correctOption: result.correctOption });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

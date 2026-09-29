@@ -11,6 +11,7 @@ import { Logo } from '../components/Logo';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -37,7 +38,7 @@ export default function LoginScreen({ schoolId, onBack, onLoggedIn, onRegister }
       setAuthSession(session);
       onLoggedIn(session);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

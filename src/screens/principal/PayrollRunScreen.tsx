@@ -15,6 +15,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 4 }, (_, i) => {
@@ -60,7 +61,7 @@ export function PayrollRunScreen({ navigation }: Props) {
       const created = await createPayrollRun(schoolId, { month: Number(month), year: Number(year) });
       setRun(created);
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -75,7 +76,7 @@ export function PayrollRunScreen({ navigation }: Props) {
       const fetchedLines = await listPayrollRunLines(schoolId, run.id);
       setLines(fetchedLines);
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -93,7 +94,7 @@ export function PayrollRunScreen({ navigation }: Props) {
       setRun(updated);
       setPaid(true);
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setBusy(false);
     }

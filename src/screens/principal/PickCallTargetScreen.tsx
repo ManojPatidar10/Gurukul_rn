@@ -11,6 +11,7 @@ import { useCallTargets, type CallTarget } from '../../hooks/useCallTargets';
 import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PickCallTarget'>;
 
@@ -50,7 +51,7 @@ export function PickCallTargetScreen({ navigation }: Props) {
             callLogId: session.callLogId,
           });
         } catch (e) {
-          setCallError((e as Error).message);
+          setCallError(getErrorMessage(e));
         } finally {
           setCallingId(null);
         }

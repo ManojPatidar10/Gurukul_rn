@@ -23,6 +23,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AcademicHelper'>;
 
@@ -80,7 +81,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
     } catch (e) {
       // The backend already returns messages written to be shown to a student or teacher as-is
       // (unconfigured, rate-limited, provider down), so there's nothing to translate here.
-      showToast(e instanceof ApiError ? e.message : (e as Error).message, 'error');
+      showToast(e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e), 'error');
       // Drop the unanswered question back into the input so a retry doesn't mean retyping it.
       setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
       setInput(question);

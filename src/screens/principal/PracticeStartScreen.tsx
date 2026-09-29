@@ -11,6 +11,7 @@ import SubjectPicker from '../../components/SubjectPicker';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PracticeStart'>;
 
@@ -28,7 +29,7 @@ export function PracticeStartScreen({ navigation }: Props) {
       const session = await createPracticeSession(schoolId, { subjectId: subject.id });
       navigation.replace('PracticeSession', { sessionId: session.id });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setStarting(false);
     }

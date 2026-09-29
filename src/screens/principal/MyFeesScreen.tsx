@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyFees'>;
 
@@ -27,7 +28,7 @@ export function MyFeesScreen({ navigation }: Props) {
     setError(null);
     return listStudentFeeAssessments(schoolId, session.ownerId)
       .then(setAssessments)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, session.ownerId]);
 
   useEffect(() => {

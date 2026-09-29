@@ -10,6 +10,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructureDetail'>;
 
@@ -30,7 +31,7 @@ export function FeeStructureDetailScreen({ route, navigation }: Props) {
       const assessments = await generateAssessments(schoolId, feeStructure.id);
       setGeneratedCount(assessments.length);
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setGenerating(false);
     }

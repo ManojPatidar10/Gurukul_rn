@@ -24,6 +24,7 @@ import { useToast } from '../../context/ToastContext';
 import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentDetail'>;
 
@@ -69,7 +70,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
             callLogId: call.callLogId,
           });
         } catch (e) {
-          setError((e as Error).message);
+          setError(getErrorMessage(e));
         } finally {
           setCalling(false);
         }
@@ -88,7 +89,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
       });
       navigation.navigate('ConversationThread', { conversationId: conversation.id, title: student.name });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setMessaging(false);
     }
@@ -110,7 +111,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
       await createStudentCredential(schoolId, student.id, { username, password, role: 'STUDENT' });
       setCreatedCredential({ username, password });
     } catch (e) {
-      setCredentialError((e as Error).message);
+      setCredentialError(getErrorMessage(e));
     } finally {
       setCreatingCredential(false);
     }
@@ -127,7 +128,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
       const result = await createStudentInvite(schoolId, student.id);
       setInviteResult(result);
     } catch (e) {
-      setInviteError((e as Error).message);
+      setInviteError(getErrorMessage(e));
     } finally {
       setGeneratingInvite(false);
     }
@@ -142,7 +143,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
       setStudent(updated);
       setShowTransfer(false);
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setTransferring(false);
     }
@@ -160,7 +161,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
             await deleteStudent(schoolId, student.id);
             navigation.goBack();
           } catch (e) {
-            showToast((e as Error).message, 'error');
+            showToast(getErrorMessage(e), 'error');
             setDeleting(false);
           }
         },

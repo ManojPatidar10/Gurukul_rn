@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionSubjectsList'>;
 
@@ -40,7 +41,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
       const employee = await getEmployee(schoolId, teacherId);
       navigation.navigate('EmployeeDetail', { employee });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setOpeningTeacherId(null);
     }
@@ -50,7 +51,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
     setError(null);
     return listSectionSubjects(schoolId, classSection.id)
       .then(setAssignments)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, classSection.id]);
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
       setTeacherId(null);
       setTeacherLabel('');
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setAssigning(false);
     }

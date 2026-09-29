@@ -36,6 +36,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { canEdit, canEnrol, nextStages, stageVariant, transitionLabelKey } from '../../utils/admissionStages';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AdmissionDetail'>;
 
@@ -92,7 +93,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
     setError(null);
     return getAdmission(schoolId, admissionId)
       .then(setAdmission)
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, admissionId]);
 
@@ -121,7 +122,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
       setAdmission(await changeAdmissionStage(schoolId, admission.id, target));
       showToast(t('admissions.detail.stageUpdated'), 'success');
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -141,7 +142,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
             showToast(t('admissions.detail.deleted'), 'success');
             navigation.goBack();
           } catch (e) {
-            showToast((e as Error).message, 'error');
+            showToast(getErrorMessage(e), 'error');
             setBusy(false);
           }
         },
@@ -163,7 +164,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
       setAdmission(await registerAdmissionDocument(schoolId, admission.id, { ...req, objectKey: presigned.objectKey }));
       showToast(t('admissions.documents.uploaded'), 'success');
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setUploading(false);
     }
@@ -199,7 +200,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
           try {
             setAdmission(await deleteAdmissionDocument(schoolId, admission.id, documentId));
           } catch (e) {
-            showToast((e as Error).message, 'error');
+            showToast(getErrorMessage(e), 'error');
           }
         },
       },
@@ -231,12 +232,12 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
         // Possible duplicate: the server refuses until the admin confirms it's a different child.
-        Alert.alert(t('admissions.detail.duplicatesTitle'), e.message, [
+        Alert.alert(t('admissions.detail.duplicatesTitle'), getErrorMessage(e), [
           { text: t('common.cancel'), style: 'cancel' },
           { text: t('admissions.enrol.duplicateConfirm'), style: 'destructive', onPress: () => enrol(true) },
         ]);
       } else {
-        showToast((e as Error).message, 'error');
+        showToast(getErrorMessage(e), 'error');
       }
     } finally {
       setEnrolling(false);
@@ -248,7 +249,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
       const student = await getStudent(schoolId, studentId);
       navigation.navigate('StudentDetail', { student });
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     }
   };
 

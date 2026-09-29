@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, SLOW_TIMEOUT_MS } from './client';
 
 export interface AiChatMessage {
   role: 'user' | 'assistant';
@@ -21,5 +21,5 @@ export interface AiChatResponse {
  * most expensive model on the platform.
  */
 export function askAi(schoolId: string, messages: AiChatMessage[]) {
-  return api.post<AiChatResponse>('/api/v1/ai/chat', { messages }, schoolId);
+  return api.post<AiChatResponse>('/api/v1/ai/chat', { messages }, schoolId, { timeoutMs: SLOW_TIMEOUT_MS });
 }

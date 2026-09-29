@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SalaryHistory'>;
 
@@ -28,8 +29,8 @@ export function SalaryHistoryScreen({ route, navigation }: Props) {
     getSalaryHistory(schoolId, employee.id)
       .then(setHistory)
       .catch((e) => {
-        setError(e.message);
-        showToast(e.message, 'error');
+        setError(getErrorMessage(e));
+        showToast(getErrorMessage(e), 'error');
       })
       .finally(() => setLoading(false));
   }, [schoolId, employee.id, showToast]);

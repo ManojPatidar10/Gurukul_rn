@@ -17,6 +17,7 @@ import {
   type PeriodRow,
   type PeriodRowError,
 } from '../../utils/timetable';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PeriodSetup'>;
 
@@ -53,7 +54,7 @@ export function PeriodSetupScreen({ navigation }: Props) {
           }))
         );
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId]);
 
@@ -96,7 +97,7 @@ export function PeriodSetupScreen({ navigation }: Props) {
       await savePeriods(schoolId, { saturdayEnabled, periods: periodRowsToRequest(rows) });
       setSuccess(true);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSaving(false);
     }

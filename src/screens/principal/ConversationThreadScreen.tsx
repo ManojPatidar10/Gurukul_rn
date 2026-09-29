@@ -30,6 +30,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConversationThread'>;
 
@@ -68,7 +69,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       .then((history) => {
         if (!cancelled) setMessages((history.messages ?? []).slice().reverse());
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
 
     subscribeToConversation(schoolId, conversationId, (message) => {
@@ -77,7 +78,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       .then((unsub) => {
         unsubscribe = unsub;
       })
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
 
     return () => {
       cancelled = true;
@@ -98,7 +99,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     try {
       await sendMessage(schoolId, conversationId, content);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSending(false);
     }
@@ -125,7 +126,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       });
       setDraft('');
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setUploading(false);
     }

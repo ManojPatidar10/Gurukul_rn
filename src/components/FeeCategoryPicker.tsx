@@ -6,6 +6,7 @@ import type { FeeCategory } from '../api/types';
 import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -27,7 +28,7 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
     setLoading(true);
     listFeeCategories(schoolId)
       .then(setCategories)
-      .catch((e) => showToast(e.message, 'error'))
+      .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoading(false));
   };
 
@@ -51,7 +52,7 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
       setCode('');
       setName('');
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setCreating(false);
     }

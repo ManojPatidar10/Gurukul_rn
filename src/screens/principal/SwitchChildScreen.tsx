@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SwitchChild'>;
 
@@ -28,7 +29,7 @@ export function SwitchChildScreen({ navigation }: Props) {
   useEffect(() => {
     listProfiles(schoolId)
       .then(setProfiles)
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId]);
 
@@ -41,7 +42,7 @@ export function SwitchChildScreen({ navigation }: Props) {
       switchProfile(session);
       navigation.reset({ index: 0, routes: [{ name: 'PrincipalDashboard' }] });
     } catch (e) {
-      setError(e instanceof ApiError ? t('switchChild.switchFailed') : (e as Error).message);
+      setError(e instanceof ApiError ? t('switchChild.switchFailed') : getErrorMessage(e));
       setSwitchingId(null);
     }
   };

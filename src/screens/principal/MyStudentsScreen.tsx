@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyStudents'>;
 
@@ -38,7 +39,7 @@ export function MyStudentsScreen({ navigation }: Props) {
       .then((rows) =>
         setSections(rows.filter((r) => r.teaches || r.cs.classTeacherId === session.ownerId).map((r) => r.cs))
       )
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, session.ownerId]);
 

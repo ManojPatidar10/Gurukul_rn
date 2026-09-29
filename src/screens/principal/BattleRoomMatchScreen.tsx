@@ -12,6 +12,7 @@ import SubjectPicker from '../../components/SubjectPicker';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, gameColors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'BattleRoomMatch'>;
 
@@ -50,7 +51,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
       const room = await joinBattleRoom(schoolId, roomId);
       navigation.replace('BattleRoom', { roomId: room.id });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setJoiningRoomId(null);
     }
@@ -67,7 +68,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
           : await createBattleRoom(schoolId, { subjectId: subject.id });
       navigation.replace('BattleRoom', { roomId: room.id });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setBusy(null);
     }
@@ -82,7 +83,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
       const room = await joinBattleRoomByCode(schoolId, code);
       navigation.replace('BattleRoom', { roomId: room.id });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setBusy(null);
     }

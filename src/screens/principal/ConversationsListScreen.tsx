@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConversationsList'>;
 
@@ -60,7 +61,7 @@ export function ConversationsListScreen({ navigation }: Props) {
       withOthers = (await listConversations(schoolId)).filter((c) => otherParty(c));
     } catch (e) {
       if (id === loadId.current) {
-        setError((e as Error).message);
+        setError(getErrorMessage(e));
         setLoading(false);
       }
       return;

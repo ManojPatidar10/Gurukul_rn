@@ -7,6 +7,7 @@ import { getStudent, searchStudents } from '../api/students';
 import type { OwnerType } from '../api/types';
 import { useAuth } from '../context/AuthContext';
 import { useSchoolId } from '../context/SchoolContext';
+import { getErrorMessage } from '../api/errorMessage';
 
 export interface CallTarget {
   ownerType: OwnerType;
@@ -72,7 +73,7 @@ export function useCallTargets() {
               .catch(() => setTargets([...teacherTargets.values()]))
           );
         })
-        .catch((e) => setError((e as Error).message))
+        .catch((e) => setError(getErrorMessage(e)))
         .finally(() => setLoading(false));
       return;
     }
@@ -85,7 +86,7 @@ export function useCallTargets() {
             : employees.filter((e) => e.role === 'ADMIN');
         setTargets(candidates.map((e) => ({ ownerType: 'EMPLOYEE' as const, ownerId: e.id, name: e.name })));
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, session.ownerType, session.ownerId, session.role]);
 

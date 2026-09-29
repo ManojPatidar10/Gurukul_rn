@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, SLOW_TIMEOUT_MS } from './client';
 import type { FeeAssessment, FeeStructure, FeeStructureRequest } from './types';
 
 export function listFeeStructures(schoolId: string) {
@@ -14,5 +14,7 @@ export function createFeeStructure(schoolId: string, req: FeeStructureRequest) {
 }
 
 export function generateAssessments(schoolId: string, id: string) {
-  return api.post<FeeAssessment[]>(`/api/v1/fee-structures/${id}/generate-assessments`, undefined, schoolId);
+  return api.post<FeeAssessment[]>(`/api/v1/fee-structures/${id}/generate-assessments`, undefined, schoolId, {
+    timeoutMs: SLOW_TIMEOUT_MS,
+  });
 }

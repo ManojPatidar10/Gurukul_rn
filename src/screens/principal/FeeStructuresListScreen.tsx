@@ -10,6 +10,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructuresList'>;
 
@@ -31,8 +32,8 @@ export function FeeStructuresListScreen({ navigation }: Props) {
     return listFeeStructures(schoolId)
       .then(setStructures)
       .catch((e) => {
-        setError(e.message);
-        showToast(e.message, 'error');
+        setError(getErrorMessage(e));
+        showToast(getErrorMessage(e), 'error');
       });
   }, [schoolId, showToast]);
 

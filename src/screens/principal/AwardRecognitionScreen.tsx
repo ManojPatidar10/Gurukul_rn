@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AwardRecognition'>;
 
@@ -48,7 +49,7 @@ export function AwardRecognitionScreen({ navigation }: Props) {
       await awardSpotRecognition(schoolId, { studentId: selected.id, amount, reason: reason.trim() });
       navigation.goBack();
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

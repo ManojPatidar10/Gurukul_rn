@@ -15,6 +15,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { isValidBankAccount, isValidPhone } from '../../utils/validators';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeForm'>;
 
@@ -61,7 +62,7 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
         : await createEmployee(schoolId, form);
       navigation.replace('EmployeeDetail', { employee: result });
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSubmitting(false);
     }

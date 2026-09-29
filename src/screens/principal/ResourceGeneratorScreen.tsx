@@ -23,6 +23,7 @@ import { ApiError } from '../../api/client';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { isBankEligible } from '../../utils/quizBank';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ResourceGenerator'>;
 
@@ -151,7 +152,7 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
       setResult(response);
       setSelectedForBank(response.questions.filter(isBankEligible).map((q) => q.number));
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
       showToast(message, 'error');
     } finally {
       setGenerating(false);

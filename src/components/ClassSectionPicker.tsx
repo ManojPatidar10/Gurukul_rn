@@ -5,6 +5,7 @@ import { createClassSection, listClassSections } from '../api/classSections';
 import type { ClassSection } from '../api/types';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -28,7 +29,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
     setError(null);
     listClassSections(schoolId)
       .then(setSections)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   };
 
@@ -50,7 +51,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
       setAcademicYear('');
       setOpen(false);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setCreating(false);
     }

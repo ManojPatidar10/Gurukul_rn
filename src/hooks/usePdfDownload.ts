@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useToast } from '../context/ToastContext';
+import { getErrorMessage } from '../api/errorMessage';
 
 /**
  * Download a server-rendered PDF and hand it to the share sheet (or say where it was saved when
@@ -24,7 +25,7 @@ export function usePdfDownload(shareTitle: string) {
       }
       await Sharing.shareAsync(file.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: shareTitle });
     } catch (e) {
-      showToast(t('reportCardPdf.failed', { message: (e as Error).message }), 'error');
+      showToast(t('reportCardPdf.failed', { message: getErrorMessage(e) }), 'error');
     } finally {
       setBusy(false);
     }

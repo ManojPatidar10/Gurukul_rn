@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'GlobalSearch'>;
 
@@ -40,7 +41,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
           ...employees.map((item): Result => ({ kind: 'EMPLOYEE', item })),
         ]);
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, debouncedQuery]);
 

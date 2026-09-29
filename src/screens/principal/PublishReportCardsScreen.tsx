@@ -11,6 +11,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PublishReportCards'>;
 
@@ -42,7 +43,7 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
       setResult(publication);
       loadTerms();
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setPublishing(false);
     }
@@ -60,7 +61,7 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
         showToast('Every assessment in this section already has a term set.', 'info');
       }
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setBackfilling(false);
     }

@@ -14,6 +14,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { isNonNegativeNumber, isPositiveNumber } from '../../utils/validators';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SalaryStructureForm'>;
 
@@ -56,7 +57,7 @@ export function SalaryStructureFormScreen({ navigation }: Props) {
       });
       navigation.goBack();
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSubmitting(false);
     }
