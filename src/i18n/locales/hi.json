@@ -1156,7 +1156,35 @@
       "academics": {
         "name": "रिपोर्ट कार्ड और परिणाम",
         "description": "जब रिपोर्ट कार्ड जारी हो"
+      },
+      "alerts": {
+        "name": "सूचनाएँ",
+        "description": "आपके बच्चे की अनुपस्थिति और फीस की याद"
       }
     }
+  },
+  "parentComms": {
+    "messages": "संदेश",
+    "announcements": "घोषणाएँ",
+    "alerts": "सूचनाएँ"
+  },
+  "announcements": {
+    "title": "घोषणाएँ",
+    "empty": "अभी कोई घोषणा नहीं है।",
+    "scopeSchool": "पूरा स्कूल",
+    "scopeClass": "कक्षा",
+    "scopeGrade": "कक्षा {{className}}"
+  },
+  "alerts": {
+    "title": "सूचनाएँ",
+    "empty": "अभी कोई सूचना नहीं है।",
+    "markAllRead": "सभी पढ़ा हुआ करें",
+    "loadMore": "और देखें"
+  },
+  "newConversation": {
+    "classTeacherOf": "कक्षा अध्यापक {{section}}",
+    "admin": "प्रशासक",
+    "parentOf": "{{name}} ({{children}} के अभिभावक)",
+    "searchTeachers": "शिक्षक का नाम खोजें"
   }
 }

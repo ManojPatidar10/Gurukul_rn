@@ -1,13 +1,18 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { ParentHomeScreen } from '../screens/ParentHomeScreen';
-import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
-import { ChildDashboardScreen } from '../screens/principal/ChildDashboardScreen';
-import { ChildFeesScreen } from '../screens/principal/ChildFeesScreen';
-import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
-import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
-import { colors } from '../theme/colors';
-import type { PrincipalStackParamList } from '../types/principal';
+import { ParentHomeScreen } from "../screens/ParentHomeScreen";
+import { AnnouncementsScreen } from "../screens/principal/AnnouncementsScreen";
+import { AttendanceHistoryScreen } from "../screens/principal/AttendanceHistoryScreen";
+import { ChildDashboardScreen } from "../screens/principal/ChildDashboardScreen";
+import { ChildFeesScreen } from "../screens/principal/ChildFeesScreen";
+import { ConversationsListScreen } from "../screens/principal/ConversationsListScreen";
+import { ConversationThreadScreen } from "../screens/principal/ConversationThreadScreen";
+import { NewConversationScreen } from "../screens/principal/NewConversationScreen";
+import { NotificationsScreen } from "../screens/principal/NotificationsScreen";
+import { MyTimetableScreen } from "../screens/principal/MyTimetableScreen";
+import { ReportCardScreen } from "../screens/principal/ReportCardScreen";
+import { colors } from "../theme/colors";
+import type { PrincipalStackParamList } from "../types/principal";
 
 const Stack = createNativeStackNavigator<PrincipalStackParamList>();
 
@@ -22,9 +27,23 @@ export function ParentNavigator() {
     >
       <Stack.Screen name="ParentHome" component={ParentHomeScreen} />
       <Stack.Screen name="ChildDashboard" component={ChildDashboardScreen} />
-      <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+      <Stack.Screen
+        name="AttendanceHistory"
+        component={AttendanceHistoryScreen}
+      />
       <Stack.Screen name="ChildFees" component={ChildFeesScreen} />
       <Stack.Screen name="ReportCard" component={ReportCardScreen} />
+      <Stack.Screen
+        name="ConversationsList"
+        component={ConversationsListScreen}
+      />
+      <Stack.Screen name="NewConversation" component={NewConversationScreen} />
+      <Stack.Screen
+        name="ConversationThread"
+        component={ConversationThreadScreen}
+      />
+      <Stack.Screen name="Announcements" component={AnnouncementsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
     </Stack.Navigator>
   );

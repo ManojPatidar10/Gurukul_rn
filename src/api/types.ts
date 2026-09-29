@@ -925,11 +925,45 @@ export interface Credential {
   role: UserRole;
 }
 
-export type ConversationType = 'DIRECT' | 'BOT';
+export type ConversationType = 'STAFF_STAFF' | 'STAFF_STUDENT' | 'PARENT_STAFF' | 'BOT';
 
 export interface ConversationParticipant {
   ownerType: OwnerType;
   ownerId: string;
+  /** Resolved by the backend; null if that person no longer exists. */
+  name?: string | null;
+}
+
+/** Someone the caller may start a parent-staff chat with (GET /api/v1/chat/contacts). */
+export interface ChatContact {
+  ownerType: OwnerType;
+  ownerId: string;
+  name: string;
+  /** Staff contact: a school admin. */
+  admin: boolean;
+  /** Staff contact: sections (e.g. "5 - A") they are class teacher of, among the parent's children's. */
+  classTeacherOf: string[];
+  /** Staff contact: "Subject (section)" they teach the parent's children. */
+  subjects: string[];
+  /** Parent contact: "Child (section)" for each of their children the caller teaches. */
+  children: string[];
+}
+
+/** One inbox entry - a copy of a push the caller was sent (GET /api/v1/notifications). */
+export interface AppNotification {
+  id: string;
+  /** The push's data.type, e.g. ABSENCE_ALERT, FEE_DUE, ANNOUNCEMENT, NEW_MESSAGE. */
+  type: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPage {
+  notifications: AppNotification[];
+  hasMore: boolean;
 }
 
 export interface Conversation {

@@ -11,6 +11,8 @@ import { getStudent } from '../api/students';
 import { FEATURE_FLAGS } from '../config/featureFlags';
 import i18n from '../i18n';
 import { navigationRef } from '../navigation/navigationRef';
+import { notificationTarget } from '../utils/notificationRouting';
+import { openNotificationTarget } from '../utils/openNotificationTarget';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -37,6 +39,7 @@ const CHANNELS = [
   { id: 'announcements', key: 'announcements', importance: Notifications.AndroidImportance.HIGH },
   { id: 'calls', key: 'calls', importance: Notifications.AndroidImportance.MAX },
   { id: 'academics', key: 'academics', importance: Notifications.AndroidImportance.HIGH },
+  { id: 'alerts', key: 'alerts', importance: Notifications.AndroidImportance.HIGH },
 ] as const;
 
 async function setUpAndroidChannels() {
@@ -201,8 +204,14 @@ export function usePushNotifications(schoolId: string | null, session: Session |
             }
           })
           .catch(() => {});
+      } else {
+        // ABSENCE_ALERT / FEE_DUE open that child's attendance / fees; ANNOUNCEMENT opens the
+        // parent's Announcements screen (staff and students have none, so it just opens the app).
+        const target = notificationTarget(data, session.role);
+        if (target) {
+          openNotificationTarget(session.schoolId, target, navigationRef.navigate).catch(() => {});
+        }
       }
-      // ANNOUNCEMENT: no announcements screen exists yet, so the push carries the notice's own text.
       // INCOMING_CALL: video calls are disabled (src/config/featureFlags.ts) and there's no API to
       // fetch an in-progress call's room details from just a callLogId anyway - a still-ringing
       // call is only ever handled live, by IncomingCallOverlay, while that feature is enabled.
