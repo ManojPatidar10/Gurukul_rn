@@ -38,7 +38,8 @@ export type FeatureId =
   | 'attendanceDevices'
   | 'activityLog'
   | 'attendanceExport'
-  | 'schoolLogo';
+  | 'schoolLogo'
+  | 'idCards';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -113,6 +114,8 @@ export type PrincipalStackParamList = {
   ActivityLog: undefined;
   AttendanceExport: undefined;
   SchoolLogoSettings: undefined;
+  IdCard: { kind: 'STUDENT' | 'EMPLOYEE'; id: string; name: string };
+  IdCardSheets: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };

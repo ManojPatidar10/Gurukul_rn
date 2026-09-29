@@ -38,6 +38,13 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
       accentKey: 'reportCard',
       onPress: () => navigation.navigate('ReportCard', { student }),
     },
+    {
+      key: 'idCard',
+      title: t('childDashboard.idCard'),
+      icon: 'id-badge',
+      accentKey: 'idCards',
+      onPress: () => navigation.navigate('IdCard', { kind: 'STUDENT', id: student.id, name: student.name }),
+    },
   ];
 
   return (

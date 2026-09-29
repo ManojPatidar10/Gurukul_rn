@@ -169,6 +169,10 @@
       "schoolLogo": {
         "title": "School Logo",
         "description": "Logo printed on report-card PDFs"
+      },
+      "idCards": {
+        "title": "ID Cards",
+        "description": "Print ID card sheets for a class or all staff"
       }
     }
   },
@@ -875,7 +879,8 @@
   "childDashboard": {
     "attendance": "Attendance",
     "fees": "Fees",
-    "reportCard": "Report Card"
+    "reportCard": "Report Card",
+    "idCard": "ID Card"
   },
   "myFees": {
     "title": "My Fees",
@@ -1008,6 +1013,69 @@
     "errors": {
       "type": "Logo must be a PNG or JPEG image",
       "size": "Logo must be 2 MB or smaller"
+    }
+  },
+  "idCard": {
+    "title": "ID Card",
+    "sectionTitle": "ID card",
+    "open": "View digital ID card",
+    "openAndEdit": "Digital ID card & card details",
+    "download": "Download ID card",
+    "shareTitle": "Share ID card",
+    "loadError": "Could not load your ID card.",
+    "completeProfile": "Complete your profile for your ID card",
+    "placeholderHint": "You can still download the card now - missing details print as placeholders.",
+    "detailsTitle": "Card details",
+    "save": "Save details",
+    "saved": "ID card details saved",
+    "valid": "Valid {{year}}",
+    "qrLabel": "ID card QR code",
+    "qrCaption": "Staff can scan this to verify the card",
+    "emergencyHintStudent": "Printed on the card. If left blank, the parent contact on record is printed instead.",
+    "emergencyHintStaff": "Someone to call in an emergency. If left blank, your own phone is printed.",
+    "kind": {
+      "student": "STUDENT",
+      "staff": "STAFF"
+    },
+    "fields": {
+      "class": "Class",
+      "rollNo": "Roll No",
+      "parent": "Parent",
+      "designation": "Designation",
+      "bloodGroup": "Blood group",
+      "phone": "Phone",
+      "emergencyName": "Emergency contact name",
+      "emergencyPhone": "Emergency phone"
+    },
+    "missing": {
+      "photo": "Photo",
+      "bloodGroup": "Blood group",
+      "emergencyContact": "Emergency contact",
+      "other": "Other details"
+    },
+    "photo": {
+      "label": "Photo",
+      "take": "Take photo",
+      "choose": "Choose photo",
+      "remove": "Remove photo",
+      "hint": "A clear, front-facing photo. PNG or JPEG, up to 3 MB.",
+      "saved": "Photo saved",
+      "failed": "Could not upload the photo: {{message}}",
+      "permission": "Allow camera or photo library access to add a photo."
+    },
+    "errors": {
+      "photoType": "Photo must be a PNG or JPEG image",
+      "photoSize": "Photo must be 3 MB or smaller",
+      "phone": "Emergency phone must be 7-15 digits, optionally starting with +"
+    },
+    "sheets": {
+      "title": "ID Card Sheets",
+      "intro": "Print-ready A4 sheets, 10 cards per page, built from what students and staff have filled in on their profiles. Missing photos and details print as placeholders.",
+      "classTitle": "A class-section",
+      "staffTitle": "All staff",
+      "downloadClass": "Download class sheet",
+      "downloadStaff": "Download staff sheet",
+      "shareTitle": "Share ID card sheet"
     }
   }
 }
