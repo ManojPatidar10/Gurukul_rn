@@ -31,7 +31,9 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAtt
 // self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Shown only to school admins - the backend rejects everyone else anyway.
-const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport'];
+const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'timetableEditor', 'bellSchedule'];
+// A teacher's own periods / a student's class timetable. An admin edits timetables instead.
+const TEACHER_AND_STUDENT_FEATURES: FeatureId[] = ['myTimetable'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
 // Teacher Tools is a principal-driven workflow (principal picks a teacher to act on behalf of),
@@ -89,6 +91,9 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   attendanceDevices: 'AttendanceDevices',
   activityLog: 'ActivityLog',
   attendanceExport: 'AttendanceExport',
+  myTimetable: 'MyTimetable',
+  timetableEditor: 'TimetableEditor',
+  bellSchedule: 'PeriodSetup',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -148,6 +153,9 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'academicHelper', title: t('dashboard.features.academicHelper.title'), icon: 'lightbulb', description: t('dashboard.features.academicHelper.description') },
     { id: 'teacherTools', title: t('dashboard.features.teacherTools.title'), icon: 'chalkboard-teacher', description: t('dashboard.features.teacherTools.description') },
     { id: 'reportCard', title: t('dashboard.features.reportCard.title'), icon: 'file-alt', description: t('dashboard.features.reportCard.description') },
+    { id: 'myTimetable', title: t('dashboard.features.myTimetable.title'), icon: 'clock', description: t('dashboard.features.myTimetable.description') },
+    { id: 'timetableEditor', title: t('dashboard.features.timetableEditor.title'), icon: 'table', description: t('dashboard.features.timetableEditor.description') },
+    { id: 'bellSchedule', title: t('dashboard.features.bellSchedule.title'), icon: 'bell', description: t('dashboard.features.bellSchedule.description') },
     { id: 'myAttendance', title: t('dashboard.features.myAttendance.title'), icon: 'calendar-check', description: t('dashboard.features.myAttendance.description') },
     { id: 'gradingScale', title: t('dashboard.features.gradingScale.title'), icon: 'sliders-h', description: t('dashboard.features.gradingScale.description') },
     { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
@@ -164,6 +172,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     .filter((feature) => {
       if (feature.id === 'myClassSection' || feature.id === 'myClassFees') return isTeacher && !!myHomeroomSection;
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
+      if (TEACHER_AND_STUDENT_FEATURES.includes(feature.id)) return isTeacher || isStudent;
       if (ADMIN_ONLY_FEATURES.includes(feature.id)) return session.role === 'ADMIN';
       if (session.role === 'ADMIN') return true;
       if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';

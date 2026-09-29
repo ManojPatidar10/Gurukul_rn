@@ -164,6 +164,18 @@
       "attendanceExport": {
         "title": "Export Attendance",
         "description": "Download student or staff attendance as a spreadsheet"
+      },
+      "myTimetable": {
+        "title": "My Timetable",
+        "description": "Your periods for the week"
+      },
+      "timetableEditor": {
+        "title": "Timetables",
+        "description": "Build each class's weekly timetable"
+      },
+      "bellSchedule": {
+        "title": "Bell Schedule",
+        "description": "Period timings, breaks and Saturday"
       }
     }
   },
@@ -870,7 +882,8 @@
   "childDashboard": {
     "attendance": "Attendance",
     "fees": "Fees",
-    "reportCard": "Report Card"
+    "reportCard": "Report Card",
+    "timetable": "Timetable"
   },
   "myFees": {
     "title": "My Fees",
@@ -976,6 +989,68 @@
       "order": "'To' date must be on or after the 'From' date",
       "tooLong": "Pick a range of at most {{days}} days",
       "failed": "Export failed: {{message}}"
+    }
+  },
+  "timetable": {
+    "days": {
+      "MONDAY": "Mon",
+      "TUESDAY": "Tue",
+      "WEDNESDAY": "Wed",
+      "THURSDAY": "Thu",
+      "FRIDAY": "Fri",
+      "SATURDAY": "Sat",
+      "SUNDAY": "Sun"
+    },
+    "periodN": "Period {{n}}",
+    "break": "Break",
+    "free": "Free",
+    "loadFailed": "Could not load the timetable: {{message}}",
+    "noPeriods": "The bell schedule hasn't been set up yet.",
+    "noPeriodsAdmin": "Set up the bell schedule first: the period timings every class shares.",
+    "setUpPeriods": "Set up bell schedule",
+    "my": {
+      "title": "My Timetable",
+      "sectionTitle": "Class Timetable",
+      "emptyTeacher": "No periods are assigned to you yet.",
+      "emptySection": "This class has no timetable yet.",
+      "nothingToday": "No periods on this day."
+    },
+    "editor": {
+      "title": "Timetables",
+      "subtitle": "Weekly timetable per class",
+      "pickSection": "Choose a class-section",
+      "noAssignments": "No subjects are assigned to this class yet. Assign subjects and teachers first; only those can be scheduled.",
+      "assignSubjects": "Assign subjects",
+      "pickTitle": "{{day}}, period {{n}}",
+      "clearCell": "Leave free",
+      "save": "Save timetable",
+      "saved": "Timetable saved.",
+      "unsaved": "Unsaved changes",
+      "clashTitle": "These periods clash with other classes:",
+      "clashLine": "{{day}} period {{n}}: {{teacher}} is teaching {{section}}",
+      "copyToAll": "Copy this day to every day",
+      "filled": "{{count}} of {{total}} periods filled"
+    },
+    "periods": {
+      "title": "Bell Schedule",
+      "subtitle": "One schedule for the whole school",
+      "intro": "Periods run in order through the day. Mark recess or lunch as a break: breaks show on every timetable but can't hold a subject. Monday to Friday are always school days.",
+      "saturday": "Saturday is a school day",
+      "start": "Start",
+      "end": "End",
+      "label": "Label (optional)",
+      "isBreak": "Break",
+      "add": "+ Add period",
+      "save": "Save bell schedule",
+      "saved": "Bell schedule saved.",
+      "timeHint": "Use 24-hour time, e.g. 08:30 or 13:15.",
+      "errors": {
+        "empty": "Add at least one period.",
+        "tooMany": "A day can have at most {{max}} periods.",
+        "badTime": "Period {{n}}: enter times as HH:MM.",
+        "endBeforeStart": "Period {{n}} must end after it starts.",
+        "overlap": "Period {{n}} starts before period {{previous}} ends."
+      }
     }
   }
 }

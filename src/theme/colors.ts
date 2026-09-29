@@ -79,7 +79,10 @@ export type AccentKey =
   | 'myClassFees'
   | 'attendanceDevices'
   | 'activityLog'
-  | 'attendanceExport';
+  | 'attendanceExport'
+  | 'myTimetable'
+  | 'timetableEditor'
+  | 'bellSchedule';
 
 export const accents: Record<AccentKey, { base: string; light: string }> = {
   students: { base: '#2563EB', light: '#E3ECFD' },
@@ -109,6 +112,9 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   attendanceDevices: { base: '#1D4ED8', light: '#E1EAFB' },
   activityLog: { base: '#334155', light: '#E2E8F0' },
   attendanceExport: { base: '#15803D', light: '#DCFCE7' },
+  myTimetable: { base: '#0E7490', light: '#DDF2F7' },
+  timetableEditor: { base: '#0E7490', light: '#DDF2F7' },
+  bellSchedule: { base: '#475569', light: '#E7EAEE' },
 };
 
 /**

@@ -38,6 +38,13 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
       accentKey: 'reportCard',
       onPress: () => navigation.navigate('ReportCard', { student }),
     },
+    {
+      key: 'timetable',
+      title: t('childDashboard.timetable'),
+      icon: 'clock',
+      accentKey: 'myTimetable',
+      onPress: () => navigation.navigate('MyTimetable', { student }),
+    },
   ];
 
   return (

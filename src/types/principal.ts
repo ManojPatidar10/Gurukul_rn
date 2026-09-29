@@ -37,7 +37,10 @@ export type FeatureId =
   | 'myClassFees'
   | 'attendanceDevices'
   | 'activityLog'
-  | 'attendanceExport';
+  | 'attendanceExport'
+  | 'myTimetable'
+  | 'timetableEditor'
+  | 'bellSchedule';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -143,4 +146,8 @@ export type PrincipalStackParamList = {
   TeacherToolsHub: undefined;
   ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
+  /** No params: the caller's own timetable. classSection: that section's. student: a parent's child. */
+  MyTimetable: { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'> } | undefined;
+  TimetableEditor: { classSection?: ClassSection } | undefined;
+  PeriodSetup: undefined;
 };
