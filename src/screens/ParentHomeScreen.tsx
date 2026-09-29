@@ -8,6 +8,8 @@ import type { Student } from '../api/types';
 import { AvatarBadge } from '../components/AvatarBadge';
 import { ParentCommsTiles } from '../components/ParentCommsTiles';
 import { ScreenContainer } from '../components/ScreenContainer';
+import { AppVersionFooter } from '../components/AppVersionFooter';
+import { NotificationPermissionPrompt } from '../components/NotificationPermissionPrompt';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useAuth } from '../context/AuthContext';
 import { useSchoolId } from '../context/SchoolContext';
@@ -67,6 +69,7 @@ export function ParentHomeScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={t('parentHome.title')} subtitle={session.username} />
       <ScreenContainer>
+        <NotificationPermissionPrompt />
         <ParentCommsTiles />
         {children.length === 0 && <Text style={styles.empty}>{t('parentHome.empty')}</Text>}
         {children.map((child) => (
@@ -84,6 +87,7 @@ export function ParentHomeScreen({ navigation }: Props) {
         <Pressable style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
+        <AppVersionFooter onLongPress={() => navigation.navigate('PushDebug')} />
       </ScreenContainer>
     </View>
   );

@@ -10,6 +10,7 @@ import { ConversationsListScreen } from '../screens/principal/ConversationsListS
 import { ConversationThreadScreen } from '../screens/principal/ConversationThreadScreen';
 import { NewConversationScreen } from '../screens/principal/NewConversationScreen';
 import { NotificationsScreen } from '../screens/principal/NotificationsScreen';
+import { PushDebugScreen } from '../screens/principal/PushDebugScreen';
 import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { colors } from '../theme/colors';
@@ -37,6 +38,7 @@ export function ParentNavigator() {
       <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />
       <Stack.Screen name="Announcements" component={AnnouncementsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
+      <Stack.Screen name="PushDebug" component={PushDebugScreen} />
       <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
     </Stack.Navigator>
   );

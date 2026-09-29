@@ -11,6 +11,7 @@ import type { Employee, Student } from '../../api/types';
 import { IdCardProfileSection } from '../../components/IdCardProfileSection';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
+import { AppVersionFooter } from '../../components/AppVersionFooter';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -284,6 +285,7 @@ export function ProfileScreen({ navigation }: Props) {
             )}
           </View>
         )}
+        {!loading && <AppVersionFooter onLongPress={() => navigation.navigate('PushDebug')} />}
       </ScreenContainer>
 
       <Modal

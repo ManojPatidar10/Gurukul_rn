@@ -106,7 +106,7 @@ export function refreshSession(): Promise<LoginResponse> {
       // Logged out or switched while this was in flight - drop the result, and end the session it
       // just created on the server rather than leaving it live until it expires.
       const orphaned: string | undefined = json?.data?.refreshToken;
-      if (orphaned) revokeRefreshToken(orphaned);
+      if (orphaned) revokeSession({ refreshToken: orphaned });
       throw new SessionExpiredError();
     }
 
@@ -144,12 +144,17 @@ export async function ensureFreshAccessToken(): Promise<void> {
   if (accessTokenExpiresSoon()) await refreshSession();
 }
 
-/** Ends a session on the server. Fire and forget - logout never waits on the network. */
-export function revokeRefreshToken(refreshToken: string) {
+/**
+ * Ends a session on the server, and with `expoPushToken` also unbinds this phone's push
+ * registration so it stops getting the logged-out user's notifications. Fire and forget - logout
+ * never waits on the network.
+ */
+export function revokeSession({ refreshToken, expoPushToken }: { refreshToken?: string | null; expoPushToken?: string | null }) {
+  if (!refreshToken && !expoPushToken) return;
   fetch(`${BASE_URL}${LOGOUT_PATH}`, {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
+    body: JSON.stringify({ refreshToken: refreshToken ?? undefined, expoPushToken: expoPushToken ?? undefined }),
   }).catch(() => {});
 }
 
