@@ -138,15 +138,7 @@ export function StudentsListScreen({ navigation }: Props) {
 
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name or roll number" />
 
-        {error && (
-          <ErrorNotice
-            message={error}
-            onRetry={() => {
-              setLoading(true);
-              load(0, false).finally(() => setLoading(false));
-            }}
-          />
-        )}
+        {error && <ErrorNotice message={error} />}
 
         <FlatList
           data={students}

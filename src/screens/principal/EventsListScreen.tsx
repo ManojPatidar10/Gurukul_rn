@@ -113,7 +113,7 @@ export function EventsListScreen({ navigation }: Props) {
           </View>
         )}
 
-        {error && <ErrorNotice message={error} onRetry={load} />}
+        {error && <ErrorNotice message={error} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList

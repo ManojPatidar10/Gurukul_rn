@@ -111,7 +111,7 @@ export function ConversationsListScreen({ navigation }: Props) {
           </Pressable>
         </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {error && <ErrorNotice message={error} onRetry={load} inset />}
+        {error && <ErrorNotice message={error} inset />}
         {!loading && conversations.length === 0 && <Text style={styles.empty}>No conversations yet.</Text>}
         <FlatList
           data={conversations}

@@ -49,7 +49,7 @@ export function MyFeesScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={t('myFees.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        {error && <ErrorNotice message={error} onRetry={load} />}
+        {error && <ErrorNotice message={error} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList

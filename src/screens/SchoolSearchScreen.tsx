@@ -49,7 +49,7 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
         <LabeledInput label={t('schoolSearch.searchByName')} value={query} onChangeText={setQuery} placeholder={t('schoolSearch.placeholder')} />
 
         {loading && <ActivityIndicator style={styles.loading} />}
-        {error && <ErrorNotice message={error} onRetry={() => load(query)} />}
+        {error && <ErrorNotice message={error} />}
 
         <FlatList
           data={results}

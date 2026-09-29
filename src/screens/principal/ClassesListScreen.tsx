@@ -43,7 +43,7 @@ export function ClassesListScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title="Classes" onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        {error && <ErrorNotice message={error} onRetry={load} />}
+        {error && <ErrorNotice message={error} />}
         <FlatList
           data={classNames}
           keyExtractor={(item) => item}

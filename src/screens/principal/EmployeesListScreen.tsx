@@ -102,15 +102,7 @@ export function EmployeesListScreen({ navigation }: Props) {
 
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name" />
 
-        {error && (
-          <ErrorNotice
-            message={error}
-            onRetry={() => {
-              setLoading(true);
-              load(0, false).finally(() => setLoading(false));
-            }}
-          />
-        )}
+        {error && <ErrorNotice message={error} />}
 
         <FlatList
           data={employees}
