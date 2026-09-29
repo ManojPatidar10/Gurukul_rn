@@ -70,6 +70,7 @@ export type AccentKey =
   | 'academicHelper'
   | 'helpdeskBot'
   | 'teacherTools'
+  | 'aiQuizGenerator'
   | 'reportCard'
   | 'gradingScale'
   | 'markMyAttendance'
@@ -100,6 +101,7 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   academicHelper: { base: '#0891B2', light: '#DFF4F8' },
   helpdeskBot: { base: '#0EA5E9', light: '#E0F2FE' },
   teacherTools: { base: '#4F46E5', light: '#E8E6FC' },
+  aiQuizGenerator: { base: '#4F46E5', light: '#E8E6FC' },
   reportCard: { base: '#B45309', light: '#FCEEDB' },
   gradingScale: { base: '#475569', light: '#E7EAEE' },
   markMyAttendance: { base: '#16A34A', light: '#DCFCE7' },

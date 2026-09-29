@@ -463,6 +463,16 @@ export interface SubjectAssignment {
   teacherName: string;
 }
 
+export interface TeacherSubjectAssignment {
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+}
+
 export interface SectionSubjectRequest {
   subjectId: string;
   teacherId: string;
@@ -1065,17 +1075,41 @@ export interface CreateQuizQuestionRequest {
   correctOption: QuizOption;
 }
 
+/** Question-bank answer kinds. Only MCQ is used by Arena games; NUMERIC/SHORT_WORD are marked automatically. */
+export type QuizQuestionType = 'MCQ' | 'NUMERIC' | 'SHORT_WORD';
+
 export interface QuizQuestionResponse {
   id: string;
   className: string;
   questionText: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOption: QuizOption;
+  /** Options and correctOption are null for NUMERIC / SHORT_WORD questions. */
+  optionA: string | null;
+  optionB: string | null;
+  optionC: string | null;
+  optionD: string | null;
+  correctOption: QuizOption | null;
   createdByEmployeeId: string;
   createdByEmployeeName: string;
+  /** Absent from older servers - treat as MCQ. */
+  questionType?: QuizQuestionType;
+  answerText?: string | null;
+}
+
+export interface BankQuestionInput {
+  questionType: QuizQuestionType;
+  questionText: string;
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  correctOption?: QuizOption;
+  answerText?: string;
+}
+
+export interface BulkCreateQuizQuestionsRequest {
+  subjectId: string;
+  className: string;
+  questions: BankQuestionInput[];
 }
 
 export interface PublicQuizQuestionResponse {
@@ -1594,10 +1628,12 @@ export interface TeacherResourceResponse {
 
 export type TeacherAssessmentType = 'QUIZ' | 'TEST' | 'EXAM' | 'ASSIGNMENT_CHECK';
 export type QuizDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'MIXED';
-export type QuestionType = 'MCQ' | 'SHORT_ANSWER' | 'LONG_ANSWER' | 'TRUE_FALSE';
+export type QuestionType = 'MCQ' | 'SHORT_ANSWER' | 'LONG_ANSWER' | 'TRUE_FALSE' | 'NUMERIC' | 'SHORT_WORD';
 
 export interface AiQuizGenerationRequest {
   classSectionId: string;
+  /** Required when a teacher generates for themselves; the server checks their assignment against it. */
+  subjectId?: string;
   subjectName: string;
   assessmentType: TeacherAssessmentType;
   title: string;
@@ -1625,6 +1661,9 @@ export interface AiQuizGenerationResponse {
   teacherName: string;
   classSectionId: string;
   classSectionLabel: string;
+  /** Grade of the section, e.g. "Grade 8" - what the question bank is scoped to. */
+  className?: string;
+  subjectId?: string | null;
   subjectName: string;
   assessmentType: TeacherAssessmentType;
   title: string;
@@ -1634,5 +1673,6 @@ export interface AiQuizGenerationResponse {
   questionCount: number;
   generatorMode: string;
   reviewNote: string;
+  model?: string;
   questions: GeneratedQuizQuestion[];
 }
