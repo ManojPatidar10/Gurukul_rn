@@ -33,7 +33,7 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAtt
 // principal reaches the same screen through Teacher Tools, acting for a chosen teacher.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance', 'aiQuizGenerator'];
 // Shown only to school admins - the backend rejects everyone else anyway.
-const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'timetableEditor', 'bellSchedule', 'schoolLogo', 'idCards'];
+const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'timetableEditor', 'bellSchedule', 'schoolLogo', 'idCards', 'newAdmission', 'admissions'];
 // A teacher's own periods / a student's class timetable. An admin edits timetables instead.
 const TEACHER_AND_STUDENT_FEATURES: FeatureId[] = ['myTimetable'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
@@ -94,6 +94,8 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   attendanceDevices: 'AttendanceDevices',
   activityLog: 'ActivityLog',
   attendanceExport: 'AttendanceExport',
+  newAdmission: 'NewAdmission',
+  admissions: 'AdmissionsList',
   myTimetable: 'MyTimetable',
   timetableEditor: 'TimetableEditor',
   bellSchedule: 'PeriodSetup',
@@ -144,6 +146,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
+    { id: 'newAdmission', title: t('dashboard.features.newAdmission.title'), icon: 'user-plus', description: t('dashboard.features.newAdmission.description') },
+    { id: 'admissions', title: t('dashboard.features.admissions.title'), icon: 'clipboard-list', description: t('dashboard.features.admissions.description') },
     { id: 'employees', title: t('dashboard.features.employees.title'), icon: 'id-badge', description: t('dashboard.features.employees.description') },
     { id: 'vendors', title: t('dashboard.features.vendors.title'), icon: 'truck', description: t('dashboard.features.vendors.description') },
     { id: 'fees', title: t('dashboard.features.fees.title'), icon: 'file-invoice-dollar', description: t('dashboard.features.fees.description') },

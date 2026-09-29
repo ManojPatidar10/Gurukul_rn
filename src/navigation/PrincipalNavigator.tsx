@@ -1,5 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { AdmissionDetailScreen } from '../screens/principal/AdmissionDetailScreen';
+import { AdmissionsListScreen } from '../screens/principal/AdmissionsListScreen';
+import { NewAdmissionScreen } from '../screens/principal/NewAdmissionScreen';
 import { AssessmentDetailScreen } from '../screens/principal/AssessmentDetailScreen';
 import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen';
 import { AssessmentResultsScreen } from '../screens/principal/AssessmentResultsScreen';
@@ -211,6 +214,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="ResourceGenerator" component={ResourceGeneratorScreen} />
         <Stack.Screen name="QuizBankReview" component={QuizBankReviewScreen} />
         <Stack.Screen name="ResourceUpload" component={ResourceUploadScreen} />
+        <Stack.Screen name="NewAdmission" component={NewAdmissionScreen} />
+        <Stack.Screen name="AdmissionsList" component={AdmissionsListScreen} />
+        <Stack.Screen name="AdmissionDetail" component={AdmissionDetailScreen} />
         <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
         <Stack.Screen name="TimetableEditor" component={TimetableEditorScreen} />
         <Stack.Screen name="PeriodSetup" component={PeriodSetupScreen} />

@@ -1,4 +1,5 @@
 import type {
+  Admission,
   Assessment,
   CallProvider,
   ClassSection,
@@ -40,7 +41,8 @@ export type FeatureId =
   | 'attendanceDevices'
   | 'activityLog'
   | 'attendanceExport'
-  | 'schoolLogo'
+  | 'newAdmission'
+  | 'admissions'
   | 'idCards'
   | 'myTimetable'
   | 'timetableEditor'
@@ -158,6 +160,9 @@ export type PrincipalStackParamList = {
   // acting for a teacher from the Teacher Tools hub.
   ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string } | undefined;
   QuizBankReview: { subjectId: string; subjectName: string; className: string; questions: GeneratedQuizQuestion[] };
+  NewAdmission: { admission?: Admission } | undefined;
+  AdmissionsList: undefined;
+  AdmissionDetail: { admissionId: string };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
   /** No params: the caller's own timetable. classSection: that section's. student: a parent's child. */
   MyTimetable: { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'> } | undefined;

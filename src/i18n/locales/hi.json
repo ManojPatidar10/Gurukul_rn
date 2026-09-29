@@ -166,6 +166,14 @@
         "title": "उपस्थिति निर्यात",
         "description": "छात्र या स्टाफ़ की उपस्थिति शीट के रूप में डाउनलोड करें"
       },
+      "newAdmission": {
+        "title": "नया प्रवेश",
+        "description": "प्रवेश आवेदन दर्ज करें"
+      },
+      "admissions": {
+        "title": "प्रवेश",
+        "description": "आवेदन देखें, स्वीकृत करें और नामांकन करें"
+      },
       "myTimetable": {
         "title": "मेरी समय-सारणी",
         "description": "इस सप्ताह के आपके पीरियड"
@@ -1049,6 +1057,107 @@
       "order": "'तक' की तारीख़ 'से' की तारीख़ के बाद या उसी दिन होनी चाहिए",
       "tooLong": "अधिकतम {{days}} दिनों की सीमा चुनें",
       "failed": "निर्यात विफल: {{message}}"
+    }
+  },
+  "admissions": {
+    "listTitle": "प्रवेश",
+    "newButton": "नया प्रवेश",
+    "empty": "अभी कोई आवेदन नहीं है।",
+    "emptyFiltered": "इस चरण में कोई आवेदन नहीं है।",
+    "loadError": "आवेदन लोड नहीं हो सके।",
+    "appliedFor": "{{className}} के लिए आवेदन",
+    "filters": {
+      "all": "सभी"
+    },
+    "stages": {
+      "NEW": "नया",
+      "UNDER_REVIEW": "समीक्षा में",
+      "APPROVED": "स्वीकृत",
+      "REJECTED": "अस्वीकृत",
+      "ENROLLED": "नामांकित"
+    },
+    "form": {
+      "titleCreate": "नया प्रवेश",
+      "titleEdit": "आवेदन संपादित करें",
+      "studentSection": "विद्यार्थी",
+      "parentSection": "अभिभावक",
+      "studentName": "विद्यार्थी का नाम",
+      "dob": "जन्म तिथि",
+      "gender": "लिंग",
+      "address": "पता",
+      "previousSchool": "पिछला विद्यालय",
+      "parentName": "अभिभावक का नाम",
+      "parentContact": "अभिभावक का फ़ोन",
+      "parentEmail": "अभिभावक का ईमेल",
+      "appliedClass": "किस कक्षा के लिए आवेदन",
+      "appliedClassHint": "सेक्शन बाद में, नामांकन के समय दिया जाएगा।",
+      "noClasses": "अभी कोई कक्षा नहीं है - पहले कक्षा-सेक्शन बनाएं।",
+      "notes": "टिप्पणी",
+      "submitCreate": "प्रवेश सहेजें",
+      "saved": "प्रवेश सहेजा गया",
+      "errors": {
+        "parentContact": "मान्य 10 अंकों का फ़ोन नंबर दर्ज करें"
+      }
+    },
+    "detail": {
+      "title": "आवेदन",
+      "student": "विद्यार्थी",
+      "parent": "अभिभावक",
+      "received": "प्राप्त",
+      "decided": "निर्णय",
+      "enrolledOn": "नामांकित",
+      "deleteConfirmTitle": "आवेदन हटाएं?",
+      "deleteConfirmBody": "इससे आवेदन और उसके दस्तावेज़ हट जाएंगे।",
+      "deleted": "आवेदन हटाया गया",
+      "stageUpdated": "चरण अपडेट हुआ",
+      "duplicatesTitle": "संभावित दोहराव",
+      "duplicatesBody": "इसी नाम, जन्म तिथि और अभिभावक फ़ोन वाला विद्यार्थी पहले से नामांकित है:",
+      "viewStudent": "विद्यार्थी रिकॉर्ड खोलें"
+    },
+    "actions": {
+      "startReview": "समीक्षा शुरू करें",
+      "approve": "स्वीकृत करें",
+      "reject": "अस्वीकृत करें",
+      "reopen": "फिर से समीक्षा के लिए खोलें",
+      "undoApproval": "वापस समीक्षा में भेजें"
+    },
+    "documents": {
+      "title": "दस्तावेज़ (वैकल्पिक)",
+      "none": "कोई दस्तावेज़ संलग्न नहीं है।",
+      "addPhoto": "फ़ोटो जोड़ें",
+      "addFile": "PDF जोड़ें",
+      "typeLabel": "दस्तावेज़ का प्रकार",
+      "uploading": "अपलोड हो रहा है…",
+      "uploaded": "दस्तावेज़ जोड़ा गया",
+      "notConfigured": "इस सर्वर पर दस्तावेज़ अपलोड अभी सेट नहीं है।",
+      "tooLarge": "फ़ाइल बहुत बड़ी है (अधिकतम 10 MB)।",
+      "permission": "फ़ोटो जोड़ने के लिए फ़ोटो लाइब्रेरी की अनुमति दें।",
+      "open": "खोलें",
+      "removeConfirm": "यह दस्तावेज़ हटाएं?",
+      "types": {
+        "BIRTH_CERTIFICATE": "जन्म प्रमाण पत्र",
+        "TRANSFER_CERTIFICATE": "स्थानांतरण प्रमाण पत्र (TC)",
+        "PREVIOUS_MARKSHEET": "पिछली अंकसूची",
+        "AADHAAR": "आधार",
+        "PHOTO": "फ़ोटो",
+        "OTHER": "अन्य"
+      }
+    },
+    "enrol": {
+      "title": "विद्यार्थी का नामांकन करें",
+      "sectionLabel": "सेक्शन",
+      "sectionHint": "केवल {{className}} के सेक्शन दिखाए गए हैं।",
+      "noSections": "{{className}} का अभी कोई सेक्शन नहीं है - पहले एक बनाएं।",
+      "admissionDate": "प्रवेश तिथि",
+      "rollNumberNote": "रोल नंबर अपने आप दिया जाता है (सेक्शन में वर्णानुक्रम से)।",
+      "feeNote": "यदि सेक्शन की कक्षा का फीस ढांचा है तो फीस बिल अपने आप बन जाता है।",
+      "sendInvite": "अभिभावक आमंत्रण कोड बनाएं",
+      "submit": "नामांकन करें",
+      "submitting": "नामांकन हो रहा है…",
+      "duplicateConfirm": "फिर भी नामांकन करें",
+      "success": "{{name}} का {{section}} में नामांकन हुआ - रोल नं. {{roll}}",
+      "alreadyEnrolled": "पहले से नामांकित - कोई नया विद्यार्थी नहीं बना।",
+      "inviteCode": "अभिभावक आमंत्रण कोड: {{code}} (72 घंटे तक मान्य)"
     }
   },
   "timetable": {

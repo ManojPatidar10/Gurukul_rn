@@ -81,7 +81,8 @@ export type AccentKey =
   | 'attendanceDevices'
   | 'activityLog'
   | 'attendanceExport'
-  | 'schoolLogo'
+  | 'newAdmission'
+  | 'admissions'
   | 'idCards'
   | 'announcements'
   | 'alerts'
@@ -119,6 +120,8 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   attendanceDevices: { base: '#1D4ED8', light: '#E1EAFB' },
   activityLog: { base: '#334155', light: '#E2E8F0' },
   attendanceExport: { base: '#15803D', light: '#DCFCE7' },
+  newAdmission: { base: '#C2410C', light: '#FFEDD5' },
+  admissions: { base: '#BE185D', light: '#FCE7F3' },
   announcements: { base: '#C026D3', light: '#FAE8FC' },
   alerts: { base: '#DC2626', light: '#FDE4E4' },
   myTimetable: { base: '#0E7490', light: '#DDF2F7' },

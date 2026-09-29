@@ -166,6 +166,14 @@
         "title": "Export Attendance",
         "description": "Download student or staff attendance as a spreadsheet"
       },
+      "newAdmission": {
+        "title": "New Admission",
+        "description": "Record an admission application"
+      },
+      "admissions": {
+        "title": "Admissions",
+        "description": "Review, approve and enrol applicants"
+      },
       "myTimetable": {
         "title": "My Timetable",
         "description": "Your periods for the week"
@@ -1049,6 +1057,107 @@
       "order": "'To' date must be on or after the 'From' date",
       "tooLong": "Pick a range of at most {{days}} days",
       "failed": "Export failed: {{message}}"
+    }
+  },
+  "admissions": {
+    "listTitle": "Admissions",
+    "newButton": "New admission",
+    "empty": "No applications yet.",
+    "emptyFiltered": "No applications in this stage.",
+    "loadError": "Could not load applications.",
+    "appliedFor": "Applied for {{className}}",
+    "filters": {
+      "all": "All"
+    },
+    "stages": {
+      "NEW": "New",
+      "UNDER_REVIEW": "Under review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "ENROLLED": "Enrolled"
+    },
+    "form": {
+      "titleCreate": "New Admission",
+      "titleEdit": "Edit Application",
+      "studentSection": "Student",
+      "parentSection": "Parent / guardian",
+      "studentName": "Student name",
+      "dob": "Date of birth",
+      "gender": "Gender",
+      "address": "Address",
+      "previousSchool": "Previous school",
+      "parentName": "Parent name",
+      "parentContact": "Parent phone",
+      "parentEmail": "Parent email",
+      "appliedClass": "Class applied for",
+      "appliedClassHint": "The section is assigned later, at enrolment.",
+      "noClasses": "No classes yet - create a class-section first.",
+      "notes": "Notes",
+      "submitCreate": "Save admission",
+      "saved": "Admission saved",
+      "errors": {
+        "parentContact": "Enter a valid 10-digit phone number"
+      }
+    },
+    "detail": {
+      "title": "Application",
+      "student": "Student",
+      "parent": "Parent / guardian",
+      "received": "Received",
+      "decided": "Decided",
+      "enrolledOn": "Enrolled",
+      "deleteConfirmTitle": "Delete application?",
+      "deleteConfirmBody": "This removes the application and its documents.",
+      "deleted": "Application deleted",
+      "stageUpdated": "Stage updated",
+      "duplicatesTitle": "Possible duplicate",
+      "duplicatesBody": "A student with the same name, date of birth and parent phone is already enrolled:",
+      "viewStudent": "Open student record"
+    },
+    "actions": {
+      "startReview": "Start review",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reopen": "Reopen for review",
+      "undoApproval": "Move back to review"
+    },
+    "documents": {
+      "title": "Documents (optional)",
+      "none": "No documents attached.",
+      "addPhoto": "Add photo",
+      "addFile": "Add PDF",
+      "typeLabel": "Document type",
+      "uploading": "Uploading…",
+      "uploaded": "Document added",
+      "notConfigured": "Document uploads aren't set up on this server yet.",
+      "tooLarge": "That file is too large (max 10 MB).",
+      "permission": "Allow photo library access to attach a photo.",
+      "open": "Open",
+      "removeConfirm": "Remove this document?",
+      "types": {
+        "BIRTH_CERTIFICATE": "Birth certificate",
+        "TRANSFER_CERTIFICATE": "Transfer certificate",
+        "PREVIOUS_MARKSHEET": "Previous marksheet",
+        "AADHAAR": "Aadhaar",
+        "PHOTO": "Photo",
+        "OTHER": "Other"
+      }
+    },
+    "enrol": {
+      "title": "Enrol student",
+      "sectionLabel": "Section",
+      "sectionHint": "Only sections of {{className}} are shown.",
+      "noSections": "No sections for {{className}} yet - create one first.",
+      "admissionDate": "Admission date",
+      "rollNumberNote": "Roll number is assigned automatically (alphabetical order in the section).",
+      "feeNote": "A fee bill is created automatically if the section's class has a fee structure.",
+      "sendInvite": "Generate a parent invite code",
+      "submit": "Enrol",
+      "submitting": "Enrolling…",
+      "duplicateConfirm": "Enrol anyway",
+      "success": "{{name}} enrolled in {{section}} - roll no. {{roll}}",
+      "alreadyEnrolled": "Already enrolled - no new student was created.",
+      "inviteCode": "Parent invite code: {{code}} (valid 72 hours)"
     }
   },
   "timetable": {
