@@ -1,10 +1,8 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getConversationMessages, listConversations } from '../../api/chat';
-import { listAllEmployees } from '../../api/employees';
-import { listAllStudents } from '../../api/students';
 import type { Conversation } from '../../api/types';
 import { getLastReadAt } from '../../api/unreadStore';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -16,67 +14,89 @@ import type { PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConversationsList'>;
 
+// The last list shown, per signed-in owner, so coming back to Messages shows it instantly while a
+// fresh copy loads quietly behind it.
+let cache: { key: string; conversations: Conversation[]; unreadCounts: Record<string, number> } | null = null;
+
+// Unread counts need each conversation's recent messages; cap how many of those requests run at once
+// so a long chat list doesn't flood the server.
+const UNREAD_FETCH_CONCURRENCY = 4;
+
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 export function ConversationsListScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [names, setNames] = useState<Record<string, string>>({});
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `${schoolId}:${session.ownerType}:${session.ownerId}`;
+  const cached = cache?.key === cacheKey ? cache : null;
+  const [conversations, setConversations] = useState<Conversation[]>(cached?.conversations ?? []);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(cached?.unreadCounts ?? {});
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
+  // Each load gets an id, so a slow earlier load finishing late can't overwrite a newer one.
+  const loadId = useRef(0);
 
   const otherParty = (conversation: Conversation) =>
     conversation.participants.find((p) => p.ownerId !== session.ownerId);
 
-  // A parent has no business loading the whole school's directories - participant names come
-  // with each conversation now; the directories are only a fallback for staff/students.
-  const isParent = session.role === 'PARENT';
-
-  const load = () => {
-    setLoading(true);
+  // Shows the list as soon as the conversations arrive (names come with each one, resolved by the
+  // backend), then fills in unread badges without holding the list back.
+  const load = async () => {
+    const id = ++loadId.current;
     setError(null);
-    Promise.all([
-      listConversations(schoolId),
-      isParent ? Promise.resolve([]) : listAllEmployees(schoolId),
-      isParent ? Promise.resolve([]) : listAllStudents(schoolId),
-    ])
-      .then(async ([convos, employees, students]) => {
-        const withOthers = convos.filter((c) => otherParty(c));
-        setConversations(withOthers);
+    let withOthers: Conversation[];
+    try {
+      withOthers = (await listConversations(schoolId)).filter((c) => otherParty(c));
+    } catch (e) {
+      if (id === loadId.current) {
+        setError((e as Error).message);
+        setLoading(false);
+      }
+      return;
+    }
+    if (id !== loadId.current) return;
+    setConversations(withOthers);
+    setLoading(false);
 
-        const map: Record<string, string> = {};
-        employees.forEach((e) => (map[e.id] = e.name));
-        students.forEach((s) => (map[s.id] = s.name));
-        setNames(map);
-
-        const counts = await Promise.all(
-          withOthers.map(async (conversation) => {
-            const [history, lastReadAt] = await Promise.all([
-              getConversationMessages(schoolId, conversation.id),
-              getLastReadAt(conversation.id),
-            ]);
-            const unread = (history.messages ?? []).filter(
-              (m) => m.senderOwnerId !== session.ownerId && (!lastReadAt || m.sentAt > lastReadAt)
-            ).length;
-            return [conversation.id, unread] as const;
-          })
-        );
-        setUnreadCounts(Object.fromEntries(counts));
-      })
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false));
+    const counts = await mapWithConcurrency(withOthers, UNREAD_FETCH_CONCURRENCY, async (conversation) => {
+      try {
+        const [history, lastReadAt] = await Promise.all([
+          getConversationMessages(schoolId, conversation.id),
+          getLastReadAt(conversation.id),
+        ]);
+        const unread = (history.messages ?? []).filter(
+          (m) => m.senderOwnerId !== session.ownerId && (!lastReadAt || m.sentAt > lastReadAt)
+        ).length;
+        return [conversation.id, unread] as const;
+      } catch {
+        return [conversation.id, 0] as const; // a badge that fails to load just isn't shown
+      }
+    });
+    if (id !== loadId.current) return;
+    const unread = Object.fromEntries(counts);
+    setUnreadCounts(unread);
+    cache = { key: cacheKey, conversations: withOthers, unreadCounts: unread };
   };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', load);
-    load();
-    return unsubscribe;
-  }, [schoolId, navigation]);
+  // 'focus' also fires when the screen first opens, so this is the only load trigger - calling
+  // load() here as well used to fetch everything twice on every open.
+  useEffect(() => navigation.addListener('focus', load), [schoolId, navigation]);
 
   const otherPartyName = (conversation: Conversation) => {
     const other = otherParty(conversation);
     if (!other) return 'Conversation';
-    return other.name ?? names[other.ownerId] ?? 'Unknown';
+    return other.name ?? 'Unknown';
   };
 
   return (
