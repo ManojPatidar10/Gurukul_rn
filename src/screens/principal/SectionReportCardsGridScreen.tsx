@@ -1,12 +1,16 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Sharing from 'expo-sharing';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { downloadSectionReportCardsPdf, PDF_MIME_TYPE } from '../../api/reportCardPdf';
 import { getSectionReportCards } from '../../api/reportCards';
 import type { ReportCard } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -20,7 +24,9 @@ const SUBJECT_WIDTH = 90;
 const SUMMARY_WIDTH = 72;
 
 export function SectionReportCardsGridScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
+  const { showToast } = useToast();
   const classSection = route.params.classSection;
   const [term, setTerm] = useState('Term 1');
   const [rows, setRows] = useState<ReportCard[] | null>(null);
@@ -28,12 +34,16 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+  // The term the grid currently shows - the text box may have been edited since without reloading.
+  const [loadedTerm, setLoadedTerm] = useState(term);
+  const [downloading, setDownloading] = useState(false);
 
   const load = (t: string) => {
     setLoading(true);
     setError(null);
     setHasLoaded(true);
     setSubjectFilter(null);
+    setLoadedTerm(t);
     getSectionReportCards(schoolId, classSection.id, t)
       .then(setRows)
       .catch((e) => {
@@ -41,6 +51,26 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
         setError((e as Error).message);
       })
       .finally(() => setLoading(false));
+  };
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const file = await downloadSectionReportCardsPdf(schoolId, classSection, loadedTerm);
+      if (!(await Sharing.isAvailableAsync())) {
+        showToast(t('reportCardPdf.savedTo', { path: file.uri }), 'success');
+        return;
+      }
+      await Sharing.shareAsync(file.uri, {
+        mimeType: PDF_MIME_TYPE,
+        UTI: 'com.adobe.pdf',
+        dialogTitle: t('reportCardPdf.shareTitle'),
+      });
+    } catch (e) {
+      showToast(t('reportCardPdf.failed', { message: (e as Error).message }), 'error');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   useEffect(() => {
@@ -102,6 +132,23 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
         {!loading && error && <Text style={styles.error}>{error}</Text>}
         {!loading && !error && hasLoaded && rows != null && rows.length === 0 && (
           <Text style={styles.empty}>0 students in this section.</Text>
+        )}
+
+        {!loading && !error && rows != null && rows.length > 0 && (
+          <Pressable
+            style={[styles.pdfButton, downloading && styles.pdfButtonDisabled]}
+            onPress={handleDownloadPdf}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <View style={styles.pdfButtonBusy}>
+                <ActivityIndicator color={colors.primary} size="small" />
+                <Text style={styles.pdfButtonText}>{t('reportCardPdf.downloading')}</Text>
+              </View>
+            ) : (
+              <Text style={styles.pdfButtonText}>{t('reportCardPdf.downloadClass')}</Text>
+            )}
+          </Pressable>
         )}
 
         {!loading && !error && subjectColumns.length > 1 && (
@@ -170,6 +217,18 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  pdfButton: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  pdfButtonDisabled: { opacity: 0.6 },
+  pdfButtonBusy: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  pdfButtonText: { color: colors.primary, fontWeight: '700' },
   root: { flex: 1, backgroundColor: colors.background },
   termRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   termInput: {

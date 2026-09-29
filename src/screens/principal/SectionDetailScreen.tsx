@@ -38,6 +38,14 @@ export function SectionDetailScreen({ route, navigation }: Props) {
       description: 'Assignments, quizzes, tests, and exams',
       onPress: () => navigation.navigate('SectionAssessmentsList', { classSection }),
     },
+    {
+      title: 'Timetable',
+      description: isAdmin ? 'Build or change the weekly timetable' : 'Weekly timetable for this section',
+      onPress: () =>
+        isAdmin
+          ? navigation.navigate('TimetableEditor', { classSection })
+          : navigation.navigate('MyTimetable', { classSection }),
+    },
     ...(canTakeAttendance
       ? [
           {
