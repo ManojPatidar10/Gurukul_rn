@@ -62,7 +62,8 @@
       "pincode": "Enter a valid 6-digit pincode.",
       "email": "Enter a valid contact email address.",
       "phone": "Enter a valid 10-digit contact phone number."
-    }
+    },
+    "logoUploadFailed": "School registered, but the logo couldn't be uploaded ({{message}}). You can add it later from the School Logo tile."
   },
   "dashboard": {
     "fallbackTitle": "Smart Gurukul",
@@ -172,6 +173,30 @@
       "admissions": {
         "title": "Admissions",
         "description": "Review, approve and enrol applicants"
+      },
+      "myTimetable": {
+        "title": "My Timetable",
+        "description": "Your periods for the week"
+      },
+      "timetableEditor": {
+        "title": "Timetables",
+        "description": "Build each class's weekly timetable"
+      },
+      "bellSchedule": {
+        "title": "Bell Schedule",
+        "description": "Period timings, breaks and Saturday"
+      },
+      "aiQuizGenerator": {
+        "title": "AI Quiz Generator",
+        "description": "Draft a quiz from your syllabus and add it to the question bank"
+      },
+      "schoolLogo": {
+        "title": "School Logo",
+        "description": "Logo printed on report-card PDFs"
+      },
+      "idCards": {
+        "title": "ID Cards",
+        "description": "Print ID card sheets for a class or all staff"
       }
     }
   },
@@ -632,7 +657,7 @@
       "marksLabel": "{{marks}} marks",
       "answerLabel": "Answer",
       "explanationLabel": "Explanation",
-      "reviewNote": "AI-generated draft — review for accuracy before publishing to students.",
+      "reviewNote": "AI-generated draft. Check every question, answer and mark before using it - nothing is saved until you review it.",
       "assessmentTypes": {
         "QUIZ": "Quiz",
         "TEST": "Test",
@@ -649,15 +674,21 @@
         "MCQ": "Multiple choice",
         "SHORT_ANSWER": "Short answer",
         "LONG_ANSWER": "Long answer",
-        "TRUE_FALSE": "True / False"
+        "TRUE_FALSE": "True / False",
+        "NUMERIC": "Number answer",
+        "SHORT_WORD": "One/two-word answer"
       },
       "errors": {
         "subjectName": "Enter a subject.",
         "title": "Enter a title.",
         "syllabus": "Enter the syllabus or topics.",
-        "questionCount": "Enter a number of questions between 1 and 50.",
-        "maxMarks": "Enter total marks greater than 0."
-      }
+        "questionCount": "Enter a number of questions between 1 and {{max}}.",
+        "maxMarks": "Enter whole-number total marks, at least 1 per question.",
+        "assignment": "Choose a class and subject."
+      },
+      "classAndSubject": "Class and subject",
+      "noAssignments": "You are not assigned to any class subject yet. Ask your principal to assign you under Classes.",
+      "noSectionSubjects": "No subjects are assigned to this class yet, so questions from this draft cannot be saved to the question bank."
     },
     "upload": {
       "title": "Upload Resource",
@@ -690,6 +721,46 @@
         "description": "Enter a description.",
         "resourceUrl": "Enter a resource URL.",
         "file": "Choose a file to upload."
+      }
+    },
+    "bank": {
+      "title": "Review & save to question bank",
+      "intro": "Check and correct each question before saving. Saved questions go into the Arena question bank for this subject and class; only multiple-choice ones appear in Arena games.",
+      "include": "Save to question bank",
+      "notEligible": "Not auto-markable - for printing/sharing only",
+      "needsSubject": "Choose a subject assigned to this class to save questions to the question bank.",
+      "reviewAndSave": "Review & save to question bank ({{count}})",
+      "remove": "Remove",
+      "questionText": "Question",
+      "option": "Option {{letter}}",
+      "correctOption": "Correct option",
+      "numericAnswer": "Answer (number)",
+      "shortWordAnswer": "Answer (one or two words)",
+      "types": {
+        "MCQ": "Multiple choice",
+        "NUMERIC": "Number",
+        "SHORT_WORD": "One/two words"
+      },
+      "markingHint": {
+        "NUMERIC": "Marked automatically: the student's number must match exactly (2.50 counts as 2.5).",
+        "SHORT_WORD": "Marked automatically, ignoring capital letters and extra spaces."
+      },
+      "confirm": "I have checked every question and answer above.",
+      "save": "Save {{count}} questions",
+      "saved": "{{count}} questions added to the question bank.",
+      "errors": {
+        "noneSelected": "Select at least one question to save.",
+        "fixFirst": "Fix the highlighted questions first.",
+        "confirm": "Tick the box to confirm you have checked the questions.",
+        "questionText": "Enter the question.",
+        "questionTooLong": "The question is too long (max 500 characters).",
+        "optionsMissing": "Fill in all four options.",
+        "optionsDuplicate": "The four options must all be different.",
+        "optionTooLong": "An option is too long (max 255 characters).",
+        "correctOption": "Choose the correct option.",
+        "numericAnswer": "Enter a plain number, with no units.",
+        "shortWordAnswer": "Enter a one- or two-word answer.",
+        "answerTooLong": "The answer is too long."
       }
     }
   },
@@ -878,7 +949,9 @@
   "childDashboard": {
     "attendance": "Attendance",
     "fees": "Fees",
-    "reportCard": "Report Card"
+    "reportCard": "Report Card",
+    "idCard": "ID Card",
+    "timetable": "Timetable"
   },
   "myFees": {
     "title": "My Fees",
@@ -1086,5 +1159,209 @@
       "alreadyEnrolled": "Already enrolled - no new student was created.",
       "inviteCode": "Parent invite code: {{code}} (valid 72 hours)"
     }
+  },
+  "timetable": {
+    "days": {
+      "MONDAY": "Mon",
+      "TUESDAY": "Tue",
+      "WEDNESDAY": "Wed",
+      "THURSDAY": "Thu",
+      "FRIDAY": "Fri",
+      "SATURDAY": "Sat",
+      "SUNDAY": "Sun"
+    },
+    "periodN": "Period {{n}}",
+    "break": "Break",
+    "free": "Free",
+    "loadFailed": "Could not load the timetable: {{message}}",
+    "noPeriods": "The bell schedule hasn't been set up yet.",
+    "noPeriodsAdmin": "Set up the bell schedule first: the period timings every class shares.",
+    "setUpPeriods": "Set up bell schedule",
+    "my": {
+      "title": "My Timetable",
+      "sectionTitle": "Class Timetable",
+      "emptyTeacher": "No periods are assigned to you yet.",
+      "emptySection": "This class has no timetable yet.",
+      "nothingToday": "No periods on this day."
+    },
+    "editor": {
+      "title": "Timetables",
+      "subtitle": "Weekly timetable per class",
+      "pickSection": "Choose a class-section",
+      "noAssignments": "No subjects are assigned to this class yet. Assign subjects and teachers first; only those can be scheduled.",
+      "assignSubjects": "Assign subjects",
+      "pickTitle": "{{day}}, period {{n}}",
+      "clearCell": "Leave free",
+      "save": "Save timetable",
+      "saved": "Timetable saved.",
+      "unsaved": "Unsaved changes",
+      "clashTitle": "These periods clash with other classes:",
+      "clashLine": "{{day}} period {{n}}: {{teacher}} is teaching {{section}}",
+      "copyToAll": "Copy this day to every day",
+      "filled": "{{count}} of {{total}} periods filled"
+    },
+    "periods": {
+      "title": "Bell Schedule",
+      "subtitle": "One schedule for the whole school",
+      "intro": "Periods run in order through the day. Mark recess or lunch as a break: breaks show on every timetable but can't hold a subject. Monday to Friday are always school days.",
+      "saturday": "Saturday is a school day",
+      "start": "Start",
+      "end": "End",
+      "label": "Label (optional)",
+      "isBreak": "Break",
+      "add": "+ Add period",
+      "save": "Save bell schedule",
+      "saved": "Bell schedule saved.",
+      "timeHint": "Use 24-hour time, e.g. 08:30 or 13:15.",
+      "errors": {
+        "empty": "Add at least one period.",
+        "tooMany": "A day can have at most {{max}} periods.",
+        "badTime": "Period {{n}}: enter times as HH:MM.",
+        "endBeforeStart": "Period {{n}} must end after it starts.",
+        "overlap": "Period {{n}} starts before period {{previous}} ends."
+      }
+    }
+  },
+  "reportCardPdf": {
+    "download": "Download PDF",
+    "downloadClass": "Download class PDF",
+    "downloading": "Preparing PDF…",
+    "shareTitle": "Share report card",
+    "savedTo": "Saved to {{path}}",
+    "failed": "Could not download the PDF: {{message}}"
+  },
+  "schoolLogo": {
+    "title": "School Logo",
+    "intro": "Your school logo is printed on report-card PDFs. Without one, PDFs show a Gurukul placeholder mark.",
+    "label": "School logo (optional)",
+    "hint": "PNG or JPEG, up to 2 MB. You can add or change it later from the School Logo tile.",
+    "choose": "Choose logo",
+    "change": "Change logo",
+    "remove": "Remove logo",
+    "save": "Save logo",
+    "uploading": "Uploading…",
+    "saved": "Logo saved",
+    "removed": "Logo removed",
+    "none": "No logo uploaded yet",
+    "permission": "Allow photo library access to choose a logo.",
+    "errors": {
+      "type": "Logo must be a PNG or JPEG image",
+      "size": "Logo must be 2 MB or smaller"
+    }
+  },
+  "idCard": {
+    "title": "ID Card",
+    "sectionTitle": "ID card",
+    "open": "View digital ID card",
+    "openAndEdit": "Digital ID card & card details",
+    "download": "Download ID card",
+    "shareTitle": "Share ID card",
+    "loadError": "Could not load your ID card.",
+    "completeProfile": "Complete your profile for your ID card",
+    "placeholderHint": "You can still download the card now - missing details print as placeholders.",
+    "detailsTitle": "Card details",
+    "save": "Save details",
+    "saved": "ID card details saved",
+    "valid": "Valid {{year}}",
+    "qrLabel": "ID card QR code",
+    "qrCaption": "Staff can scan this to verify the card",
+    "emergencyHintStudent": "Printed on the card. If left blank, the parent contact on record is printed instead.",
+    "emergencyHintStaff": "Someone to call in an emergency. If left blank, your own phone is printed.",
+    "kind": {
+      "student": "STUDENT",
+      "staff": "STAFF"
+    },
+    "fields": {
+      "class": "Class",
+      "rollNo": "Roll No",
+      "parent": "Parent",
+      "designation": "Designation",
+      "bloodGroup": "Blood group",
+      "phone": "Phone",
+      "emergencyName": "Emergency contact name",
+      "emergencyPhone": "Emergency phone"
+    },
+    "missing": {
+      "photo": "Photo",
+      "bloodGroup": "Blood group",
+      "emergencyContact": "Emergency contact",
+      "other": "Other details"
+    },
+    "photo": {
+      "label": "Photo",
+      "take": "Take photo",
+      "choose": "Choose photo",
+      "remove": "Remove photo",
+      "hint": "A clear, front-facing photo. PNG or JPEG, up to 3 MB.",
+      "saved": "Photo saved",
+      "failed": "Could not upload the photo: {{message}}",
+      "permission": "Allow camera or photo library access to add a photo."
+    },
+    "errors": {
+      "photoType": "Photo must be a PNG or JPEG image",
+      "photoSize": "Photo must be 3 MB or smaller",
+      "phone": "Emergency phone must be 7-15 digits, optionally starting with +"
+    },
+    "sheets": {
+      "title": "ID Card Sheets",
+      "intro": "Print-ready A4 sheets, 10 cards per page, built from what students and staff have filled in on their profiles. Missing photos and details print as placeholders.",
+      "classTitle": "A class-section",
+      "staffTitle": "All staff",
+      "downloadClass": "Download class sheet",
+      "downloadStaff": "Download staff sheet",
+      "shareTitle": "Share ID card sheet"
+    }
+  },
+  "notifications": {
+    "channels": {
+      "general": {
+        "name": "General",
+        "description": "Other updates from your school"
+      },
+      "messages": {
+        "name": "Messages",
+        "description": "Chat messages sent to you"
+      },
+      "announcements": {
+        "name": "Announcements",
+        "description": "Notices from your school"
+      },
+      "calls": {
+        "name": "Video calls",
+        "description": "Incoming, missed and scheduled video calls"
+      },
+      "academics": {
+        "name": "Report cards & results",
+        "description": "When a report card is published"
+      },
+      "alerts": {
+        "name": "Alerts",
+        "description": "Absence and fee reminders for your child"
+      }
+    }
+  },
+  "parentComms": {
+    "messages": "Messages",
+    "announcements": "Announcements",
+    "alerts": "Alerts"
+  },
+  "announcements": {
+    "title": "Announcements",
+    "empty": "No announcements yet.",
+    "scopeSchool": "Whole school",
+    "scopeClass": "Class",
+    "scopeGrade": "Class {{className}}"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "empty": "No alerts yet.",
+    "markAllRead": "Mark all read",
+    "loadMore": "Load more"
+  },
+  "newConversation": {
+    "classTeacherOf": "Class teacher {{section}}",
+    "admin": "Admin",
+    "parentOf": "{{name}} (Parent of {{children}})",
+    "searchTeachers": "Search teachers by name"
   }
 }

@@ -2,11 +2,15 @@ import * as Location from 'expo-location';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { setAuthSession } from '../api/client';
+import { uploadSchoolLogo } from '../api/schoolLogo';
+import type { PickedLogo } from '../api/schoolLogo';
 import { registerSchool } from '../api/schools';
 import { setStoredSchoolId } from '../api/schoolStorage';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
 import LabeledInput from '../components/LabeledInput';
+import { SchoolLogoPicker } from '../components/SchoolLogoPicker';
 import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import type { Session } from '../api/authStorage';
@@ -38,6 +42,7 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
   const [longitude, setLongitude] = useState('');
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [logo, setLogo] = useState<PickedLogo | null>(null);
   const { showToast } = useToast();
 
   const set = (key: keyof typeof form) => (value: string) =>
@@ -86,6 +91,16 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
         geofenceRadiusMeters: hasLocation ? 100 : undefined,
       });
       await setStoredSchoolId(school.id);
+      if (logo) {
+        // The school exists now, so the logo goes up with the new admin's token. A failed upload
+        // never undoes or blocks registration - it can be added later from the School Logo tile.
+        setAuthSession(admin);
+        try {
+          await uploadSchoolLogo(school.id, logo);
+        } catch (e) {
+          showToast(t('schoolSetup.logoUploadFailed', { message: (e as Error).message }), 'error');
+        }
+      }
       onRegistered(school.id, admin);
     } catch (e) {
       showToast((e as Error).message, 'error');
@@ -112,6 +127,10 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
           keyboardType="number-pad"
           maxLength={6}
         />
+
+        <Text style={styles.fieldLabel}>{t('schoolLogo.label')}</Text>
+        <Text style={styles.sectionHint}>{t('schoolLogo.hint')}</Text>
+        <SchoolLogoPicker previewUri={logo?.uri ?? null} onPicked={setLogo} disabled={submitting} />
 
         <Text style={styles.sectionHint}>{t('schoolSetup.locationHint')}</Text>
         <Pressable style={styles.locateButton} onPress={handleUseCurrentLocation} disabled={locating}>
@@ -186,6 +205,7 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.lg },
+  fieldLabel: { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginTop: spacing.sm },
   sectionHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, marginBottom: spacing.xs, fontStyle: 'italic' },
   locateButton: {
     backgroundColor: colors.surfaceMuted,

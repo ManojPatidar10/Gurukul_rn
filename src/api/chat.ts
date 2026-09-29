@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   Announcement,
+  ChatContact,
   Conversation,
   CreateAnnouncementRequest,
   CreateConversationRequest,
@@ -11,6 +12,14 @@ import type {
 
 export function listConversations(schoolId: string) {
   return api.get<Conversation[]>('/api/v1/chat/conversations', schoolId);
+}
+
+/**
+ * Who the caller may start a parent-staff chat with: for a parent, their children's teachers and
+ * the school's admins; for staff, parents of their students (any parent, for an admin).
+ */
+export function listChatContacts(schoolId: string) {
+  return api.get<ChatContact[]>('/api/v1/chat/contacts', schoolId);
 }
 
 export function createConversation(schoolId: string, req: CreateConversationRequest) {

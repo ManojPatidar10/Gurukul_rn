@@ -1,7 +1,10 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Sharing from 'expo-sharing';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { downloadStudentReportCardPdf, PDF_MIME_TYPE } from '../../api/reportCardPdf';
 import { getPublishedTerms, getReportCard } from '../../api/reportCards';
 import type { PublishedTerm, ReportCard } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -9,6 +12,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -17,8 +21,10 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
 const FALLBACK_TERM = 'Term 1';
 
 export function ReportCardScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
+  const { showToast } = useToast();
   const isSelfView = session.role === 'STUDENT' || session.role === 'PARENT';
   const student = route.params.student;
   const [term, setTerm] = useState(route.params.defaultTerm ?? '');
@@ -27,6 +33,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const load = (t: string) => {
     setLoading(true);
@@ -39,6 +46,27 @@ export function ReportCardScreen({ route, navigation }: Props) {
         setError((e as Error).message);
       })
       .finally(() => setLoading(false));
+  };
+
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const file = await downloadStudentReportCardPdf(schoolId, student.id, student.name, reportCard?.term ?? term);
+      if (!(await Sharing.isAvailableAsync())) {
+        showToast(t('reportCardPdf.savedTo', { path: file.uri }), 'success');
+        return;
+      }
+      await Sharing.shareAsync(file.uri, {
+        mimeType: PDF_MIME_TYPE,
+        UTI: 'com.adobe.pdf',
+        dialogTitle: t('reportCardPdf.shareTitle'),
+      });
+    } catch (e) {
+      showToast(t('reportCardPdf.failed', { message: (e as Error).message }), 'error');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   useEffect(() => {
@@ -137,6 +165,14 @@ export function ReportCardScreen({ route, navigation }: Props) {
               </View>
             </View>
 
+            <Pressable style={[styles.pdfButton, downloading && styles.pdfButtonDisabled]} onPress={handleDownloadPdf} disabled={downloading}>
+              {downloading ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <Text style={styles.pdfButtonText}>{t('reportCardPdf.download')}</Text>
+              )}
+            </Pressable>
+
             <Text style={styles.sectionTitle}>Subjects</Text>
             {reportCard.subjects.length === 0 && (
               <Text style={styles.empty}>No results recorded for this term yet.</Text>
@@ -212,6 +248,17 @@ const styles = StyleSheet.create({
   },
   statValue: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
   statLabel: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  pdfButton: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
+  },
+  pdfButtonDisabled: { opacity: 0.6 },
+  pdfButtonText: { color: colors.primary, fontWeight: '700' },
   sectionTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
   subjectRow: {
     flexDirection: 'row',

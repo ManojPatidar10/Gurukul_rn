@@ -28,10 +28,18 @@ export function ConversationsListScreen({ navigation }: Props) {
   const otherParty = (conversation: Conversation) =>
     conversation.participants.find((p) => p.ownerId !== session.ownerId);
 
+  // A parent has no business loading the whole school's directories - participant names come
+  // with each conversation now; the directories are only a fallback for staff/students.
+  const isParent = session.role === 'PARENT';
+
   const load = () => {
     setLoading(true);
     setError(null);
-    Promise.all([listConversations(schoolId), listAllEmployees(schoolId), listAllStudents(schoolId)])
+    Promise.all([
+      listConversations(schoolId),
+      isParent ? Promise.resolve([]) : listAllEmployees(schoolId),
+      isParent ? Promise.resolve([]) : listAllStudents(schoolId),
+    ])
       .then(async ([convos, employees, students]) => {
         const withOthers = convos.filter((c) => otherParty(c));
         setConversations(withOthers);
@@ -68,7 +76,7 @@ export function ConversationsListScreen({ navigation }: Props) {
   const otherPartyName = (conversation: Conversation) => {
     const other = otherParty(conversation);
     if (!other) return 'Conversation';
-    return names[other.ownerId] ?? 'Unknown';
+    return other.name ?? names[other.ownerId] ?? 'Unknown';
   };
 
   return (
