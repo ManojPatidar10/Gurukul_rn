@@ -45,7 +45,7 @@ export function SectionsListScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={className} subtitle="Sections" onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        {error && <ErrorNotice message={error} onRetry={load} />}
+        {error && <ErrorNotice message={error} />}
         <FlatList
           data={sections}
           keyExtractor={(item) => item.id}

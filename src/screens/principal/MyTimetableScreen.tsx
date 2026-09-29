@@ -68,7 +68,7 @@ export function MyTimetableScreen({ route, navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && (
           <View>
-            <ErrorNotice message={t('timetable.loadFailed', { message: error })} onRetry={load} />
+            <ErrorNotice message={t('timetable.loadFailed', { message: error })} />
             <Pressable onPress={load} style={styles.retry}>
               <Text style={styles.retryText}>{t('common.retry')}</Text>
             </Pressable>
