@@ -18,8 +18,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useComposerBottomPadding } from '../../hooks/useComposerBottomPadding';
 import { getConversationMessages, presignChatAttachment } from '../../api/chat';
 import { sendMessage, subscribeToConversation } from '../../api/chatSocket';
 import type { Message } from '../../api/types';
@@ -51,7 +51,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
-  const insets = useSafeAreaInsets();
+  const composerBottomPadding = useComposerBottomPadding();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState('');
@@ -224,7 +224,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         />
       )}
       {error && <Text style={styles.error}>{error}</Text>}
-      <View style={[styles.inputRow, { paddingBottom: spacing.md + insets.bottom }]}>
+      <View style={[styles.inputRow, { paddingBottom: composerBottomPadding }]}>
         <Pressable style={styles.attachButton} onPress={handleAttach} disabled={uploading}>
           {uploading ? (
             <ActivityIndicator color={colors.primary} size="small" />
@@ -317,6 +317,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm + 2,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   sendButtonText: { color: colors.white, fontWeight: '700' },
 });

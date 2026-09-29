@@ -12,9 +12,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { useComposerBottomPadding } from '../../hooks/useComposerBottomPadding';
 import { askAi, type AiChatMessage } from '../../api/ai';
 import { ApiError } from '../../api/client';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -46,7 +46,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
-  const insets = useSafeAreaInsets();
+  const composerBottomPadding = useComposerBottomPadding();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -131,7 +131,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
           </View>
         )}
 
-        <View style={[styles.inputRow, { paddingBottom: spacing.sm + insets.bottom }]}>
+        <View style={[styles.inputRow, { paddingBottom: composerBottomPadding }]}>
           <TextInput
             style={styles.input}
             value={input}
@@ -209,6 +209,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
+    minHeight: 44,
     justifyContent: 'center',
   },
   sendButtonDisabled: { opacity: 0.5 },
