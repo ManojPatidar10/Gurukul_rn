@@ -96,13 +96,29 @@ export function usePushNotifications(schoolId: string | null, session: Session |
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
 
-    const fetchAndRegister = async () => {
-      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
-      if (cancelled) return;
+    // The last Expo token we tried to register, and whether a failure has already been logged, for
+    // this signed-in owner - so a repeat of the same token is a no-op and a failing backend is
+    // reported once rather than on every retry.
+    let lastToken: string | null = null;
+    let warned = false;
+
+    // Pass the device token when we already have one (from the token listener): without it,
+    // getExpoPushTokenAsync asks the OS for the device token again, and on iOS that re-fires the
+    // token listener below - an endless register loop that starves the JS thread.
+    const fetchAndRegister = async (devicePushToken?: Notifications.DevicePushToken) => {
+      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync({
+        ...(projectId ? { projectId } : {}),
+        ...(devicePushToken ? { devicePushToken } : {}),
+      });
+      if (cancelled || expoPushToken === lastToken) return;
+      lastToken = expoPushToken;
       try {
         await registerDeviceToken(schoolId, expoPushToken);
       } catch (e) {
-        console.warn('[push] Failed to register device token with the backend', e);
+        if (!warned) {
+          warned = true;
+          console.warn('[push] Failed to register device token with the backend', e);
+        }
       }
     };
 
@@ -126,10 +142,11 @@ export function usePushNotifications(schoolId: string | null, session: Session |
     })();
 
     // In rare cases Expo rolls the underlying native token while the app is running, which
-    // invalidates the Expo push token built from it - re-derive and re-register rather than using
-    // the raw device token this listener provides, which isn't the format our backend expects.
-    const tokenSubscription = Notifications.addPushTokenListener(() => {
-      fetchAndRegister().catch((e) => console.warn('[push] Failed to refresh device token', e));
+    // invalidates the Expo push token built from it - re-derive the Expo token from the raw device
+    // token this listener provides (which isn't the format our backend expects) and re-register.
+    // iOS also fires this on every getDevicePushTokenAsync, hence the same-token check above.
+    const tokenSubscription = Notifications.addPushTokenListener((devicePushToken) => {
+      fetchAndRegister(devicePushToken).catch((e) => console.warn('[push] Failed to refresh device token', e));
     });
 
     return () => {
