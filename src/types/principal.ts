@@ -1,4 +1,5 @@
 import type {
+  Admission,
   Assessment,
   CallProvider,
   ClassSection,
@@ -37,7 +38,9 @@ export type FeatureId =
   | 'myClassFees'
   | 'attendanceDevices'
   | 'activityLog'
-  | 'attendanceExport';
+  | 'attendanceExport'
+  | 'newAdmission'
+  | 'admissions';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -142,5 +145,8 @@ export type PrincipalStackParamList = {
   TeacherPerformance: { employee: Employee };
   TeacherToolsHub: undefined;
   ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
+  NewAdmission: { admission?: Admission } | undefined;
+  AdmissionsList: undefined;
+  AdmissionDetail: { admissionId: string };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
 };

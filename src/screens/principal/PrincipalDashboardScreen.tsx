@@ -31,7 +31,7 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAtt
 // self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Shown only to school admins - the backend rejects everyone else anyway.
-const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport'];
+const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'newAdmission', 'admissions'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
 // Teacher Tools is a principal-driven workflow (principal picks a teacher to act on behalf of),
@@ -89,6 +89,8 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   attendanceDevices: 'AttendanceDevices',
   activityLog: 'ActivityLog',
   attendanceExport: 'AttendanceExport',
+  newAdmission: 'NewAdmission',
+  admissions: 'AdmissionsList',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -134,6 +136,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
+    { id: 'newAdmission', title: t('dashboard.features.newAdmission.title'), icon: 'user-plus', description: t('dashboard.features.newAdmission.description') },
+    { id: 'admissions', title: t('dashboard.features.admissions.title'), icon: 'clipboard-list', description: t('dashboard.features.admissions.description') },
     { id: 'employees', title: t('dashboard.features.employees.title'), icon: 'id-badge', description: t('dashboard.features.employees.description') },
     { id: 'vendors', title: t('dashboard.features.vendors.title'), icon: 'truck', description: t('dashboard.features.vendors.description') },
     { id: 'fees', title: t('dashboard.features.fees.title'), icon: 'file-invoice-dollar', description: t('dashboard.features.fees.description') },

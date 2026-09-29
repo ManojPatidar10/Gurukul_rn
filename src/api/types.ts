@@ -1634,3 +1634,109 @@ export interface AiQuizGenerationResponse {
   reviewNote: string;
   questions: GeneratedQuizQuestion[];
 }
+
+// --- Admissions (admin-only)
+
+export type AdmissionStage = 'NEW' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'ENROLLED';
+
+export type AdmissionDocumentType =
+  | 'BIRTH_CERTIFICATE'
+  | 'TRANSFER_CERTIFICATE'
+  | 'PREVIOUS_MARKSHEET'
+  | 'AADHAAR'
+  | 'PHOTO'
+  | 'OTHER';
+
+export interface AdmissionRequest {
+  studentName: string;
+  dob: string;
+  gender: string;
+  address: string;
+  previousSchoolName?: string;
+  parentName: string;
+  parentContact: string;
+  parentEmail?: string;
+  /** A class name from GET /class-sections/classes - the section is picked later, at enrolment. */
+  appliedClassName: string;
+  notes?: string;
+}
+
+export interface AdmissionDocument {
+  id: string;
+  documentType: AdmissionDocumentType;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  /** Time-limited link; null when document storage isn't configured on the server. */
+  downloadUrl: string | null;
+  createdAt: string;
+}
+
+export interface AdmissionDuplicateStudent {
+  id: string;
+  name: string;
+  rollNumber: string;
+  classSectionLabel: string;
+}
+
+export interface Admission {
+  id: string;
+  stage: AdmissionStage;
+  studentName: string;
+  dob: string;
+  gender: string;
+  address: string;
+  previousSchoolName: string | null;
+  parentName: string;
+  parentContact: string;
+  parentEmail: string | null;
+  appliedClassName: string;
+  assignedClassSectionId: string | null;
+  notes: string | null;
+  studentId: string | null;
+  decidedAt: string | null;
+  enrolledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Detail responses only (null in lists). */
+  documents: AdmissionDocument[] | null;
+  possibleDuplicates: AdmissionDuplicateStudent[] | null;
+  documentUploadsEnabled: boolean | null;
+}
+
+export interface PresignAdmissionDocumentRequest {
+  documentType: AdmissionDocumentType;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+}
+
+export interface PresignAdmissionDocumentResponse {
+  uploadUrl: string;
+  objectKey: string;
+  expiresAt: string;
+}
+
+export interface RegisterAdmissionDocumentRequest extends PresignAdmissionDocumentRequest {
+  objectKey: string;
+}
+
+export interface ConvertAdmissionRequest {
+  classSectionId: string;
+  admissionDate?: string;
+  sendParentInvite?: boolean;
+  allowDuplicate?: boolean;
+}
+
+export interface ConvertAdmissionResponse {
+  application: Admission;
+  studentId: string | null;
+  studentName: string | null;
+  /** Server-assigned (alphabetical rank in the section). */
+  rollNumber: string | null;
+  registrationNumber: string | null;
+  classSectionLabel: string | null;
+  alreadyEnrolled: boolean;
+  inviteCode: string | null;
+  inviteExpiresAt: string | null;
+}
