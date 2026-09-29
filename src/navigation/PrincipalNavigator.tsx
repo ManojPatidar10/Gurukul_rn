@@ -14,6 +14,7 @@ import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAt
 import { ActivityLogScreen } from '../screens/principal/ActivityLogScreen';
 import { AttendanceDevicesScreen } from '../screens/principal/AttendanceDevicesScreen';
 import { AttendanceExportScreen } from '../screens/principal/AttendanceExportScreen';
+import { SchoolLogoSettingsScreen } from '../screens/principal/SchoolLogoSettingsScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { RegistrationInboxScreen } from '../screens/principal/RegistrationInboxScreen';
 import { SectionAttendanceScreen } from '../screens/principal/SectionAttendanceScreen';
@@ -78,6 +79,7 @@ import { ProfileScreen } from '../screens/principal/ProfileScreen';
 import { SwitchChildScreen } from '../screens/principal/SwitchChildScreen';
 import { GlobalSearchScreen } from '../screens/principal/GlobalSearchScreen';
 import { ResourceGeneratorScreen } from '../screens/principal/ResourceGeneratorScreen';
+import { QuizBankReviewScreen } from '../screens/principal/QuizBankReviewScreen';
 import { ResourceUploadScreen } from '../screens/principal/ResourceUploadScreen';
 import { SalaryHistoryScreen } from '../screens/principal/SalaryHistoryScreen';
 import { SalaryStructureFormScreen } from '../screens/principal/SalaryStructureFormScreen';
@@ -171,6 +173,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AttendanceDevices" component={AttendanceDevicesScreen} />
         <Stack.Screen name="ActivityLog" component={ActivityLogScreen} />
         <Stack.Screen name="AttendanceExport" component={AttendanceExportScreen} />
+        <Stack.Screen name="SchoolLogoSettings" component={SchoolLogoSettingsScreen} />
         <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
         <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />
@@ -202,6 +205,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="TeacherPerformance" component={TeacherPerformanceScreen} />
         <Stack.Screen name="TeacherToolsHub" component={TeacherToolsHubScreen} />
         <Stack.Screen name="ResourceGenerator" component={ResourceGeneratorScreen} />
+        <Stack.Screen name="QuizBankReview" component={QuizBankReviewScreen} />
         <Stack.Screen name="ResourceUpload" component={ResourceUploadScreen} />
         <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
         <Stack.Screen name="TimetableEditor" component={TimetableEditorScreen} />

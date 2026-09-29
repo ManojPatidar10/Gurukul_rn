@@ -6,6 +6,7 @@ import type {
   FeeAssessment,
   FeePayment,
   FeeStructure,
+  GeneratedQuizQuestion,
   InfraExpenseRequest,
   PayrollLine,
   Student,
@@ -28,6 +29,7 @@ export type FeatureId =
   | 'events'
   | 'academicHelper'
   | 'teacherTools'
+  | 'aiQuizGenerator'
   | 'reportCard'
   | 'gradingScale'
   | 'markMyAttendance'
@@ -40,7 +42,8 @@ export type FeatureId =
   | 'attendanceExport'
   | 'myTimetable'
   | 'timetableEditor'
-  | 'bellSchedule';
+  | 'bellSchedule'
+  | 'schoolLogo';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -114,6 +117,7 @@ export type PrincipalStackParamList = {
   AttendanceDevices: undefined;
   ActivityLog: undefined;
   AttendanceExport: undefined;
+  SchoolLogoSettings: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };
@@ -144,7 +148,10 @@ export type PrincipalStackParamList = {
   StudentPerformance: { student: Student };
   TeacherPerformance: { employee: Employee };
   TeacherToolsHub: undefined;
-  ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
+  // Undefined = a teacher generating for themselves (from their dashboard tile); set = a principal
+  // acting for a teacher from the Teacher Tools hub.
+  ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string } | undefined;
+  QuizBankReview: { subjectId: string; subjectName: string; className: string; questions: GeneratedQuizQuestion[] };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
   /** No params: the caller's own timetable. classSection: that section's. student: a parent's child. */
   MyTimetable: { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'> } | undefined;
