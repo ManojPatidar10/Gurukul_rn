@@ -1,11 +1,13 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { createConversation } from '../../api/chat';
+import { createConversation, listChatContacts } from '../../api/chat';
 import { listAllEmployees } from '../../api/employees';
 import { getStudent, listAllStudents } from '../../api/students';
-import type { OwnerType } from '../../api/types';
+import type { ChatContact, OwnerType } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
@@ -22,10 +24,23 @@ interface Party {
   name: string;
 }
 
+/** "Mrs Rao - Class teacher 5 - A, Maths (5 - A)" - why this person is someone the parent can message. */
+function staffLabel(contact: ChatContact, t: TFunction) {
+  const reasons = [
+    ...contact.classTeacherOf.map((section) => t('newConversation.classTeacherOf', { section })),
+    ...contact.subjects,
+    ...(contact.admin ? [t('newConversation.admin')] : []),
+  ];
+  return reasons.length ? `${contact.name} - ${reasons.join(', ')}` : contact.name;
+}
+
 export function NewConversationScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const isStudent = session.role === 'STUDENT';
+  const isParent = session.role === 'PARENT';
+  const isStaff = session.role === 'TEACHER' || session.role === 'ADMIN';
   const [parties, setParties] = useState<Party[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,12 +49,22 @@ export function NewConversationScreen({ navigation }: Props) {
 
   useEffect(() => {
     setLoading(true);
+    if (isParent) {
+      // A parent may only message their children's teachers and the school's admins - the backend
+      // decides who that is (and enforces it again when the conversation is created).
+      listChatContacts(schoolId)
+        .then((contacts) => setParties(contacts.map((c) => ({ ownerType: c.ownerType, ownerId: c.ownerId, name: staffLabel(c, t) }))))
+        .catch((e) => setError((e as Error).message))
+        .finally(() => setLoading(false));
+      return;
+    }
     Promise.all([
       listAllEmployees(schoolId),
       listAllStudents(schoolId),
       isStudent ? getStudent(schoolId, session.ownerId) : Promise.resolve(null),
+      isStaff ? listChatContacts(schoolId).catch(() => [] as ChatContact[]) : Promise.resolve([] as ChatContact[]),
     ])
-      .then(([employees, students, me]) => {
+      .then(([employees, students, me, parentContacts]) => {
         // A student can message any staff member, but only their own classmates - not the
         // whole school's student directory.
         const visibleStudents = me
@@ -52,12 +77,18 @@ export function NewConversationScreen({ navigation }: Props) {
             .filter((e) => e.id !== session.ownerId)
             .map((e) => ({ ownerType: 'EMPLOYEE' as const, ownerId: e.id, name: `${e.name} (Staff)` })),
           ...visibleStudents.map((s) => ({ ownerType: 'STUDENT' as const, ownerId: s.id, name: `${s.name} (Student)` })),
+          // Staff: parents of their own students (an admin: every parent).
+          ...parentContacts.map((c) => ({
+            ownerType: 'PARENT' as const,
+            ownerId: c.ownerId,
+            name: t('newConversation.parentOf', { name: c.name, children: c.children.join(', ') }),
+          })),
         ];
         setParties(list);
       })
       .catch((e) => setError((e as Error).message))
       .finally(() => setLoading(false));
-  }, [schoolId, session.ownerId, isStudent]);
+  }, [schoolId, session.ownerId, isStudent, isParent, isStaff, t]);
 
   const visibleParties = parties.filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase()));
 
@@ -82,7 +113,7 @@ export function NewConversationScreen({ navigation }: Props) {
       <ScreenHeader title="New Conversation" onBack={() => navigation.goBack()} />
       <ScreenContainer padded={false}>
         <View style={styles.searchWrap}>
-          <SearchBar value={query} onChangeText={setQuery} placeholder="Search staff or classmates by name" />
+          <SearchBar value={query} onChangeText={setQuery} placeholder={isParent ? t('newConversation.searchTeachers') : 'Search staff or classmates by name'} />
         </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <Text style={styles.error}>{error}</Text>}

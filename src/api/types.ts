@@ -22,6 +22,8 @@ export interface School {
   latitude: number | null;
   longitude: number | null;
   geofenceRadiusMeters: number;
+  /** Short-lived presigned URL, null if no logo was uploaded (or storage isn't configured). */
+  logoUrl: string | null;
   studentCount: number;
   classSectionCount: number;
   teacherCount: number;
@@ -459,6 +461,16 @@ export interface SubjectAssignment {
   subjectCode: string;
   teacherId: string;
   teacherName: string;
+}
+
+export interface TeacherSubjectAssignment {
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
 }
 
 export interface SectionSubjectRequest {
@@ -913,11 +925,45 @@ export interface Credential {
   role: UserRole;
 }
 
-export type ConversationType = 'DIRECT' | 'BOT';
+export type ConversationType = 'STAFF_STAFF' | 'STAFF_STUDENT' | 'PARENT_STAFF' | 'BOT';
 
 export interface ConversationParticipant {
   ownerType: OwnerType;
   ownerId: string;
+  /** Resolved by the backend; null if that person no longer exists. */
+  name?: string | null;
+}
+
+/** Someone the caller may start a parent-staff chat with (GET /api/v1/chat/contacts). */
+export interface ChatContact {
+  ownerType: OwnerType;
+  ownerId: string;
+  name: string;
+  /** Staff contact: a school admin. */
+  admin: boolean;
+  /** Staff contact: sections (e.g. "5 - A") they are class teacher of, among the parent's children's. */
+  classTeacherOf: string[];
+  /** Staff contact: "Subject (section)" they teach the parent's children. */
+  subjects: string[];
+  /** Parent contact: "Child (section)" for each of their children the caller teaches. */
+  children: string[];
+}
+
+/** One inbox entry - a copy of a push the caller was sent (GET /api/v1/notifications). */
+export interface AppNotification {
+  id: string;
+  /** The push's data.type, e.g. ABSENCE_ALERT, FEE_DUE, ANNOUNCEMENT, NEW_MESSAGE. */
+  type: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPage {
+  notifications: AppNotification[];
+  hasMore: boolean;
 }
 
 export interface Conversation {
@@ -1063,17 +1109,41 @@ export interface CreateQuizQuestionRequest {
   correctOption: QuizOption;
 }
 
+/** Question-bank answer kinds. Only MCQ is used by Arena games; NUMERIC/SHORT_WORD are marked automatically. */
+export type QuizQuestionType = 'MCQ' | 'NUMERIC' | 'SHORT_WORD';
+
 export interface QuizQuestionResponse {
   id: string;
   className: string;
   questionText: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOption: QuizOption;
+  /** Options and correctOption are null for NUMERIC / SHORT_WORD questions. */
+  optionA: string | null;
+  optionB: string | null;
+  optionC: string | null;
+  optionD: string | null;
+  correctOption: QuizOption | null;
   createdByEmployeeId: string;
   createdByEmployeeName: string;
+  /** Absent from older servers - treat as MCQ. */
+  questionType?: QuizQuestionType;
+  answerText?: string | null;
+}
+
+export interface BankQuestionInput {
+  questionType: QuizQuestionType;
+  questionText: string;
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  correctOption?: QuizOption;
+  answerText?: string;
+}
+
+export interface BulkCreateQuizQuestionsRequest {
+  subjectId: string;
+  className: string;
+  questions: BankQuestionInput[];
 }
 
 export interface PublicQuizQuestionResponse {
@@ -1592,10 +1662,12 @@ export interface TeacherResourceResponse {
 
 export type TeacherAssessmentType = 'QUIZ' | 'TEST' | 'EXAM' | 'ASSIGNMENT_CHECK';
 export type QuizDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'MIXED';
-export type QuestionType = 'MCQ' | 'SHORT_ANSWER' | 'LONG_ANSWER' | 'TRUE_FALSE';
+export type QuestionType = 'MCQ' | 'SHORT_ANSWER' | 'LONG_ANSWER' | 'TRUE_FALSE' | 'NUMERIC' | 'SHORT_WORD';
 
 export interface AiQuizGenerationRequest {
   classSectionId: string;
+  /** Required when a teacher generates for themselves; the server checks their assignment against it. */
+  subjectId?: string;
   subjectName: string;
   assessmentType: TeacherAssessmentType;
   title: string;
@@ -1623,6 +1695,9 @@ export interface AiQuizGenerationResponse {
   teacherName: string;
   classSectionId: string;
   classSectionLabel: string;
+  /** Grade of the section, e.g. "Grade 8" - what the question bank is scoped to. */
+  className?: string;
+  subjectId?: string | null;
   subjectName: string;
   assessmentType: TeacherAssessmentType;
   title: string;
@@ -1632,5 +1707,112 @@ export interface AiQuizGenerationResponse {
   questionCount: number;
   generatorMode: string;
   reviewNote: string;
+  model?: string;
   questions: GeneratedQuizQuestion[];
+}
+
+// --- Admissions (admin-only)
+
+export type AdmissionStage = 'NEW' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'ENROLLED';
+
+export type AdmissionDocumentType =
+  | 'BIRTH_CERTIFICATE'
+  | 'TRANSFER_CERTIFICATE'
+  | 'PREVIOUS_MARKSHEET'
+  | 'AADHAAR'
+  | 'PHOTO'
+  | 'OTHER';
+
+export interface AdmissionRequest {
+  studentName: string;
+  dob: string;
+  gender: string;
+  address: string;
+  previousSchoolName?: string;
+  parentName: string;
+  parentContact: string;
+  parentEmail?: string;
+  /** A class name from GET /class-sections/classes - the section is picked later, at enrolment. */
+  appliedClassName: string;
+  notes?: string;
+}
+
+export interface AdmissionDocument {
+  id: string;
+  documentType: AdmissionDocumentType;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  /** Time-limited link; null when document storage isn't configured on the server. */
+  downloadUrl: string | null;
+  createdAt: string;
+}
+
+export interface AdmissionDuplicateStudent {
+  id: string;
+  name: string;
+  rollNumber: string;
+  classSectionLabel: string;
+}
+
+export interface Admission {
+  id: string;
+  stage: AdmissionStage;
+  studentName: string;
+  dob: string;
+  gender: string;
+  address: string;
+  previousSchoolName: string | null;
+  parentName: string;
+  parentContact: string;
+  parentEmail: string | null;
+  appliedClassName: string;
+  assignedClassSectionId: string | null;
+  notes: string | null;
+  studentId: string | null;
+  decidedAt: string | null;
+  enrolledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Detail responses only (null in lists). */
+  documents: AdmissionDocument[] | null;
+  possibleDuplicates: AdmissionDuplicateStudent[] | null;
+  documentUploadsEnabled: boolean | null;
+}
+
+export interface PresignAdmissionDocumentRequest {
+  documentType: AdmissionDocumentType;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+}
+
+export interface PresignAdmissionDocumentResponse {
+  uploadUrl: string;
+  objectKey: string;
+  expiresAt: string;
+}
+
+export interface RegisterAdmissionDocumentRequest extends PresignAdmissionDocumentRequest {
+  objectKey: string;
+}
+
+export interface ConvertAdmissionRequest {
+  classSectionId: string;
+  admissionDate?: string;
+  sendParentInvite?: boolean;
+  allowDuplicate?: boolean;
+}
+
+export interface ConvertAdmissionResponse {
+  application: Admission;
+  studentId: string | null;
+  studentName: string | null;
+  /** Server-assigned (alphabetical rank in the section). */
+  rollNumber: string | null;
+  registrationNumber: string | null;
+  classSectionLabel: string | null;
+  alreadyEnrolled: boolean;
+  inviteCode: string | null;
+  inviteExpiresAt: string | null;
 }

@@ -8,6 +8,7 @@ import { listProfiles } from '../../api/auth';
 import { getEmployee, updateEmployee } from '../../api/employees';
 import { getStudent, updateStudent } from '../../api/students';
 import type { Employee, Student } from '../../api/types';
+import { IdCardProfileSection } from '../../components/IdCardProfileSection';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -34,6 +35,8 @@ export function ProfileScreen({ navigation }: Props) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasOtherProfiles, setHasOtherProfiles] = useState(false);
+  // Bumped on focus so the ID-card block picks up details just edited on the ID card screen.
+  const [idCardRefresh, setIdCardRefresh] = useState(0);
 
   const [name, setName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -60,6 +63,8 @@ export function ProfileScreen({ navigation }: Props) {
   };
 
   useEffect(load, [schoolId, session.ownerId, session.ownerType]);
+
+  useEffect(() => navigation.addListener('focus', () => setIdCardRefresh((n) => n + 1)), [navigation]);
 
   // "Switch child" only matters when this phone number is linked to more than one profile -
   // most logins are a single profile, so this quietly no-ops for them rather than showing a
@@ -244,6 +249,14 @@ export function ProfileScreen({ navigation }: Props) {
                 </Pressable>
               )}
             </View>
+
+            {!editing && (session.ownerType === 'STUDENT' || session.ownerType === 'EMPLOYEE') && (
+              <IdCardProfileSection
+                schoolId={schoolId}
+                refreshKey={idCardRefresh}
+                onOpen={(card) => navigation.navigate('IdCard', { kind: card.ownerType, id: card.ownerId, name: card.name })}
+              />
+            )}
 
             {!editing && (
               <Pressable style={styles.languageRow} onPress={() => setLanguageMenuOpen(true)}>

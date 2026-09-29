@@ -83,11 +83,23 @@ export function MyQuestionsScreen({ navigation }: Props) {
         {questions.map((q) => (
           <View key={q.id} style={styles.card}>
             <Text style={styles.questionText}>{q.questionText}</Text>
-            <Text style={styles.optionText}>A. {q.optionA}</Text>
-            <Text style={styles.optionText}>B. {q.optionB}</Text>
-            <Text style={styles.optionText}>C. {q.optionC}</Text>
-            <Text style={styles.optionText}>D. {q.optionD}</Text>
-            <Text style={styles.correct}>Correct answer: {q.correctOption}</Text>
+            {(q.questionType ?? 'MCQ') === 'MCQ' ? (
+              <>
+                <Text style={styles.optionText}>A. {q.optionA}</Text>
+                <Text style={styles.optionText}>B. {q.optionB}</Text>
+                <Text style={styles.optionText}>C. {q.optionC}</Text>
+                <Text style={styles.optionText}>D. {q.optionD}</Text>
+                <Text style={styles.correct}>Correct answer: {q.correctOption}</Text>
+              </>
+            ) : (
+              <>
+                {/* Typed-answer questions aren't used by Arena games (tap-to-answer, MCQ only). */}
+                <Text style={styles.optionText}>
+                  {q.questionType === 'NUMERIC' ? 'Number answer (exact match)' : 'One/two-word answer (case ignored)'}
+                </Text>
+                <Text style={styles.correct}>Answer: {q.answerText}</Text>
+              </>
+            )}
           </View>
         ))}
       </ScreenContainer>
