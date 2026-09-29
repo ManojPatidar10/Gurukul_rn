@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AttendanceHistory'>;
 type ViewMode = 'calendar' | 'list';
@@ -43,7 +44,7 @@ export function AttendanceHistoryScreen({ route, navigation }: Props) {
   useEffect(() => {
     getStudentAttendanceHistory(schoolId, student.id)
       .then(setHistory)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingHistory(false));
   }, [schoolId, student.id]);
 
@@ -52,7 +53,7 @@ export function AttendanceHistoryScreen({ route, navigation }: Props) {
     const { from, to } = monthRange(month);
     getStudentAttendanceHistory(schoolId, student.id, from, to)
       .then(setMonthHistory)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingMonth(false));
   }, [schoolId, student.id, month]);
 

@@ -53,6 +53,34 @@ export function onSessionExpired(listener: (() => void) | null) {
   sessionExpiredListener = listener;
 }
 
+/**
+ * The request never got an answer: no connection, or the server took longer than the timeout.
+ * Not an ApiError - the server said nothing - so screens can offer "try again" rather than
+ * treating it as a rejection. Turn it into words with getErrorMessage (src/api/errorMessage.ts).
+ */
+export class NetworkError extends Error {
+  constructor(public reason: 'offline' | 'timeout') {
+    super(reason === 'timeout' ? 'The server took too long to respond' : 'No internet connection');
+  }
+}
+
+export const DEFAULT_TIMEOUT_MS = 30 * 1000;
+/** For requests that do real work before answering: AI replies, generating fees or report cards. */
+export const SLOW_TIMEOUT_MS = 2 * 60 * 1000;
+
+/** fetch, but it gives up after `timeoutMs` and reports failures as NetworkError. */
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch {
+    throw new NetworkError(controller.signal.aborted ? 'timeout' : 'offline');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** A request that failed because the session is over - the user is being sent back to login. */
 export class SessionExpiredError extends ApiError {
   constructor() {
@@ -94,7 +122,7 @@ export function refreshSession(): Promise<LoginResponse> {
       throw new SessionExpiredError();
     }
 
-    const response = await fetch(`${BASE_URL}${REFRESH_PATH}`, {
+    const response = await fetchWithTimeout(`${BASE_URL}${REFRESH_PATH}`, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -180,10 +208,10 @@ export function serverNow(): number {
 // `body` may be a function, evaluated only once the access token is settled - for requests whose
 // body carries the refresh token (profile switch), which a refresh just before sending would rotate.
 type RequestBody = unknown | (() => unknown);
-type RequestOptions = { method?: string; schoolId?: string; body?: RequestBody };
+type RequestOptions = { method?: string; schoolId?: string; body?: RequestBody; timeoutMs?: number };
 
 async function send(path: string, options: RequestOptions) {
-  const { method = 'GET', schoolId, body } = options;
+  const { method = 'GET', schoolId, body, timeoutMs } = options;
   const resolvedBody = typeof body === 'function' ? body() : body;
   const tokenUsed = currentSession?.token ?? null;
 
@@ -192,11 +220,11 @@ async function send(path: string, options: RequestOptions) {
   if (resolvedBody !== undefined) headers['Content-Type'] = 'application/json';
   if (tokenUsed) headers['Authorization'] = `Bearer ${tokenUsed}`;
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: resolvedBody !== undefined ? JSON.stringify(resolvedBody) : undefined,
-  });
+  const response = await fetchWithTimeout(
+    `${BASE_URL}${path}`,
+    { method, headers, body: resolvedBody !== undefined ? JSON.stringify(resolvedBody) : undefined },
+    timeoutMs
+  );
   syncClockOffset(response);
   return { response, tokenUsed };
 }
@@ -258,8 +286,8 @@ async function requestPaginated<T>(path: string, schoolId?: string): Promise<Pag
 export const api = {
   get: <T>(path: string, schoolId?: string) => request<T>(path, { method: 'GET', schoolId }),
   getPaginated: <T>(path: string, schoolId?: string) => requestPaginated<T>(path, schoolId),
-  post: <T>(path: string, body: RequestBody, schoolId?: string) =>
-    request<T>(path, { method: 'POST', body, schoolId }),
+  post: <T>(path: string, body: RequestBody, schoolId?: string, opts?: { timeoutMs?: number }) =>
+    request<T>(path, { method: 'POST', body, schoolId, ...opts }),
   put: <T>(path: string, body: unknown, schoolId: string) =>
     request<T>(path, { method: 'PUT', body, schoolId }),
   patch: <T>(path: string, body: unknown, schoolId: string) =>

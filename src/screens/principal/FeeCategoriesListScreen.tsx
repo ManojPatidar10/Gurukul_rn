@@ -11,6 +11,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeCategoriesList'>;
 
@@ -32,8 +33,8 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
     return listFeeCategories(schoolId)
       .then(setCategories)
       .catch((e) => {
-        setError(e.message);
-        showToast(e.message, 'error');
+        setError(getErrorMessage(e));
+        showToast(getErrorMessage(e), 'error');
       });
   }, [schoolId, showToast]);
 
@@ -68,8 +69,8 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
       setCode('');
       setName('');
     } catch (e) {
-      setError((e as Error).message);
-      showToast((e as Error).message, 'error');
+      setError(getErrorMessage(e));
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setCreating(false);
     }

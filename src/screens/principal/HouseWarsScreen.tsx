@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'HouseWars'>;
 
@@ -25,7 +26,7 @@ export function HouseWarsScreen({ navigation }: Props) {
     setError(null);
     return getHouseWars(schoolId)
       .then(setWars)
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId]);
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'RegistrationInbox'>;
 
@@ -31,7 +32,7 @@ export function RegistrationInboxScreen({ navigation }: Props) {
     setError(null);
     return listRegistrations(schoolId, 'PARENT_REGISTRATION')
       .then(setEntries)
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId]);
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export function RegistrationInboxScreen({ navigation }: Props) {
       const result = await createTeacherInvite(schoolId, selectedEmployee.id);
       setInvite(result);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setGeneratingInvite(false);
     }
@@ -84,7 +85,7 @@ export function RegistrationInboxScreen({ navigation }: Props) {
               }
               setEntries((prev) => prev.filter((e) => e.entityId !== entry.entityId));
             } catch (e) {
-              setError((e as Error).message);
+              setError(getErrorMessage(e));
             } finally {
               setDecidingId(null);
             }

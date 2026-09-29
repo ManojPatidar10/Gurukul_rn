@@ -9,6 +9,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConnectGoogleAccount'>;
 
@@ -29,7 +30,7 @@ export function ConnectGoogleAccountScreen({ navigation }: Props) {
         setConnected(res.connected);
         setGoogleEmail(res.googleEmail);
       })
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId]);
 
   useEffect(() => {
@@ -54,8 +55,8 @@ export function ConnectGoogleAccountScreen({ navigation }: Props) {
       const consentUrl = await connectGoogleMeet(schoolId);
       await Linking.openURL(consentUrl);
     } catch (e) {
-      setError((e as Error).message);
-      showToast((e as Error).message, 'error');
+      setError(getErrorMessage(e));
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setConnecting(false);
     }
@@ -77,7 +78,7 @@ export function ConnectGoogleAccountScreen({ navigation }: Props) {
               setConnected(false);
               setGoogleEmail(null);
             } catch (e) {
-              showToast((e as Error).message, 'error');
+              showToast(getErrorMessage(e), 'error');
             } finally {
               setDisconnecting(false);
             }

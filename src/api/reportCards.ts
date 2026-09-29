@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, SLOW_TIMEOUT_MS } from './client';
 import type { PublishedTerm, ReportCard, ReportCardPublication } from './types';
 
 export function getReportCard(schoolId: string, studentId: string, term: string) {
@@ -10,7 +10,9 @@ export function getPublishedTerms(schoolId: string, studentId: string) {
 }
 
 export function publishReportCards(schoolId: string, sectionId: string, term: string) {
-  return api.post<ReportCardPublication>(`/api/v1/class-sections/${sectionId}/report-cards/publish`, { term }, schoolId);
+  return api.post<ReportCardPublication>(`/api/v1/class-sections/${sectionId}/report-cards/publish`, { term }, schoolId, {
+    timeoutMs: SLOW_TIMEOUT_MS,
+  });
 }
 
 export function getSectionReportCards(schoolId: string, sectionId: string, term: string) {

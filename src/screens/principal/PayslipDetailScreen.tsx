@@ -11,6 +11,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayslipDetail'>;
 
@@ -34,7 +35,7 @@ export function PayslipDetailScreen({ route, navigation }: Props) {
   useEffect(() => {
     getPayslip(schoolId, payrollLine.id)
       .then(setPayslip)
-      .catch((e) => showToast(e.message, 'error'))
+      .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoading(false));
   }, [schoolId, payrollLine.id, showToast]);
 

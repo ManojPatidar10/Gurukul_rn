@@ -8,6 +8,7 @@ import { registerParent } from '../api/registration';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -38,7 +39,7 @@ export default function RegisterParentScreen({ schoolId, onBack, onSubmitted }: 
       const result = await registerParent(schoolId, { studentRegistrationNumber, parentContact, username, password });
       onSubmitted(result.message);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

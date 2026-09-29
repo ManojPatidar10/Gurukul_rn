@@ -20,6 +20,7 @@ import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { CallProvider, MyInviteResponse, ScheduledCallResponse } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ScheduledCalls'>;
 
@@ -40,7 +41,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
         setHosted(hostedCalls);
         setInvites(myInvites);
       })
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId]);
 
   useEffect(() => {
@@ -79,7 +80,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
       await action();
       await load();
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -96,7 +97,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
       const call = await getScheduledCall(schoolId, scheduledCallId);
       navigation.navigate('InCall', { roomName: call.roomName, provider: call.provider, displayName: title, scheduledCallId });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setBusyId(null);
     }

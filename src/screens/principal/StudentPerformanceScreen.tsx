@@ -20,6 +20,7 @@ import { ATTENDANCE_STATUS_COLORS } from '../../theme/chartPalette';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { isPositiveNumber } from '../../utils/validators';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentPerformance'>;
 
@@ -60,7 +61,7 @@ export function StudentPerformanceScreen({ route, navigation }: Props) {
     setLoading(true);
     getStudentPerformance(schoolId, student.id)
       .then(setSummary)
-      .catch((e) => showToast((e as Error).message, 'error'))
+      .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoading(false));
   }, [schoolId, student.id, showToast]);
 
@@ -69,7 +70,7 @@ export function StudentPerformanceScreen({ route, navigation }: Props) {
   useEffect(() => {
     listSubjects(schoolId)
       .then(setSubjects)
-      .catch((e) => showToast((e as Error).message, 'error'));
+      .catch((e) => showToast(getErrorMessage(e), 'error'));
   }, [schoolId, showToast]);
 
   const resetForm = () => {
@@ -130,7 +131,7 @@ export function StudentPerformanceScreen({ route, navigation }: Props) {
       setShowEntryForm(false);
       load();
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSubmitting(false);
     }

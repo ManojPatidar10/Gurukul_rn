@@ -2,6 +2,7 @@ import { setStoredSession } from '../api/authStorage';
 import {
   api,
   getAuthToken,
+  NetworkError,
   onSessionExpired,
   onSessionRefreshed,
   SessionExpiredError,
@@ -125,7 +126,7 @@ describe('refresh on 401', () => {
       throw new TypeError('Network request failed');
     };
 
-    await expect(api.get('/api/v1/students', 'school-1')).rejects.toThrow('Network request failed');
+    await expect(api.get('/api/v1/students', 'school-1')).rejects.toBeInstanceOf(NetworkError);
     expect(expired).not.toHaveBeenCalled();
     expect(getAuthToken()).toBe('access-1');
   });

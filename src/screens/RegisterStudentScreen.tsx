@@ -8,6 +8,7 @@ import { registerStudent, registerStudentWithInvite } from '../api/registration'
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -41,7 +42,7 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
         : await registerStudent(schoolId, { registrationNumber, username, password });
       onSubmitted(result.message);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

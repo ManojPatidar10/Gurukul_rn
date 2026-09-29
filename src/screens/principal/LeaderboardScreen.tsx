@@ -9,6 +9,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, gameColors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Leaderboard'>;
 
@@ -34,7 +35,7 @@ export function LeaderboardScreen({ navigation }: Props) {
     setError(null);
     getMyLeaderboard(schoolId)
       .then(setBoard)
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId]);
 

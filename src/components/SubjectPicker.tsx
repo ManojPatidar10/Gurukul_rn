@@ -5,6 +5,7 @@ import { createSubject, listSubjects } from '../api/subjects';
 import type { Subject } from '../api/types';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -27,7 +28,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
     setError(null);
     listSubjects(schoolId)
       .then(setSubjects)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   };
 
@@ -48,7 +49,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
       setName('');
       setOpen(false);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setCreating(false);
     }

@@ -16,6 +16,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AttendanceDevices'>;
 
@@ -44,7 +45,7 @@ export function AttendanceDevicesScreen({ navigation }: Props) {
   const load = useCallback(() => {
     return listAttendanceDevices(schoolId)
       .then(setDevices)
-      .catch((e) => showToast((e as Error).message, 'error'));
+      .catch((e) => showToast(getErrorMessage(e), 'error'));
   }, [schoolId, showToast]);
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export function AttendanceDevicesScreen({ navigation }: Props) {
       setRevealedKey(created);
       await load();
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setCreating(false);
     }
@@ -85,7 +86,7 @@ export function AttendanceDevicesScreen({ navigation }: Props) {
       await updateAttendanceDevice(schoolId, device.id, device.name, !device.active);
       await load();
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     }
   };
 
@@ -103,7 +104,7 @@ export function AttendanceDevicesScreen({ navigation }: Props) {
               const rotated = await rotateAttendanceDeviceKey(schoolId, device.id);
               setRevealedKey(rotated);
             } catch (e) {
-              showToast((e as Error).message, 'error');
+              showToast(getErrorMessage(e), 'error');
             }
           },
         },

@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { listInfraExpenseCategories } from '../api/infraExpenseCategories';
 import type { InfraExpenseCategory } from '../api/types';
 import { colors, radius, spacing } from '../theme/colors';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -20,7 +21,7 @@ export default function InfraCategoryPicker({ schoolId, selectedId, onSelect }: 
     setError(null);
     listInfraExpenseCategories(schoolId)
       .then(setCategories)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId]);
 

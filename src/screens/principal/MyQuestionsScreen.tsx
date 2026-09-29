@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyQuestions'>;
 
@@ -42,7 +43,7 @@ export function MyQuestionsScreen({ navigation }: Props) {
     setError(null);
     listQuizQuestions(schoolId, subjectId, className, session.ownerId)
       .then(setQuestions)
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, subjectId, className, session.ownerId]);
 

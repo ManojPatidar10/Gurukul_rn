@@ -9,6 +9,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'InfraExpensesList'>;
 
@@ -23,7 +24,7 @@ export function InfraExpensesListScreen({ navigation }: Props) {
     setError(null);
     return listInfraExpenseRequests(schoolId)
       .then(setRequests)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId]);
 
   useEffect(() => {

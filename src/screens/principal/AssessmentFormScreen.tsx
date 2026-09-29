@@ -13,6 +13,7 @@ import SubjectPicker from '../../components/SubjectPicker';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentForm'>;
 
@@ -60,7 +61,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         : await createAssessment(schoolId, classSection.id, req);
       navigation.replace('AssessmentDetail', { assessment: result, classSection });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

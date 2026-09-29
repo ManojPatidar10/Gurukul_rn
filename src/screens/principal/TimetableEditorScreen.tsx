@@ -21,6 +21,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { cellsToSlotRequests, defaultDay, slotKey, slotsToCells, type CellAssignment } from '../../utils/timetable';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TimetableEditor'>;
 
@@ -63,7 +64,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
         setDay((current) => (tt.days.includes(current) ? current : defaultDay(tt.days)));
         setDirty(false);
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, classSection]);
 
@@ -142,7 +143,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
     } catch (e) {
       const found = clashesFromError(e);
       if (found) setClashes(found);
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSaving(false);
     }

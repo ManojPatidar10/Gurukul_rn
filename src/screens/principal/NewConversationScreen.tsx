@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'NewConversation'>;
 
@@ -54,7 +55,7 @@ export function NewConversationScreen({ navigation }: Props) {
       // decides who that is (and enforces it again when the conversation is created).
       listChatContacts(schoolId)
         .then((contacts) => setParties(contacts.map((c) => ({ ownerType: c.ownerType, ownerId: c.ownerId, name: staffLabel(c, t) }))))
-        .catch((e) => setError((e as Error).message))
+        .catch((e) => setError(getErrorMessage(e)))
         .finally(() => setLoading(false));
       return;
     }
@@ -80,7 +81,7 @@ export function NewConversationScreen({ navigation }: Props) {
         ];
         setParties(list);
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, session.ownerId, isStudent, isParent, isStaff, t]);
 
@@ -96,7 +97,7 @@ export function NewConversationScreen({ navigation }: Props) {
       });
       navigation.replace('ConversationThread', { conversationId: conversation.id, title: party.name });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setCreatingId(null);
     }

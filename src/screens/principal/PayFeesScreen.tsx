@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { resolvePaymentAppUrl } from '../../utils/upiPaymentLinks';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayFees'>;
 
@@ -75,7 +76,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
       setResultAttempt(attempt);
       setStage('result');
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
       setErrorMessage(message);
       setStage('error');
     }
@@ -98,7 +99,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
       setStage('awaitingReturn');
       await Linking.openURL(openableUri);
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : (e as Error).message;
+      const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
       setErrorMessage(message);
       setStage('error');
     }

@@ -4,6 +4,7 @@ import { createVendor, listVendors } from '../api/vendors';
 import type { Vendor } from '../api/types';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -24,7 +25,7 @@ export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) 
     setError(null);
     listVendors(schoolId)
       .then(setVendors)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   };
 
@@ -41,7 +42,7 @@ export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) 
       setShowCreate(false);
       setName('');
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setCreating(false);
     }

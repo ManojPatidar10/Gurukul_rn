@@ -13,6 +13,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { notificationTarget } from '../../utils/notificationRouting';
 import { openNotificationTarget } from '../../utils/openNotificationTarget';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Notifications'>;
 
@@ -34,7 +35,7 @@ export function NotificationsScreen({ navigation }: Props) {
         setHasMore(res.hasMore);
         setPage(0);
       })
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId]);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function NotificationsScreen({ navigation }: Props) {
         setHasMore(res.hasMore);
         setPage(page + 1);
       })
-      .catch((e) => setError((e as Error).message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingMore(false));
   };
 
@@ -68,7 +69,7 @@ export function NotificationsScreen({ navigation }: Props) {
   const markAll = () => {
     const now = new Date().toISOString();
     setItems((prev) => prev?.map((n) => (n.readAt ? n : { ...n, readAt: now })) ?? null);
-    markAllNotificationsRead(schoolId).catch((e) => setError((e as Error).message));
+    markAllNotificationsRead(schoolId).catch((e) => setError(getErrorMessage(e)));
   };
 
   const hasUnread = items?.some((n) => !n.readAt) ?? false;

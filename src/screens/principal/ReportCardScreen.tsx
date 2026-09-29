@@ -15,6 +15,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
 
@@ -43,7 +44,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
       .then(setReportCard)
       .catch((e) => {
         setReportCard(null);
-        setError((e as Error).message);
+        setError(getErrorMessage(e));
       })
       .finally(() => setLoading(false));
   };
@@ -63,7 +64,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
         dialogTitle: t('reportCardPdf.shareTitle'),
       });
     } catch (e) {
-      showToast(t('reportCardPdf.failed', { message: (e as Error).message }), 'error');
+      showToast(t('reportCardPdf.failed', { message: getErrorMessage(e) }), 'error');
     } finally {
       setDownloading(false);
     }
@@ -92,7 +93,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
           load(FALLBACK_TERM);
         }
       })
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
     // Only auto-load once on mount - further loads are user-triggered via the "View" button or a
     // term chip, so typing a new term doesn't fire a request per keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps

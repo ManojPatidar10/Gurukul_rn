@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionsList'>;
 
@@ -23,7 +24,7 @@ export function SectionsListScreen({ route, navigation }: Props) {
     setError(null);
     return listSectionsByClass(schoolId, className)
       .then(setSections)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, className]);
 
   useEffect(() => {

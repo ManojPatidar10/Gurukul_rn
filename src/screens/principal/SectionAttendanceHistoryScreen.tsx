@@ -6,6 +6,7 @@ import type { ClassSection, SectionAttendanceHistory } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
+import { getErrorMessage } from '../../api/errorMessage';
 
 interface Props {
   classSection: ClassSection;
@@ -21,7 +22,7 @@ export function SectionAttendanceHistoryBody({ classSection, onSelectStudent }: 
   useEffect(() => {
     getSectionAttendanceHistory(schoolId, classSection.id)
       .then(setHistory)
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
   }, [schoolId, classSection.id]);
 

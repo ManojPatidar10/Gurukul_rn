@@ -11,6 +11,7 @@ import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { formatAuditValue, humanize } from '../../utils/activityLogFormat';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ActivityLog'>;
 
@@ -45,7 +46,7 @@ export function ActivityLogScreen({ navigation }: Props) {
         setHasNext(res.hasNext);
         setPage(0);
       })
-      .catch((e) => showToast((e as Error).message, 'error'));
+      .catch((e) => showToast(getErrorMessage(e), 'error'));
   }, [schoolId, entityType, showToast]);
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export function ActivityLogScreen({ navigation }: Props) {
         setHasNext(res.hasNext);
         setPage(page + 1);
       })
-      .catch((e) => showToast((e as Error).message, 'error'))
+      .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoadingMore(false));
   };
 

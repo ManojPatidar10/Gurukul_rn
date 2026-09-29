@@ -1372,5 +1372,14 @@
     "admin": "Admin",
     "parentOf": "{{name}} (Parent of {{children}})",
     "searchTeachers": "Search teachers by name"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "server": "Something went wrong on our side. Please try again in a moment.",
+    "unavailable": "The server is unavailable right now. Please try again in a few minutes.",
+    "offline": "You're offline. Check your internet connection and try again.",
+    "timeout": "The server is taking too long to respond. Please try again.",
+    "forbidden": "You don't have permission to do that.",
+    "codes": {}
   }
 }

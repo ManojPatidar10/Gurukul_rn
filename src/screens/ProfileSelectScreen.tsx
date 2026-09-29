@@ -11,6 +11,7 @@ import type { AuthProfile } from '../api/types';
 import { Logo } from '../components/Logo';
 import { ProfileCard } from '../components/ProfileCard';
 import { gradients, colors, radius, shadow, spacing } from '../theme/colors';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -45,7 +46,7 @@ export default function ProfileSelectScreen({ schoolId, schoolName, selectionTok
       } else if (e instanceof ApiError && e.status === 403) {
         setError(t('auth.profileNotLinked'));
       } else {
-        setError((e as Error).message);
+        setError(getErrorMessage(e));
       }
     } finally {
       setSelectingId(null);

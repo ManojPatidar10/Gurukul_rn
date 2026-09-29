@@ -15,6 +15,7 @@ import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { MAX_EXPORT_RANGE_DAYS, validateExportRange } from '../../utils/attendanceExportRange';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AttendanceExport'>;
 
@@ -67,7 +68,7 @@ export function AttendanceExportScreen({ navigation }: Props) {
         dialogTitle: t('attendanceExport.shareTitle'),
       });
     } catch (e) {
-      showToast(t('attendanceExport.errors.failed', { message: (e as Error).message }), 'error');
+      showToast(t('attendanceExport.errors.failed', { message: getErrorMessage(e) }), 'error');
     } finally {
       setExporting(false);
     }

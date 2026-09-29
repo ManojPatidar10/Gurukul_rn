@@ -9,6 +9,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'HelpdeskBot'>;
 
@@ -36,7 +37,7 @@ export function HelpdeskBotScreen({ navigation }: Props) {
         navigation.replace('ConversationThread', { conversationId: conversation.id, title: t('helpdeskBot.title') });
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof ApiError ? e.message : (e as Error).message);
+        if (!cancelled) setError(e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e));
       });
 
     return () => {

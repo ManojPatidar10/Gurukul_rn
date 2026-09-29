@@ -8,6 +8,7 @@ import { registerTeacher } from '../api/registration';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -36,7 +37,7 @@ export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }:
       const result = await registerTeacher(schoolId, { inviteCode, username, password });
       onSubmitted(result.message);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

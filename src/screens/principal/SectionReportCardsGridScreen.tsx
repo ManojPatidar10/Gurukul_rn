@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionReportCardsGrid'>;
 
@@ -48,7 +49,7 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
       .then(setRows)
       .catch((e) => {
         setRows(null);
-        setError((e as Error).message);
+        setError(getErrorMessage(e));
       })
       .finally(() => setLoading(false));
   };
@@ -67,7 +68,7 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
         dialogTitle: t('reportCardPdf.shareTitle'),
       });
     } catch (e) {
-      showToast(t('reportCardPdf.failed', { message: (e as Error).message }), 'error');
+      showToast(t('reportCardPdf.failed', { message: getErrorMessage(e) }), 'error');
     } finally {
       setDownloading(false);
     }

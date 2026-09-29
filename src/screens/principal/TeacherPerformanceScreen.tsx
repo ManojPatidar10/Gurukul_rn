@@ -16,6 +16,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TeacherPerformance'>;
 
@@ -60,7 +61,7 @@ export function TeacherPerformanceScreen({ route, navigation }: Props) {
     setLoading(true);
     getEmployeePerformance(schoolId, employee.id)
       .then(setSummary)
-      .catch((e) => showToast((e as Error).message, 'error'))
+      .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoading(false));
   }, [schoolId, employee.id, showToast]);
 
@@ -97,7 +98,7 @@ export function TeacherPerformanceScreen({ route, navigation }: Props) {
       setShowEntryForm(false);
       load();
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSubmitting(false);
     }

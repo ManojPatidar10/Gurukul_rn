@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventsList'>;
 
@@ -72,7 +73,7 @@ export function EventsListScreen({ navigation }: Props) {
     // this screen is specifically the school-events feature, so only show entries that opted in.
     return listEvents(schoolId, gradeFilter ?? undefined)
       .then((all) => setEvents(all.filter((e) => e.category !== null)))
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, gradeFilter]);
 
   useEffect(() => {

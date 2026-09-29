@@ -5,6 +5,7 @@ import { listTeachers } from '../api/teachers';
 import type { Teacher } from '../api/types';
 import { useToast } from '../context/ToastContext';
 import { colors, radius, spacing } from '../theme/colors';
+import { getErrorMessage } from '../api/errorMessage';
 
 interface Props {
   schoolId: string;
@@ -22,7 +23,7 @@ export default function TeacherPicker({ schoolId, selectedId, onSelect }: Props)
     setLoading(true);
     listTeachers(schoolId)
       .then(setTeachers)
-      .catch((e) => showToast((e as Error).message, 'error'))
+      .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoading(false));
   }, [schoolId]);
 

@@ -19,6 +19,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeDetail'>;
 
@@ -63,7 +64,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
             callLogId: call.callLogId,
           });
         } catch (e) {
-          setError((e as Error).message);
+          setError(getErrorMessage(e));
         } finally {
           setCalling(false);
         }
@@ -82,7 +83,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
       });
       navigation.navigate('ConversationThread', { conversationId: conversation.id, title: employee.name });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setMessaging(false);
     }
@@ -96,7 +97,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
       await createEmployeeCredential(schoolId, employee.id, { username, password, role: 'TEACHER' });
       setCreated({ username, password });
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

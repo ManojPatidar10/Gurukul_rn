@@ -16,6 +16,7 @@ import { usePdfDownload } from '../../hooks/usePdfDownload';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { BLOOD_GROUPS, isValidPhone, missingLabelKey, validatePhoto } from '../../utils/idCard';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'IdCard'>;
 
@@ -48,7 +49,7 @@ export function IdCardScreen({ route, navigation }: Props) {
   useEffect(() => {
     getIdCard(schoolId, kind, id)
       .then(apply)
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, kind, id]);
 
   const pickPhoto = async (source: 'camera' | 'library') => {
@@ -76,7 +77,7 @@ export function IdCardScreen({ route, navigation }: Props) {
       apply(await uploadIdCardPhoto(schoolId, kind, id, { uri: asset.uri, contentType, sizeBytes: asset.fileSize ?? 0 }));
       showToast(t('idCard.photo.saved'), 'success');
     } catch (e) {
-      showToast(t('idCard.photo.failed', { message: (e as Error).message }), 'error');
+      showToast(t('idCard.photo.failed', { message: getErrorMessage(e) }), 'error');
     } finally {
       setPhotoBusy(false);
     }
@@ -87,7 +88,7 @@ export function IdCardScreen({ route, navigation }: Props) {
     try {
       apply(await removeIdCardPhoto(schoolId, kind, id));
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setPhotoBusy(false);
     }
@@ -109,7 +110,7 @@ export function IdCardScreen({ route, navigation }: Props) {
       );
       showToast(t('idCard.saved'), 'success');
     } catch (e) {
-      showToast((e as Error).message, 'error');
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setSaving(false);
     }

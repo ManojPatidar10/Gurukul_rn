@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Announcements'>;
 
@@ -40,7 +41,7 @@ export function AnnouncementsScreen({ navigation }: Props) {
     let cancelled = false;
     fetchParentAnnouncements(schoolId)
       .then((rows) => !cancelled && setAnnouncements(rows))
-      .catch((e) => !cancelled && setError((e as Error).message));
+      .catch((e) => !cancelled && setError(getErrorMessage(e)));
     return () => {
       cancelled = true;
     };

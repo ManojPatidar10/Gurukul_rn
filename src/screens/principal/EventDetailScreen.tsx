@@ -23,6 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventDetail'>;
 
@@ -74,7 +75,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
     setError(null);
     return getEvent(schoolId, eventId)
       .then(setEvent)
-      .catch((e) => setError((e as Error).message));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, eventId]);
 
   const loadPoll = useCallback(() => {
@@ -110,7 +111,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
       await submitEventRsvp(schoolId, eventId, { status });
       await load();
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -123,7 +124,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
       await submitEventRegistration(schoolId, eventId, { answers: registrationAnswers });
       await load();
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -136,7 +137,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
       await voteEventPoll(schoolId, eventId, { optionId });
       await loadPoll();
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +153,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
       await loadPoll();
       setNewOptionLabel('');
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -169,7 +170,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
             await cancelEvent(schoolId, eventId);
             load();
           } catch (e) {
-            setError((e as Error).message);
+            setError(getErrorMessage(e));
           }
         },
       },

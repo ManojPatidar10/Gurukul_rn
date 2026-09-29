@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useCallTargets, type CallTarget } from '../../hooks/useCallTargets';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ScheduleCall'>;
 
@@ -70,7 +71,7 @@ export function ScheduleCallScreen({ navigation }: Props) {
       });
       navigation.replace('ScheduledCalls');
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

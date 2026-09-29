@@ -18,6 +18,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useLanguage } from '../../i18n/useLanguage';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Profile'>;
 
@@ -63,7 +64,7 @@ export function ProfileScreen({ navigation }: Props) {
             setAddress(row.address);
             setParentContact(row.parentContact);
           });
-    request.catch((e) => setError((e as Error).message)).finally(() => setLoading(false));
+    request.catch((e) => setError(getErrorMessage(e))).finally(() => setLoading(false));
   };
 
   useEffect(load, [schoolId, session.ownerId, session.ownerType]);
@@ -109,7 +110,7 @@ export function ProfileScreen({ navigation }: Props) {
       }
       setEditing(false);
     } catch (e) {
-      setError((e as Error).message);
+      setError(getErrorMessage(e));
     } finally {
       setSaving(false);
     }
