@@ -31,7 +31,7 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAtt
 // self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance'];
 // Shown only to school admins - the backend rejects everyone else anyway.
-const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport'];
+const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'schoolLogo'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
 // Teacher Tools is a principal-driven workflow (principal picks a teacher to act on behalf of),
@@ -89,6 +89,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   attendanceDevices: 'AttendanceDevices',
   activityLog: 'ActivityLog',
   attendanceExport: 'AttendanceExport',
+  schoolLogo: 'SchoolLogoSettings',
 };
 
 // Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
@@ -156,6 +157,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'myClassFees', title: t('dashboard.features.myClassFees.title'), icon: 'file-invoice-dollar', description: t('dashboard.features.myClassFees.description') },
     { id: 'attendanceDevices', title: t('dashboard.features.attendanceDevices.title'), icon: 'id-card', description: t('dashboard.features.attendanceDevices.description') },
     { id: 'attendanceExport', title: t('dashboard.features.attendanceExport.title'), icon: 'file-excel', description: t('dashboard.features.attendanceExport.description') },
+    { id: 'schoolLogo', title: t('dashboard.features.schoolLogo.title'), icon: 'image', description: t('dashboard.features.schoolLogo.description') },
     { id: 'activityLog', title: t('dashboard.features.activityLog.title'), icon: 'history', description: t('dashboard.features.activityLog.description') },
   ];
 
