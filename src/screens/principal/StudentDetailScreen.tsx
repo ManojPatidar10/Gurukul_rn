@@ -50,6 +50,9 @@ export function StudentDetailScreen({ route, navigation }: Props) {
   const [calling, setCalling] = useState(false);
   const [messaging, setMessaging] = useState(false);
   const isSelf = session.ownerType === 'STUDENT' && session.ownerId === student.id;
+  // Student-to-student chat isn't allowed (the backend rejects it), so a student looking at a
+  // classmate gets no message button to tap into an error.
+  const canMessage = !isSelf && !isViewerStudent;
   const confirmBeforeCall = useGoogleMeetGate(schoolId, navigation);
 
   const handleVideoCall = () => {
@@ -182,7 +185,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
               variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
             />
           </View>
-          {!isSelf && (
+          {!isSelf && (FEATURE_FLAGS.videoCalls || canMessage) && (
             <View style={styles.heroActions}>
               {FEATURE_FLAGS.videoCalls && (
                 <Pressable style={styles.iconButton} onPress={handleVideoCall} disabled={calling}>
@@ -193,13 +196,15 @@ export function StudentDetailScreen({ route, navigation }: Props) {
                   )}
                 </Pressable>
               )}
-              <Pressable style={styles.iconButton} onPress={handleMessage} disabled={messaging}>
-                {messaging ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <FontAwesome5 name="comment-dots" size={16} color={colors.white} />
-                )}
-              </Pressable>
+              {canMessage && (
+                <Pressable style={styles.iconButton} onPress={handleMessage} disabled={messaging}>
+                  {messaging ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <FontAwesome5 name="comment-dots" size={16} color={colors.white} />
+                  )}
+                </Pressable>
+              )}
             </View>
           )}
         </View>

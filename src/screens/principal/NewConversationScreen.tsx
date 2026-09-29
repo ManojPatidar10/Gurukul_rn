@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 
 import { createConversation, listChatContacts } from '../../api/chat';
 import { listAllEmployees } from '../../api/employees';
-import { getStudent, listAllStudents } from '../../api/students';
-import type { ChatContact, OwnerType } from '../../api/types';
+import { listAllStudents } from '../../api/students';
+import type { ChatContact, OwnerType, Student } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
@@ -60,18 +60,12 @@ export function NewConversationScreen({ navigation }: Props) {
     }
     Promise.all([
       listAllEmployees(schoolId),
-      listAllStudents(schoolId),
-      isStudent ? getStudent(schoolId, session.ownerId) : Promise.resolve(null),
+      // Students can only message staff - student-to-student chat isn't allowed (the backend
+      // rejects it) - so they get no student list, and don't download the roster at all.
+      isStudent ? Promise.resolve([] as Student[]) : listAllStudents(schoolId),
       isStaff ? listChatContacts(schoolId).catch(() => [] as ChatContact[]) : Promise.resolve([] as ChatContact[]),
     ])
-      .then(([employees, students, me, parentContacts]) => {
-        // A student can message any staff member, but only their own classmates - not the
-        // whole school's student directory.
-        const visibleStudents = me
-          ? students.filter(
-              (s) => s.id !== me.id && s.className === me.className && s.section === me.section && s.academicYear === me.academicYear
-            )
-          : students;
+      .then(([employees, visibleStudents, parentContacts]) => {
         const list: Party[] = [
           ...employees
             .filter((e) => e.id !== session.ownerId)
