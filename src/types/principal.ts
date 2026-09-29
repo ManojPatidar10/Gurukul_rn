@@ -114,6 +114,8 @@ export type PrincipalStackParamList = {
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };
+  Announcements: undefined;
+  Notifications: undefined;
   HelpdeskBot: undefined;
   VideoCallHub: undefined;
   PickCallTarget: undefined;

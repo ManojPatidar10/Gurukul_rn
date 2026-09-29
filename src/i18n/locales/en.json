@@ -999,7 +999,35 @@
       "academics": {
         "name": "Report cards & results",
         "description": "When a report card is published"
+      },
+      "alerts": {
+        "name": "Alerts",
+        "description": "Absence and fee reminders for your child"
       }
     }
+  },
+  "parentComms": {
+    "messages": "Messages",
+    "announcements": "Announcements",
+    "alerts": "Alerts"
+  },
+  "announcements": {
+    "title": "Announcements",
+    "empty": "No announcements yet.",
+    "scopeSchool": "Whole school",
+    "scopeClass": "Class",
+    "scopeGrade": "Class {{className}}"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "empty": "No alerts yet.",
+    "markAllRead": "Mark all read",
+    "loadMore": "Load more"
+  },
+  "newConversation": {
+    "classTeacherOf": "Class teacher {{section}}",
+    "admin": "Admin",
+    "parentOf": "{{name}} (Parent of {{children}})",
+    "searchTeachers": "Search teachers by name"
   }
 }

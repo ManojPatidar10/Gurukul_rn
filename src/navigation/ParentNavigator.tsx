@@ -1,9 +1,14 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ParentHomeScreen } from '../screens/ParentHomeScreen';
+import { AnnouncementsScreen } from '../screens/principal/AnnouncementsScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { ChildDashboardScreen } from '../screens/principal/ChildDashboardScreen';
 import { ChildFeesScreen } from '../screens/principal/ChildFeesScreen';
+import { ConversationsListScreen } from '../screens/principal/ConversationsListScreen';
+import { ConversationThreadScreen } from '../screens/principal/ConversationThreadScreen';
+import { NewConversationScreen } from '../screens/principal/NewConversationScreen';
+import { NotificationsScreen } from '../screens/principal/NotificationsScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { colors } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
@@ -24,6 +29,11 @@ export function ParentNavigator() {
       <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
       <Stack.Screen name="ChildFees" component={ChildFeesScreen} />
       <Stack.Screen name="ReportCard" component={ReportCardScreen} />
+      <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
+      <Stack.Screen name="NewConversation" component={NewConversationScreen} />
+      <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />
+      <Stack.Screen name="Announcements" component={AnnouncementsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
     </Stack.Navigator>
   );
 }
