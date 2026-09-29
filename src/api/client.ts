@@ -10,7 +10,11 @@ export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.sma
 export class ApiError extends Error {
   constructor(
     message: string,
-    public status?: number
+    public status?: number,
+    /** The server's stable machine-readable code for specific cases (e.g. 'TIMETABLE_CLASH'). */
+    public errorCode?: string,
+    /** Structured error details some endpoints send alongside the message (e.g. clashing slots). */
+    public data?: unknown
   ) {
     super(message);
   }
@@ -213,7 +217,12 @@ async function rawRequest(path: string, options: RequestOptions = {}): Promise<a
   const json = await response.json().catch(() => ({}));
 
   if (!response.ok || !json.success) {
-    throw new ApiError(json.message ?? `Request failed with status ${response.status}`, response.status);
+    throw new ApiError(
+      json.message ?? `Request failed with status ${response.status}`,
+      response.status,
+      json.errorCode ?? undefined,
+      json.data ?? undefined
+    );
   }
 
   return json;

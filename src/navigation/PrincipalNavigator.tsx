@@ -56,6 +56,9 @@ import { FeeAssessmentDetailScreen } from '../screens/principal/FeeAssessmentDet
 import { FeeAssessmentsListScreen } from '../screens/principal/FeeAssessmentsListScreen';
 import { MyFeesScreen } from '../screens/principal/MyFeesScreen';
 import { MyStudentsScreen } from '../screens/principal/MyStudentsScreen';
+import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
+import { PeriodSetupScreen } from '../screens/principal/PeriodSetupScreen';
+import { TimetableEditorScreen } from '../screens/principal/TimetableEditorScreen';
 import { FeeCategoriesListScreen } from '../screens/principal/FeeCategoriesListScreen';
 import { PayFeesScreen } from '../screens/principal/PayFeesScreen';
 import { FeePaymentSettingsScreen } from '../screens/principal/FeePaymentSettingsScreen';
@@ -78,6 +81,7 @@ import { ProfileScreen } from '../screens/principal/ProfileScreen';
 import { SwitchChildScreen } from '../screens/principal/SwitchChildScreen';
 import { GlobalSearchScreen } from '../screens/principal/GlobalSearchScreen';
 import { ResourceGeneratorScreen } from '../screens/principal/ResourceGeneratorScreen';
+import { QuizBankReviewScreen } from '../screens/principal/QuizBankReviewScreen';
 import { ResourceUploadScreen } from '../screens/principal/ResourceUploadScreen';
 import { SalaryHistoryScreen } from '../screens/principal/SalaryHistoryScreen';
 import { SalaryStructureFormScreen } from '../screens/principal/SalaryStructureFormScreen';
@@ -205,7 +209,11 @@ export function PrincipalNavigator() {
         <Stack.Screen name="TeacherPerformance" component={TeacherPerformanceScreen} />
         <Stack.Screen name="TeacherToolsHub" component={TeacherToolsHubScreen} />
         <Stack.Screen name="ResourceGenerator" component={ResourceGeneratorScreen} />
+        <Stack.Screen name="QuizBankReview" component={QuizBankReviewScreen} />
         <Stack.Screen name="ResourceUpload" component={ResourceUploadScreen} />
+        <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
+        <Stack.Screen name="TimetableEditor" component={TimetableEditorScreen} />
+        <Stack.Screen name="PeriodSetup" component={PeriodSetupScreen} />
       </Stack.Navigator>
   );
 }

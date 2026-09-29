@@ -166,6 +166,22 @@
         "title": "Export Attendance",
         "description": "Download student or staff attendance as a spreadsheet"
       },
+      "myTimetable": {
+        "title": "My Timetable",
+        "description": "Your periods for the week"
+      },
+      "timetableEditor": {
+        "title": "Timetables",
+        "description": "Build each class's weekly timetable"
+      },
+      "bellSchedule": {
+        "title": "Bell Schedule",
+        "description": "Period timings, breaks and Saturday"
+      },
+      "aiQuizGenerator": {
+        "title": "AI Quiz Generator",
+        "description": "Draft a quiz from your syllabus and add it to the question bank"
+      },
       "schoolLogo": {
         "title": "School Logo",
         "description": "Logo printed on report-card PDFs"
@@ -633,7 +649,7 @@
       "marksLabel": "{{marks}} marks",
       "answerLabel": "Answer",
       "explanationLabel": "Explanation",
-      "reviewNote": "AI-generated draft — review for accuracy before publishing to students.",
+      "reviewNote": "AI-generated draft. Check every question, answer and mark before using it - nothing is saved until you review it.",
       "assessmentTypes": {
         "QUIZ": "Quiz",
         "TEST": "Test",
@@ -650,15 +666,21 @@
         "MCQ": "Multiple choice",
         "SHORT_ANSWER": "Short answer",
         "LONG_ANSWER": "Long answer",
-        "TRUE_FALSE": "True / False"
+        "TRUE_FALSE": "True / False",
+        "NUMERIC": "Number answer",
+        "SHORT_WORD": "One/two-word answer"
       },
       "errors": {
         "subjectName": "Enter a subject.",
         "title": "Enter a title.",
         "syllabus": "Enter the syllabus or topics.",
-        "questionCount": "Enter a number of questions between 1 and 50.",
-        "maxMarks": "Enter total marks greater than 0."
-      }
+        "questionCount": "Enter a number of questions between 1 and {{max}}.",
+        "maxMarks": "Enter whole-number total marks, at least 1 per question.",
+        "assignment": "Choose a class and subject."
+      },
+      "classAndSubject": "Class and subject",
+      "noAssignments": "You are not assigned to any class subject yet. Ask your principal to assign you under Classes.",
+      "noSectionSubjects": "No subjects are assigned to this class yet, so questions from this draft cannot be saved to the question bank."
     },
     "upload": {
       "title": "Upload Resource",
@@ -691,6 +713,46 @@
         "description": "Enter a description.",
         "resourceUrl": "Enter a resource URL.",
         "file": "Choose a file to upload."
+      }
+    },
+    "bank": {
+      "title": "Review & save to question bank",
+      "intro": "Check and correct each question before saving. Saved questions go into the Arena question bank for this subject and class; only multiple-choice ones appear in Arena games.",
+      "include": "Save to question bank",
+      "notEligible": "Not auto-markable - for printing/sharing only",
+      "needsSubject": "Choose a subject assigned to this class to save questions to the question bank.",
+      "reviewAndSave": "Review & save to question bank ({{count}})",
+      "remove": "Remove",
+      "questionText": "Question",
+      "option": "Option {{letter}}",
+      "correctOption": "Correct option",
+      "numericAnswer": "Answer (number)",
+      "shortWordAnswer": "Answer (one or two words)",
+      "types": {
+        "MCQ": "Multiple choice",
+        "NUMERIC": "Number",
+        "SHORT_WORD": "One/two words"
+      },
+      "markingHint": {
+        "NUMERIC": "Marked automatically: the student's number must match exactly (2.50 counts as 2.5).",
+        "SHORT_WORD": "Marked automatically, ignoring capital letters and extra spaces."
+      },
+      "confirm": "I have checked every question and answer above.",
+      "save": "Save {{count}} questions",
+      "saved": "{{count}} questions added to the question bank.",
+      "errors": {
+        "noneSelected": "Select at least one question to save.",
+        "fixFirst": "Fix the highlighted questions first.",
+        "confirm": "Tick the box to confirm you have checked the questions.",
+        "questionText": "Enter the question.",
+        "questionTooLong": "The question is too long (max 500 characters).",
+        "optionsMissing": "Fill in all four options.",
+        "optionsDuplicate": "The four options must all be different.",
+        "optionTooLong": "An option is too long (max 255 characters).",
+        "correctOption": "Choose the correct option.",
+        "numericAnswer": "Enter a plain number, with no units.",
+        "shortWordAnswer": "Enter a one- or two-word answer.",
+        "answerTooLong": "The answer is too long."
       }
     }
   },
@@ -880,7 +942,8 @@
     "attendance": "Attendance",
     "fees": "Fees",
     "reportCard": "Report Card",
-    "idCard": "ID Card"
+    "idCard": "ID Card",
+    "timetable": "Timetable"
   },
   "myFees": {
     "title": "My Fees",
@@ -988,6 +1051,68 @@
       "failed": "Export failed: {{message}}"
     }
   },
+  "timetable": {
+    "days": {
+      "MONDAY": "Mon",
+      "TUESDAY": "Tue",
+      "WEDNESDAY": "Wed",
+      "THURSDAY": "Thu",
+      "FRIDAY": "Fri",
+      "SATURDAY": "Sat",
+      "SUNDAY": "Sun"
+    },
+    "periodN": "Period {{n}}",
+    "break": "Break",
+    "free": "Free",
+    "loadFailed": "Could not load the timetable: {{message}}",
+    "noPeriods": "The bell schedule hasn't been set up yet.",
+    "noPeriodsAdmin": "Set up the bell schedule first: the period timings every class shares.",
+    "setUpPeriods": "Set up bell schedule",
+    "my": {
+      "title": "My Timetable",
+      "sectionTitle": "Class Timetable",
+      "emptyTeacher": "No periods are assigned to you yet.",
+      "emptySection": "This class has no timetable yet.",
+      "nothingToday": "No periods on this day."
+    },
+    "editor": {
+      "title": "Timetables",
+      "subtitle": "Weekly timetable per class",
+      "pickSection": "Choose a class-section",
+      "noAssignments": "No subjects are assigned to this class yet. Assign subjects and teachers first; only those can be scheduled.",
+      "assignSubjects": "Assign subjects",
+      "pickTitle": "{{day}}, period {{n}}",
+      "clearCell": "Leave free",
+      "save": "Save timetable",
+      "saved": "Timetable saved.",
+      "unsaved": "Unsaved changes",
+      "clashTitle": "These periods clash with other classes:",
+      "clashLine": "{{day}} period {{n}}: {{teacher}} is teaching {{section}}",
+      "copyToAll": "Copy this day to every day",
+      "filled": "{{count}} of {{total}} periods filled"
+    },
+    "periods": {
+      "title": "Bell Schedule",
+      "subtitle": "One schedule for the whole school",
+      "intro": "Periods run in order through the day. Mark recess or lunch as a break: breaks show on every timetable but can't hold a subject. Monday to Friday are always school days.",
+      "saturday": "Saturday is a school day",
+      "start": "Start",
+      "end": "End",
+      "label": "Label (optional)",
+      "isBreak": "Break",
+      "add": "+ Add period",
+      "save": "Save bell schedule",
+      "saved": "Bell schedule saved.",
+      "timeHint": "Use 24-hour time, e.g. 08:30 or 13:15.",
+      "errors": {
+        "empty": "Add at least one period.",
+        "tooMany": "A day can have at most {{max}} periods.",
+        "badTime": "Period {{n}}: enter times as HH:MM.",
+        "endBeforeStart": "Period {{n}} must end after it starts.",
+        "overlap": "Period {{n}} starts before period {{previous}} ends."
+      }
+    }
+  },
   "reportCardPdf": {
     "download": "Download PDF",
     "downloadClass": "Download class PDF",
@@ -1077,5 +1202,57 @@
       "downloadStaff": "Download staff sheet",
       "shareTitle": "Share ID card sheet"
     }
+  },
+  "notifications": {
+    "channels": {
+      "general": {
+        "name": "General",
+        "description": "Other updates from your school"
+      },
+      "messages": {
+        "name": "Messages",
+        "description": "Chat messages sent to you"
+      },
+      "announcements": {
+        "name": "Announcements",
+        "description": "Notices from your school"
+      },
+      "calls": {
+        "name": "Video calls",
+        "description": "Incoming, missed and scheduled video calls"
+      },
+      "academics": {
+        "name": "Report cards & results",
+        "description": "When a report card is published"
+      },
+      "alerts": {
+        "name": "Alerts",
+        "description": "Absence and fee reminders for your child"
+      }
+    }
+  },
+  "parentComms": {
+    "messages": "Messages",
+    "announcements": "Announcements",
+    "alerts": "Alerts"
+  },
+  "announcements": {
+    "title": "Announcements",
+    "empty": "No announcements yet.",
+    "scopeSchool": "Whole school",
+    "scopeClass": "Class",
+    "scopeGrade": "Class {{className}}"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "empty": "No alerts yet.",
+    "markAllRead": "Mark all read",
+    "loadMore": "Load more"
+  },
+  "newConversation": {
+    "classTeacherOf": "Class teacher {{section}}",
+    "admin": "Admin",
+    "parentOf": "{{name}} (Parent of {{children}})",
+    "searchTeachers": "Search teachers by name"
   }
 }

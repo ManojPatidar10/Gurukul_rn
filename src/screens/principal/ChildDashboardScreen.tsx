@@ -3,6 +3,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { ParentCommsTiles } from '../../components/ParentCommsTiles';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
@@ -45,12 +46,20 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
       accentKey: 'idCards',
       onPress: () => navigation.navigate('IdCard', { kind: 'STUDENT', id: student.id, name: student.name }),
     },
+    {
+      key: 'timetable',
+      title: t('childDashboard.timetable'),
+      icon: 'clock',
+      accentKey: 'myTimetable',
+      onPress: () => navigation.navigate('MyTimetable', { student }),
+    },
   ];
 
   return (
     <View style={styles.root}>
       <ScreenHeader title={student.name} onBack={() => navigation.navigate('ParentHome')} />
       <ScreenContainer>
+        <ParentCommsTiles />
         <View style={styles.tileGrid}>
           {tiles.map((tile) => {
             const accent = accents[tile.accentKey];

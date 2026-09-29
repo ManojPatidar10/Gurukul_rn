@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { getMyChildren } from '../api/parents';
 import type { Student } from '../api/types';
 import { AvatarBadge } from '../components/AvatarBadge';
+import { ParentCommsTiles } from '../components/ParentCommsTiles';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useAuth } from '../context/AuthContext';
@@ -66,6 +67,7 @@ export function ParentHomeScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={t('parentHome.title')} subtitle={session.username} />
       <ScreenContainer>
+        <ParentCommsTiles />
         {children.length === 0 && <Text style={styles.empty}>{t('parentHome.empty')}</Text>}
         {children.map((child) => (
           <Pressable key={child.id} style={styles.row} onPress={() => navigation.navigate('ChildDashboard', { student: child })}>
