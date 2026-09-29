@@ -62,7 +62,8 @@
       "pincode": "Enter a valid 6-digit pincode.",
       "email": "Enter a valid contact email address.",
       "phone": "Enter a valid 10-digit contact phone number."
-    }
+    },
+    "logoUploadFailed": "School registered, but the logo couldn't be uploaded ({{message}}). You can add it later from the School Logo tile."
   },
   "dashboard": {
     "fallbackTitle": "Smart Gurukul",
@@ -168,6 +169,10 @@
       "aiQuizGenerator": {
         "title": "AI Quiz Generator",
         "description": "Draft a quiz from your syllabus and add it to the question bank"
+      },
+      "schoolLogo": {
+        "title": "School Logo",
+        "description": "Logo printed on report-card PDFs"
       }
     }
   },
@@ -1026,6 +1031,57 @@
       "order": "'To' date must be on or after the 'From' date",
       "tooLong": "Pick a range of at most {{days}} days",
       "failed": "Export failed: {{message}}"
+    }
+  },
+  "reportCardPdf": {
+    "download": "Download PDF",
+    "downloadClass": "Download class PDF",
+    "downloading": "Preparing PDF…",
+    "shareTitle": "Share report card",
+    "savedTo": "Saved to {{path}}",
+    "failed": "Could not download the PDF: {{message}}"
+  },
+  "schoolLogo": {
+    "title": "School Logo",
+    "intro": "Your school logo is printed on report-card PDFs. Without one, PDFs show a Gurukul placeholder mark.",
+    "label": "School logo (optional)",
+    "hint": "PNG or JPEG, up to 2 MB. You can add or change it later from the School Logo tile.",
+    "choose": "Choose logo",
+    "change": "Change logo",
+    "remove": "Remove logo",
+    "save": "Save logo",
+    "uploading": "Uploading…",
+    "saved": "Logo saved",
+    "removed": "Logo removed",
+    "none": "No logo uploaded yet",
+    "permission": "Allow photo library access to choose a logo.",
+    "errors": {
+      "type": "Logo must be a PNG or JPEG image",
+      "size": "Logo must be 2 MB or smaller"
+    }
+  },
+  "notifications": {
+    "channels": {
+      "general": {
+        "name": "General",
+        "description": "Other updates from your school"
+      },
+      "messages": {
+        "name": "Messages",
+        "description": "Chat messages sent to you"
+      },
+      "announcements": {
+        "name": "Announcements",
+        "description": "Notices from your school"
+      },
+      "calls": {
+        "name": "Video calls",
+        "description": "Incoming, missed and scheduled video calls"
+      },
+      "academics": {
+        "name": "Report cards & results",
+        "description": "When a report card is published"
+      }
     }
   }
 }

@@ -39,7 +39,8 @@ export type FeatureId =
   | 'myClassFees'
   | 'attendanceDevices'
   | 'activityLog'
-  | 'attendanceExport';
+  | 'attendanceExport'
+  | 'schoolLogo';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -113,6 +114,7 @@ export type PrincipalStackParamList = {
   AttendanceDevices: undefined;
   ActivityLog: undefined;
   AttendanceExport: undefined;
+  SchoolLogoSettings: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
   ConversationThread: { conversationId: string; title: string };

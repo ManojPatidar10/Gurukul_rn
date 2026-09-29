@@ -22,6 +22,8 @@ export interface School {
   latitude: number | null;
   longitude: number | null;
   geofenceRadiusMeters: number;
+  /** Short-lived presigned URL, null if no logo was uploaded (or storage isn't configured). */
+  logoUrl: string | null;
   studentCount: number;
   classSectionCount: number;
   teacherCount: number;

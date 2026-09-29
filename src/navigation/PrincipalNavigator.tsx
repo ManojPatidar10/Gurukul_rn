@@ -14,6 +14,7 @@ import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAt
 import { ActivityLogScreen } from '../screens/principal/ActivityLogScreen';
 import { AttendanceDevicesScreen } from '../screens/principal/AttendanceDevicesScreen';
 import { AttendanceExportScreen } from '../screens/principal/AttendanceExportScreen';
+import { SchoolLogoSettingsScreen } from '../screens/principal/SchoolLogoSettingsScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { RegistrationInboxScreen } from '../screens/principal/RegistrationInboxScreen';
 import { SectionAttendanceScreen } from '../screens/principal/SectionAttendanceScreen';
@@ -169,6 +170,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AttendanceDevices" component={AttendanceDevicesScreen} />
         <Stack.Screen name="ActivityLog" component={ActivityLogScreen} />
         <Stack.Screen name="AttendanceExport" component={AttendanceExportScreen} />
+        <Stack.Screen name="SchoolLogoSettings" component={SchoolLogoSettingsScreen} />
         <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
         <Stack.Screen name="NewConversation" component={NewConversationScreen} />
         <Stack.Screen name="ConversationThread" component={ConversationThreadScreen} />
