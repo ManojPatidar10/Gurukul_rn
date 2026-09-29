@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AttendanceHistory'>;
 type ViewMode = 'calendar' | 'list';
@@ -84,7 +85,7 @@ export function AttendanceHistoryScreen({ route, navigation }: Props) {
           </Pressable>
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {viewMode === 'calendar' && (
           <View style={styles.calendarCard}>

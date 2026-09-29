@@ -1380,6 +1380,7 @@
     "offline": "You're offline. Check your internet connection and try again.",
     "timeout": "The server is taking too long to respond. Please try again.",
     "forbidden": "You don't have permission to do that.",
-    "codes": {}
+    "codes": {},
+    "tryAgain": "Try again"
   }
 }

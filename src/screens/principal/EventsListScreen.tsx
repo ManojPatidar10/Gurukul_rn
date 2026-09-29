@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventsList'>;
 
@@ -112,7 +113,7 @@ export function EventsListScreen({ navigation }: Props) {
           </View>
         )}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} onRetry={load} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList

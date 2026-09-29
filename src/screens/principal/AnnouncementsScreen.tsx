@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Announcements'>;
 
@@ -58,7 +59,7 @@ export function AnnouncementsScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={t('announcements.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {announcements === null && !error && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {announcements?.length === 0 && <Text style={styles.empty}>{t('announcements.empty')}</Text>}
         {announcements?.map((a) => (

@@ -4,6 +4,7 @@ import { listInfraExpenseCategories } from '../api/infraExpenseCategories';
 import type { InfraExpenseCategory } from '../api/types';
 import { colors, radius, spacing } from '../theme/colors';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from './ErrorNotice';
 
 interface Props {
   schoolId: string;
@@ -29,7 +30,7 @@ export default function InfraCategoryPicker({ schoolId, selectedId, onSelect }: 
 
   return (
     <View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <ErrorNotice message={error} />}
       {categories.length === 0 && !error && (
         <Text style={styles.empty}>
           No infrastructure expense categories exist on this school yet — these can only be seeded on the

@@ -11,6 +11,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { CallLogResponse } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'CallHistory'>;
 
@@ -75,7 +76,7 @@ export function CallHistoryScreen({ navigation }: Props) {
             </Text>
           </View>
         )}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         <FlatList
           data={logs}
           keyExtractor={(log) => log.id}

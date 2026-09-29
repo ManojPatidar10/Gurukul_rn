@@ -11,6 +11,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentDetail'>;
 
@@ -69,7 +70,7 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
           <Field label="Created by" value={assessment.createdByTeacherName} />
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {canManage && (
           <View style={styles.actions}>

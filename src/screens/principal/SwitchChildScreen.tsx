@@ -14,6 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SwitchChild'>;
 
@@ -52,7 +53,7 @@ export function SwitchChildScreen({ navigation }: Props) {
       <ScreenHeader title={t('switchChild.title')} subtitle={t('switchChild.subtitle')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {!loading && profiles.length <= 1 && !error && <Text style={styles.empty}>{t('switchChild.noOtherProfiles')}</Text>}
         {!loading &&
           profiles.map((profile) => (

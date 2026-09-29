@@ -10,6 +10,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentResults'>;
 
@@ -107,7 +108,7 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
       />
       <ScreenContainer>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {success && <Text style={styles.success}>Results saved.</Text>}
 
         {!loading && roster.length === 0 && <Text style={styles.empty}>0 students in this section.</Text>}

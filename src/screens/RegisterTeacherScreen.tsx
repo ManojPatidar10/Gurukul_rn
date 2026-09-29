@@ -9,6 +9,7 @@ import { LanguageSwitch } from '../components/LanguageSwitch';
 import LabeledInput from '../components/LabeledInput';
 import { gradients, colors, radius, shadow, softShadow, spacing } from '../theme/colors';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from '../components/ErrorNotice';
 
 interface Props {
   schoolId: string;
@@ -76,7 +77,7 @@ export default function RegisterTeacherScreen({ schoolId, onBack, onSubmitted }:
         />
         {!!confirmPassword && !passwordsMatch && <Text style={styles.mismatch}>{t('registration.passwordsDontMatch')}</Text>}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.disabled]}

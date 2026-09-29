@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyQuestions'>;
 
@@ -74,7 +75,7 @@ export function MyQuestionsScreen({ navigation }: Props) {
           )}
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         {!loading && subjectId && className && questions.length === 0 && !error && (

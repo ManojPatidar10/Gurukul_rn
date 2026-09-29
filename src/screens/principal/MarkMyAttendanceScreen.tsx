@@ -14,6 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MarkMyAttendance'>;
 
@@ -128,7 +129,7 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
                 We&apos;ll use your current location to confirm you&apos;re within the school&apos;s premises before
                 marking today&apos;s attendance.
               </Text>
-              {error && <Text style={styles.error}>{error}</Text>}
+              {error && <ErrorNotice message={error} />}
               <Pressable
                 style={styles.primaryButton}
                 onPress={handleMark}

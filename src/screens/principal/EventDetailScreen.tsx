@@ -24,6 +24,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventDetail'>;
 
@@ -207,7 +208,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
       <View style={styles.root}>
         <ScreenHeader title="Event" onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <Text style={styles.error}>{error ?? 'Could not load this event.'}</Text>
+          <ErrorNotice message={error ?? 'Could not load this event.'} />
         </ScreenContainer>
       </View>
     );
@@ -248,7 +249,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           <Text style={styles.meta}>By {event.createdByEmployeeName}</Text>
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {isCancelled && <Text style={styles.cancelledNote}>This event has been cancelled.</Text>}
 

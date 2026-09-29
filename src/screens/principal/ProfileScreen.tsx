@@ -19,6 +19,7 @@ import { useLanguage } from '../../i18n/useLanguage';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Profile'>;
 
@@ -123,7 +124,7 @@ export function ProfileScreen({ navigation }: Props) {
       <ScreenHeader title={t('common.profile')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {/* The profile can fail to load (e.g. a login whose employee/student record no longer
             exists in this school) - logging out must still be possible, or the user is stuck. */}
         {!loading && (error || !(employee || student)) && (

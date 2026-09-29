@@ -13,6 +13,7 @@ import { useCallTargets, type CallTarget } from '../../hooks/useCallTargets';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ScheduleCall'>;
 
@@ -85,7 +86,7 @@ export function ScheduleCallScreen({ navigation }: Props) {
 
         <Text style={styles.sectionLabel}>Invite</Text>
         {loadingTargets && <ActivityIndicator color={colors.primary} />}
-        {targetsError && <Text style={styles.error}>{targetsError}</Text>}
+        {targetsError && <ErrorNotice message={targetsError} />}
         {!loadingTargets && targets.length === 0 && !targetsError && (
           <Text style={styles.empty}>No one available to invite right now.</Text>
         )}
@@ -152,7 +153,7 @@ export function ScheduleCallScreen({ navigation }: Props) {
           />
         )}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}

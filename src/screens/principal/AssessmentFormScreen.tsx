@@ -14,6 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentForm'>;
 
@@ -118,7 +119,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         />
         {teacherLabel ? <Text style={styles.selectedHint}>Selected: {teacherLabel}</Text> : null}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.disabled]}

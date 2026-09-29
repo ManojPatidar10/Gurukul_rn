@@ -37,6 +37,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { canEdit, canEnrol, nextStages, stageVariant, transitionLabelKey } from '../../utils/admissionStages';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AdmissionDetail'>;
 
@@ -266,7 +267,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
     return (
       <View style={styles.root}>
         <ScreenHeader title={t('admissions.detail.title')} onBack={() => navigation.goBack()} />
-        <Text style={styles.error}>{error ?? t('admissions.loadError')}</Text>
+        <ErrorNotice message={error ?? t('admissions.loadError')} />
       </View>
     );
   }

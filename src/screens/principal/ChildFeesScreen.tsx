@@ -11,6 +11,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ChildFees'>;
 
@@ -44,7 +45,7 @@ export function ChildFeesScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={t('childFees.title', { name: student.name })} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} onRetry={load} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList

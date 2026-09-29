@@ -20,6 +20,7 @@ import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeDetail'>;
 
@@ -145,7 +146,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
           <Field label={t('employees.detail.contactPhone')} value={employee.contactPhone} />
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {isViewerAdmin && (
           <View style={styles.actions}>
@@ -209,7 +210,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
               <>
                 <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
                 <LabeledInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-                {error && <Text style={styles.error}>{error}</Text>}
+                {error && <ErrorNotice message={error} />}
                 <Pressable
                   style={[styles.credentialSubmit, (!username || !password || submitting) && styles.disabled]}
                   onPress={handleCreateCredential}

@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConversationsList'>;
 
@@ -110,7 +111,7 @@ export function ConversationsListScreen({ navigation }: Props) {
           </Pressable>
         </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} onRetry={load} inset />}
         {!loading && conversations.length === 0 && <Text style={styles.empty}>No conversations yet.</Text>}
         <FlatList
           data={conversations}

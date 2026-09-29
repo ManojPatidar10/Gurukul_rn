@@ -16,6 +16,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'NewConversation'>;
 
@@ -111,7 +112,7 @@ export function NewConversationScreen({ navigation }: Props) {
           <SearchBar value={query} onChangeText={setQuery} placeholder={isParent ? t('newConversation.searchTeachers') : 'Search staff or classmates by name'} />
         </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} inset />}
         <FlatList
           data={visibleParties}
           scrollEnabled={false}

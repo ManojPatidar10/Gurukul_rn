@@ -12,6 +12,7 @@ import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PickCallTarget'>;
 
@@ -65,7 +66,7 @@ export function PickCallTargetScreen({ navigation }: Props) {
       <ScreenHeader title="Start a call" onBack={() => navigation.goBack()} />
       <ScreenContainer padded={false}>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {(error || callError) && <Text style={styles.error}>{error ?? callError}</Text>}
+        {(error || callError) && <ErrorNotice message={error || callError || ''} />}
 
         {canSearchStudents && (
           <View style={styles.searchSection}>

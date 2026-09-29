@@ -17,6 +17,7 @@ import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { BLOOD_GROUPS, isValidPhone, missingLabelKey, validatePhoto } from '../../utils/idCard';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'IdCard'>;
 
@@ -120,7 +121,7 @@ export function IdCardScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={t('idCard.title')} subtitle={card?.name ?? name} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {!card && !error && <ActivityIndicator color={colors.primary} />}
         {card && (
           <>

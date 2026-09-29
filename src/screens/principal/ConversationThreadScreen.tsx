@@ -31,6 +31,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConversationThread'>;
 
@@ -224,7 +225,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         />
       )}
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <ErrorNotice message={error} />}
       <View style={[styles.inputRow, { paddingBottom: composerBottomPadding }]}>
         <Pressable style={styles.attachButton} onPress={handleAttach} disabled={uploading}>
           {uploading ? (

@@ -7,6 +7,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 interface Props {
   classSection: ClassSection;
@@ -29,7 +30,7 @@ export function SectionAttendanceHistoryBody({ classSection, onSelectStudent }: 
   return (
     <ScreenContainer>
         {loading && <ActivityIndicator style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {history && history.students.length === 0 && (
           <Text style={styles.empty}>0 students in this section.</Text>

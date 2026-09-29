@@ -14,6 +14,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AwardRecognition'>;
 
@@ -107,7 +108,7 @@ export function AwardRecognitionScreen({ navigation }: Props) {
           multiline
         />
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} inset />}
 
         <Pressable style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]} onPress={handleSubmit} disabled={!canSubmit || submitting}>
           {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>Award points</Text>}

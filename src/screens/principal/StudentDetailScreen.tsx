@@ -25,6 +25,7 @@ import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StudentDetail'>;
 
@@ -227,7 +228,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           )}
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {(isViewerAdmin || !isViewerStudent) && (
           <View style={styles.actions}>
@@ -311,7 +312,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
               <>
                 <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
                 <LabeledInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-                {credentialError && <Text style={styles.error}>{credentialError}</Text>}
+                {credentialError && <ErrorNotice message={credentialError} />}
                 <Pressable
                   style={[styles.credentialSubmit, (!username || !password || creatingCredential) && styles.disabled]}
                   onPress={handleCreateCredential}
@@ -330,7 +331,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           <View style={styles.transferPanel}>
             <Text style={styles.transferTitle}>Student invite code</Text>
             {generatingInvite && <Text style={styles.transferring}>Generating…</Text>}
-            {inviteError && <Text style={styles.error}>{inviteError}</Text>}
+            {inviteError && <ErrorNotice message={inviteError} />}
             {inviteResult && (
               <View>
                 <Text style={styles.success}>

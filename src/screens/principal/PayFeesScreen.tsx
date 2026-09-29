@@ -14,6 +14,7 @@ import { accents, colors, radius, softShadow, spacing } from '../../theme/colors
 import type { PrincipalStackParamList } from '../../types/principal';
 import { resolvePaymentAppUrl } from '../../utils/upiPaymentLinks';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayFees'>;
 
@@ -149,7 +150,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
 
         {(stage === 'idle' || stage === 'error') && (
           <>
-            {stage === 'error' && errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+            {stage === 'error' && errorMessage && <ErrorNotice message={errorMessage} />}
             <Pressable style={styles.payButton} onPress={stage === 'error' ? handleRetry : handlePay}>
               <Text style={styles.payButtonText}>
                 {stage === 'error' ? t('fees.payFees.tryAgain') : t('fees.payFees.payNow')}

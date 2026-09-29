@@ -14,6 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionSubjectsList'>;
 
@@ -130,7 +131,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
           </Pressable>
         ))}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <FlatList
           data={assignments}

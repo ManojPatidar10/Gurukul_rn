@@ -6,6 +6,7 @@ import type { ClassSection } from '../api/types';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from './ErrorNotice';
 
 interface Props {
   schoolId: string;
@@ -59,7 +60,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
 
   return (
     <View>
-      {error && !open && <Text style={styles.error}>{error}</Text>}
+      {error && !open && <ErrorNotice message={error} />}
 
       <Pressable style={styles.field} onPress={() => setOpen(true)} disabled={loading}>
         {loading ? (
@@ -77,7 +78,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>Select class-section</Text>
 
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error && <ErrorNotice message={error} />}
 
             <FlatList
               data={sections}

@@ -21,6 +21,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { CallProvider, MyInviteResponse, ScheduledCallResponse } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ScheduledCalls'>;
 
@@ -108,7 +109,7 @@ export function ScheduledCallsScreen({ navigation }: Props) {
       <ScreenHeader title="Scheduled calls" onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Text style={styles.sectionTitle}>Hosted by me</Text>
         {!loading && hosted.length === 0 && <Text style={styles.empty}>Nothing scheduled.</Text>}

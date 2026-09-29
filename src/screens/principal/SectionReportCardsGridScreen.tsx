@@ -14,6 +14,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionReportCardsGrid'>;
 
@@ -130,7 +131,7 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
         </View>
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {!loading && error && <Text style={styles.error}>{error}</Text>}
+        {!loading && error && <ErrorNotice message={error} />}
         {!loading && !error && hasLoaded && rows != null && rows.length === 0 && (
           <Text style={styles.empty}>0 students in this section.</Text>
         )}

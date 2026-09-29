@@ -14,6 +14,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SchoolLogoSettings'>;
 
@@ -71,7 +72,7 @@ export function SchoolLogoSettingsScreen({ navigation }: Props) {
         <Text style={styles.intro}>{t('schoolLogo.intro')}</Text>
         <Text style={styles.hint}>{t('schoolLogo.hint')}</Text>
         {loading && <ActivityIndicator color={colors.primary} />}
-        {!loading && error && <Text style={styles.error}>{error}</Text>}
+        {!loading && error && <ErrorNotice message={error} />}
         {!loading && !error && (
           <>
             <SchoolLogoPicker previewUri={picked?.uri ?? currentUrl} onPicked={setPicked} disabled={busy} />

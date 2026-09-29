@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, gameColors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'BattleRoomMatch'>;
 
@@ -100,7 +101,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
 
         <SubjectPicker schoolId={schoolId} selectedId={subject?.id ?? null} onSelect={setSubject} />
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Text style={styles.fieldLabel}>Open battles in your class</Text>
         {openRooms.length === 0 && <Text style={styles.empty}>No open battles right now — start one below.</Text>}

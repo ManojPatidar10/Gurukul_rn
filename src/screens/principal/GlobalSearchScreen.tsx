@@ -13,6 +13,7 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'GlobalSearch'>;
 
@@ -58,7 +59,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
       <ScreenContainer>
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search students, staff…" />
         {loading && <ActivityIndicator color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {!loading && debouncedQuery && results.length === 0 && !error && (
           <Text style={styles.empty}>No results for &quot;{debouncedQuery}&quot;.</Text>
         )}

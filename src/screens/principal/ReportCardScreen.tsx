@@ -16,6 +16,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
 
@@ -134,7 +135,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
         )}
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {!loading && error && <Text style={styles.error}>{error}</Text>}
+        {!loading && error && <ErrorNotice message={error} />}
 
         {!loading && !error && hasLoaded && reportCard && (
           <>

@@ -20,6 +20,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'InfraExpenseDetail'>;
 
@@ -160,7 +161,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
           <Field label="Estimated amount" value={`₹${request.estimatedAmount.toLocaleString('en-IN')}`} />
         </View>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <View style={styles.actions}>
           <Pressable style={styles.actionButton} onPress={() => setPanel(panel === 'review' ? null : 'review')}>
