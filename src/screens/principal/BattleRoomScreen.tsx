@@ -15,6 +15,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, gameColors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'BattleRoom'>;
 
@@ -187,7 +188,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
       <View style={styles.root}>
         <ScreenHeader title="Battle Room" onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <Text style={styles.error}>{error ?? 'Room not found.'}</Text>
+          <ErrorNotice message={error ?? 'Room not found.'} />
         </ScreenContainer>
       </View>
     );

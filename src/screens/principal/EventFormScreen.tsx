@@ -19,6 +19,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventForm'>;
 
@@ -293,7 +294,7 @@ export function EventFormScreen({ navigation }: Props) {
           </View>
         )}
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Pressable
           style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}

@@ -5,6 +5,7 @@ import type { Vendor } from '../api/types';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from './ErrorNotice';
 
 interface Props {
   schoolId: string;
@@ -52,7 +53,7 @@ export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) 
 
   return (
     <View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <ErrorNotice message={error} />}
       {vendors.length === 0 && !showCreate && <Text style={styles.empty}>No vendors yet.</Text>}
       <View style={styles.chips}>
         {vendors.map((v) => (

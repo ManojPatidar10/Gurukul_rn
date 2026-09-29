@@ -12,6 +12,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { defaultDay, slotsForDay } from '../../utils/timetable';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyTimetable'>;
 
@@ -67,7 +68,7 @@ export function MyTimetableScreen({ route, navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && (
           <View>
-            <Text style={styles.error}>{t('timetable.loadFailed', { message: error })}</Text>
+            <ErrorNotice message={t('timetable.loadFailed', { message: error })} onRetry={load} />
             <Pressable onPress={load} style={styles.retry}>
               <Text style={styles.retryText}>{t('common.retry')}</Text>
             </Pressable>

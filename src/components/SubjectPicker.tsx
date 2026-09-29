@@ -6,6 +6,7 @@ import type { Subject } from '../api/types';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from './ErrorNotice';
 
 interface Props {
   schoolId: string;
@@ -57,7 +58,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
 
   return (
     <View>
-      {error && !open && <Text style={styles.error}>{error}</Text>}
+      {error && !open && <ErrorNotice message={error} />}
 
       <Pressable style={styles.field} onPress={() => setOpen(true)} disabled={loading}>
         {loading ? (
@@ -75,7 +76,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>Select subject</Text>
 
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error && <ErrorNotice message={error} />}
 
             <FlatList
               data={subjects}

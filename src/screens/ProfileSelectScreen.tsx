@@ -12,6 +12,7 @@ import { Logo } from '../components/Logo';
 import { ProfileCard } from '../components/ProfileCard';
 import { gradients, colors, radius, shadow, spacing } from '../theme/colors';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from '../components/ErrorNotice';
 
 interface Props {
   schoolId: string;
@@ -67,14 +68,14 @@ export default function ProfileSelectScreen({ schoolId, schoolName, selectionTok
       <View style={[styles.list, { paddingBottom: insets.bottom + spacing.lg }]}>
         {expired ? (
           <View style={styles.expiredBox}>
-            <Text style={styles.error}>{t('auth.selectionExpired')}</Text>
+            <ErrorNotice message={t('auth.selectionExpired')} />
             <Pressable style={styles.retryButton} onPress={onBack}>
               <Text style={styles.retryButtonText}>{t('common.back')}</Text>
             </Pressable>
           </View>
         ) : (
           <>
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error && <ErrorNotice message={error} />}
             {profiles.map((profile) => (
               <ProfileCard
                 key={`${profile.ownerType}:${profile.ownerId}`}

@@ -8,6 +8,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'GradingScale'>;
 
@@ -90,7 +91,7 @@ export function GradingScaleScreen({ navigation }: Props) {
         </Text>
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {success && <Text style={styles.success}>Grading scale updated.</Text>}
 
         {!loading &&

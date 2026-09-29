@@ -14,6 +14,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import { notificationTarget } from '../../utils/notificationRouting';
 import { openNotificationTarget } from '../../utils/openNotificationTarget';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Notifications'>;
 
@@ -88,7 +89,7 @@ export function NotificationsScreen({ navigation }: Props) {
         }
       />
       <ScreenContainer>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {items === null && !error && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {items?.length === 0 && <Text style={styles.empty}>{t('alerts.empty')}</Text>}
         {items?.map((item) => (

@@ -10,6 +10,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'InfraExpensesList'>;
 
@@ -48,7 +49,7 @@ export function InfraExpensesListScreen({ navigation }: Props) {
           <Text style={styles.addButtonText}>+ New request</Text>
         </Pressable>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <FlatList
           data={requests}

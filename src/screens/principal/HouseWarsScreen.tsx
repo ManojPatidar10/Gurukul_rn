@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'HouseWars'>;
 
@@ -47,7 +48,7 @@ export function HouseWarsScreen({ navigation }: Props) {
       <ScreenHeader title="House Wars" onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {wars && wars.standings.length === 0 && (
           <Text style={styles.empty}>No houses have been set up for this school yet.</Text>

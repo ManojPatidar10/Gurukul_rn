@@ -12,6 +12,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PracticeStart'>;
 
@@ -43,7 +44,7 @@ export function PracticeStartScreen({ navigation }: Props) {
 
         <SubjectPicker schoolId={schoolId} selectedId={subject?.id ?? null} onSelect={setSubject} />
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Pressable
           style={[styles.startButton, !subject && styles.disabled]}

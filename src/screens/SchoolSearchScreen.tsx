@@ -9,6 +9,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from '../components/ErrorNotice';
 
 interface Props {
   onBack: () => void;
@@ -48,13 +49,13 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
         <LabeledInput label={t('schoolSearch.searchByName')} value={query} onChangeText={setQuery} placeholder={t('schoolSearch.placeholder')} />
 
         {loading && <ActivityIndicator style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} onRetry={() => load(query)} />}
 
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
-            !loading ? <Text style={styles.empty}>{t('schoolSearch.empty')}</Text> : null
+            !loading && !error ? <Text style={styles.empty}>{t('schoolSearch.empty')}</Text> : null
           }
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => onSelect(item)}>

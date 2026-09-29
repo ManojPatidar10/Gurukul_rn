@@ -15,6 +15,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeesList'>;
 
@@ -101,7 +102,15 @@ export function EmployeesListScreen({ navigation }: Props) {
 
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name" />
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && (
+          <ErrorNotice
+            message={error}
+            onRetry={() => {
+              setLoading(true);
+              load(0, false).finally(() => setLoading(false));
+            }}
+          />
+        )}
 
         <FlatList
           data={employees}

@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 interface Props {
   classSection: ClassSection;
@@ -222,7 +223,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
         )}
 
         {loadingRoster && <ActivityIndicator style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {success && <Text style={styles.success}>Attendance saved for {date}.</Text>}
 
         {!loadingRoster && roster.length === 0 && (

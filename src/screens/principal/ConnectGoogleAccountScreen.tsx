@@ -10,6 +10,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConnectGoogleAccount'>;
 
@@ -102,7 +103,7 @@ export function ConnectGoogleAccountScreen({ navigation }: Props) {
               provider. Only you need to connect - it applies to calls you start.
             </Text>
 
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error && <ErrorNotice message={error} />}
 
             {connected ? (
               <>

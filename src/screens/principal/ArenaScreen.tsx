@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Arena'>;
 
@@ -73,7 +74,7 @@ export function ArenaScreen({ navigation }: Props) {
         </Pressable>
 
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         {!loading && challenges.length === 0 && <Text style={styles.empty}>No challenges yet — start one above.</Text>}
 
         {challenges.map((c) => (

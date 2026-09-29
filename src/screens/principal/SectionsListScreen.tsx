@@ -9,6 +9,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionsList'>;
 
@@ -44,7 +45,7 @@ export function SectionsListScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={className} subtitle="Sections" onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} onRetry={load} />}
         <FlatList
           data={sections}
           keyExtractor={(item) => item.id}

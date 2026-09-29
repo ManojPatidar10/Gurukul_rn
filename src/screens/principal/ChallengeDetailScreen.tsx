@@ -10,6 +10,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ChallengeDetail'>;
 
@@ -78,7 +79,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
       <View style={styles.root}>
         <ScreenHeader title="Quiz Battle" onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <Text style={styles.error}>{error ?? 'Could not load this challenge.'}</Text>
+          <ErrorNotice message={error ?? 'Could not load this challenge.'} />
         </ScreenContainer>
       </View>
     );
@@ -91,7 +92,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={`vs ${summary.opponentName}`} subtitle={summary.subjectName} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         {summary.status === 'COMPLETED' && (
           <View style={styles.resultBanner}>

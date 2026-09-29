@@ -16,6 +16,7 @@ import { useSchoolId } from '../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
 import { getErrorMessage } from '../api/errorMessage';
+import { ErrorNotice } from '../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ParentHome'>;
 
@@ -51,7 +52,7 @@ export function ParentHomeScreen({ navigation }: Props) {
       <View style={styles.root}>
         <ScreenHeader title={t('parentHome.title')} subtitle={session.username} />
         <ScreenContainer>
-          <Text style={styles.error}>{error}</Text>
+          <ErrorNotice message={error} />
         </ScreenContainer>
       </View>
     );

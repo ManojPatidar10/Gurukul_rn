@@ -18,6 +18,7 @@ import {
   type PeriodRowError,
 } from '../../utils/timetable';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PeriodSetup'>;
 
@@ -190,7 +191,7 @@ export function PeriodSetupScreen({ navigation }: Props) {
             )}
 
             {validation && <Text style={styles.error}>{errorText(validation)}</Text>}
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error && <ErrorNotice message={error} />}
             {success && <Text style={styles.success}>{t('timetable.periods.saved')}</Text>}
 
             <Pressable

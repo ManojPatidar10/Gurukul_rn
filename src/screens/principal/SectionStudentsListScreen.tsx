@@ -11,6 +11,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionStudentsList'>;
 
@@ -37,7 +38,7 @@ export function SectionStudentsListScreen({ route, navigation }: Props) {
       />
       <View style={styles.body}>
         {loading && <ActivityIndicator style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
         <FlatList
           data={students}
           keyExtractor={(item) => item.id}

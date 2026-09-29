@@ -10,6 +10,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PracticeSession'>;
 
@@ -83,7 +84,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
       <View style={styles.root}>
         <ScreenHeader title="Practice Mode" onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <Text style={styles.error}>{error ?? 'Could not load this practice session.'}</Text>
+          <ErrorNotice message={error ?? 'Could not load this practice session.'} />
         </ScreenContainer>
       </View>
     );
@@ -93,7 +94,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title="Practice Mode" subtitle={session.subjectName} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && <ErrorNotice message={error} />}
 
         <Text style={styles.noXpNote}>Practice doesn&apos;t earn XP — it&apos;s just for prep.</Text>
 
