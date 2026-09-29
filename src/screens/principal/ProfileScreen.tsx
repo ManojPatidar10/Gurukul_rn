@@ -34,6 +34,9 @@ export function ProfileScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  // A student's record (name, address, parent contact) is kept by the school - teachers and admins
+  // edit it from the student's profile - so students only get to view their own.
+  const canEditOwnProfile = session.ownerType !== 'STUDENT';
   const [saving, setSaving] = useState(false);
   const [hasOtherProfiles, setHasOtherProfiles] = useState(false);
   // Bumped on focus so the ID-card block picks up details just edited on the ID card screen.
@@ -219,37 +222,39 @@ export function ProfileScreen({ navigation }: Props) {
               </View>
             )}
 
-            <View style={styles.actionsRow}>
-              {editing ? (
-                <>
-                  <Pressable
-                    style={[styles.actionButton, styles.cancelButton]}
-                    onPress={() => {
-                      setEditing(false);
-                      load();
-                    }}
-                    disabled={saving}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
+            {canEditOwnProfile && (
+              <View style={styles.actionsRow}>
+                {editing ? (
+                  <>
+                    <Pressable
+                      style={[styles.actionButton, styles.cancelButton]}
+                      onPress={() => {
+                        setEditing(false);
+                        load();
+                      }}
+                      disabled={saving}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.actionButton, styles.saveButton]}
+                      onPress={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <ActivityIndicator color={colors.white} />
+                      ) : (
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      )}
+                    </Pressable>
+                  </>
+                ) : (
+                  <Pressable style={[styles.actionButton, styles.editButton]} onPress={() => setEditing(true)}>
+                    <Text style={styles.editButtonText}>Edit Profile</Text>
                   </Pressable>
-                  <Pressable
-                    style={[styles.actionButton, styles.saveButton]}
-                    onPress={handleSave}
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <ActivityIndicator color={colors.white} />
-                    ) : (
-                      <Text style={styles.saveButtonText}>Save</Text>
-                    )}
-                  </Pressable>
-                </>
-              ) : (
-                <Pressable style={[styles.actionButton, styles.editButton]} onPress={() => setEditing(true)}>
-                  <Text style={styles.editButtonText}>Edit Profile</Text>
-                </Pressable>
-              )}
-            </View>
+                )}
+              </View>
+            )}
 
             {!editing && (session.ownerType === 'STUDENT' || session.ownerType === 'EMPLOYEE') && (
               <IdCardProfileSection
