@@ -6,8 +6,10 @@ import { Platform } from 'react-native';
 
 import type { Session } from '../api/authStorage';
 import { registerDeviceToken } from '../api/notifications';
+import { getMyChildren } from '../api/parents';
 import { getStudent } from '../api/students';
 import { FEATURE_FLAGS } from '../config/featureFlags';
+import i18n from '../i18n';
 import { navigationRef } from '../navigation/navigationRef';
 
 Notifications.setNotificationHandler({
@@ -18,6 +20,40 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+/** Brand violet (marketing-sales-pipeline/brand/tokens.json violet-600), also the notification accent in app.json. */
+const BRAND_VIOLET = '#7C3AED';
+
+/**
+ * One Android channel per kind of notification, so a user can mute announcements without missing
+ * calls. The ids must match the backend's PushChannel enum; `default` catches anything sent
+ * without one. Android fixes a channel's importance the first time it's created on a phone and
+ * ignores later changes, so an importance change here needs a new channel id. The name and
+ * description can change (they follow the app language).
+ */
+const CHANNELS = [
+  { id: 'default', key: 'general', importance: Notifications.AndroidImportance.DEFAULT },
+  { id: 'messages', key: 'messages', importance: Notifications.AndroidImportance.HIGH },
+  { id: 'announcements', key: 'announcements', importance: Notifications.AndroidImportance.HIGH },
+  { id: 'calls', key: 'calls', importance: Notifications.AndroidImportance.MAX },
+  { id: 'academics', key: 'academics', importance: Notifications.AndroidImportance.HIGH },
+] as const;
+
+async function setUpAndroidChannels() {
+  if (Platform.OS !== 'android' || !i18n.isInitialized) return;
+  await Promise.all(
+    CHANNELS.map(({ id, key, importance }) =>
+      Notifications.setNotificationChannelAsync(id, {
+        name: i18n.t(`notifications.channels.${key}.name`),
+        description: i18n.t(`notifications.channels.${key}.description`),
+        importance,
+        lightColor: BRAND_VIOLET,
+        vibrationPattern: [0, 250, 250, 250],
+        showBadge: true,
+      })
+    )
+  );
+}
 
 /**
  * Requests permission, registers this device's Expo push token with the backend, keeps that
@@ -39,30 +75,57 @@ export function usePushNotifications(schoolId: string | null, session: Session |
   // and re-registering the device each time would be pointless churn.
   const sessionKey = session ? `${session.schoolId}:${session.ownerType}:${session.ownerId}` : null;
 
+  // Channel names are shown in Android's settings, so re-apply them once i18n is ready and
+  // whenever the user switches language.
+  useEffect(() => {
+    const apply = () => {
+      setUpAndroidChannels().catch(() => {});
+    };
+    apply();
+    i18n.on('initialized', apply);
+    i18n.on('languageChanged', apply);
+    return () => {
+      i18n.off('initialized', apply);
+      i18n.off('languageChanged', apply);
+    };
+  }, []);
+
   useEffect(() => {
     if (!schoolId || !sessionKey || !Device.isDevice) return;
     let cancelled = false;
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
 
-    const fetchAndRegister = async () => {
-      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
-      if (cancelled) return;
+    // The last Expo token we tried to register, and whether a failure has already been logged, for
+    // this signed-in owner - so a repeat of the same token is a no-op and a failing backend is
+    // reported once rather than on every retry.
+    let lastToken: string | null = null;
+    let warned = false;
+
+    // Pass the device token when we already have one (from the token listener): without it,
+    // getExpoPushTokenAsync asks the OS for the device token again, and on iOS that re-fires the
+    // token listener below - an endless register loop that starves the JS thread.
+    const fetchAndRegister = async (devicePushToken?: Notifications.DevicePushToken) => {
+      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync({
+        ...(projectId ? { projectId } : {}),
+        ...(devicePushToken ? { devicePushToken } : {}),
+      });
+      if (cancelled || expoPushToken === lastToken) return;
+      lastToken = expoPushToken;
       try {
         await registerDeviceToken(schoolId, expoPushToken);
       } catch (e) {
-        console.warn('[push] Failed to register device token with the backend', e);
+        if (!warned) {
+          warned = true;
+          console.warn('[push] Failed to register device token with the backend', e);
+        }
       }
     };
 
     (async () => {
       try {
-        if (Platform.OS === 'android') {
-          await Notifications.setNotificationChannelAsync('default', {
-            name: 'default',
-            importance: Notifications.AndroidImportance.MAX,
-          });
-        }
+        // Android 13+ only shows the permission prompt once the app has a channel.
+        await setUpAndroidChannels();
 
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
         let status = existingStatus;
@@ -79,10 +142,11 @@ export function usePushNotifications(schoolId: string | null, session: Session |
     })();
 
     // In rare cases Expo rolls the underlying native token while the app is running, which
-    // invalidates the Expo push token built from it - re-derive and re-register rather than using
-    // the raw device token this listener provides, which isn't the format our backend expects.
-    const tokenSubscription = Notifications.addPushTokenListener(() => {
-      fetchAndRegister().catch((e) => console.warn('[push] Failed to refresh device token', e));
+    // invalidates the Expo push token built from it - re-derive the Expo token from the raw device
+    // token this listener provides (which isn't the format our backend expects) and re-register.
+    // iOS also fires this on every getDevicePushTokenAsync, hence the same-token check above.
+    const tokenSubscription = Notifications.addPushTokenListener((devicePushToken) => {
+      fetchAndRegister(devicePushToken).catch((e) => console.warn('[push] Failed to refresh device token', e));
     });
 
     return () => {
@@ -109,24 +173,36 @@ export function usePushNotifications(schoolId: string | null, session: Session |
       const data = response.notification.request.content.data as Record<string, unknown> | undefined;
       if (!navigationRef.isReady() || !data?.type) return;
 
+      const defaultTerm = typeof data.term === 'string' ? data.term : undefined;
+      const scheduledCallTypes = ['SCHEDULED_CALL_STARTED', 'SCHEDULED_CALL_REMINDER', 'SCHEDULED_CALL_CANCELLED'];
+
       if (data.type === 'NEW_MESSAGE') {
         navigationRef.navigate('ConversationsList');
-      } else if (data.type === 'SCHEDULED_CALL_STARTED' && FEATURE_FLAGS.videoCalls) {
+      } else if (scheduledCallTypes.includes(data.type as string) && FEATURE_FLAGS.videoCalls) {
         navigationRef.navigate('ScheduledCalls');
+      } else if (data.type === 'CALL_MISSED' && FEATURE_FLAGS.videoCalls) {
+        navigationRef.navigate('CallHistory');
       } else if (data.type === 'REPORT_CARD_PUBLISHED' && session.ownerType === 'STUDENT') {
-        // The backend only ever sends this to the student themselves (one push per student in the
-        // section, see ReportCardService.notifyStudents), so session.ownerId is exactly the
-        // student whose report card to open.
+        // A student's copy has no studentId: it only ever goes to the student themselves (see
+        // ReportCardService.notifyStudentsAndParents), so session.ownerId is the report card to open.
         getStudent(session.schoolId, session.ownerId)
           .then((student) => {
-            navigationRef.navigate('ReportCard', {
-              student: { id: student.id, name: student.name },
-              defaultTerm: typeof data.term === 'string' ? data.term : undefined,
-            });
+            navigationRef.navigate('ReportCard', { student: { id: student.id, name: student.name }, defaultTerm });
+          })
+          .catch(() => {});
+      } else if (data.type === 'REPORT_CARD_PUBLISHED' && session.ownerType === 'PARENT' && typeof data.studentId === 'string') {
+        // A parent's copy names one child (a parent may have several), so open that child's card.
+        const studentId = data.studentId;
+        getMyChildren(session.schoolId)
+          .then((children) => {
+            const child = children.find((c) => c.id === studentId);
+            if (child) {
+              navigationRef.navigate('ReportCard', { student: { id: child.id, name: child.name }, defaultTerm });
+            }
           })
           .catch(() => {});
       }
-      // ANNOUNCEMENT: no announcements screen exists yet to land on.
+      // ANNOUNCEMENT: no announcements screen exists yet, so the push carries the notice's own text.
       // INCOMING_CALL: video calls are disabled (src/config/featureFlags.ts) and there's no API to
       // fetch an in-progress call's room details from just a callLogId anyway - a still-ringing
       // call is only ever handled live, by IncomingCallOverlay, while that feature is enabled.

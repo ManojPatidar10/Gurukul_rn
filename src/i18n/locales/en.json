@@ -1009,5 +1009,29 @@
       "type": "Logo must be a PNG or JPEG image",
       "size": "Logo must be 2 MB or smaller"
     }
+  },
+  "notifications": {
+    "channels": {
+      "general": {
+        "name": "General",
+        "description": "Other updates from your school"
+      },
+      "messages": {
+        "name": "Messages",
+        "description": "Chat messages sent to you"
+      },
+      "announcements": {
+        "name": "Announcements",
+        "description": "Notices from your school"
+      },
+      "calls": {
+        "name": "Video calls",
+        "description": "Incoming, missed and scheduled video calls"
+      },
+      "academics": {
+        "name": "Report cards & results",
+        "description": "When a report card is published"
+      }
+    }
   }
 }
