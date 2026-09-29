@@ -4,6 +4,7 @@ import { ParentHomeScreen } from '../screens/ParentHomeScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { ChildDashboardScreen } from '../screens/principal/ChildDashboardScreen';
 import { ChildFeesScreen } from '../screens/principal/ChildFeesScreen';
+import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { colors } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
@@ -24,6 +25,7 @@ export function ParentNavigator() {
       <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
       <Stack.Screen name="ChildFees" component={ChildFeesScreen} />
       <Stack.Screen name="ReportCard" component={ReportCardScreen} />
+      <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
     </Stack.Navigator>
   );
 }

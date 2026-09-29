@@ -40,6 +40,9 @@ export type FeatureId =
   | 'attendanceDevices'
   | 'activityLog'
   | 'attendanceExport'
+  | 'myTimetable'
+  | 'timetableEditor'
+  | 'bellSchedule'
   | 'schoolLogo';
 
 export interface FeatureAction {
@@ -150,4 +153,8 @@ export type PrincipalStackParamList = {
   ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string } | undefined;
   QuizBankReview: { subjectId: string; subjectName: string; className: string; questions: GeneratedQuizQuestion[] };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
+  /** No params: the caller's own timetable. classSection: that section's. student: a parent's child. */
+  MyTimetable: { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'> } | undefined;
+  TimetableEditor: { classSection?: ClassSection } | undefined;
+  PeriodSetup: undefined;
 };
