@@ -1338,6 +1338,15 @@
         "name": "Alerts",
         "description": "Absence and fee reminders for your child"
       }
+    },
+    "prompt": {
+      "askTitle": "Stay in the loop",
+      "askBody": "Get notified about messages, homework and battles.",
+      "allow": "Allow notifications",
+      "offTitle": "Notifications are off",
+      "offBody": "You'll miss messages and battle invites.",
+      "turnOn": "Turn on",
+      "dismiss": "Dismiss"
     }
   },
   "parentComms": {

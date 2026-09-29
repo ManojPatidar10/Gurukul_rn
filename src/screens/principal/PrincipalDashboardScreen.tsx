@@ -12,6 +12,7 @@ import type { ClassSection, Employee, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
 import { ScreenContainer } from '../../components/ScreenContainer';
+import { NotificationPermissionPrompt } from '../../components/NotificationPermissionPrompt';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatSummaryCard } from '../../components/StatSummaryCard';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
@@ -289,6 +290,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         }
       />
       <ScreenContainer>
+        <NotificationPermissionPrompt />
         {!isStudent && !isTeacher && (
           <View style={styles.statRow}>
             <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />

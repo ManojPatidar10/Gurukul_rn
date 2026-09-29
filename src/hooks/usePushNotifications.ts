@@ -1,8 +1,7 @@
 import Constants from 'expo-constants';
-import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import type { Session } from '../api/authStorage';
 import { registerDeviceToken } from '../api/notifications';
@@ -11,6 +10,7 @@ import { getStudent } from '../api/students';
 import { FEATURE_FLAGS } from '../config/featureFlags';
 import i18n from '../i18n';
 import { navigationRef } from '../navigation/navigationRef';
+import { getPushStatus, refreshPushPermission, setPushRegisterHandler, updatePushStatus } from '../push/pushStatus';
 import { notificationTarget } from '../utils/notificationRouting';
 import { openNotificationTarget } from '../utils/openNotificationTarget';
 
@@ -59,19 +59,22 @@ async function setUpAndroidChannels() {
 }
 
 /**
- * Requests permission, registers this device's Expo push token with the backend, keeps that
- * registration fresh if Expo ever rolls the token, and handles tapping a notification - including
- * one that cold-started the app, which never reaches the live tap listener. Expo's own push
- * service is used (not a direct Firebase/APNs integration) - see PushNotificationService on the
- * backend for why: this is an Expo managed-workflow app, so there's no separate push project to
- * set up or pay for.
+ * Registers this device's Expo push token with the backend once notifications are allowed, keeps
+ * that registration fresh if Expo ever rolls the token, and handles tapping a notification -
+ * including one that cold-started the app, which never reaches the live tap listener. Expo's own
+ * push service is used (not a direct Firebase/APNs integration) - see PushNotificationService on
+ * the backend for why: this is an Expo managed-workflow app, so there's no separate push project
+ * to set up or pay for.
  *
- * A simulator/emulator has no push capability at all (Device.isDevice is false there), and as of
- * SDK 53, Expo Go itself no longer supports remote push tokens on either platform - only a real
- * development or production build does. getExpoPushTokenAsync throws in both cases, so that
- * specific failure is silently swallowed rather than logging an error every time the app runs
- * somewhere push isn't actually available. A failure to register the token with our own backend
- * (once we do have one) is a real problem though, so that's logged instead.
+ * It never shows the permission prompt itself: NotificationPermissionPrompt on the home screen
+ * explains why first and then asks (see requestPushPermission). It re-checks the permission each
+ * time the app comes back to the foreground, so turning notifications on in Settings registers
+ * the device without a restart.
+ *
+ * An emulator/simulator has no push capability at all, and as of SDK 53 Expo Go no longer supports
+ * remote push tokens - only a real development or production build does. Those are skipped
+ * quietly (pushStatus.supported). A token failure anywhere else is a real problem, such as a broken
+ * FCM config, so it's logged and shown on the push debug screen.
  */
 export function usePushNotifications(schoolId: string | null, session: Session | null) {
   // Keyed on who is signed in, not on the access token - that now rotates on every silent refresh,
@@ -94,66 +97,89 @@ export function usePushNotifications(schoolId: string | null, session: Session |
   }, []);
 
   useEffect(() => {
-    if (!schoolId || !sessionKey || !Device.isDevice) return;
+    if (!schoolId || !sessionKey) return;
     let cancelled = false;
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
 
-    // The last Expo token we tried to register, and whether a failure has already been logged, for
-    // this signed-in owner - so a repeat of the same token is a no-op and a failing backend is
-    // reported once rather than on every retry.
+    // The Expo token registered for this signed-in owner (null until a registration succeeds), and
+    // whether a failure has already been logged - so a repeat of the same token is a no-op and a
+    // failing backend is reported once rather than on every retry.
     let lastToken: string | null = null;
     let warned = false;
+    let inFlight: Promise<void> | null = null;
 
     // Pass the device token when we already have one (from the token listener): without it,
     // getExpoPushTokenAsync asks the OS for the device token again, and on iOS that re-fires the
     // token listener below - an endless register loop that starves the JS thread.
-    const fetchAndRegister = async (devicePushToken?: Notifications.DevicePushToken) => {
-      const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync({
-        ...(projectId ? { projectId } : {}),
-        ...(devicePushToken ? { devicePushToken } : {}),
-      });
+    const register = async (devicePushToken?: Notifications.DevicePushToken) => {
+      if (!getPushStatus().supported) return;
+      let expoPushToken: string;
+      try {
+        ({ data: expoPushToken } = await Notifications.getExpoPushTokenAsync({
+          ...(projectId ? { projectId } : {}),
+          ...(devicePushToken ? { devicePushToken } : {}),
+        }));
+      } catch (e) {
+        console.warn('[push] token failed', e);
+        updatePushStatus({ tokenError: (e as Error).message ?? String(e) });
+        return;
+      }
+      updatePushStatus({ expoPushToken, tokenError: null });
       if (cancelled || expoPushToken === lastToken) return;
-      lastToken = expoPushToken;
       try {
         await registerDeviceToken(schoolId, expoPushToken);
+        lastToken = expoPushToken;
+        updatePushStatus({ lastRegistration: { at: new Date().toISOString(), ok: true } });
       } catch (e) {
+        updatePushStatus({
+          lastRegistration: { at: new Date().toISOString(), ok: false, error: (e as Error).message },
+        });
         if (!warned) {
           warned = true;
           console.warn('[push] Failed to register device token with the backend', e);
         }
       }
     };
+    const fetchAndRegister = (devicePushToken?: Notifications.DevicePushToken) => {
+      if (!inFlight) inFlight = register(devicePushToken).finally(() => (inFlight = null));
+      return inFlight;
+    };
+    setPushRegisterHandler(() => fetchAndRegister());
 
-    (async () => {
+    // Every cold start registers again (no "already registered" caching across launches): the
+    // backend upsert is cheap, and it re-binds a phone whose registration was lost or moved.
+    const registerIfAllowed = async () => {
       try {
-        // Android 13+ only shows the permission prompt once the app has a channel.
-        await setUpAndroidChannels();
-
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let status = existingStatus;
-        if (status !== 'granted') {
-          ({ status } = await Notifications.requestPermissionsAsync());
-        }
-        if (status !== 'granted' || cancelled) return;
-
-        await fetchAndRegister();
-      } catch {
-        // Push isn't available here (Expo Go on SDK 53+, a simulator, or a denied permission) -
-        // the app works fine without it, just without a way to reach a backgrounded session.
+        const permission = await refreshPushPermission();
+        if (permission === 'granted' && !cancelled && !lastToken) await fetchAndRegister();
+      } catch (e) {
+        console.warn('[push] permission check failed', e);
       }
-    })();
+    };
+
+    // Android 13+ only shows the permission prompt once the app has a channel.
+    setUpAndroidChannels()
+      .catch(() => {})
+      .then(registerIfAllowed);
+
+    // Coming back from Settings (or anywhere) with notifications newly allowed registers the device.
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') registerIfAllowed();
+    });
 
     // In rare cases Expo rolls the underlying native token while the app is running, which
     // invalidates the Expo push token built from it - re-derive the Expo token from the raw device
     // token this listener provides (which isn't the format our backend expects) and re-register.
     // iOS also fires this on every getDevicePushTokenAsync, hence the same-token check above.
     const tokenSubscription = Notifications.addPushTokenListener((devicePushToken) => {
-      fetchAndRegister(devicePushToken).catch((e) => console.warn('[push] Failed to refresh device token', e));
+      fetchAndRegister(devicePushToken);
     });
 
     return () => {
       cancelled = true;
+      setPushRegisterHandler(null);
+      appStateSubscription.remove();
       tokenSubscription.remove();
     };
     // sessionKey changes on every login, logout and profile switch (a new owner should re-register

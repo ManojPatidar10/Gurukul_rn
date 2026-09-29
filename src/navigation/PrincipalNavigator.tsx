@@ -11,6 +11,7 @@ import { PublishReportCardsScreen } from '../screens/principal/PublishReportCard
 import { SectionReportCardsGridScreen } from '../screens/principal/SectionReportCardsGridScreen';
 import { GradingScaleScreen } from '../screens/principal/GradingScaleScreen';
 import { MarkMyAttendanceScreen } from '../screens/principal/MarkMyAttendanceScreen';
+import { PushDebugScreen } from '../screens/principal/PushDebugScreen';
 import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocationSettingsScreen';
 import { StaffAttendanceScreen } from '../screens/principal/StaffAttendanceScreen';
 import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAttendanceHistoryScreen';
@@ -119,6 +120,7 @@ export function PrincipalNavigator() {
     >
         <Stack.Screen name="PrincipalDashboard" component={PrincipalDashboardScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="PushDebug" component={PushDebugScreen} />
         <Stack.Screen name="SwitchChild" component={SwitchChildScreen} />
         <Stack.Screen name="ConnectGoogleAccount" component={ConnectGoogleAccountScreen} />
         <Stack.Screen name="GlobalSearch" component={GlobalSearchScreen} />
