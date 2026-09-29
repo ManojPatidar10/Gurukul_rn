@@ -11,7 +11,8 @@ Key facts:
 - Parents: the same app with a parent login. Parents see their child's attendance, fees and report card, in Hindi or English; all their children are on one login; sign-in is by one-time code.
 - Languages: the app works in English and Hindi.
 - Getting started: free 1-month pilot. The Smart Gurukul team imports the school's student register and trains staff. Pricing is shared after a demo.
-- Coming soon: parent chat and parent alerts, online fee payment, timetable, homework, transport and bus tracking, SMS, ID cards, admissions, AI quiz generation, PDF report cards. Not available yet: hostel, library, statutory payroll (PF/ESI/TDS).
+- Also included: parent chat and parent alerts (absence and fee-due), timetable, admissions, ID cards, AI quiz generation, PDF report cards.
+- Not available: online fee payment, homework, transport and bus tracking, SMS, hostel, library, statutory payroll (PF/ESI/TDS).
 
 ## Pages
 
