@@ -164,6 +164,10 @@
       "attendanceExport": {
         "title": "Export Attendance",
         "description": "Download student or staff attendance as a spreadsheet"
+      },
+      "aiQuizGenerator": {
+        "title": "AI Quiz Generator",
+        "description": "Draft a quiz from your syllabus and add it to the question bank"
       }
     }
   },
@@ -624,7 +628,7 @@
       "marksLabel": "{{marks}} marks",
       "answerLabel": "Answer",
       "explanationLabel": "Explanation",
-      "reviewNote": "AI-generated draft — review for accuracy before publishing to students.",
+      "reviewNote": "AI-generated draft. Check every question, answer and mark before using it - nothing is saved until you review it.",
       "assessmentTypes": {
         "QUIZ": "Quiz",
         "TEST": "Test",
@@ -641,15 +645,21 @@
         "MCQ": "Multiple choice",
         "SHORT_ANSWER": "Short answer",
         "LONG_ANSWER": "Long answer",
-        "TRUE_FALSE": "True / False"
+        "TRUE_FALSE": "True / False",
+        "NUMERIC": "Number answer",
+        "SHORT_WORD": "One/two-word answer"
       },
       "errors": {
         "subjectName": "Enter a subject.",
         "title": "Enter a title.",
         "syllabus": "Enter the syllabus or topics.",
-        "questionCount": "Enter a number of questions between 1 and 50.",
-        "maxMarks": "Enter total marks greater than 0."
-      }
+        "questionCount": "Enter a number of questions between 1 and {{max}}.",
+        "maxMarks": "Enter whole-number total marks, at least 1 per question.",
+        "assignment": "Choose a class and subject."
+      },
+      "classAndSubject": "Class and subject",
+      "noAssignments": "You are not assigned to any class subject yet. Ask your principal to assign you under Classes.",
+      "noSectionSubjects": "No subjects are assigned to this class yet, so questions from this draft cannot be saved to the question bank."
     },
     "upload": {
       "title": "Upload Resource",
@@ -682,6 +692,46 @@
         "description": "Enter a description.",
         "resourceUrl": "Enter a resource URL.",
         "file": "Choose a file to upload."
+      }
+    },
+    "bank": {
+      "title": "Review & save to question bank",
+      "intro": "Check and correct each question before saving. Saved questions go into the Arena question bank for this subject and class; only multiple-choice ones appear in Arena games.",
+      "include": "Save to question bank",
+      "notEligible": "Not auto-markable - for printing/sharing only",
+      "needsSubject": "Choose a subject assigned to this class to save questions to the question bank.",
+      "reviewAndSave": "Review & save to question bank ({{count}})",
+      "remove": "Remove",
+      "questionText": "Question",
+      "option": "Option {{letter}}",
+      "correctOption": "Correct option",
+      "numericAnswer": "Answer (number)",
+      "shortWordAnswer": "Answer (one or two words)",
+      "types": {
+        "MCQ": "Multiple choice",
+        "NUMERIC": "Number",
+        "SHORT_WORD": "One/two words"
+      },
+      "markingHint": {
+        "NUMERIC": "Marked automatically: the student's number must match exactly (2.50 counts as 2.5).",
+        "SHORT_WORD": "Marked automatically, ignoring capital letters and extra spaces."
+      },
+      "confirm": "I have checked every question and answer above.",
+      "save": "Save {{count}} questions",
+      "saved": "{{count}} questions added to the question bank.",
+      "errors": {
+        "noneSelected": "Select at least one question to save.",
+        "fixFirst": "Fix the highlighted questions first.",
+        "confirm": "Tick the box to confirm you have checked the questions.",
+        "questionText": "Enter the question.",
+        "questionTooLong": "The question is too long (max 500 characters).",
+        "optionsMissing": "Fill in all four options.",
+        "optionsDuplicate": "The four options must all be different.",
+        "optionTooLong": "An option is too long (max 255 characters).",
+        "correctOption": "Choose the correct option.",
+        "numericAnswer": "Enter a plain number, with no units.",
+        "shortWordAnswer": "Enter a one- or two-word answer.",
+        "answerTooLong": "The answer is too long."
       }
     }
   },

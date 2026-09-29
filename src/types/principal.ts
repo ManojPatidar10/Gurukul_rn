@@ -6,6 +6,7 @@ import type {
   FeeAssessment,
   FeePayment,
   FeeStructure,
+  GeneratedQuizQuestion,
   InfraExpenseRequest,
   PayrollLine,
   Student,
@@ -28,6 +29,7 @@ export type FeatureId =
   | 'events'
   | 'academicHelper'
   | 'teacherTools'
+  | 'aiQuizGenerator'
   | 'reportCard'
   | 'gradingScale'
   | 'markMyAttendance'
@@ -141,6 +143,9 @@ export type PrincipalStackParamList = {
   StudentPerformance: { student: Student };
   TeacherPerformance: { employee: Employee };
   TeacherToolsHub: undefined;
-  ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
+  // Undefined = a teacher generating for themselves (from their dashboard tile); set = a principal
+  // acting for a teacher from the Teacher Tools hub.
+  ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string } | undefined;
+  QuizBankReview: { subjectId: string; subjectName: string; className: string; questions: GeneratedQuizQuestion[] };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
 };

@@ -1,5 +1,6 @@
 import { api } from './client';
 import type {
+  BulkCreateQuizQuestionsRequest,
   ChallengeDetailResponse,
   ChallengeSummaryResponse,
   CreateChallengeRequest,
@@ -11,6 +12,11 @@ import type {
 
 export function createQuizQuestion(schoolId: string, req: CreateQuizQuestionRequest) {
   return api.post<QuizQuestionResponse>('/api/v1/gamification/arena/questions', req, schoolId);
+}
+
+/** Saves reviewed questions (MCQ / NUMERIC / SHORT_WORD) for one subject + grade, all or nothing. */
+export function bulkCreateQuizQuestions(schoolId: string, req: BulkCreateQuizQuestionsRequest) {
+  return api.post<QuizQuestionResponse[]>('/api/v1/gamification/arena/questions/bulk', req, schoolId);
 }
 
 export function listQuizQuestions(
