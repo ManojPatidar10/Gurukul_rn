@@ -63,7 +63,8 @@ export function SchoolLocationSettingsScreen({ navigation }: Props) {
     radiusMeters.trim() !== '' &&
     !Number.isNaN(Number(latitude)) &&
     !Number.isNaN(Number(longitude)) &&
-    Number(radiusMeters) > 0;
+    Number(radiusMeters) > 0 &&
+    Number(radiusMeters) <= 1000;
 
   const handleSave = async () => {
     setSaving(true);
@@ -126,7 +127,7 @@ export function SchoolLocationSettingsScreen({ navigation }: Props) {
               value={radiusMeters}
               onChangeText={setRadiusMeters}
               keyboardType="numeric"
-              placeholder="100"
+              placeholder="100 (max 1000)"
             />
 
             <Pressable

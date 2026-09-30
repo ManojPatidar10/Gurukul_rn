@@ -677,6 +677,10 @@ export interface SelfMarkAttendanceRequest {
   latitude: number;
   longitude: number;
   accuracy?: number;
+  /** True when Android reports the fix came from a mock-location app; the server refuses it. */
+  mocked?: boolean;
+  /** When the device took the fix, epoch ms; the server refuses stale fixes. */
+  fixTimestamp?: number;
 }
 
 export interface StaffAttendanceRecord {
