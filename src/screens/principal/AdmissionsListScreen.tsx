@@ -9,6 +9,7 @@ import type { Admission, AdmissionStage } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { ADMISSION_STAGES, stageVariant } from '../../utils/admissionStages';
@@ -19,6 +20,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'AdmissionsList'>;
 
 /** Admin-only: every admission application, filterable by stage. */
 export function AdmissionsListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [stage, setStage] = useState<AdmissionStage | null>(null);
@@ -74,6 +76,7 @@ export function AdmissionsListScreen({ navigation }: Props) {
         {loading && rows.length === 0 && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={rows}
           keyExtractor={(item) => item.id}
           refreshing={loading && rows.length > 0}

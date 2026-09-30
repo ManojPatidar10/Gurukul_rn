@@ -8,6 +8,7 @@ import type { AuditAction, AuditLogEntry } from '../../api/auditLog';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { formatAuditValue, humanize } from '../../utils/activityLogFormat';
@@ -25,6 +26,7 @@ const ACTION_COLORS: Record<AuditAction, { base: string; light: string }> = {
 };
 
 export function ActivityLogScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { showToast } = useToast();
@@ -179,7 +181,7 @@ export function ActivityLogScreen({ navigation }: Props) {
             onEndReachedThreshold={0.5}
             ListEmptyComponent={<Text style={styles.empty}>{t('activityLog.empty')}</Text>}
             ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.loader} color={accent.base} /> : null}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { paddingBottom: listBottom }]}
           />
         )}
       </View>

@@ -2,6 +2,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useBottomInset } from '../hooks/useBottomInset';
 import { colors, radius, spacing } from '../theme/colors';
 
 interface Props {
@@ -38,6 +39,7 @@ export default function DateField({
   maximumDate,
   required,
 }: Props) {
+  const sheetBottom = useBottomInset(spacing.xl);
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const currentDate = value ? parseDateString(value) : new Date();
@@ -76,7 +78,7 @@ export default function DateField({
       {Platform.OS === 'ios' && (
         <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
           <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-            <Pressable style={styles.sheet} onPress={() => {}}>
+            <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={() => {}}>
               <Text style={styles.sheetTitle}>{label}</Text>
               <DateTimePicker
                 value={currentDate}

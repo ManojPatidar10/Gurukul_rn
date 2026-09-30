@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { createSubject, listSubjects } from '../api/subjects';
 import type { Subject } from '../api/types';
+import { useBottomInset } from '../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 import { getErrorMessage } from '../api/errorMessage';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props) {
+  const sheetBottom = useBottomInset(spacing.lg);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>Select subject</Text>
 
             {error && <ErrorNotice message={error} />}

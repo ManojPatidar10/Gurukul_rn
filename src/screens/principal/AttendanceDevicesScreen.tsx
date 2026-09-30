@@ -14,6 +14,7 @@ import LabeledInput from '../../components/LabeledInput';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -29,6 +30,7 @@ function methodLabel(method: AttendanceMethod, t: (key: string) => string) {
 }
 
 export function AttendanceDevicesScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { showToast } = useToast();
@@ -157,6 +159,7 @@ export function AttendanceDevicesScreen({ navigation }: Props) {
         )}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={devices}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

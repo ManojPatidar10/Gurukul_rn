@@ -10,6 +10,7 @@ import { SearchBar } from '../../components/SearchBar';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -18,6 +19,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Classmates'>;
 
 export function ClassmatesScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [classmates, setClassmates] = useState<Student[]>([]);
@@ -68,6 +70,7 @@ export function ClassmatesScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={visible}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={

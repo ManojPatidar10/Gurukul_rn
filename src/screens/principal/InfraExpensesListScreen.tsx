@@ -7,6 +7,7 @@ import type { InfraExpenseRequest } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -15,6 +16,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'InfraExpensesList'>;
 
 export function InfraExpensesListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const [requests, setRequests] = useState<InfraExpenseRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +54,7 @@ export function InfraExpensesListScreen({ navigation }: Props) {
         {error && <ErrorNotice message={error} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={requests}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

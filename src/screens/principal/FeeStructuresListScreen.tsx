@@ -8,6 +8,7 @@ import type { FeeStructure } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -19,6 +20,7 @@ function totalOf(structure: FeeStructure) {
 }
 
 export function FeeStructuresListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [structures, setStructures] = useState<FeeStructure[]>([]);
@@ -59,6 +61,7 @@ export function FeeStructuresListScreen({ navigation }: Props) {
         </Pressable>
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={structures}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

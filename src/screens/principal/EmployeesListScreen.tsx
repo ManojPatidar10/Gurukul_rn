@@ -12,6 +12,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useToast } from '../../context/ToastContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -22,6 +23,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeesList'>;
 const PAGE_SIZE = 50;
 
 export function EmployeesListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -105,6 +107,7 @@ export function EmployeesListScreen({ navigation }: Props) {
         {error && <ErrorNotice message={error} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={employees}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -24,6 +25,7 @@ function examStatus(assessmentDate: string): { label: string; variant: 'info' | 
 }
 
 export function SectionAssessmentsListScreen({ route, navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const canManage = session.ownerType === 'EMPLOYEE';
@@ -107,6 +109,7 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         )}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={visibleAssessments}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
