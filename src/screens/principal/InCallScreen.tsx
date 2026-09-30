@@ -9,6 +9,7 @@ import { endImmediateCall, endScheduledCall } from '../../api/calls';
 import { subscribeToMyCallEvents } from '../../api/callSocket';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 
@@ -27,6 +28,7 @@ export function InCallScreen({ route, navigation }: Props) {
   const { roomName, provider, displayName, callLogId, scheduledCallId } = route.params;
   const schoolId = useSchoolId();
   const { session } = useAuth();
+  const endButtonBottom = useBottomInset(spacing.xl);
   const [permissionsGranted, setPermissionsGranted] = useState<boolean | null>(null);
   const endedRef = useRef(false);
 
@@ -95,7 +97,7 @@ export function InCallScreen({ route, navigation }: Props) {
         allowsInlineMediaPlayback
         mediaCapturePermissionGrantType="grant"
       />
-      <Pressable style={styles.endButton} onPress={handleEnd} accessibilityLabel="End call">
+      <Pressable style={[styles.endButton, { bottom: endButtonBottom }]} onPress={handleEnd} accessibilityLabel="End call">
         <Text style={styles.endButtonText}>End call</Text>
       </Pressable>
     </View>
@@ -125,7 +127,6 @@ const styles = StyleSheet.create({
   backButtonText: { color: colors.white, fontWeight: '700' },
   endButton: {
     position: 'absolute',
-    bottom: spacing.xl,
     left: spacing.xl,
     right: spacing.xl,
     backgroundColor: colors.error,

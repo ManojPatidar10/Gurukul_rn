@@ -18,6 +18,7 @@ import { StatSummaryCard } from '../../components/StatSummaryCard';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, spacing } from '../../theme/colors';
 import type { FeatureAction, FeatureId, PrincipalStackParamList } from '../../types/principal';
 
@@ -138,6 +139,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const { session } = useAuth();
   const isStudent = session.ownerType === 'STUDENT';
   const isTeacher = session.role === 'TEACHER';
+  const fabBottom = useBottomInset();
   const [school, setSchool] = useState<School | null>(null);
   const [myName, setMyName] = useState<string | null>(null);
   const [myEmployee, setMyEmployee] = useState<Employee | null>(null);
@@ -291,7 +293,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           </View>
         }
       />
-      <ScreenContainer>
+      {/* Leave room below the last tile so the floating bot button never covers it. */}
+      <ScreenContainer contentContainerStyle={{ paddingBottom: fabBottom + FAB_SIZE + spacing.lg }}>
         <NotificationPermissionPrompt />
         {!isStudent && !isTeacher && (
           <View style={styles.statRow}>
@@ -358,12 +361,14 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           ))}
         </View>
       </ScreenContainer>
-      <Pressable style={styles.fab} onPress={() => navigation.navigate('HelpdeskBot')} accessibilityLabel="Helpdesk Bot">
+      <Pressable style={[styles.fab, { bottom: fabBottom }]} onPress={() => navigation.navigate('HelpdeskBot')} accessibilityLabel="Helpdesk Bot">
         <FontAwesome5 name="robot" size={22} color={colors.white} />
       </Pressable>
     </View>
   );
 }
+
+const FAB_SIZE = 56;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
@@ -382,10 +387,9 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: spacing.lg,
-    bottom: spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: FAB_SIZE,
+    height: FAB_SIZE,
+    borderRadius: FAB_SIZE / 2,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',

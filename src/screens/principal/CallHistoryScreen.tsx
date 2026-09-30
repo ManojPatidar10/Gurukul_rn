@@ -7,6 +7,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { CallLogResponse } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -18,6 +19,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'CallHistory'>;
 const PAGE_SIZE = 50;
 
 export function CallHistoryScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [logs, setLogs] = useState<CallLogResponse[]>([]);
@@ -78,6 +80,7 @@ export function CallHistoryScreen({ navigation }: Props) {
         )}
         {error && <ErrorNotice message={error} />}
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={logs}
           keyExtractor={(log) => log.id}
           onEndReached={handleLoadMore}

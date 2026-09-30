@@ -18,6 +18,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { TimetableDayTabs } from '../../components/TimetableDayTabs';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { cellsToSlotRequests, defaultDay, slotKey, slotsToCells, type CellAssignment } from '../../utils/timetable';
@@ -34,6 +35,7 @@ const assignmentKey = (a: CellAssignment) => `${a.subjectId}|${a.teacherId}`;
  * server rejects clashes (a teacher already teaching elsewhere then) and they're listed here.
  */
 export function TimetableEditorScreen({ route, navigation }: Props) {
+  const sheetBottom = useBottomInset(spacing.lg);
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [classSection, setClassSection] = useState<ClassSection | null>(route.params?.classSection ?? null);
@@ -273,7 +275,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
 
       <Modal visible={!!picking} transparent animationType="slide" onRequestClose={() => setPicking(null)}>
         <Pressable style={styles.backdrop} onPress={() => setPicking(null)}>
-          <Pressable style={styles.sheet} onPress={() => {}}>
+          <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={() => {}}>
             {picking && (
               <>
                 <Text style={styles.sheetTitle}>

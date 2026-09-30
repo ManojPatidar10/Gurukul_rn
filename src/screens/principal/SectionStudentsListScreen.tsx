@@ -8,6 +8,7 @@ import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -16,6 +17,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionStudentsList'>;
 
 export function SectionStudentsListScreen({ route, navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const classSection = route.params.classSection;
   const [students, setStudents] = useState<Student[]>([]);
@@ -40,6 +42,7 @@ export function SectionStudentsListScreen({ route, navigation }: Props) {
         {loading && <ActivityIndicator style={styles.loading} />}
         {error && <ErrorNotice message={error} />}
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={students}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={!loading ? <Text style={styles.empty}>0 students in this section.</Text> : null}

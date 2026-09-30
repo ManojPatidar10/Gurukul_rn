@@ -9,6 +9,7 @@ import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -16,6 +17,7 @@ import { getErrorMessage } from '../../api/errorMessage';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'VendorsList'>;
 
 export function VendorsListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -56,6 +58,7 @@ export function VendorsListScreen({ navigation }: Props) {
         </Pressable>
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={vendors}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

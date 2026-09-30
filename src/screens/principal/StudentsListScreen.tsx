@@ -12,6 +12,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useToast } from '../../context/ToastContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -57,6 +58,7 @@ const StudentRow = memo(function StudentRow({
 });
 
 export function StudentsListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [students, setStudents] = useState<Student[]>([]);
@@ -141,6 +143,7 @@ export function StudentsListScreen({ navigation }: Props) {
         {error && <ErrorNotice message={error} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={students}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

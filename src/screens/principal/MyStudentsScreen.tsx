@@ -8,6 +8,7 @@ import type { ClassSection } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -18,6 +19,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyStudents'>;
 const accent = accents.students;
 
 export function MyStudentsScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [sections, setSections] = useState<ClassSection[]>([]);
@@ -52,6 +54,7 @@ export function MyStudentsScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={sections}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={

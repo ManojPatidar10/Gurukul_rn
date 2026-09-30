@@ -10,6 +10,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -51,6 +52,7 @@ function statusVariant(status: string | null): 'success' | 'warning' | 'error' |
 }
 
 export function EventsListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const canCreate = session.ownerType === 'EMPLOYEE';
@@ -117,6 +119,7 @@ export function EventsListScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={events}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={

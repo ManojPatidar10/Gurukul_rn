@@ -10,6 +10,7 @@ import { SearchBar } from '../../components/SearchBar';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -29,6 +30,7 @@ function statusVariant(status: string): 'success' | 'error' | 'warning' | 'neutr
 }
 
 export function FeeAssessmentsListScreen({ navigation }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [assessments, setAssessments] = useState<FeeAssessment[]>([]);
@@ -149,6 +151,7 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
         </View>
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={visible}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

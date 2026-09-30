@@ -6,6 +6,7 @@ import { listSectionsByClass } from '../../api/classSections';
 import type { ClassSection } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -14,6 +15,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionsList'>;
 
 export function SectionsListScreen({ route, navigation }: Props) {
+  const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { className } = route.params;
   const [sections, setSections] = useState<ClassSection[]>([]);
@@ -47,6 +49,7 @@ export function SectionsListScreen({ route, navigation }: Props) {
       <View style={styles.body}>
         {error && <ErrorNotice message={error} />}
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={sections}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}

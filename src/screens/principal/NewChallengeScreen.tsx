@@ -11,6 +11,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'NewChallenge'>;
 
 export function NewChallengeScreen({ navigation }: Props) {
   const schoolId = useSchoolId();
+  const footerBottom = useBottomInset(spacing.md);
   const { session } = useAuth();
   const [classmates, setClassmates] = useState<Student[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -68,7 +70,8 @@ export function NewChallengeScreen({ navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader title="Challenge a classmate" onBack={() => navigation.goBack()} />
-      <ScreenContainer>
+      {/* The footer pads past the system bar once it shows; until then the scroll content does. */}
+      <ScreenContainer bottomInset={loading}>
         {loading && <ActivityIndicator color={colors.primary} />}
         {error && <ErrorNotice message={error} />}
 
@@ -108,7 +111,7 @@ export function NewChallengeScreen({ navigation }: Props) {
         )}
       </ScreenContainer>
       {!loading && (
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: footerBottom }]}>
           <Pressable
             style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]}
             onPress={handleSubmit}

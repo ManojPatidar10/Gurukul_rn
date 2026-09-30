@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useBottomInset } from '../hooks/useBottomInset';
 import { colors, radius, spacing } from '../theme/colors';
 
 export interface DropdownOption {
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function Dropdown({ label, value, options, onSelect, placeholder, required }: Props) {
+  const sheetBottom = useBottomInset(spacing.xl);
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
@@ -37,7 +39,7 @@ export default function Dropdown({ label, value, options, onSelect, placeholder,
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <Pressable style={styles.sheet} onPress={() => {}}>
+          <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={() => {}}>
             <Text style={styles.sheetTitle}>{label}</Text>
             <FlatList
               data={options}

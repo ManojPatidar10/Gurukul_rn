@@ -7,6 +7,7 @@ import type { SchoolSearchResult } from '../api/types';
 import LabeledInput from '../components/LabeledInput';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { useBottomInset } from '../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import { getErrorMessage } from '../api/errorMessage';
 import { ErrorNotice } from '../components/ErrorNotice';
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
+  const listBottom = useBottomInset();
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SchoolSearchResult[]>([]);
@@ -52,6 +54,7 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
         {error && <ErrorNotice message={error} />}
 
         <FlatList
+          contentContainerStyle={{ paddingBottom: listBottom }}
           data={results}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
