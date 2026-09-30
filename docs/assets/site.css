@@ -235,6 +235,10 @@ table.compare { width: 100%; border-collapse: collapse; min-width: 620px; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--sg-violet-600); box-shadow: 0 0 0 4px rgba(124, 58, 237, .15); }
 .field input[aria-invalid="true"] { border-color: var(--sg-danger); }
 .field .err { color: var(--sg-danger); font-size: .86rem; }
+.service-picks { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+.service-picks legend { font: 500 .9rem var(--sg-font-display); color: var(--sg-ink-600); margin-bottom: 6px; padding: 0; }
+.service-picks label { display: flex; align-items: center; gap: 9px; font-size: .95rem; color: var(--sg-ink-900); cursor: pointer; }
+.service-picks input { width: 18px; height: 18px; flex: none; accent-color: var(--sg-violet-600); }
 .hp { position: absolute !important; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .form-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 18px; }
 .form-note { font-size: .88rem; color: var(--sg-ink-400); margin: 12px 0 0; }
