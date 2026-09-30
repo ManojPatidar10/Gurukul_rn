@@ -41,6 +41,7 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
   const [form, setForm] = useState(emptyForm);
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [radiusMeters, setRadiusMeters] = useState('');
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [logo, setLogo] = useState<PickedLogo | null>(null);
@@ -82,14 +83,29 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
       showToast(t('schoolSetup.errors.phone'), 'error');
       return;
     }
+    const lat = latitude.trim();
+    const lng = longitude.trim();
+    const hasLocation = lat !== '' || lng !== '';
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    if (hasLocation && (lat === '' || lng === '' || !Number.isFinite(latNum) || !Number.isFinite(lngNum)
+        || Math.abs(latNum) > 90 || Math.abs(lngNum) > 180)) {
+      showToast(t('schoolSetup.errors.location'), 'error');
+      return;
+    }
+    const radiusText = radiusMeters.trim();
+    const radiusNum = radiusText === '' ? 100 : Number(radiusText);
+    if (hasLocation && (!Number.isInteger(radiusNum) || radiusNum < 25 || radiusNum > 700)) {
+      showToast(t('schoolSetup.errors.radius'), 'error');
+      return;
+    }
     setSubmitting(true);
     try {
-      const hasLocation = latitude.trim() !== '' && longitude.trim() !== '';
       const { school, admin } = await registerSchool({
         ...form,
-        latitude: hasLocation ? Number(latitude) : undefined,
-        longitude: hasLocation ? Number(longitude) : undefined,
-        geofenceRadiusMeters: hasLocation ? 100 : undefined,
+        latitude: hasLocation ? latNum : undefined,
+        longitude: hasLocation ? lngNum : undefined,
+        geofenceRadiusMeters: hasLocation ? radiusNum : undefined,
       });
       await setStoredSchoolId(school.id);
       if (logo) {
@@ -154,6 +170,13 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
           onChangeText={setLongitude}
           keyboardType="numbers-and-punctuation"
           placeholder="e.g. 75.7873"
+        />
+        <LabeledInput
+          label={t('schoolSetup.radius')}
+          value={radiusMeters}
+          onChangeText={setRadiusMeters}
+          keyboardType="numeric"
+          placeholder="100"
         />
 
         <LabeledInput
