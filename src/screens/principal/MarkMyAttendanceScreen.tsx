@@ -84,11 +84,18 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
       }
 
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      if (position.mocked) {
+        setError('Your phone is using a fake (mock) location. Turn off any fake GPS app and try again.');
+        setStatus('error');
+        return;
+      }
       setStatus('submitting');
       const saved = await selfMarkAttendance(schoolId, {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy ?? undefined,
+        mocked: position.mocked ?? false,
+        fixTimestamp: position.timestamp,
       });
       setRecord(saved);
       setStatus('success');
