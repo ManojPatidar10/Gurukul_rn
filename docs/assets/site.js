@@ -1,4 +1,4 @@
-// Smart Gurukul marketing site: mobile nav + demo-request form. No dependencies.
+// Smart Gurukul marketing site: mobile nav + demo / website-services request form. No dependencies.
 (function () {
   var header = document.querySelector('.site-header');
   var menuBtn = document.querySelector('.menu-btn');
@@ -17,6 +17,9 @@
 
   var API = 'https://api.smartgurukul.org/api/v1/leads';
   var hi = document.documentElement.lang === 'hi';
+  // website-services.html reuses this form script, marked with data-request-type="WEBSITE_SERVICES".
+  var requestType = form.getAttribute('data-request-type') || 'DEMO';
+  var services = requestType === 'WEBSITE_SERVICES';
   var msg = {
     required: hi ? 'यह ज़रूरी है' : 'This is required',
     phone: hi ? '10 अंकों का मोबाइल नंबर डालें' : 'Enter a 10-digit Indian mobile number',
@@ -24,7 +27,9 @@
     sending: hi ? 'भेजा जा रहा है…' : 'Sending…',
     ok: hi
       ? 'धन्यवाद! हमारी टीम 1 कार्यदिवस में आपसे संपर्क करेगी।'
-      : 'Thank you! Our team will call you within 1 working day to set up your demo.',
+      : services
+        ? 'Thank you! Our team will call you within 1 working day to discuss your website.'
+        : 'Thank you! Our team will call you within 1 working day to set up your demo.',
     fail: hi
       ? 'अभी भेज नहीं पाए। कृपया sales@smartgurukul.org पर ईमेल करें।'
       : "We couldn't send that right now. Please email sales@smartgurukul.org and we'll reply the same day.",
@@ -71,16 +76,22 @@
       return;
     }
     var f = form.elements;
+    // Not every form has every field (the website-services form has no state or student count).
+    function val(name) { var el = f[name]; return el && el.value.trim() ? el.value.trim() : null; }
+    var picked = [].slice.call(form.querySelectorAll('input[name="services"]:checked')).map(function (c) { return c.value; });
     var body = {
+      requestType: requestType,
       name: f.name.value.trim(),
       schoolName: f.schoolName.value.trim(),
-      role: f.role.value || null,
+      role: val('role'),
       phone: f.phone.value.trim(),
-      email: f.email.value.trim() || null,
-      city: f.city.value.trim() || null,
-      state: f.state.value || null,
-      studentCount: f.studentCount.value.trim() || null,
-      message: f.message.value.trim() || null,
+      email: val('email'),
+      city: val('city'),
+      state: val('state'),
+      studentCount: val('studentCount'),
+      services: picked.length ? picked : null,
+      budget: val('budget'),
+      message: val('message'),
       sourcePage: location.pathname,
       website: f.website.value
     };
@@ -94,7 +105,7 @@
         if (res.ok) {
           form.reset();
           show('ok', msg.ok);
-          if (window.gtag) window.gtag('event', 'generate_lead', { method: 'demo_form' });
+          if (window.gtag) window.gtag('event', 'generate_lead', { method: services ? 'website_services_form' : 'demo_form' });
         } else if (res.status === 429) {
           show('bad', msg.tooMany);
         } else {

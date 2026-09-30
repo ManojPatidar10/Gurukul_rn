@@ -84,6 +84,7 @@ NAV = [
     ("gamified-learning.html", "Games", "गेम्स"),
     ("gps-attendance.html", "GPS Attendance", "GPS हाज़िरी"),
     ("parent-app.html", "Parent App", "पैरेंट ऐप"),
+    ("website-services.html", "Websites", "वेबसाइट"),
     ("compare.html", "Compare", "तुलना"),
 ]
 
@@ -107,6 +108,9 @@ def header(meta):
     for href, en, hin in NAV:
         cur = ' aria-current="page"' if p == href else ""
         links.append(f'<li><a href="{rel(p, href)}"{cur}>{hin if hi else en}</a></li>')
+    if p == "index.html":
+        # onboarding-toolkit.html is hand-written in docs/ and linked from the English home page only.
+        links.append(f'<li><a href="{rel(p, "onboarding-toolkit.html")}">Onboarding</a></li>')
     alt = meta.get("alternate")
     if hi:
         lang_link = f'<a class="lang" href="{rel(p, alt or "index.html")}" hreflang="en" lang="en">English</a>'
@@ -114,6 +118,9 @@ def header(meta):
         lang_link = f'<a class="lang" href="{rel(p, alt or "hi/index.html")}" hreflang="hi" lang="hi">हिन्दी</a>'
     home = rel(p, "hi/index.html" if hi else "index.html")
     demo = "#demo" if meta.get("has_form") else rel(p, ("hi/index.html" if hi else "index.html") + "#demo")
+    # A page whose form isn't the demo form (e.g. website-services.html) points the header button at its own form.
+    demo = meta.get("cta_href", demo)
+    cta = meta.get("cta_label", 'डेमो बुक करें' if hi else 'Book a free demo')
     return f"""<a class="skip" href="#main">{'मुख्य सामग्री पर जाएं' if hi else 'Skip to content'}</a>
 <header class="site-header">
   <div class="wrap nav">
@@ -124,7 +131,7 @@ def header(meta):
     <ul class="nav-links">{''.join(links)}</ul>
     <div class="nav-cta">
       {lang_link}
-      <a class="btn btn-primary btn-sm" href="{demo}">{'डेमो बुक करें' if hi else 'Book a free demo'}</a>
+      <a class="btn btn-primary btn-sm" href="{demo}">{cta}</a>
     </div>
   </div>
 </header>"""
@@ -150,6 +157,7 @@ def footer(meta):
           <li><a href="{r('gps-attendance.html')}">GPS attendance</a></li>
           <li><a href="{r('parent-app.html')}">Parent app</a></li>
           <li><a href="{r('money-features.html')}">Fees &amp; payroll</a></li>
+          <li><a href="{r('website-services.html')}">{'स्कूल वेबसाइट' if hi else 'School websites'}</a></li>
         </ul>
       </div>
       <div>
@@ -158,6 +166,7 @@ def footer(meta):
           <li><a href="{r('compare.html')}">{'दूसरे सॉफ़्टवेयर से तुलना' if hi else 'vs. other school software'}</a></li>
           <li><a href="{r('index.html')}#faq">FAQ</a></li>
           <li><a href="{r('hi/index.html')}" lang="hi">हिन्दी</a></li>
+          <li><a href="{r('onboarding-toolkit.html')}">School onboarding toolkit</a></li>
         </ul>
       </div>
       <div>
@@ -311,9 +320,9 @@ def build():
         urls.append(f"  <url>\n    <loc>{canonical(meta)}</loc>\n    <lastmod>{TODAY}</lastmod>{alts}\n"
                     f"    <priority>{meta.get('priority', '0.7')}</priority>\n  </url>")
     # Hand-written pages that live directly in docs/ rather than in pages/.
-    for static in ("money-features.html",):
+    for static, priority in (("money-features.html", "0.6"), ("onboarding-toolkit.html", "0.7")):
         urls.append(f"  <url>\n    <loc>{SITE}/{static}</loc>\n    <lastmod>{TODAY}</lastmod>\n"
-                    f"    <priority>0.6</priority>\n  </url>")
+                    f"    <priority>{priority}</priority>\n  </url>")
     (OUT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
