@@ -47,7 +47,8 @@ export type FeatureId =
   | 'myTimetable'
   | 'timetableEditor'
   | 'bellSchedule'
-  | 'schoolLogo';
+  | 'schoolLogo'
+  | 'schoolLocation';
 
 export interface FeatureAction {
   id: FeatureId;

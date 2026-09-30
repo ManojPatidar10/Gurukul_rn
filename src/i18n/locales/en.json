@@ -61,9 +61,12 @@
     "errors": {
       "pincode": "Enter a valid 6-digit pincode.",
       "email": "Enter a valid contact email address.",
-      "phone": "Enter a valid 10-digit contact phone number."
+      "phone": "Enter a valid 10-digit contact phone number.",
+      "location": "Enter both latitude and longitude as numbers, or leave both blank.",
+      "radius": "Radius must be a number from 25 to 700 meters."
     },
-    "logoUploadFailed": "School registered, but the logo couldn't be uploaded ({{message}}). You can add it later from the School Logo tile."
+    "logoUploadFailed": "School registered, but the logo couldn't be uploaded ({{message}}). You can add it later from the School Logo tile.",
+    "radius": "Geofence radius in meters (optional, 25-700)"
   },
   "dashboard": {
     "fallbackTitle": "Smart Gurukul",
@@ -197,6 +200,10 @@
       "idCards": {
         "title": "ID Cards",
         "description": "Print ID card sheets for a class or all staff"
+      },
+      "schoolLocation": {
+        "title": "School Location",
+        "description": "Where teachers can check in, and how far out"
       }
     }
   },

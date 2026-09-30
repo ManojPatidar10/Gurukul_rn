@@ -34,7 +34,7 @@ const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAtt
 // principal reaches the same screen through Teacher Tools, acting for a chosen teacher.
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance', 'aiQuizGenerator'];
 // Shown only to school admins - the backend rejects everyone else anyway.
-const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'timetableEditor', 'bellSchedule', 'schoolLogo', 'idCards', 'newAdmission', 'admissions'];
+const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'timetableEditor', 'bellSchedule', 'schoolLogo', 'schoolLocation', 'idCards', 'newAdmission', 'admissions'];
 // A teacher's own periods / a student's class timetable. An admin edits timetables instead.
 const TEACHER_AND_STUDENT_FEATURES: FeatureId[] = ['myTimetable'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
@@ -101,6 +101,7 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   timetableEditor: 'TimetableEditor',
   bellSchedule: 'PeriodSetup',
   schoolLogo: 'SchoolLogoSettings',
+  schoolLocation: 'SchoolLocationSettings',
   idCards: 'IdCardSheets',
 };
 
@@ -176,6 +177,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'attendanceDevices', title: t('dashboard.features.attendanceDevices.title'), icon: 'id-card', description: t('dashboard.features.attendanceDevices.description') },
     { id: 'attendanceExport', title: t('dashboard.features.attendanceExport.title'), icon: 'file-excel', description: t('dashboard.features.attendanceExport.description') },
     { id: 'schoolLogo', title: t('dashboard.features.schoolLogo.title'), icon: 'image', description: t('dashboard.features.schoolLogo.description') },
+    { id: 'schoolLocation', title: t('dashboard.features.schoolLocation.title'), icon: 'map-marked-alt', description: t('dashboard.features.schoolLocation.description') },
     { id: 'idCards', title: t('dashboard.features.idCards.title'), icon: 'id-badge', description: t('dashboard.features.idCards.description') },
     { id: 'activityLog', title: t('dashboard.features.activityLog.title'), icon: 'history', description: t('dashboard.features.activityLog.description') },
   ];
