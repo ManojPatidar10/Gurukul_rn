@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { listEmployees, searchEmployees } from '../../api/employees';
+import { isActiveEmployee, listEmployees, searchEmployees } from '../../api/employees';
 import type { Employee } from '../../api/types';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -35,6 +35,7 @@ export function EmployeesListScreen({ navigation }: Props) {
   const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
   const { showToast } = useToast();
 
   const load = useCallback(
@@ -94,6 +95,9 @@ export function EmployeesListScreen({ navigation }: Props) {
     load(page + 1, true).finally(() => setLoadingMore(false));
   };
 
+  const inactiveCount = employees.filter((e) => !isActiveEmployee(e)).length;
+  const visibleEmployees = showInactive ? employees : employees.filter(isActiveEmployee);
+
   return (
     <View style={styles.root}>
       <ScreenHeader title={t('employees.list.title')} onBack={() => navigation.goBack()} />
@@ -104,11 +108,19 @@ export function EmployeesListScreen({ navigation }: Props) {
 
         <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name" />
 
+        {(inactiveCount > 0 || showInactive) && (
+          <Pressable style={styles.inactiveToggle} onPress={() => setShowInactive((v) => !v)} hitSlop={8}>
+            <Text style={styles.inactiveToggleText}>
+              {showInactive ? t('employees.list.hideInactive') : t('employees.list.showInactive', { count: inactiveCount })}
+            </Text>
+          </Pressable>
+        )}
+
         {error && <ErrorNotice message={error} />}
 
         <FlatList
           contentContainerStyle={{ paddingBottom: listBottom }}
-          data={employees}
+          data={visibleEmployees}
           keyExtractor={(item) => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
           onEndReached={handleLoadMore}
@@ -164,6 +176,8 @@ const styles = StyleSheet.create({
   addButtonText: { color: colors.white, fontWeight: '700' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
+  inactiveToggle: { alignSelf: 'flex-end', marginBottom: spacing.sm },
+  inactiveToggleText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
   footerLoader: { marginVertical: spacing.md },
   loader: { marginTop: 40 },
   row: {

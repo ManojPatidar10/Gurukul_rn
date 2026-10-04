@@ -5,7 +5,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { useTranslation } from 'react-i18next';
 
 import { createConversation, listChatContacts } from '../../api/chat';
-import { listAllEmployees } from '../../api/employees';
+import { isActiveEmployee, listAllEmployees } from '../../api/employees';
 import { listAllStudents } from '../../api/students';
 import type { ChatContact, OwnerType, Student } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -70,7 +70,7 @@ export function NewConversationScreen({ navigation }: Props) {
       .then(([employees, visibleStudents, parentContacts]) => {
         const list: Party[] = [
           ...employees
-            .filter((e) => e.id !== session.ownerId)
+            .filter((e) => e.id !== session.ownerId && isActiveEmployee(e))
             .map((e) => ({ ownerType: 'EMPLOYEE' as const, ownerId: e.id, name: `${e.name} (Staff)` })),
           ...visibleStudents.map((s) => ({ ownerType: 'STUDENT' as const, ownerId: s.id, name: `${s.name} (Student)` })),
           // Staff: parents of their own students (an admin: every parent).

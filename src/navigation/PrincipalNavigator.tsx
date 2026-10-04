@@ -101,6 +101,7 @@ import { StudentPerformanceScreen } from '../screens/principal/StudentPerformanc
 import { StudentsListScreen } from '../screens/principal/StudentsListScreen';
 import { TeacherPerformanceScreen } from '../screens/principal/TeacherPerformanceScreen';
 import { TeacherToolsHubScreen } from '../screens/principal/TeacherToolsHubScreen';
+import { SectionHubScreen } from '../screens/principal/SectionHubScreen';
 import { VendorDetailScreen } from '../screens/principal/VendorDetailScreen';
 import { VendorFormScreen } from '../screens/principal/VendorFormScreen';
 import { VendorsListScreen } from '../screens/principal/VendorsListScreen';
@@ -213,6 +214,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="StudentPerformance" component={StudentPerformanceScreen} />
         <Stack.Screen name="TeacherPerformance" component={TeacherPerformanceScreen} />
         <Stack.Screen name="TeacherToolsHub" component={TeacherToolsHubScreen} />
+        <Stack.Screen name="SectionHub" component={SectionHubScreen} />
         <Stack.Screen name="ResourceGenerator" component={ResourceGeneratorScreen} />
         <Stack.Screen name="QuizBankReview" component={QuizBankReviewScreen} />
         <Stack.Screen name="ResourceUpload" component={ResourceUploadScreen} />

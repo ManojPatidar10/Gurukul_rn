@@ -22,33 +22,36 @@ export type FeatureId =
   | 'payroll'
   | 'infraExpenses'
   | 'classes'
-  | 'myClassSection'
   | 'calls'
   | 'gamification'
   | 'houses'
-  | 'arena'
   | 'events'
   | 'academicHelper'
   | 'teacherTools'
-  | 'aiQuizGenerator'
   | 'reportCard'
   | 'gradingScale'
   | 'markMyAttendance'
   | 'staffAttendance'
   | 'myAttendance'
   | 'registrationInbox'
-  | 'myClassFees'
   | 'attendanceDevices'
   | 'activityLog'
   | 'attendanceExport'
-  | 'newAdmission'
   | 'admissions'
   | 'idCards'
   | 'myTimetable'
   | 'timetableEditor'
   | 'bellSchedule'
-  | 'schoolLogo'
-  | 'schoolLocation';
+  | 'schoolLocation'
+  | 'attendance'
+  | 'vendorsExpenses'
+  | 'academics'
+  | 'reports'
+  | 'arena'
+  | 'aiQuizGenerator';
+
+/** A group of admin screens behind one dashboard tile - see SectionHubScreen. */
+export type HubSection = 'students' | 'attendance' | 'vendorsExpenses' | 'academics' | 'reports';
 
 export interface FeatureAction {
   id: FeatureId;
@@ -97,7 +100,8 @@ export type PrincipalStackParamList = {
   InfraExpensesList: undefined;
   InfraExpenseDetail: { request: InfraExpenseRequest };
   InfraExpenseForm: undefined;
-  ClassesList: undefined;
+  /** `homeroom`: a class teacher's own section, pinned above the class list. */
+  ClassesList: { homeroom?: ClassSection } | undefined;
   SectionsList: { className: string };
   SectionDetail: { classSection: ClassSection };
   SectionStudentsList: { classSection: ClassSection };
@@ -124,7 +128,8 @@ export type PrincipalStackParamList = {
   ActivityLog: undefined;
   AttendanceExport: undefined;
   SchoolLogoSettings: undefined;
-  IdCard: { kind: 'STUDENT' | 'EMPLOYEE'; id: string; name: string };
+  /** `mode: 'edit'` shows only the details form (opened from Profile's Edit button). */
+  IdCard: { kind: 'STUDENT' | 'EMPLOYEE'; id: string; name: string; mode?: 'edit' };
   IdCardSheets: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
@@ -158,6 +163,7 @@ export type PrincipalStackParamList = {
   StudentPerformance: { student: Student };
   TeacherPerformance: { employee: Employee };
   TeacherToolsHub: undefined;
+  SectionHub: { section: HubSection };
   // Undefined = a teacher generating for themselves (from their dashboard tile); set = a principal
   // acting for a teacher from the Teacher Tools hub.
   ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string } | undefined;

@@ -36,7 +36,9 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { canEdit, canEnrol, nextStages, stageVariant, transitionLabelKey } from '../../utils/admissionStages';
+import { prepareImageForUpload } from '../../utils/prepareImage';
 import { getErrorMessage } from '../../api/errorMessage';
+import { pickedFileSize, putToPresignedUrl } from '../../api/presignedUpload';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AdmissionDetail'>;
@@ -51,13 +53,6 @@ const DOCUMENT_TYPES: AdmissionDocumentType[] = [
   'PHOTO',
   'OTHER',
 ];
-
-async function uploadToPresignedUrl(uploadUrl: string, uri: string, contentType: string) {
-  const file = await fetch(uri);
-  const blob = await file.blob();
-  const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': contentType }, body: blob });
-  if (!put.ok) throw new Error('Upload failed');
-}
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -151,8 +146,10 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
     ]);
   };
 
-  const upload = async (uri: string, fileName: string, contentType: string, fileSizeBytes: number) => {
+  const upload = async (uri: string, fileName: string, contentType: string, reportedSizeBytes: number) => {
     if (!admission) return;
+    // The presign must declare the exact byte count S3 will receive - the picker's own figure can be missing.
+    const fileSizeBytes = await pickedFileSize(uri, reportedSizeBytes);
     if (fileSizeBytes > MAX_DOCUMENT_BYTES) {
       showToast(t('admissions.documents.tooLarge'), 'error');
       return;
@@ -161,7 +158,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
     try {
       const req = { documentType, fileName, contentType, fileSizeBytes };
       const presigned = await presignAdmissionDocument(schoolId, admission.id, req);
-      await uploadToPresignedUrl(presigned.uploadUrl, uri, contentType);
+      await putToPresignedUrl(presigned.uploadUrl, uri, contentType);
       setAdmission(await registerAdmissionDocument(schoolId, admission.id, { ...req, objectKey: presigned.objectKey }));
       showToast(t('admissions.documents.uploaded'), 'success');
     } catch (e) {
@@ -177,10 +174,19 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
       showToast(t('admissions.documents.permission'), 'error');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
-    await upload(asset.uri, asset.fileName ?? `photo-${Date.now()}.jpg`, asset.mimeType ?? 'image/jpeg', asset.fileSize ?? 0);
+    // Any photo is accepted: it's resized and saved as JPEG first, so format and size never block it.
+    let photo;
+    try {
+      photo = await prepareImageForUpload(asset.uri, { maxDimension: 2000, sourceContentType: asset.mimeType });
+    } catch (e) {
+      showToast(getErrorMessage(e), 'error');
+      return;
+    }
+    const baseName = (asset.fileName ?? `photo-${Date.now()}`).replace(/\.[^.]+$/, '');
+    await upload(photo.uri, `${baseName}.jpg`, photo.contentType, photo.sizeBytes);
   };
 
   const handleAddPdf = async () => {

@@ -5,10 +5,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getClassSection, listClassSections } from '../../api/classSections';
-import { getEmployee, listEmployees } from '../../api/employees';
+import { getEmployee, isActiveEmployee, listAllEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
 import { getStudent, listStudents } from '../../api/students';
-import type { ClassSection, Employee, School } from '../../api/types';
+import type { ClassSection, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -20,30 +20,68 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, spacing } from '../../theme/colors';
-import type { FeatureAction, FeatureId, PrincipalStackParamList } from '../../types/principal';
+import type { FeatureAction, FeatureId, HubSection, PrincipalStackParamList } from '../../types/principal';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard'>;
 
 // Game Hub is a student-only concept (there is no "my XP" for an admin/teacher account), so it's
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
-// needed for teachers/admins, who use it to author quiz questions rather than play.
+// needed for teachers, who use it to author quiz questions rather than play.
 const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAttendance'];
 // Arena (question authoring) and self-mark check-in are teacher-only concepts - a principal/admin
 // self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
-// AI Quiz Generator is the teacher's own entry to the generator (for their assigned classes); a
-// principal reaches the same screen through Teacher Tools, acting for a chosen teacher.
+// AI Quiz Generator is the teacher's own entry to the generator (for their assigned classes).
 const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance', 'aiQuizGenerator'];
-// Shown only to school admins - the backend rejects everyone else anyway.
-const ADMIN_ONLY_FEATURES: FeatureId[] = ['activityLog', 'attendanceExport', 'timetableEditor', 'bellSchedule', 'schoolLogo', 'schoolLocation', 'idCards', 'newAdmission', 'admissions'];
+// Hidden from teachers and students - the backend rejects them anyway. Admins don't go through
+// this filter at all: they get the fixed ADMIN_HOME_FEATURES list below.
+const ADMIN_ONLY_FEATURES: FeatureId[] = [
+  'activityLog',
+  'attendanceExport',
+  'timetableEditor',
+  'bellSchedule',
+  'schoolLocation',
+  'idCards',
+  'admissions',
+  'attendance',
+  'vendorsExpenses',
+  'academics',
+  'reports',
+];
+// A school admin gets exactly these tiles, in this order. Everything else they manage sits one tap
+// down, in the section screen a tile opens (ADMIN_SECTIONS) - keeping the home grid short.
+const ADMIN_HOME_FEATURES: FeatureId[] = [
+  'students',
+  'admissions',
+  'employees',
+  'attendance',
+  'fees',
+  'payroll',
+  'vendorsExpenses',
+  'academics',
+  'events',
+  'reports',
+];
+// Admin tiles that open a SectionHub listing several screens, rather than one screen directly.
+const ADMIN_SECTIONS: Partial<Record<FeatureId, HubSection>> = {
+  students: 'students',
+  attendance: 'attendance',
+  vendorsExpenses: 'vendorsExpenses',
+  academics: 'academics',
+  reports: 'reports',
+};
 // A teacher's own periods / a student's class timetable. An admin edits timetables instead.
 const TEACHER_AND_STUDENT_FEATURES: FeatureId[] = ['myTimetable'];
 // Vendors/Payroll/Infra Expenses are purely school-admin/procurement concerns - a student account
 // has no legitimate use for any of them, so they're hidden outright rather than scoped down.
 // Teacher Tools is a principal-driven workflow (principal picks a teacher to act on behalf of),
 // not something a student would ever use either. Registration Approvals is an admin-only inbox -
-// no legitimate use for a student either.
+// no legitimate use for a student either. Classmates are reached from inside My Class
+// (SectionDetail) rather than a tile of their own, and so are their teachers (the Subjects row lists
+// each subject's teacher).
 const STUDENT_HIDDEN_FEATURES: FeatureId[] = [
+  'students',
+  'employees',
   'vendors',
   'payroll',
   'infraExpenses',
@@ -57,7 +95,9 @@ const STUDENT_HIDDEN_FEATURES: FeatureId[] = [
 // no business in - Payroll stays visible but is rerouted to just their own payslip history below.
 // Teacher Tools is principal-only for the same reason as above - a teacher acting "as" another
 // teacher doesn't fit the feature's design. Registration Approvals is admin-only for the same reason.
+// Their own payslips are under Profile, not a tile.
 const TEACHER_HIDDEN_FEATURES: FeatureId[] = [
+  'payroll',
   'employees',
   'vendors',
   'fees',
@@ -77,50 +117,80 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   payroll: 'PayrollHub',
   infraExpenses: 'InfraExpensesList',
   classes: 'ClassesList',
-  myClassSection: 'SectionDetail',
   calls: 'VideoCallHub',
   gamification: 'GamificationHub',
   houses: 'HouseWars',
-  arena: 'Arena',
   events: 'EventsList',
   academicHelper: 'AcademicHelper',
   teacherTools: 'TeacherToolsHub',
-  aiQuizGenerator: 'ResourceGenerator',
   reportCard: 'ReportCard',
   gradingScale: 'GradingScale',
   markMyAttendance: 'MarkMyAttendance',
   staffAttendance: 'StaffAttendance',
   registrationInbox: 'RegistrationInbox',
   myAttendance: 'AttendanceHistory',
-  myClassFees: 'MyClassFees',
   attendanceDevices: 'AttendanceDevices',
   activityLog: 'ActivityLog',
   attendanceExport: 'AttendanceExport',
-  newAdmission: 'NewAdmission',
   admissions: 'AdmissionsList',
   myTimetable: 'MyTimetable',
   timetableEditor: 'TimetableEditor',
   bellSchedule: 'PeriodSetup',
-  schoolLogo: 'SchoolLogoSettings',
   schoolLocation: 'SchoolLocationSettings',
   idCards: 'IdCardSheets',
+  attendance: 'SectionHub',
+  vendorsExpenses: 'SectionHub',
+  academics: 'SectionHub',
+  reports: 'SectionHub',
+  arena: 'Arena',
+  aiQuizGenerator: 'ResourceGenerator',
 };
 
-// Employees/Classes/Fees route to the same screens admins use, but scoped to the student's own
+// A teacher's tiles, in this order. A class teacher's own section is pinned inside Classes.
+const TEACHER_TILE_ORDER: FeatureId[] = [
+  'markMyAttendance',
+  'myTimetable',
+  'classes',
+  'students',
+  'arena',
+  'aiQuizGenerator',
+  'academicHelper',
+  'events',
+];
+
+// A student's tiles, in this order (any other tile a student can see goes after them).
+const STUDENT_TILE_ORDER: FeatureId[] = [
+  'classes',
+  'gamification',
+  'myAttendance',
+  'reportCard',
+  'fees',
+  'myTimetable',
+  'academicHelper',
+  'events',
+];
+
+// Classes/Fees route to the same screens admins use, but scoped to the student's own
 // class-section - the copy needs to reflect that scope instead of the school-wide admin framing.
 const STUDENT_COPY: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>> = {
-  students: { title: 'My Classmates', description: 'Students in your class' },
-  employees: { title: 'My Teachers', description: 'Teachers assigned to your class' },
-  classes: { title: 'My Class', description: 'Subjects, assessments, and attendance for your class' },
+  classes: { title: 'My Class', description: 'Classmates, subjects, assessments and timetable' },
   fees: { title: 'My Fees', description: 'Your fee dues and payment history' },
 };
 
-// Students/Payroll route to the same screens admins use, but scoped to the classes a teacher
-// teaches / their own payslips - the copy needs to reflect that instead of the school-wide framing.
+// Students routes to the same screen admins use, but scoped to the classes a teacher teaches -
+// the copy needs to reflect that instead of the school-wide framing.
 const TEACHER_COPY: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>> = {
   students: { title: 'My Students', description: 'Students in classes you teach' },
-  payroll: { title: 'My Payslips', description: 'Your own salary history' },
 };
+
+// The admin's Students, Admissions and Staff tiles cover more than their old single screen, so
+// their copy says what's behind them.
+const ADMIN_COPY_IDS: FeatureId[] = ['students', 'employees', 'admissions'];
+
+function tileRank(order: FeatureId[], id: FeatureId): number {
+  const index = order.indexOf(id);
+  return index === -1 ? order.length : index;
+}
 
 function applyRoleCopy(feature: FeatureAction, copy: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>>): FeatureAction {
   const override = copy[feature.id];
@@ -142,7 +212,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const fabBottom = useBottomInset();
   const [school, setSchool] = useState<School | null>(null);
   const [myName, setMyName] = useState<string | null>(null);
-  const [myEmployee, setMyEmployee] = useState<Employee | null>(null);
   const [myClassSection, setMyClassSection] = useState<ClassSection | null>(null);
   const [myHomeroomSection, setMyHomeroomSection] = useState<ClassSection | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
@@ -150,7 +219,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
-    { id: 'newAdmission', title: t('dashboard.features.newAdmission.title'), icon: 'user-plus', description: t('dashboard.features.newAdmission.description') },
     { id: 'admissions', title: t('dashboard.features.admissions.title'), icon: 'clipboard-list', description: t('dashboard.features.admissions.description') },
     { id: 'employees', title: t('dashboard.features.employees.title'), icon: 'id-badge', description: t('dashboard.features.employees.description') },
     { id: 'vendors', title: t('dashboard.features.vendors.title'), icon: 'truck', description: t('dashboard.features.vendors.description') },
@@ -158,56 +226,65 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'payroll', title: t('dashboard.features.payroll.title'), icon: 'money-check-alt', description: t('dashboard.features.payroll.description') },
     { id: 'infraExpenses', title: t('dashboard.features.infraExpenses.title'), icon: 'tools', description: t('dashboard.features.infraExpenses.description') },
     { id: 'classes', title: t('dashboard.features.classes.title'), icon: 'chalkboard-teacher', description: t('dashboard.features.classes.description') },
-    { id: 'myClassSection', title: t('dashboard.features.myClassSection.title'), icon: 'door-open', description: t('dashboard.features.myClassSection.description') },
     { id: 'calls', title: t('dashboard.features.calls.title'), icon: 'video', description: t('dashboard.features.calls.description') },
     { id: 'gamification', title: t('dashboard.features.gamification.title'), icon: 'trophy', description: t('dashboard.features.gamification.description') },
-    { id: 'arena', title: t('dashboard.features.arena.title'), icon: 'gamepad', description: t('dashboard.features.arena.description') },
     { id: 'events', title: t('dashboard.features.events.title'), icon: 'calendar-alt', description: t('dashboard.features.events.description') },
     { id: 'academicHelper', title: t('dashboard.features.academicHelper.title'), icon: 'lightbulb', description: t('dashboard.features.academicHelper.description') },
     { id: 'teacherTools', title: t('dashboard.features.teacherTools.title'), icon: 'chalkboard-teacher', description: t('dashboard.features.teacherTools.description') },
+    { id: 'arena', title: t('dashboard.features.arena.title'), icon: 'gamepad', description: t('dashboard.features.arena.description') },
     { id: 'aiQuizGenerator', title: t('dashboard.features.aiQuizGenerator.title'), icon: 'magic', description: t('dashboard.features.aiQuizGenerator.description') },
     { id: 'reportCard', title: t('dashboard.features.reportCard.title'), icon: 'file-alt', description: t('dashboard.features.reportCard.description') },
+    { id: 'myAttendance', title: t('dashboard.features.myAttendance.title'), icon: 'calendar-check', description: t('dashboard.features.myAttendance.description') },
     { id: 'myTimetable', title: t('dashboard.features.myTimetable.title'), icon: 'clock', description: t('dashboard.features.myTimetable.description') },
     { id: 'timetableEditor', title: t('dashboard.features.timetableEditor.title'), icon: 'table', description: t('dashboard.features.timetableEditor.description') },
     { id: 'bellSchedule', title: t('dashboard.features.bellSchedule.title'), icon: 'bell', description: t('dashboard.features.bellSchedule.description') },
-    { id: 'myAttendance', title: t('dashboard.features.myAttendance.title'), icon: 'calendar-check', description: t('dashboard.features.myAttendance.description') },
     { id: 'gradingScale', title: t('dashboard.features.gradingScale.title'), icon: 'sliders-h', description: t('dashboard.features.gradingScale.description') },
     { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
     { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
     { id: 'registrationInbox', title: t('dashboard.features.registrationInbox.title'), icon: 'user-check', description: t('dashboard.features.registrationInbox.description') },
-    { id: 'myClassFees', title: t('dashboard.features.myClassFees.title'), icon: 'file-invoice-dollar', description: t('dashboard.features.myClassFees.description') },
     { id: 'attendanceDevices', title: t('dashboard.features.attendanceDevices.title'), icon: 'id-card', description: t('dashboard.features.attendanceDevices.description') },
     { id: 'attendanceExport', title: t('dashboard.features.attendanceExport.title'), icon: 'file-excel', description: t('dashboard.features.attendanceExport.description') },
-    { id: 'schoolLogo', title: t('dashboard.features.schoolLogo.title'), icon: 'image', description: t('dashboard.features.schoolLogo.description') },
     { id: 'schoolLocation', title: t('dashboard.features.schoolLocation.title'), icon: 'map-marked-alt', description: t('dashboard.features.schoolLocation.description') },
     { id: 'idCards', title: t('dashboard.features.idCards.title'), icon: 'id-badge', description: t('dashboard.features.idCards.description') },
     { id: 'activityLog', title: t('dashboard.features.activityLog.title'), icon: 'history', description: t('dashboard.features.activityLog.description') },
+    { id: 'attendance', title: t('dashboard.features.attendance.title'), icon: 'clipboard-check', description: t('dashboard.features.attendance.description') },
+    { id: 'vendorsExpenses', title: t('dashboard.features.vendorsExpenses.title'), icon: 'truck', description: t('dashboard.features.vendorsExpenses.description') },
+    { id: 'academics', title: t('dashboard.features.academics.title'), icon: 'book', description: t('dashboard.features.academics.description') },
+    { id: 'reports', title: t('dashboard.features.reports.title'), icon: 'chart-bar', description: t('dashboard.features.reports.description') },
   ];
 
-  const visibleFeatures = featureActions
+  const adminFeatures = ADMIN_HOME_FEATURES.flatMap((id) => featureActions.filter((feature) => feature.id === id)).map((feature) =>
+    ADMIN_COPY_IDS.includes(feature.id)
+      ? { ...feature, title: t(`dashboard.adminCopy.${feature.id}.title`), description: t(`dashboard.adminCopy.${feature.id}.description`) }
+      : feature,
+  );
+
+  // Teachers and students: the full feature list, narrowed per role.
+  const roleFeatures = featureActions
     .filter((feature) => FEATURE_FLAGS.videoCalls || feature.id !== 'calls')
     .filter((feature) => {
-      if (feature.id === 'myClassSection' || feature.id === 'myClassFees') return isTeacher && !!myHomeroomSection;
-      // Admins generate through Teacher Tools (acting for a chosen teacher) - this tile is a
-      // teacher's own entry and would have no assigned classes to offer an admin.
-      if (feature.id === 'aiQuizGenerator') return isTeacher;
       if (STUDENT_ONLY_FEATURES.includes(feature.id)) return session.ownerType === 'STUDENT';
       if (TEACHER_AND_STUDENT_FEATURES.includes(feature.id)) return isTeacher || isStudent;
       if (ADMIN_ONLY_FEATURES.includes(feature.id)) return session.role === 'ADMIN';
-      if (session.role === 'ADMIN') return true;
       if (TEACHER_ONLY_FEATURES.includes(feature.id)) return session.role === 'TEACHER';
       if (isStudent && STUDENT_HIDDEN_FEATURES.includes(feature.id)) return false;
       if (isTeacher && TEACHER_HIDDEN_FEATURES.includes(feature.id)) return false;
       return true;
     })
-    // Employees/Classes are only scoped to the student's own class-section once it's loaded -
-    // rather than briefly showing a tile that would route somewhere before we know where.
-    .filter((feature) => !(isStudent && (feature.id === 'employees' || feature.id === 'classes') && !myClassSection))
+    // My Class is only scoped to the student's own class-section once it's loaded - rather than
+    // briefly showing a tile that would route somewhere before we know where.
+    .filter((feature) => !(isStudent && feature.id === 'classes' && !myClassSection))
+    .sort((a, b) => {
+      const order = isStudent ? STUDENT_TILE_ORDER : isTeacher ? TEACHER_TILE_ORDER : [];
+      return tileRank(order, a.id) - tileRank(order, b.id);
+    })
     .map((feature) => {
       if (isStudent) return applyRoleCopy(feature, STUDENT_COPY);
       if (isTeacher) return applyRoleCopy(feature, TEACHER_COPY);
       return feature;
     });
+
+  const visibleFeatures = session.role === 'ADMIN' ? adminFeatures : roleFeatures;
 
   useEffect(() => {
     getSchool(schoolId)
@@ -220,7 +297,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       getEmployee(schoolId, session.ownerId)
         .then((owner) => {
           setMyName(owner.name);
-          setMyEmployee(owner);
         })
         .catch(() => setMyName(null));
       if (session.role === 'TEACHER') {
@@ -248,8 +324,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
         listStudents(schoolId, 0, 1)
           .then((res) => setCounts((prev) => ({ ...prev, students: res.totalElements })))
           .catch(() => setCounts((prev) => ({ ...prev, students: null }))),
-        listEmployees(schoolId, 0, 1)
-          .then((res) => setCounts((prev) => ({ ...prev, employees: res.totalElements })))
+        listAllEmployees(schoolId)
+          .then((rows) => setCounts((prev) => ({ ...prev, employees: rows.filter(isActiveEmployee).length })))
           .catch(() => setCounts((prev) => ({ ...prev, employees: null }))),
         listVendors(schoolId)
           .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
@@ -311,12 +387,9 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
               key={feature.id}
               feature={feature}
               onPress={() => {
-                if (isStudent && feature.id === 'students') {
-                  navigation.navigate('Classmates');
-                  return;
-                }
-                if (isStudent && myClassSection && feature.id === 'employees') {
-                  navigation.navigate('SectionSubjectsList', { classSection: myClassSection });
+                const adminSection = session.role === 'ADMIN' ? ADMIN_SECTIONS[feature.id] : undefined;
+                if (adminSection) {
+                  navigation.navigate('SectionHub', { section: adminSection });
                   return;
                 }
                 if (isStudent && myClassSection && feature.id === 'classes') {
@@ -343,16 +416,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
                   navigation.navigate('MyStudents');
                   return;
                 }
-                if (isTeacher && myEmployee && feature.id === 'payroll') {
-                  navigation.navigate('SalaryHistory', { employee: myEmployee });
-                  return;
-                }
-                if (isTeacher && myHomeroomSection && feature.id === 'myClassSection') {
-                  navigation.navigate('SectionDetail', { classSection: myHomeroomSection });
-                  return;
-                }
-                if (isTeacher && myHomeroomSection && feature.id === 'myClassFees') {
-                  navigation.navigate('MyClassFees', { classSection: myHomeroomSection });
+                if (isTeacher && feature.id === 'classes') {
+                  navigation.navigate('ClassesList', { homeroom: myHomeroomSection ?? undefined });
                   return;
                 }
                 navigation.navigate(featureRoutes[feature.id] as never);

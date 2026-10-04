@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { searchEmployees } from '../../api/employees';
+import { isActiveEmployee, searchEmployees } from '../../api/employees';
 import { searchStudents } from '../../api/students';
 import type { Employee, Student } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -39,7 +39,7 @@ export function GlobalSearchScreen({ navigation }: Props) {
       .then(([students, employees]) => {
         setResults([
           ...students.map((item): Result => ({ kind: 'STUDENT', item })),
-          ...employees.map((item): Result => ({ kind: 'EMPLOYEE', item })),
+          ...employees.filter(isActiveEmployee).map((item): Result => ({ kind: 'EMPLOYEE', item })),
         ]);
       })
       .catch((e) => setError(getErrorMessage(e)))

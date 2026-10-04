@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { createEmployee, listAllEmployees } from '../api/employees';
+import { createEmployee, isActiveEmployee, listAllEmployees } from '../api/employees';
 import type { Employee } from '../api/types';
 import { useToast } from '../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
@@ -28,7 +28,7 @@ export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props
   const load = () => {
     setLoading(true);
     listAllEmployees(schoolId)
-      .then(setEmployees)
+      .then((rows) => setEmployees(rows.filter(isActiveEmployee)))
       .catch((e) => showToast(getErrorMessage(e), 'error'))
       .finally(() => setLoading(false));
   };

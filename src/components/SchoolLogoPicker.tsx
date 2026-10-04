@@ -3,8 +3,10 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import type { PickedLogo } from '../api/schoolLogo';
+import { getErrorMessage } from '../api/errorMessage';
 import { useToast } from '../context/ToastContext';
 import { colors, radius, spacing } from '../theme/colors';
+import { prepareImageForUpload } from '../utils/prepareImage';
 import { validateLogo } from '../utils/reportCardPdfName';
 
 interface Props {
@@ -14,7 +16,10 @@ interface Props {
   disabled?: boolean;
 }
 
-/** Image picker for the school logo (PNG/JPEG, max 2 MB) with a preview - shared by registration and settings. */
+/**
+ * Image picker for the school logo with a preview - shared by registration and settings. Any image
+ * works: it's resized and saved as PNG (if it was one, keeping transparency) or JPEG before upload.
+ */
 export function SchoolLogoPicker({ previewUri, onPicked, disabled }: Props) {
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -32,13 +37,19 @@ export function SchoolLogoPicker({ previewUri, onPicked, disabled }: Props) {
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
-    const contentType = asset.mimeType ?? (asset.uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
-    const error = validateLogo(contentType, asset.fileSize);
+    let logo;
+    try {
+      logo = await prepareImageForUpload(asset.uri, { maxDimension: 1024, keepPng: true, sourceContentType: asset.mimeType });
+    } catch (e) {
+      showToast(getErrorMessage(e), 'error');
+      return;
+    }
+    const error = validateLogo(logo.contentType, logo.sizeBytes);
     if (error) {
       showToast(t(error), 'error');
       return;
     }
-    onPicked({ uri: asset.uri, contentType, sizeBytes: asset.fileSize ?? 0 });
+    onPicked(logo);
   };
 
   return (

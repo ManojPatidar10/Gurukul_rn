@@ -31,22 +31,12 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { pickedFileSize, putToPresignedUrl } from '../../api/presignedUpload';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConversationThread'>;
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
-
-async function uploadFile(uploadUrl: string, uri: string, contentType: string) {
-  const file = await fetch(uri);
-  const blob = await file.blob();
-  const put = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': contentType },
-    body: blob,
-  });
-  if (!put.ok) throw new Error('Attachment upload failed');
-}
 
 export function ConversationThreadScreen({ route, navigation }: Props) {
   const { conversationId, title } = route.params;
@@ -106,7 +96,9 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     }
   };
 
-  const uploadAndSend = async (uri: string, fileName: string, contentType: string, fileSizeBytes: number) => {
+  const uploadAndSend = async (uri: string, fileName: string, contentType: string, reportedSizeBytes: number) => {
+    // The presign must declare the exact byte count S3 will receive - the picker's own figure can be missing.
+    const fileSizeBytes = await pickedFileSize(uri, reportedSizeBytes);
     if (fileSizeBytes > MAX_ATTACHMENT_BYTES) {
       setError('That file is too large - attachments are limited to 10MB.');
       return;
@@ -119,7 +111,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         contentType,
         fileSizeBytes,
       });
-      await uploadFile(presigned.uploadUrl, uri, contentType);
+      await putToPresignedUrl(presigned.uploadUrl, uri, contentType);
       await sendMessage(schoolId, conversationId, draft.trim(), {
         attachmentObjectKey: presigned.objectKey,
         attachmentContentType: contentType,
