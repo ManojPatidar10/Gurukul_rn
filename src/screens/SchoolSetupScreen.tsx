@@ -110,7 +110,7 @@ export default function SchoolSetupScreen({ onBack, onRegistered }: Props) {
       await setStoredSchoolId(school.id);
       if (logo) {
         // The school exists now, so the logo goes up with the new admin's token. A failed upload
-        // never undoes or blocks registration - it can be added later from the School Logo tile.
+        // never undoes or blocks registration.
         setAuthSession(admin);
         try {
           await uploadSchoolLogo(school.id, logo);

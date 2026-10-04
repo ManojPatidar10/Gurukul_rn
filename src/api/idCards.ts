@@ -2,6 +2,7 @@ import { File, Paths } from 'expo-file-system';
 
 import { idCardFileName, sectionIdSheetFileName, STAFF_ID_SHEET_FILE_NAME } from '../utils/idCard';
 import { api, BASE_URL, ensureFreshAccessToken, getAuthToken } from './client';
+import { pickedFileSize, putToPresignedUrl } from './presignedUpload';
 
 export type IdCardOwnerType = 'STUDENT' | 'EMPLOYEE';
 
@@ -71,21 +72,15 @@ export function removeIdCardPhoto(schoolId: string, type: IdCardOwnerType, id: s
 
 /** Presign -> PUT the bytes straight to S3 -> confirm. Resolves with the updated card. */
 export async function uploadIdCardPhoto(schoolId: string, type: IdCardOwnerType, id: string, photo: PickedPhoto) {
-  const file = await fetch(photo.uri);
-  const blob = await file.blob();
   const base = `/api/v1/id-cards/${segment(type)}/${id}/photo`;
   // The picker doesn't always report a size - the presign needs the exact byte count S3 will receive.
+  const fileSizeBytes = await pickedFileSize(photo.uri, photo.sizeBytes);
   const presigned = await api.post<PhotoPresignResponse>(
     `${base}/presign`,
-    { contentType: photo.contentType, fileSizeBytes: blob.size || photo.sizeBytes },
+    { contentType: photo.contentType, fileSizeBytes },
     schoolId
   );
-  const put = await fetch(presigned.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': photo.contentType },
-    body: blob,
-  });
-  if (!put.ok) throw new Error('Photo upload failed');
+  await putToPresignedUrl(presigned.uploadUrl, photo.uri, photo.contentType);
   return api.put<IdCard>(base, { objectKey: presigned.objectKey }, schoolId);
 }
 

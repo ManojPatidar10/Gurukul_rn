@@ -16,6 +16,7 @@ import { usePdfDownload } from '../../hooks/usePdfDownload';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { BLOOD_GROUPS, isValidPhone, missingLabelKey, validatePhoto } from '../../utils/idCard';
+import { prepareImageForUpload } from '../../utils/prepareImage';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -30,7 +31,8 @@ export function IdCardScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { showToast } = useToast();
-  const { kind, id, name } = route.params;
+  const { kind, id, name, mode } = route.params;
+  const editOnly = mode === 'edit';
   const [card, setCard] = useState<IdCard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bloodGroup, setBloodGroup] = useState<string | null>(null);
@@ -62,20 +64,22 @@ export function IdCardScreen({ route, navigation }: Props) {
       showToast(t('idCard.photo.permission'), 'error');
       return;
     }
-    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: true, aspect: [3, 4], quality: 0.7 };
+    // Any crop (or none) is fine - the photo is resized and converted before upload, so its shape,
+    // format and size never cause a rejection.
+    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: true, quality: 1 };
     const result =
       source === 'camera' ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
-    const contentType = asset.mimeType ?? (asset.uri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
-    const invalid = validatePhoto(contentType, asset.fileSize);
-    if (invalid) {
-      showToast(t(invalid), 'error');
-      return;
-    }
     setPhotoBusy(true);
     try {
-      apply(await uploadIdCardPhoto(schoolId, kind, id, { uri: asset.uri, contentType, sizeBytes: asset.fileSize ?? 0 }));
+      const photo = await prepareImageForUpload(asset.uri, { maxDimension: 1200, sourceContentType: asset.mimeType });
+      const invalid = validatePhoto(photo.contentType, photo.sizeBytes);
+      if (invalid) {
+        showToast(t(invalid), 'error');
+        return;
+      }
+      apply(await uploadIdCardPhoto(schoolId, kind, id, photo));
       showToast(t('idCard.photo.saved'), 'success');
     } catch (e) {
       showToast(t('idCard.photo.failed', { message: getErrorMessage(e) }), 'error');
@@ -110,6 +114,7 @@ export function IdCardScreen({ route, navigation }: Props) {
         })
       );
       showToast(t('idCard.saved'), 'success');
+      if (editOnly) navigation.goBack();
     } catch (e) {
       showToast(getErrorMessage(e), 'error');
     } finally {
@@ -119,27 +124,36 @@ export function IdCardScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={t('idCard.title')} subtitle={card?.name ?? name} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={editOnly ? t('profile.editCardTitle') : t('idCard.title')}
+        subtitle={card?.name ?? name}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         {error && <ErrorNotice message={error} />}
         {!card && !error && <ActivityIndicator color={colors.primary} />}
         {card && (
           <>
-            <IdCardView card={card} />
+            {/* Edit mode is just the form - the card and its download are on the screen behind it. */}
+            {!editOnly && (
+              <>
+                <IdCardView card={card} />
 
-            <Pressable
-              style={[styles.outlineButton, downloading && styles.disabled]}
-              disabled={downloading}
-              onPress={() => run(() => downloadIdCardPdf(schoolId, card))}
-            >
-              {downloading ? (
-                <ActivityIndicator color={colors.primary} />
-              ) : (
-                <Text style={styles.outlineButtonText}>{t('idCard.download')}</Text>
-              )}
-            </Pressable>
+                <Pressable
+                  style={[styles.outlineButton, downloading && styles.disabled]}
+                  disabled={downloading}
+                  onPress={() => run(() => downloadIdCardPdf(schoolId, card))}
+                >
+                  {downloading ? (
+                    <ActivityIndicator color={colors.primary} />
+                  ) : (
+                    <Text style={styles.outlineButtonText}>{t('idCard.download')}</Text>
+                  )}
+                </Pressable>
+              </>
+            )}
 
-            {card.missing.length > 0 && (
+            {!editOnly && card.missing.length > 0 && (
               <View style={styles.prompt}>
                 <Text style={styles.promptTitle}>{t('idCard.completeProfile')}</Text>
                 {card.missing.map((code) => (
@@ -153,7 +167,7 @@ export function IdCardScreen({ route, navigation }: Props) {
 
             {card.canEdit && (
               <View style={styles.form}>
-                <Text style={styles.sectionTitle}>{t('idCard.detailsTitle')}</Text>
+                {!editOnly && <Text style={styles.sectionTitle}>{t('idCard.detailsTitle')}</Text>}
 
                 <Text style={styles.label}>{t('idCard.photo.label')}</Text>
                 <View style={styles.photoRow}>

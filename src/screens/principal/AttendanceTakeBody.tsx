@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getEmployee, searchEmployees } from '../../api/employees';
+import { getEmployee, isActiveEmployee, searchEmployees } from '../../api/employees';
 import { listStudentsInClassSection } from '../../api/classSections';
 import { getSectionAttendance, markSectionAttendance } from '../../api/attendance';
 import type { AttendanceMethod, AttendanceStatus, ClassSection, Employee, Student } from '../../api/types';
@@ -83,7 +83,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
     setSearchingTeachers(true);
     const handle = setTimeout(() => {
       searchEmployees(schoolId, teacherQuery.trim())
-        .then((results) => !cancelled && setTeacherResults(results))
+        .then((results) => !cancelled && setTeacherResults(results.filter(isActiveEmployee)))
         .catch(() => !cancelled && setTeacherResults([]))
         .finally(() => !cancelled && setSearchingTeachers(false));
     }, SEARCH_DEBOUNCE_MS);

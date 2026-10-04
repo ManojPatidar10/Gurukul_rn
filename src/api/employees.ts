@@ -1,6 +1,12 @@
 import { api } from './client';
 import type { Employee, EmployeeRequest, SalaryHistoryEntry } from './types';
 
+// Inactive staff stay in the backend (there is no delete, and payroll/attendance history points
+// at them) but are hidden from rosters, pickers and search everywhere in the app.
+export function isActiveEmployee(employee: Employee) {
+  return employee.status !== 'INACTIVE';
+}
+
 export function listEmployees(schoolId: string, page = 0, size = 50) {
   return api.getPaginated<Employee>(`/api/v1/employees?page=${page}&size=${size}`, schoolId);
 }

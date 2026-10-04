@@ -16,6 +16,7 @@ export function SectionDetailScreen({ route, navigation }: Props) {
   const classSection = route.params.classSection;
   const canTakeAttendance = session.ownerType === 'EMPLOYEE';
   const isAdmin = session.role === 'ADMIN';
+  const isStudent = session.ownerType === 'STUDENT';
   // A class teacher has the same report-card authority as admin for their own section (marks entry
   // across every subject, publishing - see AssessmentResultService/ReportCardService on the backend),
   // so the tiles below must be reachable for them too, not just admin.
@@ -23,13 +24,21 @@ export function SectionDetailScreen({ route, navigation }: Props) {
   const canManageReportCards = isAdmin || isClassTeacherOfSection;
 
   const items: { title: string; description: string; onPress: () => void }[] = [
+    // A student's classmates live here rather than as their own dashboard tile, on the student-safe
+    // Classmates screen instead of the staff roster.
+    isStudent
+      ? {
+          title: 'My classmates',
+          description: 'Students in your class',
+          onPress: () => navigation.navigate('Classmates'),
+        }
+      : {
+          title: 'Students',
+          description: 'View students enrolled in this section',
+          onPress: () => navigation.navigate('SectionStudentsList', { classSection }),
+        },
     {
-      title: 'Students',
-      description: 'View students enrolled in this section',
-      onPress: () => navigation.navigate('SectionStudentsList', { classSection }),
-    },
-    {
-      title: 'Subjects',
+      title: isStudent ? 'Subjects & teachers' : 'Subjects',
       description: 'Subjects taught in this section, with assigned teacher',
       onPress: () => navigation.navigate('SectionSubjectsList', { classSection }),
     },
@@ -57,6 +66,15 @@ export function SectionDetailScreen({ route, navigation }: Props) {
       : []),
     ...(canManageReportCards
       ? [
+          ...(isClassTeacherOfSection
+            ? [
+                {
+                  title: 'Class fees',
+                  description: 'Fee payment status for students in your class',
+                  onPress: () => navigation.navigate('MyClassFees', { classSection }),
+                },
+              ]
+            : []),
           {
             title: 'Class marks grid',
             description: 'Every student x subject marks for a term, side by side',

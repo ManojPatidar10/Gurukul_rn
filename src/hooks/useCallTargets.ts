@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { listStudentsInClassSection } from '../api/classSections';
-import { listAllEmployees } from '../api/employees';
+import { isActiveEmployee, listAllEmployees } from '../api/employees';
 import { listSectionSubjects } from '../api/sectionSubjects';
 import { getStudent, searchStudents } from '../api/students';
 import type { OwnerType } from '../api/types';
@@ -79,7 +79,8 @@ export function useCallTargets() {
     }
 
     listAllEmployees(schoolId)
-      .then((employees) => {
+      .then((all) => {
+        const employees = all.filter(isActiveEmployee);
         const candidates =
           session.role === 'ADMIN'
             ? employees.filter((e) => e.id !== session.ownerId)

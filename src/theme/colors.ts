@@ -90,7 +90,11 @@ export type AccentKey =
   | 'timetableEditor'
   | 'bellSchedule'
   | 'schoolLogo'
-  | 'schoolLocation';
+  | 'schoolLocation'
+  | 'attendance'
+  | 'vendorsExpenses'
+  | 'academics'
+  | 'reports';
 
 export const accents: Record<AccentKey, { base: string; light: string }> = {
   students: { base: '#2563EB', light: '#E3ECFD' },
@@ -131,6 +135,10 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   schoolLogo: { base: '#7C3AED', light: '#EDE9FE' },
   schoolLocation: { base: '#0F766E', light: '#CCFBF1' },
   idCards: { base: '#0E7490', light: '#CFFAFE' },
+  attendance: { base: '#9333EA', light: '#F1E4FC' },
+  vendorsExpenses: { base: '#EA580C', light: '#FDEBE0' },
+  academics: { base: '#CA8A04', light: '#FBF1D2' },
+  reports: { base: '#334155', light: '#E2E8F0' },
 };
 
 /**

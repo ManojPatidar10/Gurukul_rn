@@ -169,10 +169,6 @@
         "title": "Export Attendance",
         "description": "Download student or staff attendance as a spreadsheet"
       },
-      "newAdmission": {
-        "title": "New Admission",
-        "description": "Record an admission application"
-      },
       "admissions": {
         "title": "Admissions",
         "description": "Review, approve and enrol applicants"
@@ -193,10 +189,6 @@
         "title": "AI Quiz Generator",
         "description": "Draft a quiz from your syllabus and add it to the question bank"
       },
-      "schoolLogo": {
-        "title": "School Logo",
-        "description": "Logo printed on report-card PDFs"
-      },
       "idCards": {
         "title": "ID Cards",
         "description": "Print ID card sheets for a class or all staff"
@@ -204,6 +196,36 @@
       "schoolLocation": {
         "title": "School Location",
         "description": "Where teachers can check in, and how far out"
+      },
+      "attendance": {
+        "title": "Attendance",
+        "description": "Staff attendance, devices and school location"
+      },
+      "vendorsExpenses": {
+        "title": "Vendors & Expenses",
+        "description": "Suppliers and infrastructure spending"
+      },
+      "academics": {
+        "title": "Academics",
+        "description": "Classes, timetables, bell schedule and grading"
+      },
+      "reports": {
+        "title": "Reports",
+        "description": "Attendance export and activity log"
+      }
+    },
+    "adminCopy": {
+      "students": {
+        "title": "Students",
+        "description": "Students, approvals and ID cards"
+      },
+      "employees": {
+        "title": "Staff",
+        "description": "Teachers and other employees"
+      },
+      "admissions": {
+        "title": "Admissions",
+        "description": "New admission and applications"
       }
     }
   },
@@ -270,7 +292,9 @@
       "addButton": "+ Add employee",
       "loadError": "Could not load employees.",
       "empty": "0 employees yet — add the first one.",
-      "noSearchResults": "No employees match your search."
+      "noSearchResults": "No employees match your search.",
+      "showInactive": "Show inactive ({{count}})",
+      "hideInactive": "Hide inactive"
     },
     "detail": {
       "designation": "Designation",
@@ -1241,7 +1265,7 @@
     "title": "School Logo",
     "intro": "Your school logo is printed on report-card PDFs. Without one, PDFs show a Gurukul placeholder mark.",
     "label": "School logo (optional)",
-    "hint": "PNG or JPEG, up to 2 MB. You can add or change it later from the School Logo tile.",
+    "hint": "Any image works - it's resized for you automatically.",
     "choose": "Choose logo",
     "change": "Change logo",
     "remove": "Remove logo",
@@ -1299,7 +1323,7 @@
       "take": "Take photo",
       "choose": "Choose photo",
       "remove": "Remove photo",
-      "hint": "A clear, front-facing photo. PNG or JPEG, up to 3 MB.",
+      "hint": "A clear, front-facing photo. Any photo works - it's resized automatically.",
       "saved": "Photo saved",
       "failed": "Could not upload the photo: {{message}}",
       "permission": "Allow camera or photo library access to add a photo."
@@ -1388,5 +1412,41 @@
     "timeout": "The server is taking too long to respond. Please try again.",
     "forbidden": "You don't have permission to do that.",
     "codes": {}
+  },
+  "sectionHub": {
+    "students": {
+      "title": "Students",
+      "subtitle": "Records, approvals and ID cards"
+    },
+    "attendance": {
+      "title": "Attendance",
+      "subtitle": "Staff check-ins and how they work"
+    },
+    "vendorsExpenses": {
+      "title": "Vendors & Expenses",
+      "subtitle": "Suppliers and infrastructure spending"
+    },
+    "academics": {
+      "title": "Academics",
+      "subtitle": "Classes and the school day"
+    },
+    "reports": {
+      "title": "Reports",
+      "subtitle": "Exports and audit history"
+    }
+  },
+  "profile": {
+    "myPayslips": "My payslips",
+    "missing": "Add {{items}} to complete your card",
+    "sections": {
+      "settings": "Settings"
+    },
+    "edit": "Edit",
+    "download": "Download",
+    "editCardTitle": "Edit ID card",
+    "languageSubtitle": "App language",
+    "payslipsSubtitle": "Your salary history",
+    "switchProfile": "Switch profile",
+    "switchProfileSubtitle": "Other profiles on this number"
   }
 }

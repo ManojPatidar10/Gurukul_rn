@@ -13,7 +13,8 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ClassesList'>;
 
-export function ClassesListScreen({ navigation }: Props) {
+export function ClassesListScreen({ route, navigation }: Props) {
+  const homeroom = route.params?.homeroom;
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const [classNames, setClassNames] = useState<string[]>([]);
@@ -51,6 +52,24 @@ export function ClassesListScreen({ navigation }: Props) {
           data={classNames}
           keyExtractor={(item) => item}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          ListHeaderComponent={
+            // A class teacher's own section comes first - it replaces the separate My Class tile.
+            homeroom ? (
+              <Pressable
+                style={[styles.row, styles.homeroomRow]}
+                onPress={() => navigation.navigate('SectionDetail', { classSection: homeroom })}
+              >
+                <View style={styles.homeroomText}>
+                  <Text style={styles.homeroomLabel}>My class</Text>
+                  <Text style={styles.rowName}>
+                    {homeroom.className} - {homeroom.section}
+                  </Text>
+                  <Text style={styles.homeroomMeta}>Attendance, fees, marks and report cards</Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
+              </Pressable>
+            ) : null
+          }
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
@@ -88,5 +107,9 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  homeroomRow: { borderWidth: 1, borderColor: colors.primary, marginBottom: spacing.md },
+  homeroomText: { flex: 1 },
+  homeroomLabel: { fontSize: 12, fontWeight: '700', color: colors.primary, marginBottom: 2 },
+  homeroomMeta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   chevron: { fontSize: 22, color: colors.textMuted },
 });
