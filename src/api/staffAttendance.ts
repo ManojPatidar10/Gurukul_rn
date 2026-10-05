@@ -1,5 +1,6 @@
 import { api } from './client';
 import type {
+  BulkStaffAttendanceRequest,
   EmployeeAttendanceHistory,
   SelfMarkAttendanceRequest,
   StaffAttendanceRecord,
@@ -8,6 +9,11 @@ import type {
 
 export function selfMarkAttendance(schoolId: string, req: SelfMarkAttendanceRequest) {
   return api.post<StaffAttendanceRecord>('/api/v1/staff-attendance/self-mark', req, schoolId);
+}
+
+/** Admin only: marks or corrects staff for one date (past dates too) and returns that day's roster. */
+export function markStaffAttendance(schoolId: string, req: BulkStaffAttendanceRequest) {
+  return api.post<StaffAttendanceRoster>('/api/v1/staff-attendance', req, schoolId);
 }
 
 export function getStaffAttendanceRoster(schoolId: string, date: string) {

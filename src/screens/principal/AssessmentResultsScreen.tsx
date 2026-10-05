@@ -1,9 +1,10 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getAssessmentResults, submitAssessmentResults } from '../../api/assessments';
-import type { AssessmentResultEntry, StudentResult } from '../../api/types';
+import type { StudentResult } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -11,15 +12,14 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { buildResultsPayload, type ResultRowState } from '../../utils/assessmentResults';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentResults'>;
 
-interface RowState {
-  marksText: string;
-  absent: boolean;
-}
+type RowState = ResultRowState;
 
 export function AssessmentResultsScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const assessment = route.params.assessment;
   const [roster, setRoster] = useState<StudentResult[]>([]);
@@ -76,19 +76,25 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
   };
 
   const handleSubmit = async () => {
-    setSaving(true);
     setError(null);
     setSuccess(false);
+    const { results, invalid } = buildResultsPayload(roster, rows, assessment.maxMarks);
+    if (invalid.length > 0) {
+      setError(
+        t('assessmentResults.invalidMarks', {
+          names: invalid.map((s) => s.studentName).join(', '),
+          max: assessment.maxMarks,
+        })
+      );
+      return;
+    }
+    // Every row blank and nothing saved before - the backend rejects an empty list anyway.
+    if (results.length === 0) {
+      setError(t('assessmentResults.nothingToSave'));
+      return;
+    }
+    setSaving(true);
     try {
-      const results: AssessmentResultEntry[] = roster.map((r) => {
-        const row = rows[r.studentId] ?? { marksText: '', absent: false };
-        const marks = Number(row.marksText);
-        return {
-          studentId: r.studentId,
-          absent: row.absent,
-          marksObtained: !row.absent && row.marksText.trim() && !Number.isNaN(marks) ? marks : undefined,
-        };
-      });
       await submitAssessmentResults(schoolId, assessment.id, results);
       setSuccess(true);
       load();

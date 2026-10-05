@@ -186,6 +186,39 @@ export function revokeSession({ refreshToken, expoPushToken }: { refreshToken?: 
   }).catch(() => {});
 }
 
+const UNREGISTER_PUSH_TIMEOUT_MS = 5 * 1000;
+
+/**
+ * Removes this phone's push token from the account it was registered to, so a logged-out phone
+ * stops getting that user's notifications. Takes the access token explicitly because logout
+ * clears the session straight after capturing it. Best effort: it never rejects, gives up after a
+ * few seconds, and ignores every failure - including the 404/405 from servers that predate the
+ * endpoint, and a 401 from an access token that had already expired.
+ */
+export async function unregisterPushToken({
+  expoPushToken,
+  accessToken,
+  schoolId,
+}: {
+  expoPushToken: string;
+  accessToken: string | null;
+  schoolId?: string | null;
+}): Promise<void> {
+  if (!accessToken) return;
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${accessToken}`,
+  };
+  if (schoolId) headers['X-School-Id'] = schoolId;
+  // The token goes in the query as well as the body - some proxies drop DELETE bodies.
+  await fetchWithTimeout(
+    `${BASE_URL}/api/v1/notifications/device-token?expoPushToken=${encodeURIComponent(expoPushToken)}`,
+    { method: 'DELETE', headers, body: JSON.stringify({ expoPushToken }) },
+    UNREGISTER_PUSH_TIMEOUT_MS
+  ).catch(() => {});
+}
+
 // Countdowns tied to a server-issued deadline (e.g. a Battle Room's joinWindowEndsAt) must not be
 // compared against the device's own Date.now() - phone clocks routinely drift by seconds to
 // minutes, which shows up as different participants seeing different countdowns for the same
