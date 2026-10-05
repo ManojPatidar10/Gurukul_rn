@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { createEmployee, updateEmployee } from '../../api/employees';
-import type { EmployeeRequest } from '../../api/types';
+import type { EmployeeRequest, EmployeeType } from '../../api/types';
 import { DatePickerField } from '../../components/DatePickerField';
 import Dropdown from '../../components/Dropdown';
 import LabeledInput from '../../components/LabeledInput';
@@ -14,7 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { isValidBankAccount, isValidPhone } from '../../utils/validators';
+import { isValidBankAccount, isValidEmail, isValidPhone } from '../../utils/validators';
 import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeForm'>;
@@ -29,6 +29,10 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
     { label: t('common.active'), value: 'ACTIVE' },
     { label: t('common.inactive'), value: 'INACTIVE' },
   ];
+  const TYPE_OPTIONS = [
+    { label: t('employees.form.types.TEACHING'), value: 'TEACHING' },
+    { label: t('employees.form.types.NON_TEACHING'), value: 'NON_TEACHING' },
+  ];
 
   const [form, setForm] = useState<EmployeeRequest>({
     name: employee?.name ?? '',
@@ -36,7 +40,10 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
     joinDate: employee?.joinDate ?? '',
     bankAccount: employee?.bankAccount ?? '',
     contactPhone: employee?.contactPhone ?? '',
+    contactEmail: employee?.contactEmail ?? '',
     status: employee?.status ?? 'ACTIVE',
+    // Staff saved before the type existed have none - left unset, the save keeps it that way.
+    employeeType: employee?.employeeType ?? undefined,
   });
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
@@ -44,7 +51,8 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
   const set = (key: keyof EmployeeRequest) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const canSubmit = form.name && form.designation && form.joinDate;
+  // New staff must say whether they teach; older records without a type can still be edited.
+  const canSubmit = form.name && form.designation && form.joinDate && (isEdit || form.employeeType);
 
   const handleSubmit = async () => {
     if (form.contactPhone && !isValidPhone(form.contactPhone)) {
@@ -55,11 +63,18 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
       showToast(t('employees.form.errors.bankAccount'), 'error');
       return;
     }
+    const contactEmail = form.contactEmail?.trim() ?? '';
+    if (contactEmail && !isValidEmail(contactEmail)) {
+      showToast(t('employees.form.errors.contactEmail'), 'error');
+      return;
+    }
+    // Email is always sent so clearing the field clears it ('' clears, a missing field is kept).
+    const request: EmployeeRequest = { ...form, contactEmail };
     setSubmitting(true);
     try {
       const result = isEdit
-        ? await updateEmployee(schoolId, employee!.id, form)
-        : await createEmployee(schoolId, form);
+        ? await updateEmployee(schoolId, employee!.id, request)
+        : await createEmployee(schoolId, request);
       navigation.replace('EmployeeDetail', { employee: result });
     } catch (e) {
       showToast(getErrorMessage(e), 'error');
@@ -90,6 +105,21 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
           onChangeText={set('contactPhone')}
           keyboardType="phone-pad"
           maxLength={10}
+        />
+        <LabeledInput
+          label={t('employees.form.contactEmail')}
+          value={form.contactEmail}
+          onChangeText={set('contactEmail')}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Dropdown
+          label={t('employees.form.employeeType')}
+          required={!isEdit}
+          value={form.employeeType ?? ''}
+          options={TYPE_OPTIONS}
+          onSelect={(value) => setForm((prev) => ({ ...prev, employeeType: value as EmployeeType }))}
         />
         <Dropdown label={t('employees.form.status')} value={form.status ?? 'ACTIVE'} options={STATUS_OPTIONS} onSelect={set('status')} />
 

@@ -150,11 +150,15 @@ export interface Employee {
   joinDate: string;
   bankAccount: string;
   contactPhone: string;
+  contactEmail: string | null;
   status: string;
+  employeeType: EmployeeType | null;
   role: UserRole | null;
   createdAt: string;
   updatedAt: string;
 }
+
+export type EmployeeType = 'TEACHING' | 'NON_TEACHING';
 
 export interface EmployeeRequest {
   name: string;
@@ -162,7 +166,11 @@ export interface EmployeeRequest {
   joinDate: string;
   bankAccount?: string;
   contactPhone?: string;
+  /** '' clears a saved email; left out keeps it. */
+  contactEmail?: string;
   status?: string;
+  /** Left out keeps the saved type (it can't be cleared once set). */
+  employeeType?: EmployeeType;
 }
 
 export interface Vendor {
@@ -671,6 +679,20 @@ export interface SectionAttendanceHistory {
   from: string | null;
   to: string | null;
   students: SectionStudentAttendanceSummary[];
+}
+
+export interface StaffAttendanceEntryRequest {
+  employeeId: string;
+  status: AttendanceStatus;
+  remarks?: string;
+}
+
+/** An admin marking (or correcting) staff attendance for one day; re-sending a day overwrites it. */
+export interface BulkStaffAttendanceRequest {
+  date: string;
+  /** Defaults to the logged-in admin when left out. */
+  markedByEmployeeId?: string;
+  records: StaffAttendanceEntryRequest[];
 }
 
 export interface SelfMarkAttendanceRequest {

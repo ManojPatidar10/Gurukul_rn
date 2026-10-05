@@ -311,11 +311,18 @@
       "joinDate": "Join date",
       "bankAccount": "Bank account",
       "contactPhone": "Contact phone",
+      "contactEmail": "Email",
       "status": "Status",
+      "employeeType": "Staff type",
+      "types": {
+        "TEACHING": "Teaching",
+        "NON_TEACHING": "Non-teaching"
+      },
       "submitCreate": "Add employee",
       "errors": {
         "contactPhone": "Enter a valid 10-digit contact phone number.",
-        "bankAccount": "Bank account number must be 9-18 digits."
+        "bankAccount": "Bank account number must be 9-18 digits.",
+        "contactEmail": "Enter a valid email address."
       }
     },
     "picker": {
@@ -1448,5 +1455,28 @@
     "payslipsSubtitle": "Your salary history",
     "switchProfile": "Switch profile",
     "switchProfileSubtitle": "Other profiles on this number"
+  },
+  "staffAttendance": {
+    "edit": "Mark / correct",
+    "editHint": "Pick a status for each staff member. Change the date to fill in an earlier day. Only the rows you change are saved.",
+    "dateLabel": "Date",
+    "saveCount_one": "Save {{count}} change",
+    "saveCount_other": "Save {{count}} changes",
+    "saved_one": "Attendance saved for {{count}} staff member.",
+    "saved_other": "Attendance saved for {{count}} staff members.",
+    "statuses": {
+      "PRESENT": "Present",
+      "ABSENT": "Absent",
+      "LATE": "Late",
+      "HALF_DAY": "Half day"
+    },
+    "selfMark": {
+      "setByAdminTitle": "Already marked by an admin",
+      "setByAdmin": "An admin has already marked your attendance today as {{status}}. Ask an admin if this needs to change."
+    }
+  },
+  "assessmentResults": {
+    "invalidMarks": "Check the marks for {{names}} - they must be a number from 0 to {{max}}.",
+    "nothingToSave": "Enter marks or mark a student absent before saving."
   }
 }

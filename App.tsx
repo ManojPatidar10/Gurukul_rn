@@ -20,14 +20,13 @@ import {
   onSessionExpired,
   onSessionRefreshed,
   refreshSession,
-  revokeSession,
   SessionExpiredError,
   setAuthSession,
 } from './src/api/client';
 import { disconnectChatSocket } from './src/api/chatSocket';
 import { IncomingCallOverlay } from './src/components/IncomingCallOverlay';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
-import { clearPushRegistration, getLastExpoPushToken } from './src/push/pushStatus';
+import { endSessionOnServer } from './src/push/pushLogout';
 import type { AuthProfile, SchoolSearchResult } from './src/api/types';
 import { initI18n } from './src/i18n';
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -145,13 +144,10 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    const refreshToken = getRefreshToken();
-    // The token lookup may read storage, so the request goes out a moment later - it needs no auth
-    // header, so clearing the session meanwhile is fine.
-    getLastExpoPushToken().then((expoPushToken) => {
-      revokeSession({ refreshToken, expoPushToken });
-      clearPushRegistration();
-    });
+    // Captured before the session is cleared: the push token lookup may read storage, so the
+    // unbind and revoke go out a moment later, carrying these rather than the (gone) session.
+    // Logout itself never waits on them.
+    endSessionOnServer({ accessToken: getAuthToken(), refreshToken: getRefreshToken(), schoolId });
     endSession();
   };
 
