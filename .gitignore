@@ -46,3 +46,8 @@ yarn-error.*
 
 # OS
 Thumbs.db
+
+# EAS local signing credentials (passwords) - never commit
+credentials.json
+*.keystore
+!android/app/debug.keystore
