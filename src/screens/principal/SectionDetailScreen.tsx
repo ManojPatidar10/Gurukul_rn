@@ -14,7 +14,6 @@ const accent = accents.classes;
 export function SectionDetailScreen({ route, navigation }: Props) {
   const { session } = useAuth();
   const classSection = route.params.classSection;
-  const canTakeAttendance = session.ownerType === 'EMPLOYEE';
   const isAdmin = session.role === 'ADMIN';
   const isStudent = session.ownerType === 'STUDENT';
   // A class teacher has the same report-card authority as admin for their own section (marks entry
@@ -22,6 +21,9 @@ export function SectionDetailScreen({ route, navigation }: Props) {
   // so the tiles below must be reachable for them too, not just admin.
   const isClassTeacherOfSection = session.role === 'TEACHER' && classSection.classTeacherId === session.ownerId;
   const canManageReportCards = isAdmin || isClassTeacherOfSection;
+  // The backend only lets the admin and this section's class teacher read its attendance - other
+  // teachers would get a 403 from the attendance screen.
+  const canTakeAttendance = isAdmin || isClassTeacherOfSection;
 
   const items: { title: string; description: string; onPress: () => void }[] = [
     // A student's classmates live here rather than as their own dashboard tile, on the student-safe

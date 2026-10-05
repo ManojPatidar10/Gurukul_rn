@@ -1469,6 +1469,10 @@
       "ABSENT": "Absent",
       "LATE": "Late",
       "HALF_DAY": "Half day"
+    },
+    "selfMark": {
+      "setByAdminTitle": "Already marked by an admin",
+      "setByAdmin": "An admin has already marked your attendance today as {{status}}. Ask an admin if this needs to change."
     }
   },
   "assessmentResults": {

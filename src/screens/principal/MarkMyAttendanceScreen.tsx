@@ -2,7 +2,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { ApiError } from '../../api/client';
 import { getEmployeeAttendanceHistory, selfMarkAttendance } from '../../api/staffAttendance';
 import type { AttendanceStatus, EmployeeAttendanceHistory, StaffAttendanceRecord } from '../../api/types';
 import { toIsoDate } from '../../components/DatePickerField';
@@ -18,7 +20,17 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MarkMyAttendance'>;
 
-type Status = 'checking' | 'idle' | 'locating' | 'submitting' | 'success' | 'error';
+// 'setByAdmin': an admin already entered today's attendance (e.g. ABSENT), and only an admin can
+// change it - so there's nothing to retry.
+type Status = 'checking' | 'idle' | 'locating' | 'submitting' | 'success' | 'error' | 'setByAdmin';
+
+// The backend's 409 code when a self check-in would overwrite an admin's entry for today.
+const ATTENDANCE_SET_BY_ADMIN = 'ATTENDANCE_SET_BY_ADMIN';
+
+/** An admin's entry other than present - showing it as "You're marked present" would be wrong. */
+function isAdminEnteredNonPresent(record: StaffAttendanceRecord) {
+  return !record.selfMarked && record.method == null && record.status !== 'PRESENT';
+}
 
 function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -31,6 +43,7 @@ function monthRange(month: Date) {
 }
 
 export function MarkMyAttendanceScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [status, setStatus] = useState<Status>('checking');
@@ -62,7 +75,15 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
     getEmployeeAttendanceHistory(schoolId, session.ownerId, today, today)
       .then((history) => {
         const todayRecord = history.records.find((r) => r.attendanceDate === today);
-        if (todayRecord) {
+        if (todayRecord && isAdminEnteredNonPresent(todayRecord)) {
+          setRecord(todayRecord);
+          setError(
+            t('staffAttendance.selfMark.setByAdmin', {
+              status: t(`staffAttendance.statuses.${todayRecord.status}`),
+            })
+          );
+          setStatus('setByAdmin');
+        } else if (todayRecord) {
           setRecord(todayRecord);
           setStatus('success');
         } else {
@@ -70,7 +91,7 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
         }
       })
       .catch(() => setStatus('idle'));
-  }, [schoolId, session.ownerId]);
+  }, [schoolId, session.ownerId, t]);
 
   const handleMark = async () => {
     setError(null);
@@ -101,7 +122,13 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
       setStatus('success');
     } catch (e) {
       setError(getErrorMessage(e));
-      setStatus('error');
+      if (e instanceof ApiError && e.errorCode === ATTENDANCE_SET_BY_ADMIN) {
+        setStatus('setByAdmin');
+        // Reload the calendar so it shows the admin's entry for today.
+        setMonth((m) => new Date(m));
+      } else {
+        setStatus('error');
+      }
     }
   };
 
@@ -125,6 +152,14 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
               <Text style={styles.successIcon}>✓</Text>
               <Text style={styles.title}>You&apos;re marked present</Text>
               <Text style={styles.subtitle}>{record.attendanceDate}</Text>
+              <Pressable style={styles.secondaryButton} onPress={() => navigation.goBack()}>
+                <Text style={styles.secondaryButtonText}>Done</Text>
+              </Pressable>
+            </>
+          ) : status === 'setByAdmin' ? (
+            <>
+              <Text style={styles.title}>{t('staffAttendance.selfMark.setByAdminTitle')}</Text>
+              {error && <ErrorNotice message={error} />}
               <Pressable style={styles.secondaryButton} onPress={() => navigation.goBack()}>
                 <Text style={styles.secondaryButtonText}>Done</Text>
               </Pressable>
