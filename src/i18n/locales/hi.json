@@ -917,7 +917,8 @@
     "alumniBadge": "पूर्व छात्र",
     "withdrawnBadge": "नामांकन रद्द",
     "selectionExpired": "सत्र समाप्त हो गया। कृपया नया OTP मांगें।",
-    "profileNotLinked": "वह प्रोफ़ाइल इस फ़ोन नंबर से जुड़ी नहीं है।"
+    "profileNotLinked": "वह प्रोफ़ाइल इस फ़ोन नंबर से जुड़ी नहीं है।",
+    "driverRole": "बस ड्राइवर"
   },
   "switchChild": {
     "buttonLabel": "बच्चा बदलें",

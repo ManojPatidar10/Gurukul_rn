@@ -13,7 +13,13 @@ interface Props {
 export function ProfileCard({ profile, onPress, disabled }: Props) {
   const { t } = useTranslation();
   const isStaff = profile.ownerType === 'EMPLOYEE';
-  const roleLabel = isStaff ? (profile.role === 'ADMIN' ? t('auth.adminRole') : t('auth.teacherRole')) : null;
+  const roleLabel = !isStaff
+    ? null
+    : profile.role === 'ADMIN'
+      ? t('auth.adminRole')
+      : profile.role === 'DRIVER'
+        ? t('auth.driverRole')
+        : t('auth.teacherRole');
   const statusBadge =
     profile.status === 'ALUMNI' ? t('auth.alumniBadge') : profile.status === 'WITHDRAWN' ? t('auth.withdrawnBadge') : null;
 
