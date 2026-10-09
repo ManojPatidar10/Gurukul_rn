@@ -49,9 +49,13 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Smart Gurukul uses your location to confirm you're at the school when self-marking attendance."
+          "locationWhenInUsePermission": "Smart Gurukul uses your location to confirm you're at the school when self-marking attendance, and to show parents where the school bus is during a bus driver's trip.",
+          "isAndroidForegroundServiceEnabled": true,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isIosBackgroundLocationEnabled": true
         }
       ],
+      "expo-task-manager",
       "expo-font",
       [
         "expo-notifications",

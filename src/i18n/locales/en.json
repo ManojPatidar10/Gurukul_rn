@@ -212,6 +212,14 @@
       "reports": {
         "title": "Reports",
         "description": "Attendance export and activity log"
+      },
+      "transport": {
+        "title": "School bus",
+        "description": "Buses, drivers and today's trips"
+      },
+      "schoolBus": {
+        "title": "School bus",
+        "description": "Where your bus is right now"
       }
     },
     "adminCopy": {
@@ -982,14 +990,17 @@
   "parentHome": {
     "title": "My Children",
     "empty": "No children linked to your account yet.",
-    "rollAndClass": "Roll {{roll}} · {{classSection}}"
+    "rollAndClass": "Roll {{roll}} · {{classSection}}",
+    "schoolBus": "School bus",
+    "schoolBusHint": "See the bus your child is on"
   },
   "childDashboard": {
     "attendance": "Attendance",
     "fees": "Fees",
     "reportCard": "Report Card",
     "idCard": "ID Card",
-    "timetable": "Timetable"
+    "timetable": "Timetable",
+    "schoolBus": "School bus"
   },
   "myFees": {
     "title": "My Fees",
@@ -1375,6 +1386,14 @@
       "alerts": {
         "name": "Alerts",
         "description": "Absence and fee reminders for your child"
+      },
+      "games": {
+        "name": "Games",
+        "description": "Quiz challenges and battle rooms"
+      },
+      "transport": {
+        "name": "School bus",
+        "description": "When your child boards, reaches school or heads home"
       }
     },
     "prompt": {
@@ -1478,5 +1497,125 @@
   "assessmentResults": {
     "invalidMarks": "Check the marks for {{names}} - they must be a number from 0 to {{max}}.",
     "nothingToSave": "Enter marks or mark a student absent before saving."
+  },
+  "transport": {
+    "direction": {
+      "MORNING": "To school",
+      "RETURN": "Going home"
+    },
+    "status": {
+      "CHECKLIST": "Checklist",
+      "ACTIVE": "Running",
+      "ENDED": "Ended"
+    },
+    "boarding": {
+      "boarded": "Boarded",
+      "notBoarded": "Not boarded",
+      "unmarked": "Not marked yet"
+    },
+    "reasons": {
+      "PICKED_UP_BY_PARENT": "Picked up by parent",
+      "LEFT_EARLY": "Left school early",
+      "OTHER_BUS": "Going on another bus",
+      "OTHER": "Other reason"
+    },
+    "time": {
+      "justNow": "just now",
+      "minute": "1 min ago",
+      "minutes": "{{count}} min ago",
+      "hours": "{{count}} h ago"
+    },
+    "myBus": {
+      "title": "School bus",
+      "empty": "None of your children is on a bus right now.",
+      "emptyHint": "You'll get a notification when your child boards, and can watch the bus here.",
+      "onBoard": "{{names}} on {{bus}}",
+      "driver": "Driver: {{name}}",
+      "lastUpdated": "Bus location updated {{ago}}",
+      "noLocationYet": "Waiting for the bus's location…"
+    },
+    "driver": {
+      "homeTitle": "Bus trips",
+      "currentTrip": "Current trip",
+      "checklistOpen": "Checklist open - mark every child before leaving",
+      "runningSince": "Running since {{time}}",
+      "continueTrip": "Continue",
+      "chooseBus": "Choose your bus",
+      "noBuses": "No buses yet - ask the school office to add one.",
+      "startMorning": "Trip to school",
+      "startMorningHint": "Add children as they board",
+      "startReturn": "Trip home",
+      "startReturnHint": "Check every child before leaving school",
+      "pickMorningTrips": "Which morning trips is this bus bringing home?",
+      "noMorningTrips": "No finished morning trips today. You can still add children by name.",
+      "morningTripMeta": "{{count}} children · {{driver}} · arrived {{time}}",
+      "startNow": "Start trip",
+      "openChecklist": "Open checklist",
+      "addBoarding": "Who is boarding?",
+      "addExtra": "Add a child who isn't on the list",
+      "searchPlaceholder": "Type a child's name",
+      "add": "Add",
+      "onList": "On the list",
+      "noMatch": "No child with that name.",
+      "addedByHand": "added",
+      "nobodyYet": "No children yet.",
+      "onBoardCount": "{{count}} on board",
+      "checklistTitle": "{{left}} of {{total}} still to mark",
+      "change": "Change",
+      "chooseReason": "Why isn't {{name}} boarding?",
+      "notePlaceholder": "Write the reason",
+      "markEveryone": "Mark {{count}} more to start",
+      "startTripHome": "Start trip home",
+      "cancelTrip": "Cancel trip",
+      "cancelTripTitle": "Cancel this trip?",
+      "cancelTripBody": "The checklist is thrown away. Nobody is notified.",
+      "endTrip": "End trip",
+      "endTripTitle": "End this trip?",
+      "endTripBody": "Location sharing stops. On a trip to school, parents are told their child reached school.",
+      "tripEnded": "This trip has ended.",
+      "backHome": "Back to bus trips",
+      "sharingLocation": "Sharing the bus location with parents",
+      "sharingForeground": "Sharing location only while this app is open - keep it open",
+      "notSharing": "Location is not being shared",
+      "shareLocation": "Share location",
+      "queued": "{{count}} positions waiting for signal",
+      "locationPermissionNeeded": "Allow location access so parents can see the bus.",
+      "trackingNotificationTitle": "Bus trip running",
+      "trackingNotificationBody": "Sharing the bus location with parents"
+    },
+    "admin": {
+      "title": "School bus",
+      "tabs": {
+        "trips": "Today",
+        "buses": "Buses",
+        "drivers": "Drivers"
+      },
+      "noTrips": "No bus trips today yet.",
+      "boardedSummary": "{{boarded}} on board",
+      "notBoardedSummary": "{{count}} not boarded",
+      "endedAuto": "Ended automatically",
+      "startedAt": "Started {{time}}",
+      "endedAt": "ended {{time}}",
+      "children": "Children",
+      "endTripBody": "End this trip for the driver? Use this if they forgot to end it.",
+      "addBus": "Add bus",
+      "editBus": "Edit bus",
+      "busName": "Bus name",
+      "registration": "Registration number",
+      "capacity": "Seats",
+      "defaultDriver": "Usual driver",
+      "inService": "In service",
+      "outOfService": "Out of service",
+      "seats": "{{count}} seats",
+      "noBuses": "No buses yet.",
+      "busSaved": "Bus saved",
+      "addDriver": "Add driver",
+      "driverName": "Driver's name",
+      "driverPhone": "Mobile number",
+      "driverLoginHint": "The driver signs in to this app with an OTP sent to this number on WhatsApp.",
+      "driverSaved": "Driver added - they can now sign in with their number",
+      "noDrivers": "No drivers yet.",
+      "removeDriverHint": "To remove a driver, mark them inactive under Staff."
+    }
   }
 }

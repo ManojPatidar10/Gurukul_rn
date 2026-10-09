@@ -28,6 +28,14 @@ describe('notificationTarget', () => {
     });
   });
 
+  it('opens the bus map for families and the transport screen for admins', () => {
+    const bus = { type: 'BUS_TRIP', event: 'BOARDED', tripId: 't1', studentId: 's1' };
+    expect(notificationTarget(bus, 'PARENT')).toEqual({ screen: 'MyBus' });
+    expect(notificationTarget(bus, 'STUDENT')).toEqual({ screen: 'MyBus' });
+    expect(notificationTarget({ ...bus, event: 'AUTO_ENDED' }, 'ADMIN')).toEqual({ screen: 'TransportHub' });
+    expect(notificationTarget(bus, 'TEACHER')).toBeNull();
+  });
+
   it('returns null for unknown or missing payloads', () => {
     expect(notificationTarget(undefined, 'PARENT')).toBeNull();
     expect(notificationTarget({ type: 'SOMETHING_NEW' }, 'PARENT')).toBeNull();

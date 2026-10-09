@@ -28,7 +28,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard
 // filtered out of the grid below rather than being one more tile everyone sees but can't use.
 // Arena is the reverse: students now reach it from inside Game Hub, so its own tile is only
 // needed for teachers, who use it to author quiz questions rather than play.
-const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAttendance'];
+const STUDENT_ONLY_FEATURES: FeatureId[] = ['gamification', 'reportCard', 'myAttendance', 'schoolBus'];
 // Arena (question authoring) and self-mark check-in are teacher-only concepts - a principal/admin
 // self-marking isn't part of this tile's intent even though the backend also permits it for ADMIN.
 // AI Quiz Generator is the teacher's own entry to the generator (for their assigned classes).
@@ -36,6 +36,7 @@ const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance', 'aiQuiz
 // Hidden from teachers and students - the backend rejects them anyway. Admins don't go through
 // this filter at all: they get the fixed ADMIN_HOME_FEATURES list below.
 const ADMIN_ONLY_FEATURES: FeatureId[] = [
+  'transport',
   'activityLog',
   'attendanceExport',
   'timetableEditor',
@@ -60,6 +61,7 @@ const ADMIN_HOME_FEATURES: FeatureId[] = [
   'vendorsExpenses',
   'academics',
   'events',
+  'transport',
   'reports',
 ];
 // Admin tiles that open a SectionHub listing several screens, rather than one screen directly.
@@ -144,6 +146,8 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   reports: 'SectionHub',
   arena: 'Arena',
   aiQuizGenerator: 'ResourceGenerator',
+  transport: 'TransportHub',
+  schoolBus: 'MyBus',
 };
 
 // A teacher's tiles, in this order. A class teacher's own section is pinned inside Classes.
@@ -161,6 +165,7 @@ const TEACHER_TILE_ORDER: FeatureId[] = [
 // A student's tiles, in this order (any other tile a student can see goes after them).
 const STUDENT_TILE_ORDER: FeatureId[] = [
   'classes',
+  'schoolBus',
   'gamification',
   'myAttendance',
   'reportCard',
@@ -251,6 +256,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'vendorsExpenses', title: t('dashboard.features.vendorsExpenses.title'), icon: 'truck', description: t('dashboard.features.vendorsExpenses.description') },
     { id: 'academics', title: t('dashboard.features.academics.title'), icon: 'book', description: t('dashboard.features.academics.description') },
     { id: 'reports', title: t('dashboard.features.reports.title'), icon: 'chart-bar', description: t('dashboard.features.reports.description') },
+    { id: 'transport', title: t('dashboard.features.transport.title'), icon: 'bus', description: t('dashboard.features.transport.description') },
+    { id: 'schoolBus', title: t('dashboard.features.schoolBus.title'), icon: 'bus', description: t('dashboard.features.schoolBus.description') },
   ];
 
   const adminFeatures = ADMIN_HOME_FEATURES.flatMap((id) => featureActions.filter((feature) => feature.id === id)).map((feature) =>

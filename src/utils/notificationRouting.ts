@@ -7,6 +7,7 @@
 export type NotificationTarget =
   | { screen: 'ConversationsList' }
   | { screen: 'Announcements' }
+  | { screen: 'MyBus' | 'TransportHub' }
   | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string };
 
 export function notificationTarget(
@@ -26,6 +27,10 @@ export function notificationTarget(
     case 'FEE_DUE':
       // Online payment is on hold, so a fee reminder opens the child's fee summary.
       return role === 'PARENT' && studentId ? { screen: 'ChildFees', studentId } : null;
+    case 'BUS_TRIP':
+      // Boarding/return updates go to the child's login and parents; unusual ones also to admins.
+      if (role === 'STUDENT' || role === 'PARENT') return { screen: 'MyBus' };
+      return role === 'ADMIN' ? { screen: 'TransportHub' } : null;
     default:
       return null;
   }

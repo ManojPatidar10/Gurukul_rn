@@ -94,9 +94,13 @@ export type AccentKey =
   | 'attendance'
   | 'vendorsExpenses'
   | 'academics'
-  | 'reports';
+  | 'reports'
+  | 'transport'
+  | 'schoolBus';
 
 export const accents: Record<AccentKey, { base: string; light: string }> = {
+  transport: { base: '#D97706', light: '#FEF3C7' },
+  schoolBus: { base: '#D97706', light: '#FEF3C7' },
   students: { base: '#2563EB', light: '#E3ECFD' },
   employees: { base: '#7C3AED', light: '#EDE7FC' },
   vendors: { base: '#EA580C', light: '#FDEBE0' },

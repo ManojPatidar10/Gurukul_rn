@@ -13,6 +13,7 @@ import { NotificationsScreen } from '../screens/principal/NotificationsScreen';
 import { PushDebugScreen } from '../screens/principal/PushDebugScreen';
 import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
+import { MyBusScreen } from '../screens/transport/MyBusScreen';
 import { colors } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
 
@@ -40,6 +41,7 @@ export function ParentNavigator() {
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="PushDebug" component={PushDebugScreen} />
       <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
+      <Stack.Screen name="MyBus" component={MyBusScreen} />
     </Stack.Navigator>
   );
 }

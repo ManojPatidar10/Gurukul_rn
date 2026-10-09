@@ -26,6 +26,13 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
       onPress: () => navigation.navigate('AttendanceHistory', { student }),
     },
     {
+      key: 'schoolBus',
+      title: t('childDashboard.schoolBus'),
+      icon: 'bus',
+      accentKey: 'schoolBus',
+      onPress: () => navigation.navigate('MyBus'),
+    },
+    {
       key: 'fees',
       title: t('childDashboard.fees'),
       icon: 'file-invoice-dollar',
