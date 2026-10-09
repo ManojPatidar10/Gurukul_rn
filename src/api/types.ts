@@ -1896,6 +1896,8 @@ export interface TripStudent {
   note: string | null;
   extra: boolean;
   markedAt: string | null;
+  /** Trip home: when the driver marked the child dropped at their stop. */
+  droppedAt: string | null;
 }
 
 export interface BusTrip {
@@ -1929,6 +1931,26 @@ export interface DriverHome {
   buses: Bus[];
   currentTrip: BusTrip | null;
   returnableMorningTrips: MorningTripOption[];
+}
+
+export interface TripSummary {
+  id: string;
+  busName: string;
+  busRegistrationNumber: string | null;
+  direction: TripDirection;
+  status: TripStatus;
+  serviceDate: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  endedAutomatically: boolean;
+  boardedCount: number;
+  notBoardedCount: number;
+  droppedCount: number;
+}
+
+export interface TripHistoryPage {
+  trips: TripSummary[];
+  hasMore: boolean;
 }
 
 export interface DriverStudentResult {

@@ -11,6 +11,7 @@ import type {
   LocationFix,
   MyChildTrip,
   NotBoardedReason,
+  TripHistoryPage,
   TripDirection,
 } from './types';
 
@@ -49,6 +50,11 @@ export function getDriverHome(schoolId: string) {
   return api.get<DriverHome>(`${BASE}/me`, schoolId);
 }
 
+/** The driver's own trips, newest first. */
+export function getMyPastTrips(schoolId: string, page: number) {
+  return api.get<TripHistoryPage>(`${BASE}/me/trips?page=${page}&size=20`, schoolId);
+}
+
 export function searchStudentsForBus(schoolId: string, q: string) {
   return api.get<DriverStudentResult[]>(`${BASE}/students/search?q=${encodeURIComponent(q)}`, schoolId);
 }
@@ -72,6 +78,15 @@ export function markStudent(
 
 export function unmarkStudent(schoolId: string, tripId: string, studentId: string) {
   return api.delete<BusTrip>(`${BASE}/trips/${tripId}/students/${studentId}`, schoolId);
+}
+
+/** Trip home: the child got off at their stop - the family is told at once. */
+export function dropStudent(schoolId: string, tripId: string, studentId: string) {
+  return api.post<BusTrip>(`${BASE}/trips/${tripId}/students/${studentId}/drop`, undefined, schoolId);
+}
+
+export function undoDrop(schoolId: string, tripId: string, studentId: string) {
+  return api.delete<BusTrip>(`${BASE}/trips/${tripId}/students/${studentId}/drop`, schoolId);
 }
 
 export function startReturnTrip(schoolId: string, tripId: string) {

@@ -6,11 +6,13 @@ import { useTranslation } from 'react-i18next';
 import { getErrorMessage } from '../../api/errorMessage';
 import {
   cancelTrip,
+  dropStudent,
   endTrip,
   getTrip,
   markStudent,
   searchStudentsForBus,
   startReturnTrip,
+  undoDrop,
   unmarkStudent,
 } from '../../api/transport';
 import type { BusTrip, DriverStudentResult, NotBoardedReason, TripStudent } from '../../api/types';
@@ -40,7 +42,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'DriverTrip'>;
  * start. While the trip runs, the phone shares its location (busTracking).
  */
 export function DriverTripScreen({ navigation, route }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const schoolId = useSchoolId();
   const { tripId } = route.params;
   const [trip, setTrip] = useState<BusTrip | null>(null);
@@ -136,6 +138,10 @@ export function DriverTripScreen({ navigation, route }: Props) {
 
   const undo = (row: TripStudent) => act(row.studentId, () => unmarkStudent(schoolId, tripId, row.studentId));
 
+  const markDropped = (row: TripStudent) => act(row.studentId, () => dropStudent(schoolId, tripId, row.studentId));
+
+  const undoDropped = (row: TripStudent) => act(row.studentId, () => undoDrop(schoolId, tripId, row.studentId));
+
   const openReason = (row: TripStudent) => {
     setReasonFor(row.studentId);
     setReason(null);
@@ -169,7 +175,12 @@ export function DriverTripScreen({ navigation, route }: Props) {
   };
 
   const confirmEnd = () => {
-    Alert.alert(t('transport.driver.endTripTitle'), t('transport.driver.endTripBody'), [
+    // On the trip home, warn about children nobody marked dropped - their families won't be told.
+    const notDropped = trip?.direction === 'RETURN' ? boarded.filter((s) => !s.droppedAt) : [];
+    const body = notDropped.length
+      ? t('transport.driver.endWithUndropped', { count: notDropped.length, names: notDropped.map((s) => s.name).join(', ') })
+      : t('transport.driver.endTripBody');
+    Alert.alert(t('transport.driver.endTripTitle'), body, [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('transport.driver.endTrip'),
@@ -216,6 +227,7 @@ export function DriverTripScreen({ navigation, route }: Props) {
     const busy = busyId === row.studentId;
     const checklist = trip?.status === 'CHECKLIST';
     const morning = trip?.direction === 'MORNING' && trip.status === 'ACTIVE';
+    const goingHome = trip?.direction === 'RETURN' && trip.status === 'ACTIVE' && row.status === 'BOARDED';
     return (
       <View key={row.studentId} style={styles.row}>
         <View style={styles.rowTop}>
@@ -231,9 +243,10 @@ export function DriverTripScreen({ navigation, route }: Props) {
                   styles.rowStatus,
                   row.status === 'BOARDED' && styles.statusBoarded,
                   row.status === 'NOT_BOARDED' && styles.statusNotBoarded,
+                  row.droppedAt != null && styles.statusDropped,
                 ]}
               >
-                {boardingLabel(row, t)}
+                {boardingLabel(row, t, i18n.language)}
               </Text>
             )}
           </View>
@@ -243,7 +256,17 @@ export function DriverTripScreen({ navigation, route }: Props) {
               <Text style={styles.undoText}>{morning ? t('common.remove') : t('transport.driver.change')}</Text>
             </Pressable>
           )}
+          {!busy && goingHome && row.droppedAt && (
+            <Pressable style={styles.undoButton} onPress={() => undoDropped(row)}>
+              <Text style={styles.undoText}>{t('transport.driver.undo')}</Text>
+            </Pressable>
+          )}
         </View>
+        {!busy && goingHome && !row.droppedAt && (
+          <Pressable style={[styles.markButton, styles.markDropped]} onPress={() => markDropped(row)}>
+            <Text style={styles.markText}>🏠 {t('transport.driver.markDropped')}</Text>
+          </Pressable>
+        )}
         {checklist && row.status === null && !busy && reasonFor !== row.studentId && (
           <View style={styles.markButtons}>
             <Pressable style={[styles.markButton, styles.markBoarded]} onPress={() => markBoarded(row)}>
@@ -300,7 +323,7 @@ export function DriverTripScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={title} onBack={() => navigation.navigate('DriverHome')} />
+      <ScreenHeader title={title} onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('DriverHome'))} />
       <ScreenContainer keyboardShouldPersistTaps="handled">
         {error && <ErrorNotice message={error} />}
         {!trip && !error && <ActivityIndicator color={colors.primary} style={styles.loading} />}
@@ -380,12 +403,22 @@ export function DriverTripScreen({ navigation, route }: Props) {
             <Text style={styles.sectionTitle}>
               {trip.status === 'CHECKLIST'
                 ? t('transport.driver.checklistTitle', { left: unmarked.length, total: trip.students.length })
-                : t('transport.driver.onBoardCount', { count: boarded.length })}
+                : trip.direction === 'RETURN'
+                  ? t('transport.driver.droppedCount', { dropped: boarded.filter((s) => s.droppedAt).length, total: boarded.length })
+                  : t('transport.driver.onBoardCount', { count: boarded.length })}
             </Text>
             {trip.students.length === 0 && <Text style={styles.empty}>{t('transport.driver.nobodyYet')}</Text>}
-            {(trip.direction === 'MORNING' ? boarded : [...unmarked, ...trip.students.filter((s) => s.status !== null)]).map(
-              renderRow
-            )}
+            {(trip.direction === 'MORNING'
+              ? boarded
+              : trip.status === 'CHECKLIST'
+                ? [...unmarked, ...trip.students.filter((s) => s.status !== null)]
+                : // Trip home: still on the bus first, then dropped, then those who never boarded.
+                  [
+                    ...boarded.filter((s) => !s.droppedAt),
+                    ...boarded.filter((s) => s.droppedAt),
+                    ...trip.students.filter((s) => s.status !== 'BOARDED'),
+                  ]
+            ).map(renderRow)}
           </>
         )}
 
@@ -470,6 +503,8 @@ const styles = StyleSheet.create({
   markButton: { flex: 1, borderRadius: radius.md, paddingVertical: spacing.md, alignItems: 'center' },
   markBoarded: { backgroundColor: colors.success },
   markNotBoarded: { backgroundColor: colors.error },
+  markDropped: { backgroundColor: colors.primary, marginTop: spacing.md, flex: 0 },
+  statusDropped: { color: colors.primary },
   markText: { color: colors.white, fontWeight: '800', fontSize: 15 },
   reasonBox: { marginTop: spacing.md },
   reasonTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.sm },
