@@ -1972,6 +1972,20 @@ export interface MyChildTrip {
   lastLocation: BusLocation | null;
 }
 
+/** What a WhatsApp tracking link shows (public, no login). */
+export interface PublicTracking {
+  state: 'ON_BUS' | 'DROPPED' | 'ENDED' | 'INVALID';
+  childName?: string;
+  busName?: string;
+  busRegistrationNumber?: string | null;
+  direction?: TripDirection;
+  schoolName?: string | null;
+  location?: BusLocation | null;
+  path?: [number, number][];
+  droppedAt?: string | null;
+  endedAt?: string | null;
+}
+
 export interface LocationFix {
   lat: number;
   lng: number;

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, Linking, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 
 import { PrincipalNavigator } from './src/navigation/PrincipalNavigator';
@@ -30,6 +30,8 @@ import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { endSessionOnServer } from './src/push/pushLogout';
 import type { AuthProfile, SchoolSearchResult } from './src/api/types';
 import { initI18n } from './src/i18n';
+import { trackTokenFromUrl } from './src/transport/trackLink';
+import { TrackLinkView } from './src/screens/transport/TrackLinkView';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
 import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
@@ -73,6 +75,20 @@ export default function App() {
   const [preAuthStep, setPreAuthStep] = useState<PreAuthStep>({ name: 'welcome' });
   const [i18nReady, setI18nReady] = useState(false);
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(0);
+  // A WhatsApp "track the bus" link opened in the app (App Links) - shown over whatever is open,
+  // signed in or not, since the link itself grants access.
+  const [trackToken, setTrackToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    Linking.getInitialURL()
+      .then((url) => setTrackToken((current) => trackTokenFromUrl(url) ?? current))
+      .catch(() => {});
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      const token = trackTokenFromUrl(url);
+      if (token) setTrackToken(token);
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     initI18n().then(() => setI18nReady(true));
@@ -356,6 +372,7 @@ export default function App() {
             </AuthContext.Provider>
           </SchoolContext.Provider>
         )}
+        {trackToken && i18nReady && <TrackLinkView token={trackToken} onClose={() => setTrackToken(null)} />}
       </ToastProvider>
       <StatusBar style="light" />
     </SafeAreaProvider>

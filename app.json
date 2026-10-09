@@ -15,7 +15,10 @@
           "phonepe",
           "gpay"
         ]
-      }
+      },
+      "associatedDomains": [
+        "applinks:api.smartgurukul.org"
+      ]
     },
     "android": {
       "package": "com.gurukul.rn",
@@ -33,6 +36,23 @@
         "RECORD_AUDIO",
         "MODIFY_AUDIO_SETTINGS",
         "ACCESS_FINE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "api.smartgurukul.org",
+              "pathPrefix": "/track/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "web": {
