@@ -1896,6 +1896,8 @@ export interface TripStudent {
   note: string | null;
   extra: boolean;
   markedAt: string | null;
+  /** Trip home: when the driver marked the child dropped at their stop. */
+  droppedAt: string | null;
 }
 
 export interface BusTrip {
@@ -1943,6 +1945,7 @@ export interface TripSummary {
   endedAutomatically: boolean;
   boardedCount: number;
   notBoardedCount: number;
+  droppedCount: number;
 }
 
 export interface TripHistoryPage {

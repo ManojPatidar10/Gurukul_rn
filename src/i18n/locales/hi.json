@@ -1511,7 +1511,8 @@
     "boarding": {
       "boarded": "बस में बैठा",
       "notBoarded": "बस में नहीं बैठा",
-      "unmarked": "अभी मार्क नहीं"
+      "unmarked": "अभी मार्क नहीं",
+      "dropped": "घर पर उतारा · {{time}}"
     },
     "reasons": {
       "PICKED_UP_BY_PARENT": "माता-पिता ले गए",
@@ -1585,7 +1586,12 @@
       "pastTrips": "पिछली ट्रिप",
       "noPastTrips": "अभी कोई ट्रिप नहीं।",
       "loadMore": "पुरानी ट्रिप दिखाएँ",
-      "endedAutomatically": "अपने-आप खत्म हुई"
+      "endedAutomatically": "अपने-आप खत्म हुई",
+      "markDropped": "घर पर उतारा",
+      "undo": "वापस लें",
+      "droppedCount": "{{total}} में से {{dropped}} घर पर उतारे",
+      "droppedSummary": "{{count}} घर पर उतारे",
+      "endWithUndropped": "{{count}} बच्चों को अभी घर पर उतारा मार्क नहीं किया गया: {{names}}। उनके परिवार को उतरने का संदेश नहीं जाएगा। फिर भी ट्रिप खत्म करें?"
     },
     "admin": {
       "title": "स्कूल बस",

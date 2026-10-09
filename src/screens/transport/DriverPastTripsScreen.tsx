@@ -89,6 +89,9 @@ export function DriverPastTripsScreen({ navigation }: Props) {
                   </Text>
                   <Text style={styles.rowMeta}>
                     {t('transport.admin.boardedSummary', { boarded: trip.boardedCount })}
+                    {trip.direction === 'RETURN' && trip.status !== 'CHECKLIST'
+                      ? ` · ${t('transport.driver.droppedSummary', { count: trip.droppedCount })}`
+                      : ''}
                     {trip.notBoardedCount > 0
                       ? ` · ${t('transport.admin.notBoardedSummary', { count: trip.notBoardedCount })}`
                       : ''}

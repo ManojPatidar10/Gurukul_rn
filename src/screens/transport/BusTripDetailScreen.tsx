@@ -139,7 +139,7 @@ export function BusTripDetailScreen({ navigation, route }: Props) {
                     row.status === 'NOT_BOARDED' && { color: colors.error },
                   ]}
                 >
-                  {boardingLabel(row, t)}
+                  {boardingLabel(row, t, i18n.language)}
                 </Text>
               </View>
             ))}

@@ -19,8 +19,11 @@ export function formatTime(iso: string | null, language: string): string {
   return new Date(iso).toLocaleTimeString(language, { hour: 'numeric', minute: '2-digit' });
 }
 
-/** "Boarded", "Not boarded - left school early", or "Not marked yet". */
-export function boardingLabel(row: TripStudent, t: TFunction): string {
+/** "Boarded", "Dropped home · 2:45 PM", "Not boarded - left school early", or "Not marked yet". */
+export function boardingLabel(row: TripStudent, t: TFunction, language = 'en'): string {
+  if (row.status === 'BOARDED' && row.droppedAt) {
+    return t('transport.boarding.dropped', { time: formatTime(row.droppedAt, language) });
+  }
   if (row.status === 'BOARDED') return t('transport.boarding.boarded');
   if (row.status === 'NOT_BOARDED') {
     const reason = row.reason === 'OTHER' && row.note ? row.note : row.reason ? t(`transport.reasons.${row.reason}`) : '';

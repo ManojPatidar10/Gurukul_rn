@@ -80,6 +80,15 @@ export function unmarkStudent(schoolId: string, tripId: string, studentId: strin
   return api.delete<BusTrip>(`${BASE}/trips/${tripId}/students/${studentId}`, schoolId);
 }
 
+/** Trip home: the child got off at their stop - the family is told at once. */
+export function dropStudent(schoolId: string, tripId: string, studentId: string) {
+  return api.post<BusTrip>(`${BASE}/trips/${tripId}/students/${studentId}/drop`, undefined, schoolId);
+}
+
+export function undoDrop(schoolId: string, tripId: string, studentId: string) {
+  return api.delete<BusTrip>(`${BASE}/trips/${tripId}/students/${studentId}/drop`, schoolId);
+}
+
 export function startReturnTrip(schoolId: string, tripId: string) {
   return api.post<BusTrip>(`${BASE}/trips/${tripId}/start`, undefined, schoolId);
 }
