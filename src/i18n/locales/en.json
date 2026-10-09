@@ -917,7 +917,8 @@
     "alumniBadge": "Alumni",
     "withdrawnBadge": "Withdrawn",
     "selectionExpired": "Session expired. Please request a new OTP.",
-    "profileNotLinked": "That profile isn't linked to this phone number."
+    "profileNotLinked": "That profile isn't linked to this phone number.",
+    "driverRole": "Bus driver"
   },
   "switchChild": {
     "buttonLabel": "Switch child",

@@ -901,7 +901,7 @@ export interface OtpVerifyRequest {
 // profile - verify/select-profile/switch all use this same shape so the UI can render one card
 // component across the pre-login picker and the post-login "switch child" screen.
 export type AuthProfileOwnerType = 'STUDENT' | 'EMPLOYEE';
-export type AuthProfileRole = 'STUDENT' | 'TEACHER' | 'ADMIN';
+export type AuthProfileRole = 'STUDENT' | 'TEACHER' | 'ADMIN' | 'DRIVER';
 export type AuthProfileStatus = 'ACTIVE' | 'ALUMNI' | 'WITHDRAWN';
 
 export interface AuthProfile {
