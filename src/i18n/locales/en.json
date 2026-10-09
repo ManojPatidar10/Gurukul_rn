@@ -1627,6 +1627,14 @@
       "driverSaved": "Driver added - they can now sign in with their number",
       "noDrivers": "No drivers yet.",
       "removeDriverHint": "To remove a driver, mark them inactive under Staff."
+    },
+    "trackLink": {
+      "title": "School bus",
+      "close": "Close",
+      "ended": "This trip has ended, so the bus is no longer shown.",
+      "dropped": "{{name}} was dropped home at {{time}}.",
+      "invalid": "This tracking link is not valid.",
+      "offline": "No connection - retrying…"
     }
   }
 }
