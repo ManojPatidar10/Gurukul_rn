@@ -7,6 +7,7 @@ import { NavigationContainer } from '@react-navigation/native';
 
 import { PrincipalNavigator } from './src/navigation/PrincipalNavigator';
 import { ParentNavigator } from './src/navigation/ParentNavigator';
+import { DriverNavigator } from './src/navigation/DriverNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 import { colors } from './src/theme/colors';
 import { SchoolContext } from './src/context/SchoolContext';
@@ -343,7 +344,13 @@ export default function App() {
           <SchoolContext.Provider value={schoolId}>
             <AuthContext.Provider value={{ session, logout: handleLogout, switchProfile: handleSwitchProfile }}>
               <NavigationContainer ref={navigationRef}>
-                {session.ownerType === 'PARENT' ? <ParentNavigator /> : <PrincipalNavigator />}
+                {session.role === 'DRIVER' ? (
+                  <DriverNavigator />
+                ) : session.ownerType === 'PARENT' ? (
+                  <ParentNavigator />
+                ) : (
+                  <PrincipalNavigator />
+                )}
               </NavigationContainer>
               <IncomingCallOverlay session={session} schoolId={schoolId} />
             </AuthContext.Provider>

@@ -13,7 +13,7 @@ type Navigate = <K extends keyof PrincipalStackParamList>(
  * against the parent's own children first - a push for a child no longer linked opens nothing.
  */
 export async function openNotificationTarget(schoolId: string, target: NotificationTarget, navigate: Navigate) {
-  if (target.screen === 'ConversationsList' || target.screen === 'Announcements') {
+  if (!('studentId' in target)) {
     navigate(target.screen);
     return;
   }

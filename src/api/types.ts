@@ -754,7 +754,7 @@ export interface PagedResponse<T> {
   totalElements: number;
 }
 
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
+export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' | 'DRIVER';
 export type OwnerType = 'EMPLOYEE' | 'STUDENT' | 'PARENT';
 
 export interface AttendanceDevice {
@@ -1841,4 +1841,120 @@ export interface ConvertAdmissionResponse {
   alreadyEnrolled: boolean;
   inviteCode: string | null;
   inviteExpiresAt: string | null;
+}
+
+// ---------------------------------------------------------------- school bus (transport)
+
+export type TripDirection = 'MORNING' | 'RETURN';
+export type TripStatus = 'CHECKLIST' | 'ACTIVE' | 'ENDED';
+export type BoardingStatus = 'BOARDED' | 'NOT_BOARDED';
+export type NotBoardedReason = 'PICKED_UP_BY_PARENT' | 'LEFT_EARLY' | 'OTHER_BUS' | 'OTHER';
+
+export interface Bus {
+  id: string;
+  name: string;
+  registrationNumber: string | null;
+  capacity: number | null;
+  defaultDriverId: string | null;
+  defaultDriverName: string | null;
+  active: boolean;
+}
+
+export interface BusRequest {
+  name: string;
+  registrationNumber?: string;
+  capacity?: number;
+  defaultDriverId?: string | null;
+  active?: boolean;
+}
+
+export interface Driver {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+/** A bus's latest known position - also the payload on /topic/transport/trips/{id}. */
+export interface BusLocation {
+  tripId: string;
+  lat: number;
+  lng: number;
+  heading: number | null;
+  speed: number | null;
+  accuracy: number | null;
+  at: string;
+}
+
+export interface TripStudent {
+  studentId: string;
+  name: string;
+  className: string;
+  section: string;
+  /** Null on a return checklist row nobody has marked yet. */
+  status: BoardingStatus | null;
+  reason: NotBoardedReason | null;
+  note: string | null;
+  extra: boolean;
+  markedAt: string | null;
+}
+
+export interface BusTrip {
+  id: string;
+  busId: string;
+  busName: string;
+  busRegistrationNumber: string | null;
+  driverId: string;
+  driverName: string | null;
+  direction: TripDirection;
+  status: TripStatus;
+  serviceDate: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  endedAutomatically: boolean;
+  lastLocation: BusLocation | null;
+  students: TripStudent[];
+  morningTripIds: string[];
+}
+
+export interface MorningTripOption {
+  tripId: string;
+  busId: string;
+  busName: string;
+  driverName: string | null;
+  endedAt: string | null;
+  boardedCount: number;
+}
+
+export interface DriverHome {
+  buses: Bus[];
+  currentTrip: BusTrip | null;
+  returnableMorningTrips: MorningTripOption[];
+}
+
+export interface DriverStudentResult {
+  studentId: string;
+  name: string;
+  className: string;
+  section: string;
+}
+
+export interface MyChildTrip {
+  studentId: string;
+  studentName: string;
+  tripId: string;
+  busName: string;
+  busRegistrationNumber: string | null;
+  driverName: string | null;
+  direction: TripDirection;
+  startedAt: string | null;
+  lastLocation: BusLocation | null;
+}
+
+export interface LocationFix {
+  lat: number;
+  lng: number;
+  heading?: number | null;
+  speed?: number | null;
+  accuracy?: number | null;
+  at: string;
 }

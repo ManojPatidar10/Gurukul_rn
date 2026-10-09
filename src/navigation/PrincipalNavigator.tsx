@@ -105,6 +105,9 @@ import { SectionHubScreen } from '../screens/principal/SectionHubScreen';
 import { VendorDetailScreen } from '../screens/principal/VendorDetailScreen';
 import { VendorFormScreen } from '../screens/principal/VendorFormScreen';
 import { VendorsListScreen } from '../screens/principal/VendorsListScreen';
+import { BusTripDetailScreen } from '../screens/transport/BusTripDetailScreen';
+import { MyBusScreen } from '../screens/transport/MyBusScreen';
+import { TransportHubScreen } from '../screens/transport/TransportHubScreen';
 import { colors } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
 
@@ -224,6 +227,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
         <Stack.Screen name="TimetableEditor" component={TimetableEditorScreen} />
         <Stack.Screen name="PeriodSetup" component={PeriodSetupScreen} />
+        <Stack.Screen name="MyBus" component={MyBusScreen} />
+        <Stack.Screen name="TransportHub" component={TransportHubScreen} />
+        <Stack.Screen name="BusTripDetail" component={BusTripDetailScreen} />
       </Stack.Navigator>
   );
 }

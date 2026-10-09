@@ -212,6 +212,14 @@
       "reports": {
         "title": "रिपोर्ट",
         "description": "उपस्थिति एक्सपोर्ट और गतिविधि लॉग"
+      },
+      "transport": {
+        "title": "स्कूल बस",
+        "description": "बसें, ड्राइवर और आज की ट्रिप"
+      },
+      "schoolBus": {
+        "title": "स्कूल बस",
+        "description": "आपकी बस अभी कहाँ है"
       }
     },
     "adminCopy": {
@@ -982,14 +990,17 @@
   "parentHome": {
     "title": "मेरे बच्चे",
     "empty": "अभी तक आपके खाते से कोई बच्चा लिंक नहीं है।",
-    "rollAndClass": "रोल {{roll}} · {{classSection}}"
+    "rollAndClass": "रोल {{roll}} · {{classSection}}",
+    "schoolBus": "स्कूल बस",
+    "schoolBusHint": "जिस बस में बच्चा है, उसे देखें"
   },
   "childDashboard": {
     "attendance": "उपस्थिति",
     "fees": "फीस",
     "reportCard": "रिपोर्ट कार्ड",
     "idCard": "पहचान पत्र",
-    "timetable": "समय-सारणी"
+    "timetable": "समय-सारणी",
+    "schoolBus": "स्कूल बस"
   },
   "myFees": {
     "title": "मेरी फीस",
@@ -1375,6 +1386,14 @@
       "alerts": {
         "name": "सूचनाएँ",
         "description": "आपके बच्चे की अनुपस्थिति और फीस की याद"
+      },
+      "games": {
+        "name": "गेम्स",
+        "description": "क्विज़ चैलेंज और बैटल रूम"
+      },
+      "transport": {
+        "name": "स्कूल बस",
+        "description": "जब बच्चा बस में बैठे, स्कूल पहुँचे या घर निकले"
       }
     },
     "prompt": {
@@ -1478,5 +1497,125 @@
   "assessmentResults": {
     "invalidMarks": "{{names}} के अंक जांचें - ये 0 से {{max}} के बीच की संख्या होने चाहिए।",
     "nothingToSave": "सहेजने से पहले अंक दर्ज करें या विद्यार्थी को अनुपस्थित चिह्नित करें।"
+  },
+  "transport": {
+    "direction": {
+      "MORNING": "स्कूल की ओर",
+      "RETURN": "घर की ओर"
+    },
+    "status": {
+      "CHECKLIST": "चेकलिस्ट",
+      "ACTIVE": "चल रही है",
+      "ENDED": "समाप्त"
+    },
+    "boarding": {
+      "boarded": "बस में बैठा",
+      "notBoarded": "बस में नहीं बैठा",
+      "unmarked": "अभी मार्क नहीं"
+    },
+    "reasons": {
+      "PICKED_UP_BY_PARENT": "माता-पिता ले गए",
+      "LEFT_EARLY": "स्कूल से जल्दी चला गया",
+      "OTHER_BUS": "दूसरी बस से जा रहा है",
+      "OTHER": "अन्य कारण"
+    },
+    "time": {
+      "justNow": "अभी",
+      "minute": "1 मिनट पहले",
+      "minutes": "{{count}} मिनट पहले",
+      "hours": "{{count}} घंटे पहले"
+    },
+    "myBus": {
+      "title": "स्कूल बस",
+      "empty": "अभी आपका कोई बच्चा बस में नहीं है।",
+      "emptyHint": "बच्चे के बस में बैठते ही आपको सूचना मिलेगी, और आप यहाँ बस देख सकेंगे।",
+      "onBoard": "{{names}} - {{bus}} में",
+      "driver": "ड्राइवर: {{name}}",
+      "lastUpdated": "बस की लोकेशन {{ago}} अपडेट हुई",
+      "noLocationYet": "बस की लोकेशन का इंतज़ार…"
+    },
+    "driver": {
+      "homeTitle": "बस ट्रिप",
+      "currentTrip": "चालू ट्रिप",
+      "checklistOpen": "चेकलिस्ट खुली है - निकलने से पहले हर बच्चे को मार्क करें",
+      "runningSince": "{{time}} से चल रही है",
+      "continueTrip": "जारी रखें",
+      "chooseBus": "अपनी बस चुनें",
+      "noBuses": "अभी कोई बस नहीं - स्कूल ऑफिस से बस जुड़वाएँ।",
+      "startMorning": "स्कूल की ट्रिप",
+      "startMorningHint": "बच्चे बैठते जाएँ, उन्हें जोड़ते जाएँ",
+      "startReturn": "घर की ट्रिप",
+      "startReturnHint": "स्कूल से निकलने से पहले हर बच्चे को जाँचें",
+      "pickMorningTrips": "यह बस सुबह की कौन-सी ट्रिप के बच्चों को घर ले जा रही है?",
+      "noMorningTrips": "आज सुबह की कोई ट्रिप पूरी नहीं हुई। आप नाम से बच्चे जोड़ सकते हैं।",
+      "morningTripMeta": "{{count}} बच्चे · {{driver}} · {{time}} पहुँची",
+      "startNow": "ट्रिप शुरू करें",
+      "openChecklist": "चेकलिस्ट खोलें",
+      "addBoarding": "कौन बैठ रहा है?",
+      "addExtra": "सूची में न होने वाला बच्चा जोड़ें",
+      "searchPlaceholder": "बच्चे का नाम लिखें",
+      "add": "जोड़ें",
+      "onList": "सूची में है",
+      "noMatch": "इस नाम का कोई बच्चा नहीं।",
+      "addedByHand": "जोड़ा गया",
+      "nobodyYet": "अभी कोई बच्चा नहीं।",
+      "onBoardCount": "बस में {{count}}",
+      "checklistTitle": "{{total}} में से {{left}} मार्क करना बाकी",
+      "change": "बदलें",
+      "chooseReason": "{{name}} बस में क्यों नहीं बैठ रहा?",
+      "notePlaceholder": "कारण लिखें",
+      "markEveryone": "शुरू करने के लिए {{count}} और मार्क करें",
+      "startTripHome": "घर की ट्रिप शुरू करें",
+      "cancelTrip": "ट्रिप रद्द करें",
+      "cancelTripTitle": "यह ट्रिप रद्द करें?",
+      "cancelTripBody": "चेकलिस्ट हटा दी जाएगी। किसी को सूचना नहीं जाएगी।",
+      "endTrip": "ट्रिप खत्म करें",
+      "endTripTitle": "यह ट्रिप खत्म करें?",
+      "endTripBody": "लोकेशन शेयर होना बंद होगा। स्कूल की ट्रिप पर माता-पिता को बताया जाएगा कि बच्चा स्कूल पहुँच गया।",
+      "tripEnded": "यह ट्रिप खत्म हो गई है।",
+      "backHome": "बस ट्रिप पर वापस",
+      "sharingLocation": "माता-पिता के साथ बस की लोकेशन शेयर हो रही है",
+      "sharingForeground": "लोकेशन सिर्फ़ ऐप खुला रहने पर शेयर हो रही है - ऐप खुला रखें",
+      "notSharing": "लोकेशन शेयर नहीं हो रही",
+      "shareLocation": "लोकेशन शेयर करें",
+      "queued": "{{count}} लोकेशन नेटवर्क का इंतज़ार कर रही हैं",
+      "locationPermissionNeeded": "लोकेशन की अनुमति दें ताकि माता-पिता बस देख सकें।",
+      "trackingNotificationTitle": "बस ट्रिप चल रही है",
+      "trackingNotificationBody": "माता-पिता के साथ बस की लोकेशन शेयर हो रही है"
+    },
+    "admin": {
+      "title": "स्कूल बस",
+      "tabs": {
+        "trips": "आज",
+        "buses": "बसें",
+        "drivers": "ड्राइवर"
+      },
+      "noTrips": "आज अभी कोई बस ट्रिप नहीं।",
+      "boardedSummary": "बस में {{boarded}}",
+      "notBoardedSummary": "{{count}} नहीं बैठे",
+      "endedAuto": "अपने-आप खत्म हुई",
+      "startedAt": "{{time}} शुरू",
+      "endedAt": "{{time}} खत्म",
+      "children": "बच्चे",
+      "endTripBody": "ड्राइवर की जगह यह ट्रिप खत्म करें? अगर वे खत्म करना भूल गए हों तो इसका उपयोग करें।",
+      "addBus": "बस जोड़ें",
+      "editBus": "बस बदलें",
+      "busName": "बस का नाम",
+      "registration": "रजिस्ट्रेशन नंबर",
+      "capacity": "सीटें",
+      "defaultDriver": "नियमित ड्राइवर",
+      "inService": "सेवा में",
+      "outOfService": "सेवा में नहीं",
+      "seats": "{{count}} सीटें",
+      "noBuses": "अभी कोई बस नहीं।",
+      "busSaved": "बस सेव हो गई",
+      "addDriver": "ड्राइवर जोड़ें",
+      "driverName": "ड्राइवर का नाम",
+      "driverPhone": "मोबाइल नंबर",
+      "driverLoginHint": "ड्राइवर इस नंबर पर WhatsApp से आए OTP से ऐप में लॉग इन करेंगे।",
+      "driverSaved": "ड्राइवर जुड़ गया - अब वे अपने नंबर से लॉग इन कर सकते हैं",
+      "noDrivers": "अभी कोई ड्राइवर नहीं।",
+      "removeDriverHint": "ड्राइवर हटाने के लिए उन्हें स्टाफ़ में निष्क्रिय करें।"
+    }
   }
 }

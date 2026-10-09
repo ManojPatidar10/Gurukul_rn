@@ -73,6 +73,16 @@ export function ParentHomeScreen({ navigation }: Props) {
       <ScreenContainer>
         <NotificationPermissionPrompt />
         <ParentCommsTiles />
+        {children.length > 0 && (
+          <Pressable style={styles.row} onPress={() => navigation.navigate('MyBus')}>
+            <AvatarBadge name={t('parentHome.schoolBus')} accentKey="schoolBus" />
+            <View style={styles.rowMain}>
+              <Text style={styles.rowName}>{t('parentHome.schoolBus')}</Text>
+              <Text style={styles.rowMeta}>{t('parentHome.schoolBusHint')}</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+        )}
         {children.length === 0 && <Text style={styles.empty}>{t('parentHome.empty')}</Text>}
         {children.map((child) => (
           <Pressable key={child.id} style={styles.row} onPress={() => navigation.navigate('ChildDashboard', { student: child })}>
