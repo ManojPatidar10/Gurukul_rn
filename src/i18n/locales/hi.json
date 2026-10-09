@@ -1581,7 +1581,11 @@
       "queued": "{{count}} लोकेशन नेटवर्क का इंतज़ार कर रही हैं",
       "locationPermissionNeeded": "लोकेशन की अनुमति दें ताकि माता-पिता बस देख सकें।",
       "trackingNotificationTitle": "बस ट्रिप चल रही है",
-      "trackingNotificationBody": "माता-पिता के साथ बस की लोकेशन शेयर हो रही है"
+      "trackingNotificationBody": "माता-पिता के साथ बस की लोकेशन शेयर हो रही है",
+      "pastTrips": "पिछली ट्रिप",
+      "noPastTrips": "अभी कोई ट्रिप नहीं।",
+      "loadMore": "पुरानी ट्रिप दिखाएँ",
+      "endedAutomatically": "अपने-आप खत्म हुई"
     },
     "admin": {
       "title": "स्कूल बस",

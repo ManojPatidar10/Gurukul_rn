@@ -300,7 +300,7 @@ export function DriverTripScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={title} onBack={() => navigation.navigate('DriverHome')} />
+      <ScreenHeader title={title} onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('DriverHome'))} />
       <ScreenContainer keyboardShouldPersistTaps="handled">
         {error && <ErrorNotice message={error} />}
         {!trip && !error && <ActivityIndicator color={colors.primary} style={styles.loading} />}

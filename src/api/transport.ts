@@ -11,6 +11,7 @@ import type {
   LocationFix,
   MyChildTrip,
   NotBoardedReason,
+  TripHistoryPage,
   TripDirection,
 } from './types';
 
@@ -47,6 +48,11 @@ export function listTrips(schoolId: string, date?: string) {
 
 export function getDriverHome(schoolId: string) {
   return api.get<DriverHome>(`${BASE}/me`, schoolId);
+}
+
+/** The driver's own trips, newest first. */
+export function getMyPastTrips(schoolId: string, page: number) {
+  return api.get<TripHistoryPage>(`${BASE}/me/trips?page=${page}&size=20`, schoolId);
 }
 
 export function searchStudentsForBus(schoolId: string, q: string) {

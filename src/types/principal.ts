@@ -69,6 +69,7 @@ export type PrincipalStackParamList = {
   BusTripDetail: { tripId: string };
   DriverHome: undefined;
   DriverTrip: { tripId: string };
+  DriverPastTrips: undefined;
   PrincipalDashboard: undefined;
   Profile: undefined;
   PushDebug: undefined;

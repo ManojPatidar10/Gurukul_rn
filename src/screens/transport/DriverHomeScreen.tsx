@@ -205,6 +205,12 @@ export function DriverHomeScreen({ navigation }: Props) {
           </>
         )}
 
+        {home && (
+          <Pressable style={styles.historyButton} onPress={() => navigation.navigate('DriverPastTrips')}>
+            <Text style={styles.historyText}>🕘 {t('transport.driver.pastTrips')}</Text>
+          </Pressable>
+        )}
+
         <Pressable style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
@@ -287,6 +293,15 @@ const styles = StyleSheet.create({
   },
   primaryText: { color: colors.white, fontSize: 17, fontWeight: '800' },
   disabled: { opacity: 0.6 },
-  logoutButton: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.xl },
+  historyButton: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    ...softShadow,
+  },
+  historyText: { fontSize: 16, fontWeight: '800', color: colors.primary },
+  logoutButton: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.md },
   logoutText: { color: colors.error, fontWeight: '700', fontSize: 14 },
 });

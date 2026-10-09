@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { PushDebugScreen } from '../screens/principal/PushDebugScreen';
 import { DriverHomeScreen } from '../screens/transport/DriverHomeScreen';
+import { DriverPastTripsScreen } from '../screens/transport/DriverPastTripsScreen';
 import { DriverTripScreen } from '../screens/transport/DriverTripScreen';
 import { colors } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
@@ -20,6 +21,7 @@ export function DriverNavigator() {
     >
       <Stack.Screen name="DriverHome" component={DriverHomeScreen} />
       <Stack.Screen name="DriverTrip" component={DriverTripScreen} />
+      <Stack.Screen name="DriverPastTrips" component={DriverPastTripsScreen} />
       <Stack.Screen name="PushDebug" component={PushDebugScreen} />
     </Stack.Navigator>
   );

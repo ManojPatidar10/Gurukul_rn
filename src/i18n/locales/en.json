@@ -1581,7 +1581,11 @@
       "queued": "{{count}} positions waiting for signal",
       "locationPermissionNeeded": "Allow location access so parents can see the bus.",
       "trackingNotificationTitle": "Bus trip running",
-      "trackingNotificationBody": "Sharing the bus location with parents"
+      "trackingNotificationBody": "Sharing the bus location with parents",
+      "pastTrips": "Past trips",
+      "noPastTrips": "No trips yet.",
+      "loadMore": "Show older trips",
+      "endedAutomatically": "Ended automatically"
     },
     "admin": {
       "title": "School bus",
