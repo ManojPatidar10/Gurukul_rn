@@ -8,7 +8,8 @@ export type NotificationTarget =
   | { screen: 'ConversationsList' }
   | { screen: 'Announcements' }
   | { screen: 'MyBus' | 'TransportHub' }
-  | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string };
+  | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string }
+  | { screen: 'ReportCard'; studentId: string; term?: string };
 
 export function notificationTarget(
   data: Record<string, unknown> | null | undefined,
@@ -27,6 +28,15 @@ export function notificationTarget(
     case 'FEE_DUE':
       // Online payment is on hold, so a fee reminder opens the child's fee summary.
       return role === 'PARENT' && studentId ? { screen: 'ChildFees', studentId } : null;
+    case 'REPORT_CARD_PUBLISHED': {
+      // A parent's copy names one child (a parent may have several), so it opens that child's card
+      // for that term. A student's copy has no studentId and students have no inbox; their push tap
+      // is handled in usePushNotifications.
+      if (role !== 'PARENT' || !studentId) return null;
+      return typeof data.term === 'string'
+        ? { screen: 'ReportCard', studentId, term: data.term }
+        : { screen: 'ReportCard', studentId };
+    }
     case 'BUS_TRIP':
       // Boarding/return updates go to the child's login and parents; unusual ones also to admins.
       if (role === 'STUDENT' || role === 'PARENT') return { screen: 'MyBus' };
