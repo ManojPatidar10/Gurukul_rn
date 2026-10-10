@@ -33,6 +33,7 @@ export function MyQuestionsScreen({ navigation }: Props) {
   const { session } = useAuth();
   const { showToast } = useToast();
   const [subjectId, setSubjectId] = useState<string | null>(null);
+  const [subjectName, setSubjectName] = useState<string | null>(null);
   const [classNames, setClassNames] = useState<string[]>([]);
   const [loadingClassNames, setLoadingClassNames] = useState(true);
   const [classNamesError, setClassNamesError] = useState<string | null>(null);
@@ -128,7 +129,14 @@ export function MyQuestionsScreen({ navigation }: Props) {
       <ScreenHeader title="My Questions" onBack={() => navigation.goBack()} />
       <ScreenContainer>
         <Text style={styles.fieldLabel}>Subject</Text>
-        <SubjectPicker schoolId={schoolId} selectedId={subjectId} onSelect={(s: Subject) => setSubjectId(s.id)} />
+        <SubjectPicker
+          schoolId={schoolId}
+          selectedId={subjectId}
+          onSelect={(s: Subject) => {
+            setSubjectId(s.id);
+            setSubjectName(s.name);
+          }}
+        />
 
         <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>Class</Text>
         {classNamesError ? (
@@ -167,6 +175,18 @@ export function MyQuestionsScreen({ navigation }: Props) {
             trackColor={{ true: colors.primary, false: colors.border }}
           />
         </View>
+
+        {subjectId && className && (
+          // The whole grade's answers to this teacher's own questions (no section).
+          <Pressable
+            style={styles.retryButton}
+            onPress={() =>
+              navigation.navigate('QuestionStats', { subjectId, subjectName: subjectName ?? undefined, className })
+            }
+          >
+            <Text style={styles.retryButtonText}>Question stats</Text>
+          </Pressable>
+        )}
 
         {error && <ErrorNotice message={error} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
