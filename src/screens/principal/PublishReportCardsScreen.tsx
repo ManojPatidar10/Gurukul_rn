@@ -1,9 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { backfillSectionTerm, listSectionTerms } from '../../api/assessments';
-import { publishReportCards } from '../../api/reportCards';
+import { getPublishCheck, publishReportCards } from '../../api/reportCards';
 import type { ReportCardPublication, TermSummary } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -13,6 +13,8 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { canonicalTerm, findExistingTerm } from '../../utils/assessmentTerms';
+import { canPublish, nothingToPublishMessage, publishConfirmation } from '../../utils/reportCardPublish';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PublishReportCards'>;
 
@@ -20,43 +22,111 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { showToast } = useToast();
   const classSection = route.params.classSection;
-  const [term, setTerm] = useState('Term 1');
-  const [existingTerms, setExistingTerms] = useState<TermSummary[]>([]);
+  // No pre-filled term: publishing notifies every family and can't be undone yet, so the term is
+  // always an explicit pick from the ones this section's assessments actually use.
+  const [term, setTerm] = useState<string | null>(null);
+  const [terms, setTerms] = useState<TermSummary[] | null>(null);
+  const [termsError, setTermsError] = useState<string | null>(null);
+  const [backfillTerm, setBackfillTerm] = useState('');
+  const [checking, setChecking] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [backfilling, setBackfilling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ReportCardPublication | null>(null);
 
-  const loadTerms = () => {
+  const loadTerms = useCallback(() => {
     listSectionTerms(schoolId, classSection.id)
-      .then(setExistingTerms)
-      .catch(() => {});
+      .then((loaded) => {
+        setTermsError(null);
+        setTerms(loaded);
+        setTerm((current) => (current && loaded.some((t) => t.term === current) ? current : null));
+      })
+      .catch((e) => {
+        // Don't leave stale chips beside the error - they'd look current.
+        setTerms(null);
+        setTerm(null);
+        setTermsError(getErrorMessage(e));
+      });
+  }, [schoolId, classSection.id]);
+
+  useEffect(loadTerms, [loadTerms]);
+
+  const retryTerms = () => {
+    setTermsError(null);
+    loadTerms();
   };
 
-  useEffect(loadTerms, [schoolId, classSection.id]);
+  // `busy` only disables Publish after the next render, so a quick double tap could run two checks,
+  // stack two confirmations and send two publishes at once. This is set on the tap itself and held
+  // until the flow ends: refused, failed, cancelled or published.
+  const publishFlow = useRef(false);
+  const endPublishFlow = () => {
+    publishFlow.current = false;
+  };
 
-  const handlePublish = async () => {
+  const publish = async (confirmedTerm: string) => {
     setPublishing(true);
     setError(null);
-    setResult(null);
     try {
-      const publication = await publishReportCards(schoolId, classSection.id, term.trim());
+      const publication = await publishReportCards(schoolId, classSection.id, confirmedTerm);
       setResult(publication);
       loadTerms();
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
       setPublishing(false);
+      endPublishFlow();
     }
   };
 
-  const handleBackfill = async () => {
-    setBackfilling(true);
+  // Publishing is never one tap: check what it would do first, and make the admin confirm the
+  // counts and warnings (missing marks, un-termed assessments, already published).
+  const handlePublish = async () => {
+    if (!term || publishFlow.current) return;
+    publishFlow.current = true;
+    let confirming = false;
+    setChecking(true);
     setError(null);
+    setResult(null);
     try {
-      const { assessmentsUpdated } = await backfillSectionTerm(schoolId, classSection.id, term.trim());
+      const check = await getPublishCheck(schoolId, classSection.id, term);
+      if (!canPublish(check)) {
+        Alert.alert('Nothing to publish', nothingToPublishMessage(check));
+        return;
+      }
+      const { title, message } = publishConfirmation(check);
+      Alert.alert(
+        title,
+        message,
+        [
+          { text: 'Cancel', style: 'cancel', onPress: endPublishFlow },
+          { text: 'Publish', style: 'destructive', onPress: () => publish(check.term) },
+        ],
+        { onDismiss: endPublishFlow }
+      );
+      confirming = true;
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setChecking(false);
+      // While the confirmation is up, its buttons end the flow.
+      if (!confirming) endPublishFlow();
+    }
+  };
+
+  const termNames = (terms ?? []).map((t) => t.term);
+  const backfillTarget = canonicalTerm(backfillTerm, termNames);
+  const backfillMatch = findExistingTerm(backfillTerm, termNames);
+  const backfillTargetPublished = (terms ?? []).some((t) => t.published && t.term === backfillTarget);
+
+  const handleBackfill = async () => {
+    if (!backfillTarget) return;
+    setBackfilling(true);
+    try {
+      const { assessmentsUpdated } = await backfillSectionTerm(schoolId, classSection.id, backfillTarget);
       if (assessmentsUpdated > 0) {
-        showToast(`Tagged ${assessmentsUpdated} assessment(s) that had no term with "${term.trim()}".`, 'success');
+        showToast(`Tagged ${assessmentsUpdated} assessment(s) that had no term with "${backfillTarget}".`, 'success');
+        setBackfillTerm('');
         loadTerms();
       } else {
         showToast('Every assessment in this section already has a term set.', 'info');
@@ -68,6 +138,8 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
     }
   };
 
+  const busy = checking || publishing;
+
   return (
     <View style={styles.root}>
       <ScreenHeader
@@ -77,29 +149,37 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
       />
       <ScreenContainer>
         <Text style={styles.description}>
-          Publishing makes this term&apos;s report card visible to every student in this section
-          and locks further marks entry for any assessment in this term. This can be re-run later
-          if marks need correcting - publishing again just refreshes the timestamp.
+          Publishing shows this term&apos;s report card to every student and parent in this section and
+          notifies them. It also locks marks entry for every assessment in the term. There&apos;s no undo
+          yet, so check the class marks grid first.
         </Text>
 
         <Text style={styles.label}>Term</Text>
-        <TextInput
-          style={styles.input}
-          value={term}
-          onChangeText={setTerm}
-          placeholder="e.g. Term 1"
-          placeholderTextColor={colors.textMuted}
-        />
-
-        {existingTerms.length > 0 && (
+        {terms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
+        {termsError && (
           <>
-            <Text style={styles.hint}>Terms already used by this section&apos;s assessments:</Text>
+            <ErrorNotice message={termsError} />
+            <Pressable onPress={retryTerms} style={styles.retry}>
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          </>
+        )}
+        {terms !== null && terms.length === 0 && (
+          <Text style={styles.hint}>
+            No assessment in this section has a term yet, so there&apos;s nothing to publish. Give each
+            assessment a term (edit it, or use the fix below), then come back.
+          </Text>
+        )}
+        {terms !== null && terms.length > 0 && (
+          <>
+            <Text style={styles.hint}>Pick the term to publish. ✓ means it&apos;s already published.</Text>
             <View style={styles.chips}>
-              {existingTerms.map((t) => (
+              {terms.map((t) => (
                 <Pressable
                   key={t.term}
                   style={[styles.chip, term === t.term && styles.chipSelected]}
                   onPress={() => setTerm(t.term)}
+                  disabled={busy}
                 >
                   <Text style={[styles.chipText, term === t.term && styles.chipTextSelected]}>
                     {t.term}
@@ -111,39 +191,57 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
           </>
         )}
 
-        <Text style={styles.hint}>
-          If a student&apos;s marks don&apos;t show up after publishing, it&apos;s usually because
-          the assessment was created without a term. Tag every un-termed assessment in this section
-          with the term above:
-        </Text>
+        {error && <ErrorNotice message={error} />}
+        {result && (
+          <Text style={styles.success}>
+            Published &quot;{result.term}&quot; for this section — by {result.publishedByEmployeeName}. Marks
+            for this term are now locked.
+          </Text>
+        )}
+
         <Pressable
-          style={[styles.backfillButton, (!term.trim() || backfilling) && styles.disabled]}
+          style={[styles.publishButton, (!term || busy) && styles.disabled]}
+          onPress={handlePublish}
+          disabled={!term || busy}
+        >
+          {busy ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.publishButtonText}>
+              {term ? `Publish "${term}" report cards` : 'Pick a term to publish'}
+            </Text>
+          )}
+        </Pressable>
+
+        <Text style={styles.sectionTitle}>Assessments with no term</Text>
+        <Text style={styles.hint}>
+          An assessment saved without a term never appears on any report card. Tag every assessment in
+          this section that has no term with:
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={backfillTerm}
+          onChangeText={setBackfillTerm}
+          placeholder="Term, e.g. Term 1"
+          placeholderTextColor={colors.textMuted}
+        />
+        {backfillTargetPublished ? (
+          <Text style={styles.warning}>
+            Report cards for &quot;{backfillTarget}&quot; are already published, so assessments can&apos;t be
+            added to it.
+          </Text>
+        ) : backfillMatch && backfillMatch !== backfillTerm.trim() ? (
+          <Text style={styles.hint}>Will be saved as &quot;{backfillMatch}&quot;, the spelling this section already uses.</Text>
+        ) : null}
+        <Pressable
+          style={[styles.backfillButton, (!backfillTarget || backfillTargetPublished || backfilling) && styles.disabled]}
           onPress={handleBackfill}
-          disabled={!term.trim() || backfilling}
+          disabled={!backfillTarget || backfillTargetPublished || backfilling}
         >
           {backfilling ? (
             <ActivityIndicator color={colors.primary} size="small" />
           ) : (
             <Text style={styles.backfillButtonText}>Fix assessments missing a term</Text>
-          )}
-        </Pressable>
-
-        {error && <ErrorNotice message={error} />}
-        {result && (
-          <Text style={styles.success}>
-            Published &quot;{result.term}&quot; for this section — by {result.publishedByEmployeeName}.
-          </Text>
-        )}
-
-        <Pressable
-          style={[styles.publishButton, (!term.trim() || publishing) && styles.disabled]}
-          onPress={handlePublish}
-          disabled={!term.trim() || publishing}
-        >
-          {publishing ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <Text style={styles.publishButtonText}>Publish report cards</Text>
           )}
         </Pressable>
       </ScreenContainer>
@@ -155,6 +253,13 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   description: { fontSize: 13.5, color: colors.textMuted, lineHeight: 20, marginBottom: spacing.lg },
   label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
+  },
   input: {
     backgroundColor: colors.surfaceMuted,
     borderRadius: radius.lg,
@@ -162,9 +267,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     fontSize: 15,
     color: colors.textPrimary,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   hint: { fontSize: 12.5, color: colors.textMuted, lineHeight: 18, marginBottom: spacing.sm },
+  warning: { fontSize: 12.5, color: colors.warning, lineHeight: 18, marginBottom: spacing.sm },
+  termsLoading: { alignSelf: 'flex-start', marginBottom: spacing.lg },
+  retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm, marginBottom: spacing.sm },
+  retryText: { color: colors.primary, fontWeight: '700' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   chip: {
     borderWidth: 1.5,
@@ -182,10 +291,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingVertical: spacing.sm,
     alignItems: 'center',
+    marginTop: spacing.xs,
     marginBottom: spacing.lg,
   },
   backfillButtonText: { color: colors.textPrimary, fontWeight: '700', fontSize: 13.5 },
-  error: { color: colors.error, marginBottom: spacing.md },
   success: { color: colors.success, marginBottom: spacing.md, fontWeight: '600' },
   publishButton: {
     backgroundColor: colors.primary,

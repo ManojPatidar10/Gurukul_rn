@@ -574,8 +574,11 @@ export interface ReportCard {
   subjects: SubjectResult[];
   totalMaxMarks: number;
   totalMarksObtained: number;
-  overallPercentage: number;
-  overallGrade: string;
+  /** Null when the student has no marks for the term (none entered, none marked absent). */
+  overallPercentage: number | null;
+  overallGrade: string | null;
+  /** Assessments in this term with no mark for the student (blank and not marked absent). */
+  missingMarksCount: number;
   attendancePercentage: number | null;
   published: boolean;
   publishedAt: string | null;
@@ -586,6 +589,20 @@ export interface ReportCardPublication {
   term: string;
   publishedAt: string;
   publishedByEmployeeName: string;
+}
+
+/** GET /class-sections/{id}/report-cards/publish-check - what publishing this term would do. */
+export interface ReportCardPublishCheck {
+  /** The section's own spelling of the term. */
+  term: string;
+  assessmentCount: number;
+  /** Assessments in the section with no term, which no report card includes. */
+  untermedAssessmentCount: number;
+  studentCount: number;
+  studentsWithMissingMarks: number;
+  missingMarksCount: number;
+  alreadyPublished: boolean;
+  publishedAt: string | null;
 }
 
 export interface PublishedTerm {
