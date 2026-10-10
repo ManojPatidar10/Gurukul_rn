@@ -65,6 +65,7 @@ export interface FeatureAction {
 export type PrincipalStackParamList = {
   /** School bus: a family's live view, the admin hub and trip detail, and the driver's screens. */
   MyBus: undefined;
+  Holidays: undefined;
   TransportHub: undefined;
   BusTripDetail: { tripId: string };
   DriverHome: undefined;
