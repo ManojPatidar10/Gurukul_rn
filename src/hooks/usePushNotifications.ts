@@ -204,6 +204,7 @@ export function usePushNotifications(schoolId: string | null, session: Session |
       if (!navigationRef.isReady() || !data?.type) return;
 
       const defaultTerm = typeof data.term === 'string' ? data.term : undefined;
+      const defaultSectionId = typeof data.sectionId === 'string' && data.sectionId ? data.sectionId : undefined;
       const scheduledCallTypes = ['SCHEDULED_CALL_STARTED', 'SCHEDULED_CALL_REMINDER', 'SCHEDULED_CALL_CANCELLED'];
 
       if (data.type === 'NEW_MESSAGE') {
@@ -217,7 +218,11 @@ export function usePushNotifications(schoolId: string | null, session: Session |
         // ReportCardService.notifyStudentsAndParents), so session.ownerId is the report card to open.
         getStudent(session.schoolId, session.ownerId)
           .then((student) => {
-            navigationRef.navigate('ReportCard', { student: { id: student.id, name: student.name }, defaultTerm });
+            navigationRef.navigate('ReportCard', {
+              student: { id: student.id, name: student.name },
+              defaultTerm,
+              ...(defaultSectionId ? { defaultSectionId } : {}),
+            });
           })
           .catch(() => {});
       } else {

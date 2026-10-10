@@ -16,11 +16,14 @@ import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import {
   buildResultsPayload,
+  clearMovedEntry,
   isResultsDirty,
   MAX_REMARK_LENGTH,
   resultsGridMode,
   rowFromResult,
+  savedResultLabel,
   summarizeResults,
+  supportsExcused as serverSupportsExcused,
   type ResultRowState,
 } from '../../utils/assessmentResults';
 import { passMarkFromScale } from '../../utils/gradingScale';
@@ -35,6 +38,12 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
   const { assessment, readOnly = false } = route.params;
   const [roster, setRoster] = useState<StudentResult[]>([]);
   const [rows, setRows] = useState<Record<string, RowState>>({});
+  // Results saved for students who have since left the section: read-only here, and only clearable.
+  const [movedStudents, setMovedStudents] = useState<StudentResult[]>([]);
+  // Only a server that sends `excused` on its rows knows Excused; an older one gets no toggle.
+  const [supportsExcused, setSupportsExcused] = useState(false);
+  const [clearingId, setClearingId] = useState<string | null>(null);
+  const [clearError, setClearError] = useState<string | null>(null);
   // Max marks, term and lock come from the results response: the route's copy of the assessment
   // is whatever the list loaded, and max marks may have changed since.
   const [maxMarks, setMaxMarks] = useState(assessment.maxMarks);
@@ -51,6 +60,9 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
   const applyResults = useCallback(
     (data: AssessmentResults) => {
       setRoster(data.results);
+      const moved = data.movedStudents ?? [];
+      setMovedStudents(moved);
+      setSupportsExcused(serverSupportsExcused([...data.results, ...moved]));
       const nextRows: Record<string, RowState> = {};
       data.results.forEach((r) => {
         nextRows[r.studentId] = rowFromResult(r);
@@ -90,7 +102,8 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
     fetchResults();
   };
 
-  const { editable, inputsEnabled } = resultsGridMode({ locked, readOnly, saving });
+  // A Clear is a save too: its response replaces every row, so the grid waits for it like for Save.
+  const { editable, inputsEnabled } = resultsGridMode({ locked, readOnly, saving: saving || clearingId !== null });
   const dirty = useMemo(() => isResultsDirty(roster, rows), [roster, rows]);
 
   // Covers the header Back, Android Back and the iOS swipe.
@@ -118,7 +131,7 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
   const handleSubmit = async () => {
     setSaveError(null);
     setSuccess(false);
-    const { results, invalid } = buildResultsPayload(roster, rows, maxMarks);
+    const { results, invalid } = buildResultsPayload(roster, rows, maxMarks, { supportsExcused });
     setInvalidIds(new Set(invalid.map((s) => s.studentId)));
     if (invalid.length > 0) {
       setSaveError(
@@ -144,6 +157,34 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Clears a moved student's result on its own save call. Only offered while the grid has no unsaved
+  // changes: the response replaces the whole grid, so anything typed would be lost.
+  const confirmClearMoved = (student: StudentResult) => {
+    Alert.alert(
+      t('assessmentResults.clearConfirmTitle'),
+      t('assessmentResults.clearConfirmMessage', { name: student.studentName }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('assessmentResults.clear'),
+          style: 'destructive',
+          onPress: async () => {
+            setClearingId(student.studentId);
+            setClearError(null);
+            setSuccess(false);
+            try {
+              applyResults(await submitAssessmentResults(schoolId, assessment.id, [clearMovedEntry(student.studentId)]));
+            } catch (e) {
+              setClearError(getErrorMessage(e));
+            } finally {
+              setClearingId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -213,6 +254,10 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {editable && !loadError && roster.length > 0 && (
+          <Text style={styles.remarkHint}>{t('assessmentResults.remarkVisibleHint')}</Text>
+        )}
+
         {!loadError &&
           roster.map((student) => {
             const row = rows[student.studentId] ?? rowFromResult(student);
@@ -225,18 +270,23 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
                 </Text>
                 <View style={styles.rowInputs}>
                   <TextInput
-                    style={[styles.marksInput, row.absent && styles.marksInputDisabled, invalid && styles.inputInvalid]}
+                    style={[
+                      styles.marksInput,
+                      (row.absent || row.excused) && styles.marksInputDisabled,
+                      invalid && styles.inputInvalid,
+                    ]}
                     value={row.marksText}
                     onChangeText={(text) => setRow(student.studentId, { marksText: text })}
                     keyboardType="decimal-pad"
                     placeholder={t('assessmentResults.outOf', { max: maxMarks })}
                     placeholderTextColor={colors.textMuted}
-                    editable={inputsEnabled && !row.absent}
+                    editable={inputsEnabled && !row.absent && !row.excused}
                     accessibilityLabel={t('assessmentResults.marksLabel', { name, roll: student.rollNumber, max: maxMarks })}
                   />
                   <Pressable
                     style={[styles.absentToggle, row.absent && styles.absentToggleActive, !editable && styles.readOnlyToggle]}
-                    onPress={() => setRow(student.studentId, { absent: !row.absent })}
+                    // Absent and Excused can't both be set: ticking one unticks the other.
+                    onPress={() => setRow(student.studentId, { absent: !row.absent, excused: false })}
                     disabled={!inputsEnabled}
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: row.absent, disabled: !inputsEnabled }}
@@ -246,6 +296,20 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
                       {t('assessmentResults.absent')}
                     </Text>
                   </Pressable>
+                  {supportsExcused && (
+                    <Pressable
+                      style={[styles.absentToggle, row.excused && styles.excusedToggleActive, !editable && styles.readOnlyToggle]}
+                      onPress={() => setRow(student.studentId, { excused: !row.excused, absent: false })}
+                      disabled={!inputsEnabled}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: row.excused, disabled: !inputsEnabled }}
+                      accessibilityLabel={t('assessmentResults.excusedLabel', { name })}
+                    >
+                      <Text style={[styles.absentToggleText, row.excused && styles.absentToggleTextActive]}>
+                        {t('assessmentResults.excused')}
+                      </Text>
+                    </Pressable>
+                  )}
                 </View>
                 {/* Stays editable when Absent is ticked - "Absent: medical leave" is a useful remark. */}
                 {(editable || row.remarksText.trim() !== '') && (
@@ -264,6 +328,44 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
               </View>
             );
           })}
+
+        {!loadError && movedStudents.length > 0 && (
+          <View style={styles.movedArea}>
+            <Text style={styles.movedTitle}>{t('assessmentResults.movedTitle')}</Text>
+            <Text style={styles.movedHint}>{t('assessmentResults.movedHint')}</Text>
+            {editable && dirty && <Text style={styles.movedWarning}>{t('assessmentResults.saveFirst')}</Text>}
+            {clearError && <ErrorNotice message={clearError} />}
+            {movedStudents.map((student) => (
+              <View key={student.studentId} style={styles.card}>
+                <View style={styles.movedRow}>
+                  <View style={styles.movedMain}>
+                    <Text style={styles.studentName}>
+                      {t('assessmentResults.studentLine', { name: student.studentName, roll: student.rollNumber })}
+                    </Text>
+                    <Text style={styles.movedValue}>{savedResultLabel(student, maxMarks)}</Text>
+                    {!!student.remarks?.trim() && <Text style={styles.movedRemark}>{student.remarks}</Text>}
+                  </View>
+                  {editable && (
+                    <Pressable
+                      style={[styles.clearButton, (dirty || !inputsEnabled) && styles.disabled]}
+                      onPress={() => confirmClearMoved(student)}
+                      disabled={dirty || !inputsEnabled}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('assessmentResults.clearLabel', { name: student.studentName })}
+                      accessibilityState={{ disabled: dirty || !inputsEnabled }}
+                    >
+                      {clearingId === student.studentId ? (
+                        <ActivityIndicator color={colors.error} size="small" />
+                      ) : (
+                        <Text style={styles.clearButtonText}>{t('assessmentResults.clear')}</Text>
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {editable && !loadError && roster.length > 0 && (
           <View style={styles.saveArea}>
@@ -345,10 +447,30 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   absentToggleActive: { backgroundColor: colors.error, borderColor: colors.error },
+  excusedToggleActive: { backgroundColor: colors.textSecondary, borderColor: colors.textSecondary },
   readOnlyToggle: { opacity: 0.6 },
   absentToggleText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
   absentToggleTextActive: { color: colors.white },
   saveArea: { marginTop: spacing.md, marginBottom: spacing.xl },
+  remarkHint: { fontSize: 12.5, color: colors.textMuted, lineHeight: 18, marginBottom: spacing.md },
+  movedArea: { marginTop: spacing.lg },
+  movedTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.xs },
+  movedHint: { fontSize: 12.5, color: colors.textMuted, lineHeight: 18, marginBottom: spacing.sm },
+  movedWarning: { fontSize: 12.5, fontWeight: '600', color: colors.warning, marginBottom: spacing.sm },
+  movedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  movedMain: { flex: 1 },
+  movedValue: { fontSize: 14, fontWeight: '700', color: colors.textSecondary },
+  movedRemark: { fontSize: 13, color: colors.textMuted, marginTop: spacing.xs },
+  clearButton: {
+    borderWidth: 1.5,
+    borderColor: colors.error,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    minWidth: 64,
+    alignItems: 'center',
+  },
+  clearButtonText: { fontSize: 12, fontWeight: '700', color: colors.error },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

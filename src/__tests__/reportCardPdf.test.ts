@@ -17,6 +17,15 @@ describe('report card PDF file names', () => {
     expect(studentReportCardFileName('प्रिया', 'Term 1')).toBe('report-card-student-term-1.pdf');
     expect(fileSlug('', 'term')).toBe('term');
   });
+
+  it('uses the roll number for a name with nothing usable, then "student", like the server', () => {
+    expect(studentReportCardFileName('प्रिया', 'Term 1', '12')).toBe('report-card-roll-12-term-1.pdf');
+    expect(studentReportCardFileName('प्रिया', 'Term 1', ' 7/B ')).toBe('report-card-roll-7-b-term-1.pdf');
+    expect(studentReportCardFileName('प्रिया', 'Term 1', 'बारह')).toBe('report-card-student-term-1.pdf');
+    expect(studentReportCardFileName('प्रिया', 'Term 1', null)).toBe('report-card-student-term-1.pdf');
+    // A usable name wins over the roll number.
+    expect(studentReportCardFileName('Aarav Kumar', 'Term 1', '12')).toBe('report-card-aarav-kumar-term-1.pdf');
+  });
 });
 
 describe('validateLogo', () => {

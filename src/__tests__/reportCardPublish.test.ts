@@ -1,7 +1,13 @@
 import type { ReportCardPublishCheck, TermSummary } from '../api/types';
 import { canonicalTerm, defaultSectionTerm, findExistingTerm } from '../utils/assessmentTerms';
 import { formatOverallGrade, formatOverallPercentage, missingMarksCount } from '../utils/reportCardDisplay';
-import { canPublish, nothingToPublishMessage, publishConfirmation, publishWarnings } from '../utils/reportCardPublish';
+import {
+  canPublish,
+  nothingToPublishMessage,
+  publishConfirmation,
+  publishWarnings,
+  unpublishReasonError,
+} from '../utils/reportCardPublish';
 
 const check = (overrides: Partial<ReportCardPublishCheck> = {}): ReportCardPublishCheck => ({
   term: 'Term 1',
@@ -121,14 +127,60 @@ describe('publish check', () => {
 });
 
 describe('publishConfirmation', () => {
-  it('gives the counts and says families are notified, marks lock and there is no undo', () => {
+  it('gives the counts and says families are notified, marks lock and an admin can unpublish', () => {
     const { title, message } = publishConfirmation(check(), formatDate);
     expect(title).toBe('Publish "Term 1" report cards?');
     expect(message).toContain('30 students · 8 assessments in "Term 1".');
     expect(message).toContain('Every student and parent in this section will be notified.');
     expect(message).toContain('Marks for every assessment in "Term 1" will be locked.');
-    expect(message).toContain("There's no undo yet");
+    expect(message).toContain("An admin can unpublish these later with a reason. Families aren't told when that happens.");
+    expect(message).not.toContain('no undo');
     expect(message).not.toContain('•');
+  });
+
+  it('says when the term was unpublished before, by whom and why, and that families are notified again', () => {
+    const unpublished = check({
+      lastUnpublishedAt: '2026-10-05T09:30:00Z',
+      lastUnpublishedByName: 'Meera Joshi',
+      lastUnpublishReason: 'Maths marks for roll 12 were wrong',
+    });
+    expect(publishWarnings(unpublished)).toEqual([
+      {
+        code: 'previouslyUnpublished',
+        unpublishedAt: '2026-10-05T09:30:00Z',
+        byName: 'Meera Joshi',
+        reason: 'Maths marks for roll 12 were wrong',
+      },
+    ]);
+    const { message } = publishConfirmation(unpublished, formatDate);
+    expect(message).toContain(
+      '• "Term 1" was unpublished on <2026-10-05T09:30:00Z> by Meera Joshi: Maths marks for roll 12 were wrong. ' +
+        'Publishing it again notifies every family again.'
+    );
+    expect(message).toContain('Every student and parent in this section will be notified.');
+  });
+
+  it('leaves the unpublish warning out for a server without it, and copes with a missing name or reason', () => {
+    expect(publishWarnings(check({ lastUnpublishedAt: null }))).toEqual([]);
+    const { message } = publishConfirmation(check({ lastUnpublishedAt: '2026-10-05T09:30:00Z' }), formatDate);
+    expect(message).toContain('• "Term 1" was unpublished on <2026-10-05T09:30:00Z>. Publishing it again notifies every family again.');
+  });
+
+  it('on a re-publish after an earlier unpublish, keeps to "not notified again"', () => {
+    // The server sends the last unpublish even while the term is published again.
+    const republish = check({
+      alreadyPublished: true,
+      publishedAt: '2026-10-07T10:00:00Z',
+      lastUnpublishedAt: '2026-10-05T09:30:00Z',
+      lastUnpublishedByName: 'Meera Joshi',
+      lastUnpublishReason: 'Maths marks for roll 12 were wrong',
+    });
+    expect(publishWarnings(republish)).toEqual([{ code: 'alreadyPublished', publishedAt: '2026-10-07T10:00:00Z' }]);
+    const { message } = publishConfirmation(republish, formatDate);
+    expect(message).toContain('Students and parents are not notified again.');
+    expect(message).not.toContain('notifies every family again');
+    expect(message).not.toContain('was unpublished');
+    expect(message).not.toContain('will be notified');
   });
 
   it('spells out each warning', () => {
@@ -167,5 +219,16 @@ describe('publishConfirmation', () => {
     const { message } = publishConfirmation(check({ studentCount: 1, assessmentCount: 1, untermedAssessmentCount: 1 }), formatDate);
     expect(message).toContain('1 student · 1 assessment in "Term 1".');
     expect(message).toContain('1 assessment in this section has no term, so its marks');
+  });
+});
+
+describe('unpublishReasonError', () => {
+  it('wants 5 to 500 characters once trimmed', () => {
+    expect(unpublishReasonError('abcd')).toBe('reportCardUnpublish.reasonLength');
+    expect(unpublishReasonError('abcde')).toBeNull();
+    expect(unpublishReasonError('x'.repeat(500))).toBeNull();
+    expect(unpublishReasonError('x'.repeat(501))).toBe('reportCardUnpublish.reasonLength');
+    expect(unpublishReasonError('   abcd   ')).toBe('reportCardUnpublish.reasonLength');
+    expect(unpublishReasonError('')).toBe('reportCardUnpublish.reasonLength');
   });
 });

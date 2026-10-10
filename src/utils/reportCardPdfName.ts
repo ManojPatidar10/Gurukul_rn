@@ -7,8 +7,15 @@ export function fileSlug(value: string | null | undefined, fallback = 'student')
   return slug || fallback;
 }
 
-export function studentReportCardFileName(studentName: string, term: string) {
-  return `report-card-${fileSlug(studentName)}-${fileSlug(term, 'term')}.pdf`;
+/**
+ * The same name the server gives the PDF: the student's name, or `roll-{roll number}` when the name
+ * has nothing usable (a Hindi-only name), and only then "student".
+ */
+export function studentReportCardFileName(studentName: string, term: string, rollNumber?: string | null) {
+  const name = fileSlug(studentName, '');
+  const roll = fileSlug(rollNumber, '');
+  const who = name || (roll ? `roll-${roll}` : 'student');
+  return `report-card-${who}-${fileSlug(term, 'term')}.pdf`;
 }
 
 export function sectionReportCardsFileName(className: string, section: string, term: string) {
