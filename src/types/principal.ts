@@ -50,7 +50,8 @@ export type FeatureId =
   | 'arena'
   | 'aiQuizGenerator'
   | 'transport'
-  | 'schoolBus';
+  | 'schoolBus'
+  | 'holidays';
 
 /** A group of admin screens behind one dashboard tile - see SectionHubScreen. */
 export type HubSection = 'students' | 'attendance' | 'vendorsExpenses' | 'academics' | 'reports';
