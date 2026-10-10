@@ -106,7 +106,6 @@ import { VendorDetailScreen } from '../screens/principal/VendorDetailScreen';
 import { VendorFormScreen } from '../screens/principal/VendorFormScreen';
 import { VendorsListScreen } from '../screens/principal/VendorsListScreen';
 import { BusTripDetailScreen } from '../screens/transport/BusTripDetailScreen';
-import { GreetingsScreen } from '../screens/greetings/GreetingsScreen';
 import { MyBusScreen } from '../screens/transport/MyBusScreen';
 import { TransportHubScreen } from '../screens/transport/TransportHubScreen';
 import { colors } from '../theme/colors';
@@ -229,7 +228,6 @@ export function PrincipalNavigator() {
         <Stack.Screen name="TimetableEditor" component={TimetableEditorScreen} />
         <Stack.Screen name="PeriodSetup" component={PeriodSetupScreen} />
         <Stack.Screen name="MyBus" component={MyBusScreen} />
-        <Stack.Screen name="Greetings" component={GreetingsScreen} />
         <Stack.Screen name="TransportHub" component={TransportHubScreen} />
         <Stack.Screen name="BusTripDetail" component={BusTripDetailScreen} />
       </Stack.Navigator>

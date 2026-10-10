@@ -37,7 +37,6 @@ const TEACHER_ONLY_FEATURES: FeatureId[] = ['arena', 'markMyAttendance', 'aiQuiz
 // this filter at all: they get the fixed ADMIN_HOME_FEATURES list below.
 const ADMIN_ONLY_FEATURES: FeatureId[] = [
   'transport',
-  'greetings',
   'activityLog',
   'attendanceExport',
   'timetableEditor',
@@ -62,7 +61,6 @@ const ADMIN_HOME_FEATURES: FeatureId[] = [
   'vendorsExpenses',
   'academics',
   'events',
-  'greetings',
   'transport',
   'reports',
 ];
@@ -149,7 +147,6 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   arena: 'Arena',
   aiQuizGenerator: 'ResourceGenerator',
   transport: 'TransportHub',
-  greetings: 'Greetings',
   schoolBus: 'MyBus',
 };
 
@@ -260,7 +257,6 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'academics', title: t('dashboard.features.academics.title'), icon: 'book', description: t('dashboard.features.academics.description') },
     { id: 'reports', title: t('dashboard.features.reports.title'), icon: 'chart-bar', description: t('dashboard.features.reports.description') },
     { id: 'transport', title: t('dashboard.features.transport.title'), icon: 'bus', description: t('dashboard.features.transport.description') },
-    { id: 'greetings', title: t('dashboard.features.greetings.title'), icon: 'gift', description: t('dashboard.features.greetings.description') },
     { id: 'schoolBus', title: t('dashboard.features.schoolBus.title'), icon: 'bus', description: t('dashboard.features.schoolBus.description') },
   ];
 
