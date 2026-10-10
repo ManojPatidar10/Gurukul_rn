@@ -55,24 +55,13 @@ export function isShortWordAnswer(value: string | null | undefined): boolean {
 }
 
 /**
- * Which bank type a generated question can become, or null if it can't be marked automatically
- * (long answers, true/false, or a short answer that is more than two words).
+ * Which bank type a generated question can become, or null if it belongs on the paper only. Only a
+ * four-option multiple-choice question qualifies: the Arena, Practice and Battle games serve MCQ
+ * only, so number and short-word questions would sit in the bank unplayed, and true/false has two
+ * options where the bank needs four different ones. Every type still goes into the shared PDF.
  */
 export function suggestBankType(q: GeneratedQuizQuestion): QuizQuestionType | null {
-  switch (q.questionType) {
-    case 'MCQ':
-      return q.options.length === 4 ? 'MCQ' : null;
-    case 'NUMERIC':
-      return isNumericAnswer(q.answer) ? 'NUMERIC' : null;
-    case 'SHORT_WORD':
-      return isShortWordAnswer(q.answer) ? 'SHORT_WORD' : null;
-    case 'SHORT_ANSWER':
-      if (isNumericAnswer(q.answer)) return 'NUMERIC';
-      if (isShortWordAnswer(q.answer)) return 'SHORT_WORD';
-      return null;
-    default:
-      return null;
-  }
+  return q.questionType === 'MCQ' && q.options.length === 4 ? 'MCQ' : null;
 }
 
 export function isBankEligible(q: GeneratedQuizQuestion): boolean {
