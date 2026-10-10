@@ -107,8 +107,11 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
       }
 
       const location = await readSelfMarkLocation();
-      setStatus('verifying');
-      const request = await withPlayIntegrity(location, defaultIntegrityDeps(schoolId));
+      // 'verifying' only once Google Play is really asked (not on iOS, in OFF mode or on an older backend).
+      const request = await withPlayIntegrity(location, {
+        ...defaultIntegrityDeps(schoolId),
+        onRequestingToken: () => setStatus('verifying'),
+      });
       setStatus('submitting');
       const saved = await selfMarkAttendance(schoolId, request);
       setRecord(saved);

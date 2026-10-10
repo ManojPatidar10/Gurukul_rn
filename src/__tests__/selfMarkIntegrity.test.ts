@@ -5,6 +5,7 @@ import { getSelfMarkNonce } from '../api/staffAttendance';
 import type { IntegrityMode, SelfMarkAttendanceRequest, SelfMarkNonce } from '../api/types';
 import {
   defaultIntegrityDeps,
+  INTEGRITY_TOKEN_TIMEOUT_MS,
   integrityErrorMessage,
   isIntegrityRefusal,
   withPlayIntegrity,
@@ -34,6 +35,7 @@ jest.mock('expo-constants', () => ({
 
 const DEFAULT_MESSAGE =
   "Smart Gurukul couldn't check this phone. Update Smart Gurukul from the Play Store, then try again.";
+const BUSY_MESSAGE = "Google's security check is busy. Wait a minute, then try again.";
 
 const located: SelfMarkAttendanceRequest = {
   latitude: 26.9,
@@ -75,7 +77,8 @@ describe('integrityErrorMessage', () => {
       "Self check-in needs the Google Play Store and Google Play services, signed in with a Google account. Ask an admin to mark your attendance if this phone doesn't have them.",
     ],
     ['ERR_INTEGRITY_NETWORK', 'Check your internet connection, then try again.'],
-    ['ERR_INTEGRITY_TRANSIENT', "Google's security check is busy. Wait a minute, then try again."],
+    ['ERR_INTEGRITY_TRANSIENT', BUSY_MESSAGE],
+    ['ERR_INTEGRITY_TIMEOUT', BUSY_MESSAGE],
     ['ERR_INTEGRITY_APP_NOT_INSTALLED', 'Install Smart Gurukul from the Play Store, then try again.'],
   ])('words %s', (code, message) => {
     expect(integrityErrorMessage(code)).toBe(message);
@@ -134,13 +137,33 @@ describe('withPlayIntegrity', () => {
     expect(d.requestToken).toHaveBeenCalledWith('Qm9vbXNoYWthbGFrYWJvb21zaGFrYWxh', '855182407063');
   });
 
-  it.each<[string, Partial<PlayIntegrityDeps>]>([
-    ['the token request fails', { requestToken: jest.fn().mockRejectedValue(nativeError('ERR_INTEGRITY_NETWORK')) }],
-    ['the native function is missing', { requestToken: null }],
-    ['the project number is missing', { cloudProjectNumber: null }],
-  ])('Android in REPORT mode: still checks in when %s', async (_, overrides) => {
+  it.each<[string, Partial<PlayIntegrityDeps>, string]>([
+    [
+      'the token request fails',
+      { requestToken: jest.fn().mockRejectedValue(nativeError('ERR_INTEGRITY_PLAY_MISSING')) },
+      'ERR_INTEGRITY_PLAY_MISSING',
+    ],
+    ['the native function is missing', { requestToken: null }, 'ERR_INTEGRITY_UNSUPPORTED'],
+    ['the project number is missing', { cloudProjectNumber: null }, 'ERR_INTEGRITY_CONFIG'],
+    ['the rejection has no code', { requestToken: jest.fn().mockRejectedValue(new Error('boom')) }, 'ERR_INTEGRITY_UNKNOWN'],
+    [
+      'the reject code is not one of ours',
+      { requestToken: jest.fn().mockRejectedValue(nativeError(`ERR_${'X'.repeat(80)}`)) },
+      'ERR_INTEGRITY_UNKNOWN',
+    ],
+    ['the token is empty', { requestToken: jest.fn().mockResolvedValue('') }, 'ERR_INTEGRITY_UNKNOWN'],
+  ])('Android in REPORT mode: still checks in, and says why there is no token, when %s', async (_, overrides, code) => {
     const d = deps({ fetchNonce: jest.fn().mockResolvedValue(nonce('REPORT')), ...overrides });
-    await expect(withPlayIntegrity(located, d)).resolves.toEqual({ ...located, platform: 'android' });
+    await expect(withPlayIntegrity(located, d)).resolves.toEqual({
+      ...located,
+      platform: 'android',
+      integrityClientError: code,
+    });
+  });
+
+  it('Android in ENFORCE mode: a failed token request is not reported, it stops the check-in', async () => {
+    const d = deps({ requestToken: jest.fn().mockRejectedValue(nativeError('ERR_INTEGRITY_NETWORK')) });
+    await expect(withPlayIntegrity(located, d)).rejects.toThrow('Check your internet connection, then try again.');
   });
 
   it('Android in ENFORCE mode: attaches the token and its nonce', async () => {
@@ -189,9 +212,7 @@ describe('withPlayIntegrity', () => {
       fetchNonce: jest.fn().mockResolvedValue(nonce('STRICT')),
       requestToken: jest.fn().mockRejectedValue(nativeError('ERR_INTEGRITY_TRANSIENT')),
     });
-    await expect(withPlayIntegrity(located, failing)).rejects.toThrow(
-      "Google's security check is busy. Wait a minute, then try again."
-    );
+    await expect(withPlayIntegrity(located, failing)).rejects.toThrow(BUSY_MESSAGE);
   });
 
   it('lets nonce errors other than "no endpoint" through', async () => {
@@ -201,15 +222,107 @@ describe('withPlayIntegrity', () => {
   });
 });
 
+describe('withPlayIntegrity: Google Play that never answers', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const hanging = () => jest.fn(() => new Promise<string>(() => undefined));
+
+  it('REPORT: gives up after the timeout and checks in with the platform and the reason', async () => {
+    const d = deps({ fetchNonce: jest.fn().mockResolvedValue(nonce('REPORT')), requestToken: hanging() });
+    const attempt = withPlayIntegrity(located, d);
+    await jest.advanceTimersByTimeAsync(INTEGRITY_TOKEN_TIMEOUT_MS);
+    await expect(attempt).resolves.toEqual({ ...located, platform: 'android', integrityClientError: 'ERR_INTEGRITY_TIMEOUT' });
+  });
+
+  it('ENFORCE: gives up after the timeout with the "busy" message', async () => {
+    const attempt = withPlayIntegrity(located, deps({ requestToken: hanging() }));
+    const settled = expect(attempt).rejects.toThrow(BUSY_MESSAGE);
+    await jest.advanceTimersByTimeAsync(INTEGRITY_TOKEN_TIMEOUT_MS);
+    await settled;
+    await expect(attempt).rejects.toBeInstanceOf(SelfMarkLocationError);
+  });
+
+  it('waits the whole timeout: a slow token that arrives just in time is used', async () => {
+    let answer: (token: string) => void = () => undefined;
+    const requestToken = jest.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          answer = resolve;
+        })
+    );
+    const attempt = withPlayIntegrity(located, deps({ requestToken }));
+    await jest.advanceTimersByTimeAsync(INTEGRITY_TOKEN_TIMEOUT_MS - 1);
+    answer('late-token');
+    await expect(attempt).resolves.toMatchObject({ integrityToken: 'late-token' });
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('uses tokenTimeoutMs when given', async () => {
+    const d = deps({
+      fetchNonce: jest.fn().mockResolvedValue(nonce('REPORT')),
+      requestToken: hanging(),
+      tokenTimeoutMs: 500,
+    });
+    const attempt = withPlayIntegrity(located, d);
+    await jest.advanceTimersByTimeAsync(500);
+    await expect(attempt).resolves.toMatchObject({ integrityClientError: 'ERR_INTEGRITY_TIMEOUT' });
+  });
+
+  it('clears the timer once the token arrives', async () => {
+    await expect(withPlayIntegrity(located, deps())).resolves.toMatchObject({ integrityToken: 'token-123' });
+    expect(jest.getTimerCount()).toBe(0);
+  });
+});
+
+describe('withPlayIntegrity: onRequestingToken', () => {
+  it.each([['REPORT'], ['ENFORCE']])('%s: is called once, just before Google Play is asked', async (mode) => {
+    const calls: string[] = [];
+    const d = deps({
+      fetchNonce: jest.fn().mockResolvedValue(nonce(mode)),
+      requestToken: jest.fn(() => {
+        calls.push('requestToken');
+        return Promise.resolve('token-123');
+      }),
+      onRequestingToken: jest.fn(() => {
+        calls.push('onRequestingToken');
+      }),
+    });
+    await withPlayIntegrity(located, d);
+    expect(calls).toEqual(['onRequestingToken', 'requestToken']);
+  });
+
+  it.each<[string, Partial<PlayIntegrityDeps>]>([
+    ['iOS', { platform: 'ios' }],
+    ['an older backend (no nonce)', { fetchNonce: jest.fn().mockResolvedValue(null) }],
+    ['OFF mode', { fetchNonce: jest.fn().mockResolvedValue(nonce('OFF')) }],
+    ['REPORT without the native function', { fetchNonce: jest.fn().mockResolvedValue(nonce('REPORT')), requestToken: null }],
+    ['ENFORCE without a project number', { cloudProjectNumber: null }],
+  ])('is not called for %s, where Google Play is never asked', async (_, overrides) => {
+    const onRequestingToken = jest.fn();
+    await withPlayIntegrity(located, deps({ ...overrides, onRequestingToken })).catch(() => undefined);
+    expect(onRequestingToken).not.toHaveBeenCalled();
+  });
+});
+
 describe('defaultIntegrityDeps', () => {
   const getNonce = getSelfMarkNonce as jest.Mock;
 
   beforeEach(() => jest.clearAllMocks());
 
-  it('turns a 404 from the nonce endpoint into "no nonce"', async () => {
-    getNonce.mockRejectedValue(new ApiError('Not found', 404));
-    await expect(defaultIntegrityDeps('school-1').fetchNonce()).resolves.toBeNull();
-    expect(getNonce).toHaveBeenCalledWith('school-1');
+  it.each([['Resource not found: api/v1/staff-attendance/self-mark/nonce'], ['Request failed with status 404']])(
+    'turns an older backend\'s "no such endpoint" 404 (%p) into "no nonce"',
+    async (message) => {
+      getNonce.mockRejectedValue(new ApiError(message, 404));
+      await expect(defaultIntegrityDeps('school-1').fetchNonce()).resolves.toBeNull();
+      expect(getNonce).toHaveBeenCalledWith('school-1');
+    }
+  );
+
+  it('passes on the endpoint\'s own 404, so the teacher sees "Employee not found"', async () => {
+    const failure = new ApiError('Employee not found', 404);
+    getNonce.mockRejectedValue(failure);
+    await expect(defaultIntegrityDeps('school-1').fetchNonce()).rejects.toBe(failure);
   });
 
   it('passes other nonce errors on', async () => {

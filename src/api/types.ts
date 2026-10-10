@@ -754,6 +754,8 @@ export interface SelfMarkAttendanceRequest {
   /** Android: Play Integrity token requested with `integrityNonce`; required when the server enforces it. */
   integrityToken?: string;
   integrityNonce?: string;
+  /** REPORT mode only: why this phone couldn't get a token (ERR_INTEGRITY_* code), so it isn't logged as an old build. */
+  integrityClientError?: string;
 }
 
 /** How the server treats Play Integrity on Android self check-in: ignored, logged only, or required. */
