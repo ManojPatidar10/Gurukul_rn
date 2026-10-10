@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { backfillSectionTerm, listSectionTerms } from '../../api/assessments';
@@ -56,6 +56,14 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
     loadTerms();
   };
 
+  // `busy` only disables Publish after the next render, so a quick double tap could run two checks,
+  // stack two confirmations and send two publishes at once. This is set on the tap itself and held
+  // until the flow ends: refused, failed, cancelled or published.
+  const publishFlow = useRef(false);
+  const endPublishFlow = () => {
+    publishFlow.current = false;
+  };
+
   const publish = async (confirmedTerm: string) => {
     setPublishing(true);
     setError(null);
@@ -67,13 +75,16 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
       setError(getErrorMessage(e));
     } finally {
       setPublishing(false);
+      endPublishFlow();
     }
   };
 
   // Publishing is never one tap: check what it would do first, and make the admin confirm the
   // counts and warnings (missing marks, un-termed assessments, already published).
   const handlePublish = async () => {
-    if (!term) return;
+    if (!term || publishFlow.current) return;
+    publishFlow.current = true;
+    let confirming = false;
     setChecking(true);
     setError(null);
     setResult(null);
@@ -84,14 +95,22 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
         return;
       }
       const { title, message } = publishConfirmation(check);
-      Alert.alert(title, message, [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Publish', style: 'destructive', onPress: () => publish(check.term) },
-      ]);
+      Alert.alert(
+        title,
+        message,
+        [
+          { text: 'Cancel', style: 'cancel', onPress: endPublishFlow },
+          { text: 'Publish', style: 'destructive', onPress: () => publish(check.term) },
+        ],
+        { onDismiss: endPublishFlow }
+      );
+      confirming = true;
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
       setChecking(false);
+      // While the confirmation is up, its buttons end the flow.
+      if (!confirming) endPublishFlow();
     }
   };
 

@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createAssessment, listSectionTerms, updateAssessment } from '../../api/assessments';
 import type { AssessmentType, Employee, Subject, TermSummary } from '../../api/types';
@@ -61,14 +61,22 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
   const termNames = (sectionTerms ?? []).map((t) => t.term);
   const savedTerm = canonicalTerm(term, termNames);
   const termMatch = findExistingTerm(term, termNames);
-  // A published term is locked: the server refuses moving an assessment into it.
-  const isLockedTerm = (candidate: string) =>
-    (sectionTerms ?? []).some((t) => t.published && t.term === candidate) && candidate !== (assessment?.term ?? null);
+  // A published term is locked: the server refuses moving an assessment into it, and refuses any
+  // edit at all to an assessment already in one, so say so up front instead of after Save.
+  const isLockedTerm = (candidate: string) => (sectionTerms ?? []).some((t) => t.published && t.term === candidate);
+  const editLocked = isEdit && !!assessment?.term && isLockedTerm(assessment.term);
   const termLocked = !!savedTerm && isLockedTerm(savedTerm);
 
   // A term is required: an assessment without one never reaches any report card.
   const canSubmit =
-    !!title && !!subjectId && !!assessmentDate && Number(maxMarks) > 0 && !!teacherId && !!savedTerm && !termLocked;
+    !editLocked &&
+    !!title &&
+    !!subjectId &&
+    !!assessmentDate &&
+    Number(maxMarks) > 0 &&
+    !!teacherId &&
+    !!savedTerm &&
+    !termLocked;
 
   const handleSubmit = async () => {
     if (!subjectId || !teacherId) return;
@@ -100,6 +108,11 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={isEdit ? 'Edit assessment' : 'New assessment'} onBack={() => navigation.goBack()} />
       <ScreenContainer>
+        {editLocked && (
+          <Text style={styles.lockNotice}>
+            Report cards for &quot;{assessment?.term}&quot; are published, so this assessment can&apos;t be edited.
+          </Text>
+        )}
         <Text style={styles.label}>Type</Text>
         <View style={styles.typeRow}>
           {TYPES.map((t) => (
@@ -133,8 +146,11 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
           required
           value={term}
           onChangeText={setTerm}
-          placeholder="Pick one below or type a new term, e.g. Term 1"
+          placeholder={
+            sectionTerms && sectionTerms.length > 0 ? 'Pick one below or type a new term, e.g. Term 1' : 'Type a term, e.g. Term 1'
+          }
         />
+        {sectionTerms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
         {termsError && (
           <>
             <ErrorNotice message={termsError} />
@@ -167,12 +183,17 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
             </View>
           </>
         )}
-        {termLocked ? (
+        {editLocked ? null : termLocked ? (
           <Text style={styles.termWarning}>
             Report cards for &quot;{savedTerm}&quot; are already published, so assessments can&apos;t be added to it.
           </Text>
         ) : termMatch && termMatch !== term.trim() ? (
           <Text style={styles.termHint}>Will be saved as &quot;{termMatch}&quot;, the spelling this section already uses.</Text>
+        ) : !savedTerm ? (
+          // Otherwise Save is greyed out with no reason given - e.g. editing an old assessment saved without a term.
+          <Text style={isEdit ? styles.termWarning : styles.termHint}>
+            Pick or type a term - an assessment without one is left off every report card.
+          </Text>
         ) : null}
         <LabeledInput label="Description (optional)" value={description} onChangeText={setDescription} />
 
@@ -219,6 +240,8 @@ const styles = StyleSheet.create({
   typeChipTextSelected: { color: colors.white },
   termHint: { fontSize: 12, color: colors.textMuted, marginBottom: spacing.sm },
   termWarning: { fontSize: 12, color: colors.warning, marginBottom: spacing.md },
+  termsLoading: { alignSelf: 'flex-start', marginBottom: spacing.md },
+  lockNotice: { fontSize: 13, fontWeight: '600', color: colors.warning, lineHeight: 19, marginBottom: spacing.md },
   retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm, marginBottom: spacing.sm },
   retryText: { color: colors.primary, fontWeight: '700' },
   error: { color: colors.error, marginTop: spacing.md },

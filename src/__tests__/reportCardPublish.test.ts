@@ -26,6 +26,21 @@ describe('term canonicalisation', () => {
     expect(canonicalTerm('annual', existing)).toBe('Annual');
   });
 
+  it('prefers an exact match over a case variant, like the server', () => {
+    // Old data can hold both spellings; the server keeps an exact match, so the app must too.
+    for (const variants of [
+      ['Term 1', 'term 1'],
+      ['term 1', 'Term 1'],
+    ]) {
+      expect(findExistingTerm('term 1', variants)).toBe('term 1');
+      expect(findExistingTerm('Term 1', variants)).toBe('Term 1');
+      expect(findExistingTerm(' term 1 ', variants)).toBe('term 1');
+    }
+    // No exact match: the first case variant in the server's order, as the server picks.
+    expect(canonicalTerm('TERM 1', ['Term 1', 'term 1'])).toBe('Term 1');
+    expect(canonicalTerm('TERM 1', ['term 1', 'Term 1'])).toBe('term 1');
+  });
+
   it('keeps a new term as typed, trimmed', () => {
     expect(findExistingTerm('Term1', existing)).toBeNull();
     expect(canonicalTerm('  Half yearly ', existing)).toBe('Half yearly');
@@ -135,6 +150,17 @@ describe('publishConfirmation', () => {
     expect(message).toContain('Students and parents are not notified again.');
     expect(message).not.toContain('will be notified');
     expect(message).toContain('stay locked');
+  });
+
+  it('on a re-publish, does not send the admin to a term fix that is refused for this term', () => {
+    const { message } = publishConfirmation(
+      check({ alreadyPublished: true, publishedAt: '2026-10-01T10:00:00Z', untermedAssessmentCount: 2 }),
+      formatDate
+    );
+    expect(message).toContain('• 2 assessments in this section have no term, so their marks');
+    expect(message).toContain(`"Term 1" is already published, so they can't be added to it.`);
+    expect(message).toContain('Give them another term');
+    expect(message).not.toContain('first: after publishing');
   });
 
   it('uses singular wording for one of each', () => {

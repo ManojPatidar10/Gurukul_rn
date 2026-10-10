@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getGradingScale, replaceGradingScale } from '../../api/gradingScale';
@@ -70,6 +70,14 @@ export function GradingScaleScreen({ navigation }: Props) {
   const validationError = loading ? null : validateGradingBands(rows);
   const canSave = !loading && validationError === null;
 
+  // `saving` only disables Save after the next render, so a quick double tap could stack two
+  // confirmations and run two saves at once. This is set on the tap itself and held until the
+  // confirmation is cancelled or the save finishes.
+  const saveFlow = useRef(false);
+  const endSaveFlow = () => {
+    saveFlow.current = false;
+  };
+
   const save = async (bands: Omit<GradingBand, 'id'>[]) => {
     setSaving(true);
     setError(null);
@@ -81,20 +89,24 @@ export function GradingScaleScreen({ navigation }: Props) {
       setError(getErrorMessage(e));
     } finally {
       setSaving(false);
+      endSaveFlow();
     }
   };
 
   // Grades are worked out live from this scale, so saving regrades every report card - including
   // published ones families have already seen. Confirm first.
   const handleSave = () => {
+    if (saveFlow.current) return;
+    saveFlow.current = true;
     const bands = gradingBandRowsToRequest(rows);
     Alert.alert(
       'Save grading scale?',
       `${describeGradingBands(bands)}\n\nEvery report card is graded with this scale, including report cards already published, so their grades may change.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel', onPress: endSaveFlow },
         { text: 'Save', onPress: () => save(bands) },
-      ]
+      ],
+      { onDismiss: endSaveFlow }
     );
   };
 

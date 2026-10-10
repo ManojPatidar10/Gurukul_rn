@@ -21,8 +21,6 @@ import { formatOverallGrade, formatOverallPercentage, missingMarksCount } from '
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
 
-const FALLBACK_TERM = 'Term 1';
-
 export function ReportCardScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
@@ -36,6 +34,8 @@ export function ReportCardScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+  // Staff opening a student with nothing published yet: no term is guessed, they type one to preview.
+  const [nothingPublished, setNothingPublished] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const load = (t: string) => {
@@ -80,8 +80,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
     // A student/parent opening their own report card is the common case this fixes: rather than
     // guessing a hardcoded term string that may not match whatever a teacher actually typed at
     // publish time, ask the backend which terms are actually published and default to the latest.
-    // A teacher/admin previewing a student's card can still freely type any term below (including
-    // an unpublished draft), so falling back to a sensible starting guess for them is fine.
+    // A teacher/admin previewing a student's card can type any term below (including an unpublished
+    // draft). With nothing published they get a prompt, not a guessed "Term 1": a section that names
+    // its terms differently would just see an empty card for the wrong term.
     getPublishedTerms(schoolId, student.id)
       .then((terms) => {
         setPublishedTerms(terms);
@@ -91,8 +92,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
         } else if (isSelfView) {
           setError('No report card has been published for your class yet.');
         } else {
-          setTerm(FALLBACK_TERM);
-          load(FALLBACK_TERM);
+          setNothingPublished(true);
         }
       })
       .catch((e) => setError(getErrorMessage(e)));
@@ -140,6 +140,12 @@ export function ReportCardScreen({ route, navigation }: Props) {
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {!loading && error && <ErrorNotice message={error} />}
+        {!loading && !error && !hasLoaded && nothingPublished && (
+          <Text style={styles.empty}>
+            No report card has been published for this student yet. Type a term above and tap View to
+            preview one.
+          </Text>
+        )}
 
         {!loading && !error && hasLoaded && reportCard && (
           <>

@@ -33,7 +33,8 @@ function defaultFormatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function warningText(warning: PublishWarning, term: string, formatDate: (iso: string) => string): string {
+function warningText(warning: PublishWarning, check: ReportCardPublishCheck, formatDate: (iso: string) => string): string {
+  const { term } = check;
   switch (warning.code) {
     case 'noStudents':
       return 'This section has no students, so no report cards will be published.';
@@ -42,12 +43,24 @@ function warningText(warning: PublishWarning, term: string, formatDate: (iso: st
         `${count(warning.students, 'student has', 'students have')} marks missing ` +
         `(${count(warning.marks, 'mark')} in all). Their report cards will say marks are missing.`
       );
-    case 'untermedAssessments':
+    case 'untermedAssessments': {
+      const one = warning.count === 1;
+      const summary =
+        `${count(warning.count, 'assessment')} in this section ${one ? 'has' : 'have'} no term, ` +
+        `so ${one ? 'its' : 'their'} marks won't be on any report card.`;
+      // A published term is locked (the app and the server both refuse the fix for it), so on a
+      // re-publish don't point the admin at a fix they can't use for this term.
+      if (check.alreadyPublished) {
+        return (
+          `${summary} "${term}" is already published, so ${one ? 'it' : 'they'} can't be added to it. Give ` +
+          `${one ? 'it' : 'them'} another term with "Fix assessments missing a term", or edit ${one ? 'it' : 'each one'}.`
+        );
+      }
       return (
-        `${count(warning.count, 'assessment')} in this section ${warning.count === 1 ? 'has' : 'have'} no term, ` +
-        `so ${warning.count === 1 ? 'its' : 'their'} marks won't be on any report card. If ${warning.count === 1 ? 'it belongs' : 'they belong'} ` +
-        `to "${term}", use "Fix assessments missing a term" first: after publishing, nothing can be added to "${term}".`
+        `${summary} If ${one ? 'it belongs' : 'they belong'} to "${term}", use "Fix assessments missing a term" ` +
+        `first: after publishing, nothing can be added to "${term}".`
       );
+    }
     case 'alreadyPublished':
       return (
         `"${term}" was already published${warning.publishedAt ? ` on ${formatDate(warning.publishedAt)}` : ''}. ` +
@@ -69,7 +82,7 @@ export function publishConfirmation(
   const lines = [`${count(check.studentCount, 'student')} · ${count(check.assessmentCount, 'assessment')} in "${term}".`];
   const warnings = publishWarnings(check);
   if (warnings.length > 0) {
-    lines.push('', ...warnings.map((w) => `• ${warningText(w, term, formatDate)}`));
+    lines.push('', ...warnings.map((w) => `• ${warningText(w, check, formatDate)}`));
   }
   lines.push('');
   if (!check.alreadyPublished) {
