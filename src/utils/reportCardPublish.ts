@@ -4,7 +4,12 @@ export type PublishWarning =
   | { code: 'noStudents' }
   | { code: 'missingMarks'; students: number; marks: number }
   | { code: 'untermedAssessments'; count: number }
-  | { code: 'alreadyPublished'; publishedAt: string | null };
+  | { code: 'alreadyPublished'; publishedAt: string | null }
+  | { code: 'previouslyUnpublished'; unpublishedAt: string; byName: string | null; reason: string | null };
+
+/** The server's limits on an unpublish reason (trimmed). */
+export const MIN_UNPUBLISH_REASON_LENGTH = 5;
+export const MAX_UNPUBLISH_REASON_LENGTH = 500;
 
 /** A term no assessment in the section uses would publish nothing but empty report cards. */
 export function canPublish(check: ReportCardPublishCheck): boolean {
@@ -22,6 +27,14 @@ export function publishWarnings(check: ReportCardPublishCheck): PublishWarning[]
     warnings.push({ code: 'untermedAssessments', count: check.untermedAssessmentCount });
   }
   if (check.alreadyPublished) warnings.push({ code: 'alreadyPublished', publishedAt: check.publishedAt });
+  if (check.lastUnpublishedAt) {
+    warnings.push({
+      code: 'previouslyUnpublished',
+      unpublishedAt: check.lastUnpublishedAt,
+      byName: check.lastUnpublishedByName ?? null,
+      reason: check.lastUnpublishReason ?? null,
+    });
+  }
   return warnings;
 }
 
@@ -66,12 +79,20 @@ function warningText(warning: PublishWarning, check: ReportCardPublishCheck, for
         `"${term}" was already published${warning.publishedAt ? ` on ${formatDate(warning.publishedAt)}` : ''}. ` +
         'Publishing again only updates the published date. Students and parents are not notified again.'
       );
+    case 'previouslyUnpublished': {
+      const by = warning.byName ? ` by ${warning.byName}` : '';
+      const why = warning.reason ? `: ${warning.reason}` : '';
+      return (
+        `"${term}" was unpublished on ${formatDate(warning.unpublishedAt)}${by}${why}. ` +
+        'Publishing it again notifies every family again.'
+      );
+    }
   }
 }
 
 /**
  * The confirmation shown before publishing: the counts, every warning, and what publishing does
- * (notifies families the first time, locks the term's marks, can't be undone from the app yet).
+ * (notifies families the first time, locks the term's marks, and only an admin can unpublish).
  * English only, like the rest of the Publish screen.
  */
 export function publishConfirmation(
@@ -91,11 +112,22 @@ export function publishConfirmation(
   } else {
     lines.push(`Marks for every assessment in "${term}" stay locked.`);
   }
-  lines.push("There's no undo yet: published report cards can't be withdrawn from the app.");
+  lines.push("An admin can unpublish these later with a reason. Families aren't told when that happens.");
   return { title: `Publish "${term}" report cards?`, message: lines.join('\n') };
 }
 
 /** Why publishing is refused outright (see canPublish). */
 export function nothingToPublishMessage(check: ReportCardPublishCheck): string {
   return `No assessment in this section has the term "${check.term}", so every report card would be empty.`;
+}
+
+/**
+ * Null when the unpublish reason can be sent, otherwise the i18n key saying why not: the server
+ * wants 5 to 500 characters once trimmed.
+ */
+export function unpublishReasonError(reason: string): string | null {
+  const length = reason.trim().length;
+  return length >= MIN_UNPUBLISH_REASON_LENGTH && length <= MAX_UNPUBLISH_REASON_LENGTH
+    ? null
+    : 'reportCardUnpublish.reasonLength';
 }

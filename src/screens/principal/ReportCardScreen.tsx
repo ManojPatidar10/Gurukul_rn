@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Sharing from 'expo-sharing';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -13,49 +13,87 @@ import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useAcademicTerms } from '../../hooks/useAcademicTerms';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { formatOverallGrade, formatOverallPercentage, missingMarksCount } from '../../utils/reportCardDisplay';
+import { latestPublishedTerm, reportCardTermChips, termChipKey, termKey } from '../../utils/academicTerms';
+import {
+  assessmentMarkLabel,
+  attendanceLabelKey,
+  formatOverallGrade,
+  formatOverallPercentage,
+  formatSubjectGrade,
+  formatSubjectPercentage,
+  hasAbsentOrExcused,
+  missingMarksCount,
+  subjectCounts,
+} from '../../utils/reportCardDisplay';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
 
 export function ReportCardScreen({ route, navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
   const isSelfView = session.role === 'STUDENT' || session.role === 'PARENT';
-  const student = route.params.student;
-  const [term, setTerm] = useState(route.params.defaultTerm ?? '');
+  const { student, defaultTerm, defaultSectionId } = route.params;
+  // Staff can also preview a draft for one of the school's listed terms. Students and parents only
+  // ever see published terms, so they don't need the list.
+  const {
+    terms: listedTerms,
+    configured: termListConfigured,
+    loading: termListLoading,
+  } = useAcademicTerms(schoolId, !isSelfView);
+  // Typed by staff in a school without a term list (or from an older server): today's free text.
+  const [typedTerm, setTypedTerm] = useState(defaultTerm ?? '');
+  // The chip shown as selected: `classSectionId:term` (termChipKey).
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [publishedTerms, setPublishedTerms] = useState<PublishedTerm[]>([]);
   const [reportCard, setReportCard] = useState<ReportCard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
-  // Staff opening a student with nothing published yet: no term is guessed, they type one to preview.
+  // Staff opening a student with nothing published yet: no term is guessed, they pick or type one.
   const [nothingPublished, setNothingPublished] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  // Subjects whose per-assessment list is open.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Ignores a slow response for a term the user has since moved away from.
+  const loadSeq = useRef(0);
 
-  const load = (t: string) => {
+  const load = (term: string, sectionId?: string) => {
+    const seq = ++loadSeq.current;
+    setSelectedKey(termChipKey(term, sectionId));
+    setTypedTerm(term);
     setLoading(true);
     setError(null);
     setHasLoaded(true);
-    getReportCard(schoolId, student.id, t)
-      .then(setReportCard)
+    setExpanded(new Set());
+    getReportCard(schoolId, student.id, term, sectionId)
+      .then((card) => {
+        if (seq === loadSeq.current) setReportCard(card);
+      })
       .catch((e) => {
+        if (seq !== loadSeq.current) return;
         setReportCard(null);
         setError(getErrorMessage(e));
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (seq === loadSeq.current) setLoading(false);
+      });
   };
-
 
   const handleDownloadPdf = async () => {
     setDownloading(true);
     try {
-      const file = await downloadStudentReportCardPdf(schoolId, student.id, student.name, reportCard?.term ?? term);
+      // The card's own class, so the PDF is the card on screen (an earlier class after promotion).
+      const file = await downloadStudentReportCardPdf(schoolId, student.id, student.name, reportCard?.term ?? typedTerm, {
+        sectionId: reportCard?.classSectionId,
+        rollNumber: reportCard?.rollNumber,
+      });
       if (!(await Sharing.isAvailableAsync())) {
         showToast(t('reportCardPdf.savedTo', { path: file.uri }), 'success');
         return;
@@ -73,22 +111,38 @@ export function ReportCardScreen({ route, navigation }: Props) {
   };
 
   useEffect(() => {
-    if (route.params.defaultTerm) {
-      load(route.params.defaultTerm);
+    if (defaultTerm) {
+      // From a notification or a link: open that term (and class) straight away, and load the
+      // published terms only for the chips.
+      load(defaultTerm, defaultSectionId);
+      const openedKey = termChipKey(defaultTerm, defaultSectionId);
+      getPublishedTerms(schoolId, student.id)
+        .then((terms) => {
+          setPublishedTerms(terms);
+          // Mark the matching chip, unless the user has already picked another term.
+          const match = terms.find(
+            (entry) =>
+              termKey(entry.term) === termKey(defaultTerm) &&
+              (defaultSectionId ? entry.classSectionId === defaultSectionId : entry.current !== false)
+          );
+          if (match) {
+            const matchKey = termChipKey(match.term, match.classSectionId);
+            setSelectedKey((current) => (current === openedKey ? matchKey : current));
+          }
+        })
+        .catch(() => {});
       return;
     }
-    // A student/parent opening their own report card is the common case this fixes: rather than
-    // guessing a hardcoded term string that may not match whatever a teacher actually typed at
-    // publish time, ask the backend which terms are actually published and default to the latest.
-    // A teacher/admin previewing a student's card can type any term below (including an unpublished
-    // draft). With nothing published they get a prompt, not a guessed "Term 1": a section that names
-    // its terms differently would just see an empty card for the wrong term.
+    // Ask the server which terms are published rather than guessing a term name, and open the
+    // latest by the term's dates (else by when it was published). With nothing published, a
+    // student or parent is told so; staff get a prompt to pick or type a term to preview a draft,
+    // never a guessed "Term 1".
     getPublishedTerms(schoolId, student.id)
       .then((terms) => {
         setPublishedTerms(terms);
-        if (terms.length > 0) {
-          setTerm(terms[0].term);
-          load(terms[0].term);
+        const latest = latestPublishedTerm(terms);
+        if (latest) {
+          load(latest.term, latest.classSectionId);
         } else if (isSelfView) {
           setError('No report card has been published for your class yet.');
         } else {
@@ -96,45 +150,67 @@ export function ReportCardScreen({ route, navigation }: Props) {
         }
       })
       .catch((e) => setError(getErrorMessage(e)));
-    // Only auto-load once on mount - further loads are user-triggered via the "View" button or a
-    // term chip, so typing a new term doesn't fire a request per keystroke.
+    // Only auto-load once on mount - further loads are a tap on a term chip (or staff's "View"
+    // button), so typing a term doesn't fire a request per keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const chips = reportCardTermChips(publishedTerms, termListConfigured ? listedTerms : [], !isSelfView);
+  // Students and parents only pick from chips. Staff type a term only while the school has no term list.
+  const showTypedTerm = !isSelfView && !termListLoading && !termListConfigured;
+
+  const formatDate = (iso: string) =>
+    new Date(`${iso}T00:00:00`).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const toggleSubject = (subjectId: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(subjectId)) next.delete(subjectId);
+      else next.add(subjectId);
+      return next;
+    });
+
   // Shown on the card so a half-filled one doesn't look finished.
   const missingMarks = missingMarksCount(reportCard?.missingMarksCount);
+  const attendanceLabel = reportCard ? attendanceLabelKey(reportCard, formatDate) : null;
 
   return (
     <View style={styles.root}>
       <ScreenHeader title={`${student.name}'s report card`} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <View style={styles.termRow}>
-          <TextInput
-            style={styles.termInput}
-            value={term}
-            onChangeText={setTerm}
-            placeholder="Term (e.g. Term 1)"
-            placeholderTextColor={colors.textMuted}
-          />
-          <Pressable style={styles.viewButton} onPress={() => load(term)} disabled={!term.trim() || loading}>
-            {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.viewButtonText}>View</Text>}
-          </Pressable>
-        </View>
-        {publishedTerms.length > 0 && (
+        {showTypedTerm && (
+          <View style={styles.termRow}>
+            <TextInput
+              style={styles.termInput}
+              value={typedTerm}
+              onChangeText={setTypedTerm}
+              placeholder="Term (e.g. Term 1)"
+              placeholderTextColor={colors.textMuted}
+            />
+            <Pressable style={styles.viewButton} onPress={() => load(typedTerm.trim())} disabled={!typedTerm.trim() || loading}>
+              {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.viewButtonText}>View</Text>}
+            </Pressable>
+          </View>
+        )}
+        {chips.length > 0 && (
           <View style={styles.chips}>
-            {publishedTerms.map(({ term: t }) => (
-              <Pressable
-                key={t}
-                style={[styles.chip, term === t && styles.chipSelected]}
-                onPress={() => {
-                  setTerm(t);
-                  load(t);
-                }}
-                disabled={loading}
-              >
-                <Text style={[styles.chipText, term === t && styles.chipTextSelected]}>{t}</Text>
-              </Pressable>
-            ))}
+            {chips.map((chip) => {
+              const selected = selectedKey === chip.key;
+              return (
+                <Pressable
+                  key={chip.key}
+                  style={[styles.chip, selected && styles.chipSelected]}
+                  onPress={() => load(chip.term, chip.sectionId)}
+                  disabled={loading}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected, disabled: loading }}
+                >
+                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                    {chip.published ? chip.label : t('reportCardDetail.draftChip', { term: chip.label })}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         )}
 
@@ -142,8 +218,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
         {!loading && error && <ErrorNotice message={error} />}
         {!loading && !error && !hasLoaded && nothingPublished && (
           <Text style={styles.empty}>
-            No report card has been published for this student yet. Type a term above and tap View to
-            preview one.
+            {termListConfigured
+              ? t('reportCardDetail.pickTermPreview')
+              : 'No report card has been published for this student yet. Type a term above and tap View to preview one.'}
           </Text>
         )}
 
@@ -151,6 +228,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
           <>
             <View style={styles.headerCard}>
               <View style={styles.headerRow}>
+                {/* The card's own class: an earlier one when it's from before a promotion. */}
                 <Text style={styles.headerClass}>
                   {reportCard.className} - {reportCard.section} · {reportCard.academicYear}
                 </Text>
@@ -159,6 +237,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
                   variant={reportCard.published ? 'success' : 'neutral'}
                 />
               </View>
+              {!isSelfView && reportCard.published && reportCard.frozen !== undefined && (
+                <Text style={styles.liveHint}>{t('reportCardDetail.liveHint')}</Text>
+              )}
               {missingMarks > 0 && (
                 <View style={styles.missingRow}>
                   <StatusChip label={t('reportCardStatus.marksMissing', { count: missingMarks })} variant="warning" />
@@ -177,7 +258,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
                   <Text style={styles.statValue}>
                     {reportCard.attendancePercentage != null ? `${reportCard.attendancePercentage}%` : '—'}
                   </Text>
-                  <Text style={styles.statLabel}>Attendance</Text>
+                  <Text style={styles.statLabel}>
+                    {attendanceLabel ? t(attendanceLabel.key, attendanceLabel.params) : ''}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -194,17 +277,62 @@ export function ReportCardScreen({ route, navigation }: Props) {
             {reportCard.subjects.length === 0 && (
               <Text style={styles.empty}>No results recorded for this term yet.</Text>
             )}
-            {reportCard.subjects.map((subject) => (
-              <View key={subject.subjectId} style={styles.subjectRow}>
-                <View style={styles.subjectMain}>
-                  <Text style={styles.subjectName}>{subject.subjectName}</Text>
-                  <Text style={styles.subjectMeta}>
-                    {subject.marksObtained} / {subject.maxMarks} · {subject.percentage}%
-                  </Text>
+            {reportCard.subjects.map((subject) => {
+              const counts = subjectCounts(subject);
+              const assessments = subject.assessments ?? [];
+              const open = expanded.has(subject.subjectId);
+              return (
+                <View key={subject.subjectId} style={styles.subjectCard}>
+                  <View style={styles.subjectRow}>
+                    <View style={styles.subjectMain}>
+                      <Text style={styles.subjectName}>{subject.subjectName}</Text>
+                      <Text style={styles.subjectMeta}>
+                        {subject.marksObtained} / {subject.maxMarks} · {formatSubjectPercentage(subject.percentage)}
+                      </Text>
+                    </View>
+                    <StatusChip label={formatSubjectGrade(subject.grade)} variant="info" />
+                  </View>
+                  {(counts.absent > 0 || counts.excused > 0) && (
+                    <View style={styles.countRow}>
+                      {counts.absent > 0 && (
+                        <StatusChip label={t('reportCardDetail.absentCount', { count: counts.absent })} variant="error" />
+                      )}
+                      {counts.excused > 0 && (
+                        <StatusChip label={t('reportCardDetail.excusedCount', { count: counts.excused })} variant="neutral" />
+                      )}
+                    </View>
+                  )}
+                  {assessments.length > 0 && (
+                    <Pressable
+                      onPress={() => toggleSubject(subject.subjectId)}
+                      style={styles.expandToggle}
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: open }}
+                    >
+                      <Text style={styles.expandToggleText}>
+                        {open
+                          ? t('reportCardDetail.hideAssessments')
+                          : t('reportCardDetail.showAssessments', { count: assessments.length })}
+                      </Text>
+                    </Pressable>
+                  )}
+                  {open &&
+                    assessments.map((assessment) => (
+                      <View key={assessment.assessmentId} style={styles.assessmentRow}>
+                        <View style={styles.assessmentLine}>
+                          <View style={styles.assessmentMain}>
+                            <Text style={styles.assessmentTitle}>{assessment.title}</Text>
+                            <Text style={styles.assessmentDate}>{formatDate(assessment.assessmentDate)}</Text>
+                          </View>
+                          <Text style={styles.assessmentMark}>{assessmentMarkLabel(assessment)}</Text>
+                        </View>
+                        {!!assessment.remarks && <Text style={styles.assessmentRemark}>{assessment.remarks}</Text>}
+                      </View>
+                    ))}
                 </View>
-                <StatusChip label={subject.grade} variant="info" />
-              </View>
-            ))}
+              );
+            })}
+            {hasAbsentOrExcused(reportCard) && <Text style={styles.legend}>{t('reportCardDetail.legend')}</Text>}
           </>
         )}
       </ScreenContainer>
@@ -255,6 +383,7 @@ const styles = StyleSheet.create({
   },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   headerClass: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  liveHint: { fontSize: 12.5, color: colors.textMuted, lineHeight: 18, marginBottom: spacing.md },
   missingRow: { flexDirection: 'row', marginBottom: spacing.md },
   statRow: { flexDirection: 'row', gap: spacing.sm },
   statCard: {
@@ -265,7 +394,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
-  statLabel: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  statLabel: { fontSize: 11, color: colors.textMuted, marginTop: 2, textAlign: 'center' },
   pdfButton: {
     borderWidth: 1.5,
     borderColor: colors.primary,
@@ -278,17 +407,35 @@ const styles = StyleSheet.create({
   pdfButtonDisabled: { opacity: 0.6 },
   pdfButtonText: { color: colors.primary, fontWeight: '700' },
   sectionTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
-  subjectRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  subjectCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
     ...softShadow,
   },
+  subjectRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   subjectMain: { flex: 1, marginRight: spacing.sm },
   subjectName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   subjectMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  countRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
+  expandToggle: { alignSelf: 'flex-start', paddingTop: spacing.sm },
+  expandToggleText: { fontSize: 12.5, fontWeight: '700', color: colors.primary },
+  assessmentRow: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  assessmentLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  assessmentMain: { flex: 1 },
+  assessmentTitle: { fontSize: 13.5, fontWeight: '600', color: colors.textPrimary },
+  assessmentDate: { fontSize: 11.5, color: colors.textMuted, marginTop: 1 },
+  assessmentMark: { fontSize: 13.5, fontWeight: '700', color: colors.textSecondary },
+  assessmentRemark: { fontSize: 12.5, color: colors.textMuted, marginTop: spacing.xs, lineHeight: 18 },
+  legend: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, marginBottom: spacing.lg },
 });

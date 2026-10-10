@@ -1,11 +1,14 @@
 import type { StudentResult } from '../api/types';
 import {
   buildResultsPayload,
+  clearMovedEntry,
   isResultsDirty,
   parseMarks,
   resultsGridMode,
   rowFromResult,
+  savedResultLabel,
   summarizeResults,
+  supportsExcused,
   type ResultRowState,
 } from '../utils/assessmentResults';
 import { isPassingMark, passMarkFromScale } from '../utils/gradingScale';
@@ -14,8 +17,8 @@ function student(id: string, saved: Partial<StudentResult> = {}): StudentResult 
   return { studentId: id, studentName: `Student ${id}`, rollNumber: id, marksObtained: null, absent: false, remarks: null, ...saved };
 }
 
-function row(marksText: string, absent = false, remarksText = ''): ResultRowState {
-  return { marksText, absent, remarksText };
+function row(marksText: string, absent = false, remarksText = '', excused = false): ResultRowState {
+  return { marksText, absent, excused, remarksText };
 }
 
 describe('parseMarks', () => {
@@ -63,6 +66,52 @@ describe('buildResultsPayload', () => {
     expect(invalid).toEqual([]);
     expect(results).toEqual([{ studentId: '1', absent: true }]);
   });
+
+  it('sends an excused row with no marks and its remark, ignoring marks typed before Excused was ticked', () => {
+    const { results, invalid } = buildResultsPayload(
+      [student('1', { marksObtained: 30 })],
+      { '1': row('abc', false, ' Sick ', true) },
+      50,
+      { supportsExcused: true }
+    );
+    expect(invalid).toEqual([]);
+    expect(results).toEqual([{ studentId: '1', absent: false, excused: true, remarks: 'Sick' }]);
+  });
+
+  it('keeps a saved Excused when the grid row is untouched', () => {
+    const { results } = buildResultsPayload([student('1', { excused: true })], {}, 50, { supportsExcused: true });
+    expect(results).toEqual([{ studentId: '1', absent: false, excused: true }]);
+  });
+
+  it('never sends excused to an older server, even for a row marked excused', () => {
+    const { results } = buildResultsPayload([student('1')], { '1': row('12', false, '', true) }, 50);
+    expect(results).toEqual([{ studentId: '1', absent: false, marksObtained: 12 }]);
+  });
+});
+
+describe('Excused support and moved students', () => {
+  it('knows Excused only when the server sends it on its rows', () => {
+    expect(supportsExcused([student('1', { excused: false })])).toBe(true);
+    expect(supportsExcused([student('1'), student('2', { excused: true })])).toBe(true);
+    expect(supportsExcused([student('1')])).toBe(false);
+    expect(supportsExcused([])).toBe(false);
+  });
+
+  it('reads a saved Excused into the grid row, and a missing one as not excused', () => {
+    expect(rowFromResult(student('1', { excused: true })).excused).toBe(true);
+    expect(rowFromResult(student('1')).excused).toBe(false);
+  });
+
+  it('shows what is saved for a moved student', () => {
+    expect(savedResultLabel(student('1', { marksObtained: 18 }), 20)).toBe('18 / 20');
+    expect(savedResultLabel(student('1', { absent: true }), 20)).toBe('AB');
+    expect(savedResultLabel(student('1', { excused: true }), 20)).toBe('EX');
+    expect(savedResultLabel(student('1', { remarks: 'Left in June' }), 20)).toBe('—');
+  });
+
+  it('clears a moved student with no marks, not absent or excused, and no remark', () => {
+    expect(clearMovedEntry('s9')).toEqual({ studentId: 's9', absent: false, excused: false });
+  });
 });
 
 describe('isResultsDirty', () => {
@@ -89,6 +138,14 @@ describe('isResultsDirty', () => {
 
   it('ignores the marks box of a row that is absent both before and after', () => {
     expect(isResultsDirty(roster, { ...loaded(), '2': row('12', true) })).toBe(false);
+  });
+
+  it('is dirty when Excused is ticked or unticked, and ignores the marks box of a row excused before and after', () => {
+    expect(isResultsDirty(roster, { ...loaded(), '3': row('', false, '', true) })).toBe(true);
+    const excusedRoster = [student('1', { excused: true })];
+    expect(isResultsDirty(excusedRoster, { '1': row('', false, '', false) })).toBe(true);
+    expect(isResultsDirty(excusedRoster, { '1': row('12', false, '', true) })).toBe(false);
+    expect(isResultsDirty(excusedRoster, { '1': rowFromResult(excusedRoster[0]) })).toBe(false);
   });
 });
 
@@ -155,6 +212,16 @@ describe('summarizeResults', () => {
     expect(summary.passCount).toBeNull();
     expect(summary.failCount).toBeNull();
     expect(summary.average).toBe(25);
+  });
+
+  it('counts an excused student as entered but leaves them out of the stats and Pass/Fail', () => {
+    const summary = summarizeResults([...roster, student('5', { excused: true, marksObtained: 2 })], 50, 33);
+    expect(summary.entered).toBe(4);
+    expect(summary.total).toBe(5);
+    expect(summary.average).toBe(25);
+    expect(summary.lowest).toBe(10);
+    expect(summary.passCount).toBe(1);
+    expect(summary.failCount).toBe(1);
   });
 
   it('has no stats before any marks are entered', () => {

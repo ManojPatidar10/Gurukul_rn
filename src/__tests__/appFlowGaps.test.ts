@@ -15,8 +15,8 @@ function student(id: string, saved: Partial<StudentResult> = {}): StudentResult 
   return { studentId: id, studentName: `Student ${id}`, rollNumber: id, marksObtained: null, absent: false, remarks: null, ...saved };
 }
 
-function row(marksText: string, absent = false, remarksText = ''): ResultRowState {
-  return { marksText, absent, remarksText };
+function row(marksText: string, absent = false, remarksText = '', excused = false): ResultRowState {
+  return { marksText, absent, excused, remarksText };
 }
 
 describe('buildResultsPayload', () => {
@@ -65,6 +65,26 @@ describe('buildResultsPayload', () => {
       { studentId: '1', absent: false, remarks: 'Did not submit' },
       { studentId: '2', absent: true, remarks: 'Medical leave' },
     ]);
+  });
+
+  it('sends excused on every row only to a server that knows Excused', () => {
+    const roster = [student('1'), student('2'), student('3', { excused: true }), student('4')];
+    const rows = { '1': row('', false, '', true), '2': row('42'), '3': row(''), '4': row('', true) };
+    // A server that sends `excused` back: an excused row goes like an absent one, with no marks,
+    // and un-ticking a saved Excused sends the row blank so it can be undone.
+    expect(buildResultsPayload(roster, rows, 50, { supportsExcused: true }).results).toEqual([
+      { studentId: '1', absent: false, excused: true },
+      { studentId: '2', absent: false, excused: false, marksObtained: 42 },
+      { studentId: '3', absent: false, excused: false },
+      { studentId: '4', absent: true, excused: false },
+    ]);
+    // An older server never gets the field.
+    const { results } = buildResultsPayload([student('2'), student('4')], { '2': row('42'), '4': row('', true) }, 50);
+    expect(results).toEqual([
+      { studentId: '2', absent: false, marksObtained: 42 },
+      { studentId: '4', absent: true },
+    ]);
+    expect(results.some((r) => 'excused' in r)).toBe(false);
   });
 
   it('flags marks that are not a strict number from 0 to max marks', () => {

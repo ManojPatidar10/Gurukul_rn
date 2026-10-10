@@ -141,6 +141,10 @@
         "title": "Grading Scale",
         "description": "Marks-percentage to letter-grade bands"
       },
+      "academicTerms": {
+        "title": "Terms",
+        "description": "The school's terms and dates, for assessments and report cards"
+      },
       "markMyAttendance": {
         "title": "Mark My Attendance",
         "description": "Check in from the school premises"
@@ -1305,9 +1309,90 @@
     "marksMissing_other": "{{count}} marks missing",
     "noTerms": "No assessment in this section has a term yet, so there are no report cards to show. Give each assessment a term first."
   },
+  "academicTerms": {
+    "title": "Terms",
+    "intro": "Every assessment picks its term from this list. Add dates so report-card attendance covers just the term. Once the list has a term, new assessments must use one of these.",
+    "yearHint": "Set the academic year too (e.g. 2026-27): a term's dates then count only on that year's report cards.",
+    "add": "Add a term",
+    "newTitle": "New term",
+    "editTitle": "Edit term",
+    "empty": "No terms yet.",
+    "noDates": "No dates yet: attendance will be shown to date",
+    "academicYear": "Academic year {{year}}",
+    "usedBy_one": "Used by {{count}} assessment",
+    "usedBy_other": "Used by {{count}} assessments",
+    "publishedFor_one": "published for {{count}} class",
+    "publishedFor_other": "published for {{count}} classes",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Term 1",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "academicYear": "Academic year (optional)",
+      "academicYearHint": "e.g. 2026-27",
+      "nameLocked": "Used by assessments, so the name can't change",
+      "datesHint": "Give both dates, or neither.",
+      "clearDates": "Clear dates"
+    },
+    "added": "Term added",
+    "saved": "Term saved",
+    "deleted": "Term deleted",
+    "delete": "Delete term",
+    "deleteTitle": "Delete this term?",
+    "deleteMessage": "\"{{name}}\" will be taken off the school's term list.",
+    "deleteFailedTitle": "Can't delete this term",
+    "unlisted_one": "Your assessments already use {{count}} term not in this list: {{names}}.",
+    "unlisted_other": "Your assessments already use {{count}} terms not in this list: {{names}}.",
+    "importButton": "Add them",
+    "importing": "Adding…",
+    "imported_one": "{{count}} term added",
+    "imported_other": "{{count}} terms added",
+    "errors": {
+      "nameRequired": "Give the term a name",
+      "nameTooLong": "A term name can be at most 50 characters",
+      "duplicate": "There's already a term called \"{{name}}\"",
+      "bothDates": "Give both a start and an end date, or neither",
+      "endBeforeStart": "The term must end on or after its start date",
+      "yearTooLong": "The academic year can be at most 20 characters"
+    },
+    "picker": {
+      "notInList": "(not in the school's term list)",
+      "pickOne": "Pick a term - an assessment without one is left off every report card.",
+      "setupHint": "Set up the school's terms in Academics → Terms so everyone picks from one list.",
+      "noAssessments": "(no assessments)",
+      "notInTermList": "(not in term list)"
+    }
+  },
+  "reportCardDetail": {
+    "attendanceTerm": "Attendance ({{from}} – {{to}})",
+    "attendanceToDate": "Attendance to date",
+    "absentCount": "AB ×{{count}}",
+    "excusedCount": "EX ×{{count}}",
+    "showAssessments_one": "Show {{count}} assessment",
+    "showAssessments_other": "Show {{count}} assessments",
+    "hideAssessments": "Hide assessments",
+    "legend": "AB = absent, counted as 0. EX = excused, not counted.",
+    "liveHint": "You're seeing the current marks. Families see this card as it was when it was published.",
+    "draftChip": "{{term}} (draft)",
+    "pickTermPreview": "No report card has been published for this student yet. Pick a term above to preview a draft.",
+    "moved": "Moved"
+  },
+  "reportCardUnpublish": {
+    "canUnpublishLater": "An admin can unpublish later, with a reason.",
+    "button": "Unpublish…",
+    "reasonLabel": "Reason (kept in the activity log)",
+    "reasonPlaceholder": "Why are these report cards being withdrawn?",
+    "counter": "{{count}} / 500",
+    "reasonLength": "Give a reason of 5 to 500 characters",
+    "confirm": "Unpublish",
+    "confirmTitle": "Unpublish report cards?",
+    "confirmMessage": "Unpublish \"{{term}}\" for {{className}}? Students and parents won't see these report cards until you publish again. They aren't notified now, and they will be notified when you publish again. Marks entry unlocks.",
+    "done": "\"{{term}}\" report cards unpublished",
+    "adminOnly": "Only an admin can unpublish report cards."
+  },
   "schoolLogo": {
     "title": "School Logo",
-    "intro": "Your school logo is printed on report-card PDFs. Without one, PDFs show a Gurukul placeholder mark.",
+    "intro": "Your school logo is printed on report-card PDFs. Without one, they show your school's name.",
     "label": "School logo (optional)",
     "hint": "Any image works - it's resized for you automatically.",
     "choose": "Choose logo",
@@ -1546,7 +1631,16 @@
     "discardTitle": "Discard unsaved marks?",
     "discardMessage": "The marks you typed on this screen haven't been saved.",
     "keepEditing": "Keep editing",
-    "discard": "Discard"
+    "discard": "Discard",
+    "excused": "Excused",
+    "excusedLabel": "Excused: {{name}}",
+    "remarkVisibleHint": "Remarks are shown to the student and parents on the report card.",
+    "movedTitle": "Left this class",
+    "movedHint": "These students have moved to another class but still have a result saved here. Clear a result that should not stay on this assessment.",
+    "clear": "Clear",
+    "clearConfirmTitle": "Clear this result?",
+    "clearConfirmMessage": "Clear the marks, Absent, Excused and remark saved for {{name}} on this assessment?",
+    "saveFirst": "Save or discard your changes first"
   },
   "transport": {
     "direction": {
