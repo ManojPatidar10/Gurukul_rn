@@ -5,7 +5,6 @@ import { AppState, Platform } from 'react-native';
 
 import type { Session } from '../api/authStorage';
 import { registerDeviceToken } from '../api/notifications';
-import { getMyChildren } from '../api/parents';
 import { getStudent } from '../api/students';
 import { FEATURE_FLAGS } from '../config/featureFlags';
 import i18n from '../i18n';
@@ -221,19 +220,10 @@ export function usePushNotifications(schoolId: string | null, session: Session |
             navigationRef.navigate('ReportCard', { student: { id: student.id, name: student.name }, defaultTerm });
           })
           .catch(() => {});
-      } else if (data.type === 'REPORT_CARD_PUBLISHED' && session.ownerType === 'PARENT' && typeof data.studentId === 'string') {
-        // A parent's copy names one child (a parent may have several), so open that child's card.
-        const studentId = data.studentId;
-        getMyChildren(session.schoolId)
-          .then((children) => {
-            const child = children.find((c) => c.id === studentId);
-            if (child) {
-              navigationRef.navigate('ReportCard', { student: { id: child.id, name: child.name }, defaultTerm });
-            }
-          })
-          .catch(() => {});
       } else {
-        // ABSENCE_ALERT / FEE_DUE open that child's attendance / fees; ANNOUNCEMENT opens the
+        // Shared with the in-app Alerts inbox, so a push tap and an inbox tap can't drift apart:
+        // ABSENCE_ALERT / FEE_DUE / REPORT_CARD_PUBLISHED (a parent's copy names one child) open
+        // that child's attendance / fees / report card for that term; ANNOUNCEMENT opens the
         // parent's Announcements screen (staff and students have none, so it just opens the app);
         // BUS_TRIP opens the family's bus map, or an admin's transport screen.
         const target = notificationTarget(data, session.role);

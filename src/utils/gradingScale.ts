@@ -126,6 +126,24 @@ export function gradingBandErrorMessage(error: GradingBandError): string {
   }
 }
 
+/**
+ * The pass mark, as a percentage, from the school's grading scale. The lowest band is "fail" and
+ * every other band is a pass, so it's the second-lowest band's minimum - the server grades with the
+ * highest band whose minimum is at or below the percentage. 33 with the built-in scale. Null when
+ * the scale has fewer than 2 bands: there's no pass/fail line to draw, and guessing 33% would be wrong
+ * for a school that changed its scale.
+ */
+export function passMarkFromScale(bands: Pick<GradingBand, 'minPercentage'>[]): number | null {
+  if (bands.length < 2) return null;
+  const sorted = [...bands].sort((a, b) => a.minPercentage - b.minPercentage);
+  return sorted[1].minPercentage;
+}
+
+/** Whether `marks` out of `maxMarks` reaches the pass mark, with the percentage rounded to 2 places. */
+export function isPassingMark(marks: number, maxMarks: number, passMark: number): boolean {
+  return round2((marks * 100) / maxMarks) >= passMark;
+}
+
 /** One line per band, highest first ("A+  90-100%"), for the save confirmation. */
 export function describeGradingBands(bands: Omit<GradingBand, 'id'>[]): string {
   return bands.map((b) => `${b.label}  ${b.minPercentage}-${b.maxPercentage}%`).join('\n');

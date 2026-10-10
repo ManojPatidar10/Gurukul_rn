@@ -120,12 +120,13 @@ export type PrincipalStackParamList = {
   SectionAssessmentsList: { classSection: ClassSection };
   AssessmentForm: { classSection: ClassSection; assessment?: Assessment };
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
-  AssessmentResults: { assessment: Assessment };
+  /** `readOnly`: a teacher who may read this assessment's marks but not change them. */
+  AssessmentResults: { assessment: Assessment; readOnly?: boolean };
   AttendanceTake: { classSection: ClassSection };
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
   RegistrationInbox: undefined;
   ParentHome: undefined;
-  ChildDashboard: { student: Pick<Student, 'id' | 'name'> };
+  ChildDashboard: { student: Pick<Student, 'id' | 'name' | 'classSectionId'> };
   ChildFees: { student: Pick<Student, 'id' | 'name'> };
   ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
   PublishReportCards: { classSection: ClassSection };
@@ -161,7 +162,8 @@ export type PrincipalStackParamList = {
   Arena: undefined;
   NewChallenge: undefined;
   ChallengeDetail: { challengeId: string };
-  QuestionAuthor: undefined;
+  // Undefined = add a new question; questionId = edit that saved question.
+  QuestionAuthor: { questionId?: string } | undefined;
   MyQuestions: undefined;
   BattleRoomMatch: undefined;
   BattleRoom: { roomId: string };
@@ -171,7 +173,6 @@ export type PrincipalStackParamList = {
   EventDetail: { eventId: string };
   EventForm: undefined;
   AcademicHelper: undefined;
-  StudentPerformance: { student: Student };
   TeacherPerformance: { employee: Employee };
   TeacherToolsHub: undefined;
   SectionHub: { section: HubSection };

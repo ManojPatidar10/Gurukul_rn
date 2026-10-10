@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { getPracticeSession, submitPracticeAnswer } from '../../api/practice';
 import type { PracticeSessionResponse, PublicQuizQuestionResponse, QuizOption } from '../../api/types';
+import { QuizReviewList } from '../../components/QuizReviewList';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -29,10 +30,9 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Answer result for whichever question is currently on screen only - cleared the moment we
-  // advance, so a previous question's correct/wrong state can never bleed into the next one.
-  const [answered, setAnswered] = useState<
-    { questionId: string; selected: QuizOption; correct: boolean; correctOption: QuizOption } | null
-  >(null);
+  // advance, so a previous question's correct/wrong state can never bleed into the next one. Only
+  // right or wrong: the correct options are revealed in the review once the session is over.
+  const [answered, setAnswered] = useState<{ questionId: string; selected: QuizOption; correct: boolean } | null>(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -55,7 +55,10 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
     setError(null);
     try {
       const result = await submitPracticeAnswer(schoolId, sessionId, { questionId, selectedOption: selected });
-      setAnswered({ questionId, selected, correct: result.correct, correctOption: result.correctOption });
+      setAnswered({ questionId, selected, correct: result.correct });
+      // The last answer: reload straight into the score and the review. If that fails, the Next
+      // button stays up to try again.
+      if (result.sessionCompleted) await load();
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -93,7 +96,9 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader title="Practice Mode" subtitle={session.subjectName} onBack={() => navigation.goBack()} />
-      <ScreenContainer>
+      {/* The review's report box has a text field: taps on Send/Cancel go through while the keyboard
+          is up, and on iOS the list scrolls clear of the keyboard. */}
+      <ScreenContainer keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {error && <ErrorNotice message={error} />}
 
         <Text style={styles.noXpNote}>Practice doesn&apos;t earn XP — it&apos;s just for prep.</Text>
@@ -106,6 +111,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
             </Text>
           </View>
         )}
+        {session.status === 'COMPLETED' && <QuizReviewList items={session.review} />}
 
         {session.status === 'ACTIVE' && currentQuestion && (
           <View style={styles.questionCard}>
@@ -123,15 +129,10 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
             {OPTIONS.map(({ key, field }) => {
               const isThisAnswered = answered && answered.questionId === currentQuestion.id;
               const isSelected = isThisAnswered && answered.selected === key;
-              const isCorrectOption = isThisAnswered && answered.correctOption === key;
               return (
                 <Pressable
                   key={key}
-                  style={[
-                    styles.optionButton,
-                    isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong),
-                    !isSelected && isCorrectOption && styles.optionCorrect,
-                  ]}
+                  style={[styles.optionButton, isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong)]}
                   disabled={submitting || !!isThisAnswered}
                   onPress={() => handleSelect(currentQuestion.id, key)}
                 >

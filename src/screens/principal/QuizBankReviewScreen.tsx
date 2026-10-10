@@ -24,9 +24,9 @@ const BANK_TYPES: QuizQuestionType[] = ['MCQ'];
 
 /**
  * The mandatory review step between an AI draft and the question bank. Every selected question is
- * shown editable (text, options + correct option, or the typed answer), the teacher can drop any of
- * them, and saving needs an explicit "I've checked these" confirmation. The save is all-or-nothing
- * on the server, which re-validates every question.
+ * shown editable (text, options + correct option, or the typed answer, and the explanation), the
+ * teacher can drop any of them, and saving needs an explicit "I've checked these" confirmation. The
+ * save is all-or-nothing on the server, which re-validates every question and records them as AI-made.
  */
 export function QuizBankReviewScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
@@ -67,6 +67,7 @@ export function QuizBankReviewScreen({ route, navigation }: Props) {
       const saved = await bulkCreateQuizQuestions(schoolId, {
         subjectId,
         className,
+        source: 'AI',
         questions: drafts.map(toBankInput),
       });
       showToast(t('teacherTools.bank.saved', { count: saved.length }), 'success');
@@ -162,6 +163,13 @@ export function QuizBankReviewScreen({ route, navigation }: Props) {
             {d.questionType !== 'MCQ' && (
               <Text style={styles.hint}>{t(`teacherTools.bank.markingHint.${d.questionType}`)}</Text>
             )}
+
+            <LabeledInput
+              label={t('teacherTools.bank.explanation')}
+              value={d.explanation}
+              onChangeText={(v) => update(index, { explanation: v })}
+              multiline
+            />
 
             {errors[index] && <Text style={styles.error}>{t(`teacherTools.bank.errors.${errors[index]}`)}</Text>}
           </View>

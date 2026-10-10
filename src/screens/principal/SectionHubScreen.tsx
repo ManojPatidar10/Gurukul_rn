@@ -43,6 +43,7 @@ const SECTIONS: Record<HubSection, HubItem[]> = {
     { key: 'bellSchedule', accentKey: 'bellSchedule', icon: 'bell', copyKey: 'dashboard.features.bellSchedule', navigate: (n) => n.navigate('PeriodSetup') },
     { key: 'gradingScale', accentKey: 'gradingScale', icon: 'sliders-h', copyKey: 'dashboard.features.gradingScale', navigate: (n) => n.navigate('GradingScale') },
     { key: 'holidays', accentKey: 'holidays', icon: 'calendar-day', copyKey: 'dashboard.features.holidays', navigate: (n) => n.navigate('Holidays') },
+    { key: 'teacherTools', accentKey: 'teacherTools', icon: 'chalkboard-teacher', copyKey: 'dashboard.features.teacherTools', navigate: (n) => n.navigate('TeacherToolsHub') },
   ],
   reports: [
     { key: 'attendanceExport', accentKey: 'attendanceExport', icon: 'file-excel', copyKey: 'dashboard.features.attendanceExport', navigate: (n) => n.navigate('AttendanceExport') },

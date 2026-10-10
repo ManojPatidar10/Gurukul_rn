@@ -501,27 +501,42 @@ export interface Assessment {
   academicYear: string;
   type: AssessmentType;
   title: string;
-  subjectId: string;
-  subjectName: string;
-  subjectCode: string;
+  /** The subject and creator are null on old assessments saved without them. */
+  subjectId: string | null;
+  subjectName: string | null;
+  subjectCode: string | null;
   assessmentDate: string;
   maxMarks: number;
   description: string;
-  createdByTeacherId: string;
-  createdByTeacherName: string;
+  createdByTeacherId: string | null;
+  createdByTeacherName: string | null;
   term: string | null;
+  /**
+   * ACTIVE students in the section with a mark or Absent saved, and ACTIVE students in the section.
+   * Only sent to ADMIN and TEACHER callers (null for STUDENT and PARENT), and missing from older servers.
+   */
+  marksEnteredCount?: number | null;
+  marksExpectedCount?: number | null;
 }
 
-export interface AssessmentRequest {
+export interface CreateAssessmentRequest {
   title: string;
   type: AssessmentType;
   subjectId: string;
   assessmentDate: string;
   maxMarks: number;
   description?: string;
-  teacherId: string;
+  /**
+   * Who is recorded as the creator. Only an ADMIN can choose: the server ignores it from a TEACHER
+   * (the creator is them). Older servers clear the creator when it's left out - see
+   * utils/assessmentPermissions creatorTeacherId.
+   */
+  teacherId?: string;
   term?: string;
 }
+
+/** PUT /assessments/{id}: a field left out keeps its current value. `description: ""` clears it. */
+export type UpdateAssessmentRequest = Partial<CreateAssessmentRequest>;
 
 export interface AssessmentResultEntry {
   studentId: string;
@@ -544,6 +559,10 @@ export interface AssessmentResults {
   assessmentTitle: string;
   maxMarks: number;
   results: StudentResult[];
+  /** Missing from older servers. */
+  term?: string | null;
+  /** True when the term's report cards are published, so marks can't be saved. Missing from older servers. */
+  locked?: boolean;
 }
 
 export interface GradingBand {
@@ -1160,13 +1179,24 @@ export interface CreateQuizQuestionRequest {
   optionC: string;
   optionD: string;
   correctOption: QuizOption;
+  /** Why the answer is right; students see it only in the review after they answer. Max 1000. */
+  explanation?: string;
 }
 
 /** Question-bank answer kinds. Only MCQ is used by Arena games; NUMERIC/SHORT_WORD are marked automatically. */
 export type QuizQuestionType = 'MCQ' | 'NUMERIC' | 'SHORT_WORD';
 
+/** Where a bank question came from: typed by staff, or saved from the AI quiz generator. */
+export type QuizQuestionSource = 'MANUAL' | 'AI';
+
+/**
+ * The staff view of a bank question, answer key included. The optional fields are absent from
+ * servers older than the question-bank-and-games change - treat them as empty / false.
+ */
 export interface QuizQuestionResponse {
   id: string;
+  subjectId?: string;
+  subjectName?: string;
   className: string;
   questionText: string;
   /** Options and correctOption are null for NUMERIC / SHORT_WORD questions. */
@@ -1180,6 +1210,55 @@ export interface QuizQuestionResponse {
   /** Absent from older servers - treat as MCQ. */
   questionType?: QuizQuestionType;
   answerText?: string | null;
+  explanation?: string | null;
+  source?: QuizQuestionSource;
+  /** Retired questions are never drawn into new games; Restore brings them back. */
+  retired?: boolean;
+  /** Distinct students with an open "wrong answer" report on this question. */
+  openReportCount?: number;
+  /** Up to 5 newest non-blank comments from open reports, newest first, without student names. */
+  openReportComments?: string[];
+  /** The caller is an ADMIN or wrote this question, so may edit, retire, restore and dismiss reports. */
+  canEdit?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Edits a saved question - a full replacement of these fields. Subject, grade, type and source
+ * can't change, and fields that don't fit the stored type are ignored. A null or blank explanation
+ * clears it.
+ */
+export interface UpdateQuizQuestionRequest {
+  questionText: string;
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  correctOption?: QuizOption;
+  answerText?: string;
+  explanation?: string | null;
+}
+
+/** `alreadyReported` is true when this student already had an open report on the question. */
+export interface QuizQuestionReportResponse {
+  questionId: string;
+  alreadyReported: boolean;
+}
+
+/** One question of a finished Arena challenge or Practice session, with the answer key revealed. */
+export interface QuizReviewItem {
+  questionId: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: QuizOption;
+  explanation: string | null;
+  /** Null when the student didn't answer it. */
+  selectedOption: QuizOption | null;
+  correct: boolean;
 }
 
 export interface BankQuestionInput {
@@ -1191,11 +1270,14 @@ export interface BankQuestionInput {
   optionD?: string;
   correctOption?: QuizOption;
   answerText?: string;
+  explanation?: string;
 }
 
 export interface BulkCreateQuizQuestionsRequest {
   subjectId: string;
   className: string;
+  /** Applies to the whole batch; the server defaults it to MANUAL. */
+  source?: QuizQuestionSource;
   questions: BankQuestionInput[];
 }
 
@@ -1218,28 +1300,37 @@ export interface SubmitAnswerRequest {
   selectedOption: QuizOption;
 }
 
+/** Right or wrong only - the correct option is revealed in the review once the challenge ends. */
 export interface SubmitAnswerResponse {
   correct: boolean;
   challengeCompleted: boolean;
-  correctOption: QuizOption;
 }
 
 export interface ChallengeSummaryResponse {
   id: string;
   subjectName: string;
   opponentName: string;
+  /** The effective status: an ACTIVE challenge past expiresAt is reported as EXPIRED. */
   status: ChallengeStatus;
   totalQuestions: number;
   myAnsweredCount: number;
   opponentAnsweredCount: number;
   youWon: boolean | null;
   draw: boolean;
+  /** When answers stop being accepted (created + the server's challenge-expiry-hours). */
+  expiresAt?: string;
+  /** XP the winner got: 0 for a draw, an expired or active challenge, or once the pair's daily limit is reached. */
+  xpAwarded?: number;
+  /** True only for a COMPLETED challenge with a winner that gave no XP because the pair hit today's limit. */
+  xpLimitReached?: boolean;
 }
 
 export interface ChallengeDetailResponse {
   summary: ChallengeSummaryResponse;
   questions: PublicQuizQuestionResponse[];
   myAnsweredQuestionIds: string[];
+  /** Null while ACTIVE; one item per question, from the caller's own answers, once COMPLETED or EXPIRED. */
+  review?: QuizReviewItem[] | null;
 }
 
 export type PracticeSessionStatus = 'ACTIVE' | 'COMPLETED';
@@ -1257,6 +1348,8 @@ export interface PracticeSessionResponse {
   correctCount: number;
   questions: PublicQuizQuestionResponse[];
   myAnsweredQuestionIds: string[];
+  /** Null while ACTIVE; filled once the session is COMPLETED. */
+  review?: QuizReviewItem[] | null;
 }
 
 export interface SubmitPracticeAnswerRequest {
@@ -1264,10 +1357,10 @@ export interface SubmitPracticeAnswerRequest {
   selectedOption: QuizOption;
 }
 
+/** Right or wrong only - the correct options are revealed in the review once the session ends. */
 export interface SubmitPracticeAnswerResponse {
   correct: boolean;
   sessionCompleted: boolean;
-  correctOption: QuizOption;
 }
 
 export type BattleRoomStatus = 'WAITING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
@@ -1307,6 +1400,8 @@ export interface BattleQuestionResult {
   questionIndex: number;
   questionId: string;
   correctOption: QuizOption;
+  /** Why the correct option is right, when the question has an explanation. */
+  explanation?: string | null;
   /** One row per participant, fastest correct answer first. */
   results: BattlePlayerResult[];
 }
@@ -1335,8 +1430,11 @@ export interface BattleRoomState {
   /** When answering closes for currentQuestion - the question closes earlier if everyone answers. */
   currentQuestionEndsAt: string | null;
   lastResult: BattleQuestionResult | null;
+  /** Null on a draw, and until the room is COMPLETED. */
   winnerStudentId: string | null;
   winnerName: string | null;
+  /** True when the room is COMPLETED with no winner: a level tie, or nobody scored. */
+  draw?: boolean;
 }
 
 export interface BattleRoomSummary {

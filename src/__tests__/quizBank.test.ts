@@ -1,5 +1,6 @@
 import type { GeneratedQuizQuestion } from '../api/types';
 import {
+  BANK_LIMITS,
   isNumericAnswer,
   isShortWordAnswer,
   suggestBankType,
@@ -107,5 +108,37 @@ describe('toBankDraft / validateBankDraft / toBankInput', () => {
 
   it('returns null for questions that cannot go in the bank', () => {
     expect(toBankDraft(q({ questionType: 'LONG_ANSWER', answer: 'Essay' }))).toBeNull();
+  });
+
+  it('treats a draft with no correct option as invalid', () => {
+    const draft = toBankDraft(q({ options: ['3', '4', '5', '6'], answer: 'none of these' })) as BankDraft;
+    expect(draft.correctOption).toBeNull();
+    expect(validateBankDraft(draft)).toBe('correctOption');
+  });
+});
+
+describe('explanations', () => {
+  it('carries the AI explanation over, trimmed and cut to the limit', () => {
+    const draft = toBankDraft(q({ options: ['3', '4', '5', '6'], answer: '4', explanation: '  Two twos make four.  ' })) as BankDraft;
+    expect(draft.explanation).toBe('Two twos make four.');
+
+    const long = toBankDraft(q({ options: ['3', '4', '5', '6'], answer: '4', explanation: 'x'.repeat(1200) })) as BankDraft;
+    expect(long.explanation).toHaveLength(BANK_LIMITS.explanation);
+    expect(validateBankDraft(long)).toBeNull();
+  });
+
+  it('flags an explanation longer than 1000 characters', () => {
+    const draft = toBankDraft(q({ options: ['3', '4', '5', '6'], answer: '4' })) as BankDraft;
+    expect(validateBankDraft({ ...draft, explanation: 'x'.repeat(1000) })).toBeNull();
+    expect(validateBankDraft({ ...draft, explanation: 'x'.repeat(1001) })).toBe('explanationTooLong');
+  });
+
+  it('sends the explanation only when it is not blank', () => {
+    const draft = toBankDraft(q({ options: ['3', '4', '5', '6'], answer: '4' })) as BankDraft;
+    expect(toBankInput({ ...draft, explanation: '   ' })).not.toHaveProperty('explanation');
+    expect(toBankInput({ ...draft, explanation: ' Because 2 + 2 = 4. ' }).explanation).toBe('Because 2 + 2 = 4.');
+
+    const numeric = toBankDraft(q({ questionType: 'NUMERIC', answer: '8', explanation: '4 + 4' })) as BankDraft;
+    expect(toBankInput(numeric)).toEqual({ questionType: 'NUMERIC', questionText: 'What is 2 + 2?', answerText: '8', explanation: '4 + 4' });
   });
 });
