@@ -1,0 +1,148 @@
+<!--meta {
+  "path": "share.html",
+  "crumb": "Send follow-up",
+  "title": "Send a follow-up | Smart Gurukul",
+  "description": "Send a school the Smart Gurukul follow-up after a call, on WhatsApp or by email.",
+  "noindex": true,
+  "software": false,
+  "cta_href": "thanks.html",
+  "cta_label": "Preview the page"
+} -->
+<section class="violet share-wrap" aria-labelledby="share-title">
+  <div class="wrap">
+    <div class="demo-card share-card">
+      <p class="eyebrow" style="color:var(--sg-violet-600)">After the call</p>
+      <h1 id="share-title" style="font-size:clamp(1.5rem,4vw,2rem);margin:0 0 6px">Send the follow-up</h1>
+      <p class="form-note" style="margin:0 0 18px">Fill in what you know, then tap a button. Nothing is stored or sent from this page; it opens WhatsApp or your email app with the message ready.</p>
+      <form id="share-form" novalidate>
+        <div class="form-grid">
+          <div class="field"><label for="sname">Their name</label><input id="sname" autocomplete="off" maxlength="60" placeholder="Sharma"></div>
+          <div class="field"><label for="school">School</label><input id="school" autocomplete="off" maxlength="60" placeholder="Sunrise Public School"></div>
+          <div class="field"><label for="mobile">Their WhatsApp number</label><input id="mobile" type="tel" inputmode="tel" autocomplete="off" maxlength="18" placeholder="98765 43210"><span class="err" id="mobile-err" aria-live="polite"></span></div>
+          <div class="field"><label for="semail">Their email</label><input id="semail" type="email" inputmode="email" autocomplete="off" maxlength="120" placeholder="principal@school.in"><span class="err" id="semail-err" aria-live="polite"></span></div>
+          <div class="field"><label for="sender">Your name</label><input id="sender" autocomplete="off" maxlength="40" value="Manoj"></div>
+          <div class="field"><label for="lang">WhatsApp language</label>
+            <select id="lang"><option value="hinglish">Hinglish</option><option value="en">English</option></select></div>
+        </div>
+        <div class="share-actions">
+          <button class="btn btn-wa" type="button" id="send-wa">Send on WhatsApp</button>
+          <button class="btn btn-primary" type="button" id="send-mail">Send email</button>
+        </div>
+        <div class="share-actions small">
+          <button class="btn btn-soft btn-sm" type="button" id="copy-wa">Copy WhatsApp text</button>
+          <button class="btn btn-soft btn-sm" type="button" id="copy-mail">Copy email text</button>
+        </div>
+        <div class="form-status" id="share-status" role="status" aria-live="polite"></div>
+        <p class="form-note">WhatsApp gets the follow-up page link (video, features and deck). The email has the recap and the pitch deck, without the video. On Android, choose Titan when your phone asks which app to use, or use <em>Copy email text</em> and paste it into Titan.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var SITE = 'https://smartgurukul.org/';
+  var $ = function (id) { return document.getElementById(id); };
+  var status = $('share-status');
+  try { var saved = localStorage.getItem('sg-share-sender'); if (saved) $('sender').value = saved; } catch (e) {}
+  $('sender').addEventListener('change', function () { try { localStorage.setItem('sg-share-sender', $('sender').value.trim()); } catch (e) {} });
+
+  function v(id) { return $(id).value.replace(/\s+/g, ' ').trim(); }
+  function show(kind, text) { status.className = 'form-status ' + kind; status.textContent = text; }
+  function err(id, text) { $(id + '-err').textContent = text || ''; $(id).setAttribute('aria-invalid', text ? 'true' : 'false'); }
+
+  /** 10-digit Indian mobiles get +91; a number typed with + and a country code is used as is. */
+  function waNumber() {
+    var raw = $('mobile').value.trim(), d = raw.replace(/\D/g, '');
+    if (/^[6-9]\d{9}$/.test(d)) return '91' + d;
+    if (/^0[6-9]\d{9}$/.test(d)) return '91' + d.slice(1);
+    if (/^91[6-9]\d{9}$/.test(d)) return d;
+    if (raw.charAt(0) === '+' && d.length >= 8 && d.length <= 15) return d;
+    return null;
+  }
+
+  function pageLink() {
+    var q = [], n = v('sname'), s = v('school');
+    if (n) q.push('n=' + encodeURIComponent(n));
+    if (s) q.push('s=' + encodeURIComponent(s));
+    return SITE + 'thanks.html' + (q.length ? '?' + q.join('&') : '');
+  }
+
+  function waText() {
+    var n = v('sname'), me = v('sender') || 'Smart Gurukul team', link = pageLink();
+    if ($('lang').value === 'en') {
+      return (n ? 'Hello ' + n + ' ji,' : 'Hello,') + ' thank you for your time today.\n\n' +
+        'Everything from our call (a 45-second video, the features and our pitch deck) is here:\n' + link + '\n\n' +
+        'Next step: a free 1-month pilot. Just send your student list (Excel or a photo of the register) and we will set everything up and train your staff.\n\n' +
+        '- ' + me + ', Smart Gurukul';
+    }
+    return 'Namaste' + (n ? ' ' + n + ' ji' : '') + ' 🙏\n' +
+      'Aaj samay dene ke liye dhanyavaad. Demo ki saari jaankari, 45 second ka video aur hamari presentation yahan hai:\n' + link + '\n\n' +
+      'Agla kadam: 1 mahine ka free pilot. Bas student list (Excel ya register ki photo) bhej dijiye, hum sab set up karke aapke staff ko sikha denge.\n\n' +
+      '- ' + me + ', Smart Gurukul';
+  }
+
+  function mailSubject() {
+    var s = v('school');
+    return 'Thank you for your time' + (s ? ', and next steps for ' + s : '') + ' | Smart Gurukul';
+  }
+
+  function mailBody() {
+    var n = v('sname'), s = v('school'), me = v('sender') || 'The Smart Gurukul team';
+    return 'Dear ' + (n ? n + ' ji' : 'Sir/Madam') + ',\n\n' +
+      'Thank you for taking the time to speak with us today' + (s ? ' about Smart Gurukul for ' + s : '') + '. It was a pleasure walking you through the app, and we would love to help your school get started.\n\n' +
+      'A quick recap of what we discussed:\n' +
+      '- One app for the principal, teachers, students and parents, in English and Hindi\n' +
+      '- Teacher attendance by GPS check-in, with no biometric machine to buy\n' +
+      '- Class attendance in two taps, marks entry and report cards (with PDF download)\n' +
+      '- Fees and dues, payroll and payslips\n' +
+      '- A parent app with attendance, fees and report card, plus parent chat and alerts\n' +
+      '- An AI helper for teachers, and XP, House Wars and quiz battles that keep students engaged\n' +
+      '- Timetable, admission enquiries and digital ID cards\n\n' +
+      'Our pitch deck, to share with your management:\n' +
+      SITE + 'deck.html\n' +
+      'PDF: ' + SITE + 'assets/deck/Smart-Gurukul-Pitch-Deck.pdf\n\n' +
+      'Next step, a free 1-month pilot:\n' +
+      '1. Share your student list (an Excel sheet, or photos of the register).\n' +
+      '2. We set up your classes, students and staff, and train your teachers.\n' +
+      '3. Use it with your real classes for a month, then decide.\n\n' +
+      'Just reply to this email with any questions, or WhatsApp us on +91 70242 74770.\n\n' +
+      'Warm regards,\n' + me + '\nSmart Gurukul\nsmartgurukul.org';
+  }
+
+  function copy(text, done) {
+    var ok = function () { show('ok', done); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(ok, function () { show('bad', 'Could not copy. Long-press to select the text instead.'); });
+    } else {
+      var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); ok(); } catch (e) { show('bad', 'Could not copy on this browser.'); }
+      document.body.removeChild(t);
+    }
+  }
+
+  $('send-wa').addEventListener('click', function () {
+    err('semail');
+    var num = waNumber();
+    if (!num) { err('mobile', 'Enter a 10-digit mobile number, or +country code and number'); $('mobile').focus(); return; }
+    err('mobile');
+    show('', '');
+    location.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent(waText());
+  });
+
+  $('send-mail').addEventListener('click', function () {
+    err('mobile');
+    var to = v('semail');
+    if (to && !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(to)) { err('semail', 'Enter a valid email'); $('semail').focus(); return; }
+    err('semail');
+    show('', '');
+    location.href = 'mailto:' + encodeURIComponent(to).replace('%40', '@') +
+      '?subject=' + encodeURIComponent(mailSubject()) + '&body=' + encodeURIComponent(mailBody());
+  });
+
+  $('copy-wa').addEventListener('click', function () { copy(waText(), 'WhatsApp text copied.'); });
+  $('copy-mail').addEventListener('click', function () {
+    copy('Subject: ' + mailSubject() + '\n\n' + mailBody(), 'Email subject and text copied. Paste it into Titan.');
+  });
+})();
+</script>

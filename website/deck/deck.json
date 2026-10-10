@@ -1,0 +1,55 @@
+{
+  "v": 4,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-09-23T11:30:00Z"
+  },
+  "title": "Smart Gurukul Pitch Deck",
+  "order": [
+    "cover",
+    "team",
+    "problem",
+    "solution",
+    "features",
+    "simple",
+    "gamification",
+    "demo",
+    "traction",
+    "competition",
+    "close"
+  ],
+  "cover": "cover",
+  "sections": {
+    "intro": {
+      "description": "Who we are and the one-line pitch",
+      "start": "cover"
+    },
+    "why": {
+      "description": "The problem schools have and how one app solves it",
+      "start": "problem"
+    },
+    "product": {
+      "description": "What the app does, then a walkthrough in the app",
+      "start": "features"
+    },
+    "start": {
+      "description": "How a school gets started, and why us",
+      "start": "traction"
+    },
+    "next": {
+      "description": "Agreeing the next step",
+      "start": "close"
+    }
+  },
+  "faces": {
+    "domine": {
+      "family": "Domine",
+      "href": "https://fonts.googleapis.com/css2?family=Domine:wght@400..700&display=swap"
+    },
+    "nunito-sans": {
+      "family": "Nunito Sans",
+      "href": "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap"
+    }
+  },
+  "designSystems": []
+}
