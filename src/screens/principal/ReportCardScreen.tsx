@@ -17,6 +17,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { formatOverallGrade, formatOverallPercentage, missingMarksCount } from '../../utils/reportCardDisplay';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
 
@@ -100,6 +101,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Shown on the card so a half-filled one doesn't look finished.
+  const missingMarks = missingMarksCount(reportCard?.missingMarksCount);
+
   return (
     <View style={styles.root}>
       <ScreenHeader title={`${student.name}'s report card`} onBack={() => navigation.goBack()} />
@@ -149,13 +153,18 @@ export function ReportCardScreen({ route, navigation }: Props) {
                   variant={reportCard.published ? 'success' : 'neutral'}
                 />
               </View>
+              {missingMarks > 0 && (
+                <View style={styles.missingRow}>
+                  <StatusChip label={t('reportCardStatus.marksMissing', { count: missingMarks })} variant="warning" />
+                </View>
+              )}
               <View style={styles.statRow}>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{reportCard.overallPercentage}%</Text>
+                  <Text style={styles.statValue}>{formatOverallPercentage(reportCard.overallPercentage)}</Text>
                   <Text style={styles.statLabel}>Overall</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{reportCard.overallGrade}</Text>
+                  <Text style={styles.statValue}>{formatOverallGrade(reportCard.overallGrade)}</Text>
                   <Text style={styles.statLabel}>Grade</Text>
                 </View>
                 <View style={styles.statCard}>
@@ -240,6 +249,7 @@ const styles = StyleSheet.create({
   },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   headerClass: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  missingRow: { flexDirection: 'row', marginBottom: spacing.md },
   statRow: { flexDirection: 'row', gap: spacing.sm },
   statCard: {
     flex: 1,
