@@ -1,6 +1,7 @@
 import type {
   QuestionStat,
   QuestionStatsResponse,
+  SectionQuizSummary,
   SectionQuizTotals,
   StudentQuizSummary,
 } from '../api/quizInsights';
@@ -123,8 +124,14 @@ export function sortStudents(rows: readonly StudentQuizSummary[], key: StudentSo
   return copy.sort(byName);
 }
 
-/** "Practice 12 · Arena 10 (won 1 of 2) · Battle 9 (won 0 of 1)", leaving out games with nothing in them. */
+/**
+ * "Practice 12 · Arena 10 (won 1 of 2) · Battle 9 (won 0 of 1)", leaving out games with nothing in
+ * them. A student with no answers in the period has no activity, whatever games finished in it (a
+ * challenge answered earlier can complete in the range): the same rule as `totals.activeStudents`,
+ * so a card never shows a game for a student the totals count as not having played.
+ */
 export function gameBreakdown(s: StudentQuizSummary): string {
+  if (s.answered === 0) return 'No quiz activity in this period';
   const match = (label: string, m: StudentQuizSummary['arena']) =>
     m.played > 0 ? `${label} ${m.answered} (won ${m.won} of ${m.played})` : `${label} ${m.answered}`;
   const parts: string[] = [];
@@ -144,8 +151,16 @@ export function totalsSummary(t: SectionQuizTotals): string {
   return parts.join(' · ');
 }
 
-/** The empty-state line for the class summary, or null when someone played. */
-export function summaryEmptyMessage(t: SectionQuizTotals): string | null {
+/**
+ * The empty-state line for the class summary, or null when someone played. With no subject filter
+ * and no subjects to choose from, the server lists no students even when the class has some, so
+ * that case is checked first.
+ */
+export function summaryEmptyMessage(
+  summary: Pick<SectionQuizSummary, 'subjectId' | 'subjects' | 'totals'>
+): string | null {
+  const t = summary.totals;
+  if (summary.subjectId === null && summary.subjects.length === 0) return 'No subjects are set up for this school yet.';
   if (t.students === 0) return 'No students in this class yet.';
   if (t.activeStudents === 0) return 'No one in this class played Practice, Arena or Battle in this period.';
   return null;
@@ -216,6 +231,20 @@ export function noQuestionsMessage(onlyMine: boolean, subjectName: string, class
   return onlyMine
     ? `You haven't added any multiple-choice questions for ${subjectName} in ${className} yet.`
     : `No multiple-choice questions for ${subjectName} in ${className} yet.`;
+}
+
+/**
+ * Whether the section screen must load the caller's subject assignments before it can decide on the
+ * "Quiz results" tile: only a TEACHER signed in as staff who isn't this section's class teacher.
+ * ADMIN and the class teacher don't need them, and STUDENT, PARENT and DRIVER never make the call.
+ */
+export function quizResultsNeedsAssignments(
+  session: Pick<LoginResponse, 'role' | 'ownerType' | 'ownerId'>,
+  classSection: Pick<ClassSection, 'classTeacherId'>
+): boolean {
+  return (
+    session.role === 'TEACHER' && session.ownerType === 'EMPLOYEE' && classSection.classTeacherId !== session.ownerId
+  );
 }
 
 /**

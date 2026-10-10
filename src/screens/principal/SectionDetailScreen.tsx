@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { canSeeQuizResults } from '../../utils/quizInsights';
+import { canSeeQuizResults, quizResultsNeedsAssignments } from '../../utils/quizInsights';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionDetail'>;
 
@@ -34,8 +34,7 @@ export function SectionDetailScreen({ route, navigation }: Props) {
   // Quiz results are open to the admin, the class teacher and the section's subject teachers. Only
   // a teacher who is neither admin nor class teacher needs their assignments to know; if that call
   // fails the tile stays hidden (it is a secondary tile, and the server enforces the rule anyway).
-  const needsAssignments =
-    session.role === 'TEACHER' && session.ownerType === 'EMPLOYEE' && !isClassTeacherOfSection;
+  const needsAssignments = quizResultsNeedsAssignments(session, classSection);
   const [assignments, setAssignments] = useState<TeacherSubjectAssignment[] | null>(null);
   useEffect(() => {
     if (!needsAssignments) return;

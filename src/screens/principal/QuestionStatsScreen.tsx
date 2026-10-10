@@ -128,6 +128,7 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
           <Switch
             value={includeRetired}
             onValueChange={setIncludeRetired}
+            accessibilityLabel="Show retired questions"
             trackColor={{ true: colors.primary, false: colors.border }}
           />
         </View>
@@ -135,7 +136,7 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
         {error && (
           <>
             <ErrorNotice message={error} />
-            <Pressable style={styles.retryButton} onPress={load}>
+            <Pressable style={styles.retryButton} onPress={load} accessibilityRole="button">
               <Text style={styles.retryButtonText}>Retry</Text>
             </Pressable>
           </>
@@ -202,7 +203,11 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
 
                   {q.canEdit && (
                     <View style={styles.actions}>
-                      <Pressable onPress={() => navigation.navigate('QuestionAuthor', { questionId: q.id })} hitSlop={6}>
+                      <Pressable
+                        onPress={() => navigation.navigate('QuestionAuthor', { questionId: q.id })}
+                        hitSlop={6}
+                        accessibilityRole="button"
+                      >
                         <Text style={styles.action}>Edit</Text>
                       </Pressable>
                     </View>

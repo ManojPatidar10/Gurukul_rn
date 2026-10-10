@@ -96,7 +96,7 @@ export function QuizResultsScreen({ route, navigation }: Props) {
   const students = useMemo(() => (summary ? sortStudents(summary.students, sortKey) : []), [summary, sortKey]);
   const selectedSubject = subjects.find((s) => s.id === subjectId) ?? null;
   const allLabel = allSubjectsAllowed ? 'All subjects' : 'All my subjects';
-  const emptyMessage = summary ? summaryEmptyMessage(summary.totals) : null;
+  const emptyMessage = summary ? summaryEmptyMessage(summary) : null;
 
   return (
     <View style={styles.root}>
@@ -128,6 +128,7 @@ export function QuizResultsScreen({ route, navigation }: Props) {
         {selectedSubject && (
           <Pressable
             style={styles.outlineButton}
+            accessibilityRole="button"
             onPress={() =>
               navigation.navigate('QuestionStats', {
                 subjectId: selectedSubject.id,
@@ -144,7 +145,7 @@ export function QuizResultsScreen({ route, navigation }: Props) {
         {error && (
           <>
             <ErrorNotice message={error} />
-            <Pressable style={styles.outlineButton} onPress={() => setReload((n) => n + 1)}>
+            <Pressable style={styles.outlineButton} onPress={() => setReload((n) => n + 1)} accessibilityRole="button">
               <Text style={styles.outlineButtonText}>Retry</Text>
             </Pressable>
           </>

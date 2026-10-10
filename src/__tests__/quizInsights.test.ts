@@ -1,4 +1,4 @@
-import type { QuestionStat, StudentQuizSummary } from '../api/quizInsights';
+import type { QuestionStat, SectionQuizTotals, StudentQuizSummary, SubjectOption } from '../api/quizInsights';
 import type { ClassSection, LoginResponse, QuizQuestionResponse, TeacherSubjectAssignment } from '../api/types';
 import {
   DEFAULT_RANGE_DAYS,
@@ -18,6 +18,7 @@ import {
   questionFlags,
   questionGameSplit,
   questionScopeLine,
+  quizResultsNeedsAssignments,
   rangeForDays,
   sortStudents,
   summaryEmptyMessage,
@@ -163,6 +164,29 @@ describe('gameBreakdown / totalsSummary / summaryEmptyMessage', () => {
     expect(gameBreakdown(student('Asha', 0, null))).toBe('No quiz activity in this period');
   });
 
+  it('counts a student with no answers in the period as inactive, even if a game finished in it', () => {
+    // A challenge answered before the period that completed (and was won) inside it: the totals
+    // don't count this student as having played, so neither does the card.
+    const finishedLater = student('Asha', 0, null, {
+      practice: { answered: 0, correct: 0, sessions: 0 },
+      arena: { answered: 0, correct: 0, played: 1, won: 1 },
+    });
+    expect(gameBreakdown(finishedLater)).toBe('No quiz activity in this period');
+    const battleFinishedLater = student('Asha', 0, null, {
+      practice: { answered: 0, correct: 0, sessions: 0 },
+      battle: { answered: 0, correct: 0, played: 1, won: 0 },
+    });
+    expect(gameBreakdown(battleFinishedLater)).toBe('No quiz activity in this period');
+  });
+
+  it("still shows a finished game with no answers in the period for a student who answered something else", () => {
+    const active = student('Asha', 4, 50, {
+      practice: { answered: 4, correct: 2, sessions: 1 },
+      arena: { answered: 0, correct: 0, played: 1, won: 1 },
+    });
+    expect(gameBreakdown(active)).toBe('Practice 4 · Arena 0 (won 1 of 1)');
+  });
+
   it('lists only the games with something in them', () => {
     const mixed = student('Asha', 31, 71, {
       practice: { answered: 12, correct: 9, sessions: 2 },
@@ -194,14 +218,31 @@ describe('gameBreakdown / totalsSummary / summaryEmptyMessage', () => {
     );
   });
 
+  const science: SubjectOption[] = [{ id: 'sci', name: 'Science' }];
+  const summary = (totals: SectionQuizTotals, subjects: SubjectOption[] = science, subjectId: string | null = null) => ({
+    subjectId,
+    subjects,
+    totals,
+  });
+  const none: SectionQuizTotals = { students: 0, activeStudents: 0, answered: 0, correct: 0, percentCorrect: null };
+
   it('picks the empty-state line', () => {
-    expect(summaryEmptyMessage({ students: 0, activeStudents: 0, answered: 0, correct: 0, percentCorrect: null })).toBe(
-      'No students in this class yet.'
-    );
-    expect(summaryEmptyMessage({ students: 5, activeStudents: 0, answered: 0, correct: 0, percentCorrect: null })).toBe(
+    expect(summaryEmptyMessage(summary(none))).toBe('No students in this class yet.');
+    expect(summaryEmptyMessage(summary({ ...none, students: 5 }))).toBe(
       'No one in this class played Practice, Arena or Battle in this period.'
     );
-    expect(summaryEmptyMessage({ students: 5, activeStudents: 1, answered: 2, correct: 1, percentCorrect: 50 })).toBeNull();
+    expect(
+      summaryEmptyMessage(summary({ students: 5, activeStudents: 1, answered: 2, correct: 1, percentCorrect: 50 }))
+    ).toBeNull();
+    // A subject filter with nobody playing.
+    expect(summaryEmptyMessage(summary({ ...none, students: 5 }, science, 'sci'))).toBe(
+      'No one in this class played Practice, Arena or Battle in this period.'
+    );
+  });
+
+  it('says the school has no subjects rather than no students when there is nothing to filter by', () => {
+    // The server lists no students when there are no subjects, even for a class that has some.
+    expect(summaryEmptyMessage(summary(none, []))).toBe('No subjects are set up for this school yet.');
   });
 });
 
@@ -366,5 +407,23 @@ describe('canSeeQuizResults', () => {
   it('keeps students and parents out', () => {
     expect(canSeeQuizResults(session('STUDENT', 'STUDENT', 'ct'), section, [assignment('sec-8a')])).toBe(false);
     expect(canSeeQuizResults(session('PARENT', 'PARENT', 'ct'), section, [assignment('sec-8a')])).toBe(false);
+  });
+
+  describe('quizResultsNeedsAssignments', () => {
+    it('loads assignments only for a staff teacher who is not the class teacher', () => {
+      expect(quizResultsNeedsAssignments(session('TEACHER', 'EMPLOYEE', 't1'), section)).toBe(true);
+      expect(quizResultsNeedsAssignments(session('TEACHER', 'EMPLOYEE', 't1'), { classTeacherId: null })).toBe(true);
+    });
+
+    it('skips the call for the admin and the class teacher', () => {
+      expect(quizResultsNeedsAssignments(session('ADMIN', 'EMPLOYEE', 'adm'), section)).toBe(false);
+      expect(quizResultsNeedsAssignments(session('TEACHER', 'EMPLOYEE', 'ct'), section)).toBe(false);
+    });
+
+    it('never makes the call for students, parents or drivers', () => {
+      expect(quizResultsNeedsAssignments(session('STUDENT', 'STUDENT', 's1'), section)).toBe(false);
+      expect(quizResultsNeedsAssignments(session('PARENT', 'PARENT', 'p1'), section)).toBe(false);
+      expect(quizResultsNeedsAssignments(session('DRIVER', 'EMPLOYEE', 'd1'), section)).toBe(false);
+    });
   });
 });

@@ -180,6 +180,7 @@ export function MyQuestionsScreen({ navigation }: Props) {
           // The whole grade's answers to this teacher's own questions (no section).
           <Pressable
             style={styles.retryButton}
+            accessibilityRole="button"
             onPress={() =>
               navigation.navigate('QuestionStats', { subjectId, subjectName: subjectName ?? undefined, className })
             }
