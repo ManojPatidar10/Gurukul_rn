@@ -24,6 +24,10 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
   const [busy, setBusy] = useState<'match' | 'create' | 'join' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openRooms, setOpenRooms] = useState<BattleRoomSummary[]>([]);
+  // A failed refresh says so (with Retry) rather than claiming there are no open battles; the
+  // next successful 5-second refresh clears it.
+  const [roomsFailed, setRoomsFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,10 +35,12 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
     const load = () => {
       listBattleRooms(schoolId, subject?.id)
         .then((rooms) => {
-          if (!cancelled) setOpenRooms(rooms);
+          if (cancelled) return;
+          setOpenRooms(rooms);
+          setRoomsFailed(false);
         })
         .catch(() => {
-          if (!cancelled) setOpenRooms([]);
+          if (!cancelled) setRoomsFailed(true);
         });
     };
     load();
@@ -43,7 +49,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [schoolId, subject?.id]);
+  }, [schoolId, subject?.id, retryCount]);
 
   const handleJoinRoom = async (roomId: string) => {
     setJoiningRoomId(roomId);
@@ -104,7 +110,17 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
         {error && <ErrorNotice message={error} />}
 
         <Text style={styles.fieldLabel}>Open battles in your class</Text>
-        {openRooms.length === 0 && <Text style={styles.empty}>No open battles right now — start one below.</Text>}
+        {roomsFailed && (
+          <>
+            <ErrorNotice message="Couldn't load open battles" />
+            <Pressable style={styles.retryButton} onPress={() => setRetryCount((n) => n + 1)}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </Pressable>
+          </>
+        )}
+        {!roomsFailed && openRooms.length === 0 && (
+          <Text style={styles.empty}>No open battles right now — start one below.</Text>
+        )}
         {openRooms.map((room) => {
           const isWaiting = room.status === 'WAITING';
           return (
@@ -225,6 +241,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   empty: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm },
+  retryButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs + 2,
+    marginBottom: spacing.md,
+  },
+  retryButtonText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
   roomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

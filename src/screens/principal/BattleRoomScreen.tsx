@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, gameColors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { battleResultTitle, isBattleTie } from '../../utils/arenaLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -54,6 +55,11 @@ function ResultReveal({
         {title}: {result.correctOption}
         {correctText ? ` — ${correctText}` : ''}
       </Text>
+      {!!result.explanation?.trim() && (
+        <Text style={styles.revealExplanation} numberOfLines={2}>
+          {result.explanation.trim()}
+        </Text>
+      )}
       {result.results.map((r) => (
         <View key={r.studentId} style={styles.revealRow}>
           <Text style={styles.revealName} numberOfLines={1}>
@@ -313,8 +319,8 @@ export function BattleRoomScreen({ route, navigation }: Props) {
 
         {room.status === 'COMPLETED' && (
           <View style={styles.card}>
-            <FontAwesome5 name="trophy" size={28} color={gameColors.gold} />
-            <Text style={styles.waitingTitle}>{room.winnerName ?? 'Battle'} wins!</Text>
+            <FontAwesome5 name={isBattleTie(room) ? 'handshake' : 'trophy'} size={28} color={gameColors.gold} />
+            <Text style={styles.waitingTitle}>{battleResultTitle(room)}</Text>
             {room.participants.map((p) => (
               <Text key={p.studentId} style={styles.participantRow}>
                 {p.name} — {p.points} pts ({p.correctCount} correct)
@@ -394,6 +400,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   revealTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
+  revealExplanation: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+  },
   revealRow: {
     flexDirection: 'row',
     alignItems: 'center',
