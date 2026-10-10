@@ -62,7 +62,7 @@ describe('suggestBankType', () => {
 });
 
 function typedDraft(questionType: 'NUMERIC' | 'SHORT_WORD', answerText: string): BankDraft {
-  return { number: 1, questionType, questionText: 'What is 2 + 2?', options: ['', '', '', ''], correctOption: null, answerText };
+  return { number: 1, questionType, questionText: 'What is 2 + 2?', options: ['', '', '', ''], correctOption: null, answerText, explanation: '' };
 }
 
 describe('toBankDraft / validateBankDraft / toBankInput', () => {
@@ -138,7 +138,8 @@ describe('explanations', () => {
     expect(toBankInput({ ...draft, explanation: '   ' })).not.toHaveProperty('explanation');
     expect(toBankInput({ ...draft, explanation: ' Because 2 + 2 = 4. ' }).explanation).toBe('Because 2 + 2 = 4.');
 
-    const numeric = toBankDraft(q({ questionType: 'NUMERIC', answer: '8', explanation: '4 + 4' })) as BankDraft;
+    // Typed-answer drafts aren't offered for the bank any more (MCQ only), but toBankInput still shapes one correctly.
+    const numeric: BankDraft = { ...typedDraft('NUMERIC', '8'), explanation: '4 + 4' };
     expect(toBankInput(numeric)).toEqual({ questionType: 'NUMERIC', questionText: 'What is 2 + 2?', answerText: '8', explanation: '4 + 4' });
   });
 });
