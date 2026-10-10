@@ -6,6 +6,8 @@ import {
   validateGradingBands,
   type GradingBandRow,
 } from '../utils/gradingScale';
+import hi from '../i18n/locales/hi.json';
+import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 
 const band = (min: string, max: string, label: string): GradingBandRow => ({
   minPercentage: min,
@@ -111,11 +113,41 @@ describe('gradingBandRowsToRequest', () => {
 
 describe('grading scale messages', () => {
   it('says what to fix', () => {
-    expect(gradingBandErrorMessage({ code: 'gap', from: 32, to: 33 })).toContain('between 32% and 33%');
-    expect(gradingBandErrorMessage({ code: 'labelTooLong', band: 2, max: 10 })).toBe(
+    expect(gradingBandErrorMessage({ code: 'gap', from: 32, to: 33 }, tEn)).toContain('between 32% and 33%');
+    expect(gradingBandErrorMessage({ code: 'labelTooLong', band: 2, max: 10 }, tEn)).toBe(
       'Band 2: a grade can be at most 10 characters.'
     );
-    expect(gradingBandErrorMessage({ code: 'overlap', label: 'A', otherLabel: 'B' })).toBe('Bands "B" and "A" overlap.');
+    expect(gradingBandErrorMessage({ code: 'overlap', label: 'A', otherLabel: 'B' }, tEn)).toBe('Bands "B" and "A" overlap.');
+  });
+
+  it('keeps every message the same as before in English', () => {
+    expect(gradingBandErrorMessage({ code: 'empty' }, tEn)).toBe('Add at least one grade band.');
+    expect(gradingBandErrorMessage({ code: 'missingLabel', band: 1 }, tEn)).toBe('Band 1: enter a grade, e.g. A+.');
+    expect(gradingBandErrorMessage({ code: 'duplicateLabel', label: 'a' }, tEn)).toBe(
+      'Grade "a" is used for more than one band.'
+    );
+    expect(gradingBandErrorMessage({ code: 'badNumber', band: 2 }, tEn)).toBe(
+      'Band 2: enter the min and max as numbers, e.g. 75 and 90.'
+    );
+    expect(gradingBandErrorMessage({ code: 'outOfRange', band: 1 }, tEn)).toBe(
+      'Band 1: percentages must be between 0 and 100.'
+    );
+    expect(gradingBandErrorMessage({ code: 'minAboveMax', band: 2 }, tEn)).toBe(
+      "Band 2: the min can't be more than the max."
+    );
+    expect(gradingBandErrorMessage({ code: 'gap', from: 32.5, to: 33 }, tEn)).toBe(
+      'No band covers the percentages between 32.5% and 33%. Bands must cover 0-100% with no gaps.'
+    );
+  });
+
+  it('keeps the numbers and labels, unescaped, in Hindi', () => {
+    const gap = gradingBandErrorMessage({ code: 'gap', from: 32, to: 33 }, tHi);
+    expect(gap).toBe(fill(hi.gradingScale.errors.gap, { from: 32, to: 33 }));
+    expect(gap).toContain('32%');
+    const overlap = gradingBandErrorMessage({ code: 'overlap', label: 'A', otherLabel: 'B' }, tHi);
+    expect(overlap).toBe(fill(hi.gradingScale.errors.overlap, { label: 'A', otherLabel: 'B' }));
+    expect(overlap).toContain('"B"');
+    expect(overlap).not.toContain('&quot;');
   });
 
   it('lists the bands for the save confirmation', () => {

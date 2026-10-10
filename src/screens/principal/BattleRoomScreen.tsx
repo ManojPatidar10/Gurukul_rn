@@ -1,6 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getBattleRoom, startBattleRoom } from '../../api/battleRooms';
@@ -48,12 +49,14 @@ function ResultReveal({
   question: BattleRoomQuestion | undefined;
   myStudentId: string;
 }) {
+  const { t } = useTranslation();
   const correctText = optionText(question, result.correctOption);
   return (
     <>
       <Text style={styles.revealTitle}>
-        {title}: {result.correctOption}
-        {correctText ? ` — ${correctText}` : ''}
+        {correctText
+          ? t('games.battle.revealWithText', { title, option: result.correctOption, text: correctText })
+          : t('games.battle.reveal', { title, option: result.correctOption })}
       </Text>
       {!!result.explanation?.trim() && (
         <Text style={styles.revealExplanation} numberOfLines={2}>
@@ -63,7 +66,7 @@ function ResultReveal({
       {result.results.map((r) => (
         <View key={r.studentId} style={styles.revealRow}>
           <Text style={styles.revealName} numberOfLines={1}>
-            {r.studentId === myStudentId ? 'You' : r.name}
+            {r.studentId === myStudentId ? t('games.common.you') : r.name}
           </Text>
           <View
             style={[
@@ -81,6 +84,7 @@ function ResultReveal({
 }
 
 export function BattleRoomScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const { roomId } = route.params;
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -183,7 +187,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   if (loading) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Battle Room" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.battle.title')} onBack={() => navigation.goBack()} />
         <ActivityIndicator style={styles.loading} color={colors.primary} />
       </View>
     );
@@ -192,9 +196,9 @@ export function BattleRoomScreen({ route, navigation }: Props) {
   if (error || !room) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Battle Room" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.battle.title')} onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <ErrorNotice message={error ?? 'Room not found.'} />
+          <ErrorNotice message={error ?? t('games.battle.notFound')} />
         </ScreenContainer>
       </View>
     );
@@ -202,7 +206,11 @@ export function BattleRoomScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={`${room.subjectName} Battle`} subtitle={room.className} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('games.battle.subjectBattle', { subject: room.subjectName })}
+        subtitle={room.className}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         {room.status === 'WAITING' && (
           <View style={styles.card}>
@@ -212,12 +220,16 @@ export function BattleRoomScreen({ route, navigation }: Props) {
               color={gameColors.gold}
               trackColor={colors.border}
             />
-            <Text style={styles.waitingTitle}>Waiting for players…</Text>
+            <Text style={styles.waitingTitle}>{t('games.battle.waitingForPlayers')}</Text>
             <Text style={styles.waitingSubtitle}>
-              {room.participants.length}/{room.maxPlayers} joined · needs {room.minPlayers} to start
+              {t('games.battle.joinedSummary', {
+                joined: room.participants.length,
+                max: room.maxPlayers,
+                min: room.minPlayers,
+              })}
             </Text>
             <View style={styles.roomCodeChip}>
-              <Text style={styles.roomCodeLabel}>Room code — share to invite</Text>
+              <Text style={styles.roomCodeLabel}>{t('games.battle.roomCodeHint')}</Text>
               <Text style={styles.roomCodeValue} selectable>
                 {room.roomCode}
               </Text>
@@ -233,7 +245,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                 {starting ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.startNowButtonText}>Start now</Text>
+                  <Text style={styles.startNowButtonText}>{t('games.battle.startNow')}</Text>
                 )}
               </Pressable>
             )}
@@ -252,10 +264,12 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                       <Text style={styles.seatAvatarText}>{p.name.trim().charAt(0).toUpperCase()}</Text>
                     </View>
                     <Text style={styles.seatName} numberOfLines={1}>
-                      {isMe ? 'You' : p.name}
+                      {isMe ? t('games.common.you') : p.name}
                     </Text>
-                    <Text style={styles.seatScore}>{p.points} pts</Text>
-                    {p.answeredCurrentQuestion && <Text style={styles.seatAnsweredLabel}>LOCKED IN</Text>}
+                    <Text style={styles.seatScore}>{t('games.common.points', { points: p.points })}</Text>
+                    {p.answeredCurrentQuestion && (
+                      <Text style={styles.seatAnsweredLabel}>{t('games.battle.lockedIn')}</Text>
+                    )}
                   </View>
                 );
               })}
@@ -264,20 +278,22 @@ export function BattleRoomScreen({ route, navigation }: Props) {
             {inRevealPause && room.lastResult ? (
               <View style={styles.card}>
                 <ResultReveal
-                  title="Correct answer"
+                  title={t('games.battle.correctAnswer')}
                   result={room.lastResult}
                   question={questionCache[room.lastResult.questionId]}
                   myStudentId={myStudentId}
                 />
                 <Text style={styles.waitingSubtitle}>
-                  Next question in {Math.max(0, Math.ceil(((startsAt ?? now) - now) / 1000))}…
+                  {t('games.battle.nextQuestionIn', {
+                    seconds: Math.max(0, Math.ceil(((startsAt ?? now) - now) / 1000)),
+                  })}
                 </Text>
               </View>
             ) : room.currentQuestion ? (
               <View style={styles.card}>
                 <View style={styles.questionHeaderRow}>
                   <Text style={styles.questionIndex}>
-                    Question {room.currentQuestionIndex + 1} of {room.questionCount}
+                    {t('games.common.questionOf', { number: room.currentQuestionIndex + 1, total: room.questionCount })}
                   </Text>
                   {endsAt !== null && (
                     <CircularCountdown
@@ -305,13 +321,13 @@ export function BattleRoomScreen({ route, navigation }: Props) {
                     </Pressable>
                   ))}
                 </View>
-                {myAnswered && <Text style={styles.buzzWinnerText}>Waiting for others…</Text>}
+                {myAnswered && <Text style={styles.buzzWinnerText}>{t('games.battle.waitingForOthers')}</Text>}
               </View>
             ) : (
               <View style={styles.card}>
                 <ActivityIndicator color={gameColors.ember} />
-                <Text style={styles.waitingTitle}>Get ready…</Text>
-                <Text style={styles.waitingSubtitle}>Next question is on its way.</Text>
+                <Text style={styles.waitingTitle}>{t('games.battle.getReady')}</Text>
+                <Text style={styles.waitingSubtitle}>{t('games.battle.nextOnTheWay')}</Text>
               </View>
             )}
           </>
@@ -320,16 +336,16 @@ export function BattleRoomScreen({ route, navigation }: Props) {
         {room.status === 'COMPLETED' && (
           <View style={styles.card}>
             <FontAwesome5 name={isBattleTie(room) ? 'handshake' : 'trophy'} size={28} color={gameColors.gold} />
-            <Text style={styles.waitingTitle}>{battleResultTitle(room)}</Text>
+            <Text style={styles.waitingTitle}>{battleResultTitle(room, t)}</Text>
             {room.participants.map((p) => (
               <Text key={p.studentId} style={styles.participantRow}>
-                {p.name} — {p.points} pts ({p.correctCount} correct)
+                {t('games.battle.finalRow', { name: p.name, points: p.points, correct: p.correctCount })}
               </Text>
             ))}
             {room.lastResult && (
               <View style={[styles.card, styles.finalResultCard]}>
                 <ResultReveal
-                  title="Final question — correct answer"
+                  title={t('games.battle.finalCorrectAnswer')}
                   result={room.lastResult}
                   question={questionCache[room.lastResult.questionId]}
                   myStudentId={myStudentId}
@@ -341,7 +357,7 @@ export function BattleRoomScreen({ route, navigation }: Props) {
 
         {room.status === 'CANCELLED' && (
           <View style={styles.card}>
-            <Text style={styles.waitingTitle}>Room cancelled</Text>
+            <Text style={styles.waitingTitle}>{t('games.battle.cancelled')}</Text>
           </View>
         )}
       </ScreenContainer>

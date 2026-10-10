@@ -9,7 +9,7 @@ export type NotificationTarget =
   | { screen: 'Announcements' }
   | { screen: 'MyBus' | 'TransportHub' }
   | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string }
-  | { screen: 'ReportCard'; studentId: string; term?: string };
+  | { screen: 'ReportCard'; studentId: string; term?: string; sectionId?: string };
 
 export function notificationTarget(
   data: Record<string, unknown> | null | undefined,
@@ -32,10 +32,15 @@ export function notificationTarget(
       // A parent's copy names one child (a parent may have several), so it opens that child's card
       // for that term. A student's copy has no studentId and students have no inbox; their push tap
       // is handled in usePushNotifications.
+      // The section that published says which class's card it is: after promotion the same term
+      // can be published for two of the child's classes.
       if (role !== 'PARENT' || !studentId) return null;
-      return typeof data.term === 'string'
-        ? { screen: 'ReportCard', studentId, term: data.term }
-        : { screen: 'ReportCard', studentId };
+      return {
+        screen: 'ReportCard',
+        studentId,
+        ...(typeof data.term === 'string' ? { term: data.term } : {}),
+        ...(typeof data.sectionId === 'string' && data.sectionId ? { sectionId: data.sectionId } : {}),
+      };
     }
     case 'BUS_TRIP':
       // Boarding/return updates go to the child's login and parents; unusual ones also to admins.

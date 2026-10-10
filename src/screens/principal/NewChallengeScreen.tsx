@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createChallenge } from '../../api/arena';
@@ -20,6 +21,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'NewChallenge'>;
 
 export function NewChallengeScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const footerBottom = useBottomInset(spacing.md);
   const { session } = useAuth();
@@ -69,7 +71,7 @@ export function NewChallengeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Challenge a classmate" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('games.newChallenge.title')} onBack={() => navigation.goBack()} />
       {/* The footer pads past the system bar once it shows; until then the scroll content does. */}
       <ScreenContainer bottomInset={loading}>
         {loading && <ActivityIndicator color={colors.primary} />}
@@ -77,7 +79,7 @@ export function NewChallengeScreen({ navigation }: Props) {
 
         {!loading && (
           <>
-            <Text style={styles.fieldLabel}>Subject</Text>
+            <Text style={styles.fieldLabel}>{t('games.newChallenge.subject')}</Text>
             <View style={styles.chips}>
               {subjects.map((subject) => (
                 <Pressable
@@ -88,14 +90,14 @@ export function NewChallengeScreen({ navigation }: Props) {
                   <Text style={[styles.chipText, subjectId === subject.id && styles.chipTextSelected]}>{subject.name}</Text>
                 </Pressable>
               ))}
-              {subjects.length === 0 && <Text style={styles.empty}>No subjects set up yet.</Text>}
+              {subjects.length === 0 && <Text style={styles.empty}>{t('games.newChallenge.noSubjects')}</Text>}
             </View>
 
-            <Text style={styles.fieldLabel}>Opponent</Text>
-            <SearchBar value={query} onChangeText={setQuery} placeholder="Search classmates by name…" />
-            {classmates.length === 0 && <Text style={styles.empty}>No classmates found.</Text>}
+            <Text style={styles.fieldLabel}>{t('games.newChallenge.opponent')}</Text>
+            <SearchBar value={query} onChangeText={setQuery} placeholder={t('games.newChallenge.searchPlaceholder')} />
+            {classmates.length === 0 && <Text style={styles.empty}>{t('games.newChallenge.noClassmates')}</Text>}
             {classmates.length > 0 && visibleClassmates.length === 0 && (
-              <Text style={styles.empty}>No match for &quot;{query}&quot;.</Text>
+              <Text style={styles.empty}>{t('games.newChallenge.noMatch', { query })}</Text>
             )}
             {visibleClassmates.map((student) => (
               <Pressable
@@ -104,7 +106,7 @@ export function NewChallengeScreen({ navigation }: Props) {
                 onPress={() => setOpponentId(student.id)}
               >
                 <Text style={styles.studentName}>{student.name}</Text>
-                <Text style={styles.studentMeta}>Section {student.section}</Text>
+                <Text style={styles.studentMeta}>{t('games.newChallenge.section', { section: student.section })}</Text>
               </Pressable>
             ))}
           </>
@@ -117,7 +119,11 @@ export function NewChallengeScreen({ navigation }: Props) {
             onPress={handleSubmit}
             disabled={!canSubmit || submitting}
           >
-            {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>Send challenge</Text>}
+            {submitting ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.submitText}>{t('games.newChallenge.send')}</Text>
+            )}
           </Pressable>
         </View>
       )}

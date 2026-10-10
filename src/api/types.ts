@@ -542,6 +542,11 @@ export interface AssessmentResultEntry {
   studentId: string;
   marksObtained?: number;
   absent: boolean;
+  /**
+   * Left out of both marks obtained and max marks on the report card. Only sent to a server that
+   * sends it back (see utils/assessmentResults supportsExcused): left out, the server keeps what's saved.
+   */
+  excused?: boolean;
   remarks?: string;
 }
 
@@ -551,6 +556,8 @@ export interface StudentResult {
   rollNumber: string;
   marksObtained: number | null;
   absent: boolean;
+  /** Missing from older servers, which have no Excused. */
+  excused?: boolean;
   remarks: string | null;
 }
 
@@ -563,6 +570,11 @@ export interface AssessmentResults {
   term?: string | null;
   /** True when the term's report cards are published, so marks can't be saved. Missing from older servers. */
   locked?: boolean;
+  /**
+   * Results saved for students who have since moved to another class: they can only be cleared
+   * here. Missing from older servers.
+   */
+  movedStudents?: StudentResult[];
 }
 
 export interface GradingBand {
@@ -572,15 +584,41 @@ export interface GradingBand {
   label: string;
 }
 
+export type ReportCardAssessmentStatus = 'MARKED' | 'ABSENT' | 'EXCUSED' | 'MISSING';
+
+/** One assessment of a subject in the card's section and term. */
+export interface ReportCardAssessment {
+  assessmentId: string;
+  title: string;
+  type: AssessmentType;
+  assessmentDate: string;
+  maxMarks: number;
+  /** Only when MARKED. */
+  marksObtained: number | null;
+  status: ReportCardAssessmentStatus;
+  /** Trimmed; null when blank. Can be set for any status, including MISSING. */
+  remarks: string | null;
+}
+
 export interface SubjectResult {
   subjectId: string;
   subjectName: string;
   subjectCode: string;
+  /** Over marked and absent results: an excused one is left out of both sums. */
   maxMarks: number;
   marksObtained: number;
-  percentage: number;
-  grade: string;
+  /** Null only when every result in the subject is excused (never on older servers). */
+  percentage: number | null;
+  grade: string | null;
+  /** Missing from older servers: read as 0. */
+  absentCount?: number;
+  excusedCount?: number;
+  /** By date, then title. Missing from older servers: the per-assessment list is hidden. */
+  assessments?: ReportCardAssessment[];
 }
+
+/** TERM: just the term's dates (attendanceFrom/To). TO_DATE: every record so far. */
+export type AttendanceBasis = 'TERM' | 'TO_DATE';
 
 export interface ReportCard {
   studentId: string;
@@ -601,6 +639,17 @@ export interface ReportCard {
   attendancePercentage: number | null;
   published: boolean;
   publishedAt: string | null;
+  // Missing from older servers.
+  /** The section the card is worked out for - an earlier class after promotion or transfer. */
+  classSectionId?: string;
+  /** The student's current section isn't the card's section. */
+  movedOut?: boolean;
+  /** Missing reads as TO_DATE. */
+  attendanceBasis?: AttendanceBasis;
+  attendanceFrom?: string | null;
+  attendanceTo?: string | null;
+  /** True when this is the card as it was saved at publish (what students and parents see). */
+  frozen?: boolean;
 }
 
 export interface ReportCardPublication {
@@ -608,6 +657,18 @@ export interface ReportCardPublication {
   term: string;
   publishedAt: string;
   publishedByEmployeeName: string;
+  /** Students with a snapshot for this publication after the call. Missing from older servers. */
+  frozenCardCount?: number;
+}
+
+/** POST /class-sections/{id}/report-cards/unpublish */
+export interface ReportCardUnpublish {
+  classSectionId: string;
+  term: string;
+  unpublishedAt: string;
+  unpublishedByName: string;
+  reason: string;
+  discardedSnapshotCount: number;
 }
 
 /** GET /class-sections/{id}/report-cards/publish-check - what publishing this term would do. */
@@ -622,16 +683,63 @@ export interface ReportCardPublishCheck {
   missingMarksCount: number;
   alreadyPublished: boolean;
   publishedAt: string | null;
+  /** The latest unpublish of this section and term. Missing from older servers. */
+  lastUnpublishedAt?: string | null;
+  lastUnpublishedByName?: string | null;
+  lastUnpublishReason?: string | null;
 }
 
 export interface PublishedTerm {
   term: string;
   publishedAt: string;
+  // Missing from older servers, which list only the current section's publications.
+  classSectionId?: string;
+  className?: string;
+  section?: string;
+  academicYear?: string;
+  /** This is the student's current section. */
+  current?: boolean;
+  /** From the school's listed term matching ignoring case. */
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 export interface TermSummary {
   term: string;
   published: boolean;
+  // Missing from older servers.
+  publishedAt?: string | null;
+  /** From the school's listed term matching ignoring case. */
+  startDate?: string | null;
+  endDate?: string | null;
+  inTermList?: boolean;
+}
+
+/** One of the school's terms (GET /academic-terms). */
+export interface AcademicTerm {
+  id: string;
+  name: string;
+  startDate: string | null;
+  endDate: string | null;
+  /** Free text, e.g. "2026-27". */
+  academicYear: string | null;
+  /** Null for students and parents. */
+  assessmentCount: number | null;
+  publishedSectionCount: number | null;
+}
+
+/** POST and PUT /academic-terms. PUT is a full replace: a null date or year clears it. */
+export interface AcademicTermRequest {
+  name: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  academicYear?: string | null;
+}
+
+/** A term the school's assessments already use that isn't on its list. */
+export interface UnlistedTerm {
+  term: string;
+  assessmentCount: number;
 }
 
 export interface BackfillTermResult {

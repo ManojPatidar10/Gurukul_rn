@@ -6,7 +6,6 @@ import type {
   StudentQuizSummary,
 } from '../api/quizInsights';
 import type { ClassSection, LoginResponse, QuizOption, TeacherSubjectAssignment } from '../api/types';
-import { reportWarning } from './questionAuthor';
 
 /**
  * Pure helpers for the Quiz results and Question stats screens. Dates are school days in
@@ -170,6 +169,15 @@ export function summaryEmptyMessage(
  * Why a question may need a look: open "wrong answer" reports, a wrong option picked more often
  * than the right one, or a low % correct. The last two need at least MIN_ANSWERS_FOR_FLAG answers.
  */
+// English until the quiz-results screens get Hindi (audit M15 part 2); questionAuthor's reportWarning
+// now takes a translator.
+function reportWarning(openReportCount: number | null | undefined): string | null {
+  if (!openReportCount || openReportCount <= 0) return null;
+  return openReportCount === 1
+    ? '1 student reported a wrong answer'
+    : `${openReportCount} students reported a wrong answer`;
+}
+
 export function questionFlags(item: QuestionStat): string[] {
   const flags: string[] = [];
   const report = reportWarning(item.question.openReportCount);

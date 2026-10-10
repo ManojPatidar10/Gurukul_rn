@@ -15,12 +15,23 @@ async function download(schoolId: string, path: string, fileName: string): Promi
   return File.downloadFileAsync(`${BASE_URL}${path}`, destination, { headers, idempotent: true });
 }
 
-/** One student's report card PDF (same access rules as the in-app view; DRAFT watermark if unpublished). */
-export function downloadStudentReportCardPdf(schoolId: string, studentId: string, studentName: string, term: string) {
+/**
+ * One student's report card PDF (same access rules as the in-app view; DRAFT watermark if
+ * unpublished). Pass the card's `sectionId` so the PDF is the same card as on screen (an earlier
+ * class after promotion), and its `rollNumber` for the file name when the name has no ASCII letters.
+ */
+export function downloadStudentReportCardPdf(
+  schoolId: string,
+  studentId: string,
+  studentName: string,
+  term: string,
+  options: { sectionId?: string; rollNumber?: string | null } = {}
+) {
+  const section = options.sectionId ? `&sectionId=${encodeURIComponent(options.sectionId)}` : '';
   return download(
     schoolId,
-    `/api/v1/students/${studentId}/report-card.pdf?term=${encodeURIComponent(term)}`,
-    studentReportCardFileName(studentName, term)
+    `/api/v1/students/${studentId}/report-card.pdf?term=${encodeURIComponent(term)}${section}`,
+    studentReportCardFileName(studentName, term, options.rollNumber)
   );
 }
 

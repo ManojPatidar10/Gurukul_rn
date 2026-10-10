@@ -67,6 +67,7 @@ export type PrincipalStackParamList = {
   /** School bus: a family's live view, the admin hub and trip detail, and the driver's screens. */
   MyBus: undefined;
   Holidays: undefined;
+  AcademicTerms: undefined;
   TransportHub: undefined;
   BusTripDetail: { tripId: string };
   DriverHome: undefined;
@@ -128,7 +129,15 @@ export type PrincipalStackParamList = {
   ParentHome: undefined;
   ChildDashboard: { student: Pick<Student, 'id' | 'name' | 'classSectionId'> };
   ChildFees: { student: Pick<Student, 'id' | 'name'> };
-  ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
+  /**
+   * `defaultSectionId`: the class the term was published for (an earlier class after promotion).
+   * `student.classSectionId`: the student's current class, for staff draft previews; looked up when left out.
+   */
+  ReportCard: {
+    student: Pick<Student, 'id' | 'name'> & { classSectionId?: string | null };
+    defaultTerm?: string;
+    defaultSectionId?: string;
+  };
   PublishReportCards: { classSection: ClassSection };
   SectionReportCardsGrid: { classSection: ClassSection };
   GradingScale: undefined;

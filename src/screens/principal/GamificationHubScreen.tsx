@@ -2,6 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getMyGameProfile } from '../../api/gamification';
@@ -16,21 +17,53 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'GamificationHub'>;
 
+/** The title and subtitle are locale keys, resolved at render time so a language switch re-renders them. */
 const MODES: {
   route: keyof PrincipalStackParamList;
   icon: string;
-  title: string;
-  subtitle: string;
+  titleKey: string;
+  subtitleKey: string;
   color: string;
 }[] = [
-  { route: 'Leaderboard', icon: 'trophy', title: 'Leaderboard', subtitle: 'Your league ranking', color: gameColors.gold },
-  { route: 'HouseWars', icon: 'shield-alt', title: 'House Wars', subtitle: 'School-wide standings', color: gameColors.ember },
-  { route: 'BattleRoomMatch', icon: 'bolt', title: 'Battle Room', subtitle: 'Live group quiz', color: gameColors.jade },
-  { route: 'Arena', icon: 'gamepad', title: 'Gurukul Arena', subtitle: 'Challenge a classmate', color: '#8B5CF6' },
-  { route: 'PracticeStart', icon: 'graduation-cap', title: 'Practice', subtitle: 'Solo, no opponent', color: '#38BDF8' },
+  {
+    route: 'Leaderboard',
+    icon: 'trophy',
+    titleKey: 'games.hub.modes.leaderboard.title',
+    subtitleKey: 'games.hub.modes.leaderboard.subtitle',
+    color: gameColors.gold,
+  },
+  {
+    route: 'HouseWars',
+    icon: 'shield-alt',
+    titleKey: 'games.hub.modes.houseWars.title',
+    subtitleKey: 'games.hub.modes.houseWars.subtitle',
+    color: gameColors.ember,
+  },
+  {
+    route: 'BattleRoomMatch',
+    icon: 'bolt',
+    titleKey: 'games.hub.modes.battleRoom.title',
+    subtitleKey: 'games.hub.modes.battleRoom.subtitle',
+    color: gameColors.jade,
+  },
+  {
+    route: 'Arena',
+    icon: 'gamepad',
+    titleKey: 'games.hub.modes.arena.title',
+    subtitleKey: 'games.hub.modes.arena.subtitle',
+    color: '#8B5CF6',
+  },
+  {
+    route: 'PracticeStart',
+    icon: 'graduation-cap',
+    titleKey: 'games.hub.modes.practice.title',
+    subtitleKey: 'games.hub.modes.practice.subtitle',
+    color: '#38BDF8',
+  },
 ];
 
 export function GamificationHubScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [profile, setProfile] = useState<GameProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,7 +120,7 @@ export function GamificationHubScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Game Hub" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('games.hub.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && <ErrorNotice message={error} />}
@@ -103,7 +136,7 @@ export function GamificationHubScreen({ navigation }: Props) {
               <View style={styles.levelBadgeWrap}>
                 <Animated.View style={[styles.levelBadgeGlow, { opacity: levelGlow }]} />
                 <View style={styles.levelBadge}>
-                  <Text style={styles.levelBadgeLabel}>LVL</Text>
+                  <Text style={styles.levelBadgeLabel}>{t('games.hub.level')}</Text>
                   <Text style={styles.levelBadgeNumber}>{profile.level}</Text>
                 </View>
               </View>
@@ -111,14 +144,17 @@ export function GamificationHubScreen({ navigation }: Props) {
                 <Animated.Text style={[styles.flameGlyph, { transform: [{ scale: flameScale }] }]}>
                   🔥
                 </Animated.Text>
-                <Text style={styles.streakText}>{profile.currentStreakDays}-day streak</Text>
+                <Text style={styles.streakText}>{t('games.hub.streak', { days: profile.currentStreakDays })}</Text>
               </View>
             </View>
 
             <View style={styles.xpLabels}>
-              <Text style={styles.xpLabel}>{profile.totalXp} XP total</Text>
+              <Text style={styles.xpLabel}>{t('games.hub.xpTotal', { xp: profile.totalXp })}</Text>
               <Text style={styles.xpLabelStrong}>
-                {Math.max(0, profile.xpForNextLevel - profile.xpIntoLevel)} XP to Level {profile.level + 1}
+                {t('games.hub.xpToNextLevel', {
+                  xp: Math.max(0, profile.xpForNextLevel - profile.xpIntoLevel),
+                  level: profile.level + 1,
+                })}
               </Text>
             </View>
             <View style={styles.xpTrack}>
@@ -136,18 +172,18 @@ export function GamificationHubScreen({ navigation }: Props) {
               <View style={styles.statCard}>
                 <FontAwesome5 name="fire" size={14} color={gameColors.ember} />
                 <Text style={styles.statValue}>{profile.longestStreakDays}</Text>
-                <Text style={styles.statLabel}>Longest streak</Text>
+                <Text style={styles.statLabel}>{t('games.hub.longestStreak')}</Text>
               </View>
               <View style={styles.statCard}>
                 <FontAwesome5 name="bolt" size={14} color={gameColors.gold} />
                 <Text style={styles.statValue}>{profile.totalXp}</Text>
-                <Text style={styles.statLabel}>Total XP</Text>
+                <Text style={styles.statLabel}>{t('games.hub.totalXp')}</Text>
               </View>
             </View>
           </LinearGradient>
         )}
 
-        <Text style={styles.sectionTitle}>Play</Text>
+        <Text style={styles.sectionTitle}>{t('games.hub.play')}</Text>
         <View style={styles.modeGrid}>
           {MODES.map((mode) => (
             <Pressable
@@ -158,13 +194,13 @@ export function GamificationHubScreen({ navigation }: Props) {
               <View style={[styles.modeIconCircle, { backgroundColor: `${mode.color}22` }]}>
                 <FontAwesome5 name={mode.icon} size={20} color={mode.color} />
               </View>
-              <Text style={styles.modeTitle}>{mode.title}</Text>
-              <Text style={styles.modeSubtitle}>{mode.subtitle}</Text>
+              <Text style={styles.modeTitle}>{t(mode.titleKey)}</Text>
+              <Text style={styles.modeSubtitle}>{t(mode.subtitleKey)}</Text>
             </Pressable>
           ))}
         </View>
 
-        <Text style={styles.comingSoon}>Badges are coming in the next update.</Text>
+        <Text style={styles.comingSoon}>{t('games.hub.badgesSoon')}</Text>
       </ScreenContainer>
     </View>
   );

@@ -1,5 +1,6 @@
 import type { AssessmentResultEntry, StudentResult } from '../api/types';
 import { isPassingMark } from './gradingScale';
+import { NO_VALUE } from './reportCardDisplay';
 
 /** The assessment_result.remarks limit the server enforces. */
 export const MAX_REMARK_LENGTH = 500;
@@ -7,6 +8,8 @@ export const MAX_REMARK_LENGTH = 500;
 export interface ResultRowState {
   marksText: string;
   absent: boolean;
+  /** Left out of the report card's sums. Absent and Excused are never both ticked. */
+  excused: boolean;
   remarksText: string;
 }
 
@@ -43,8 +46,32 @@ export function rowFromResult(result: StudentResult): ResultRowState {
   return {
     marksText: result.marksObtained != null ? String(result.marksObtained) : '',
     absent: result.absent,
+    excused: result.excused === true,
     remarksText: result.remarks ?? '',
   };
+}
+
+/**
+ * The server knows Excused when its result rows carry the field. An older server has none, so the
+ * Excused toggle stays hidden and `excused` is never sent to it.
+ */
+export function supportsExcused(results: StudentResult[]): boolean {
+  return results.some((r) => typeof r.excused === 'boolean');
+}
+
+/** What's saved for a student, read-only: "18 / 20", "AB", "EX", or "—" when there are no marks. */
+export function savedResultLabel(result: StudentResult, maxMarks: number): string {
+  if (result.absent) return 'AB';
+  if (result.excused) return 'EX';
+  return result.marksObtained != null ? `${result.marksObtained} / ${maxMarks}` : NO_VALUE;
+}
+
+/**
+ * The save entry that clears a moved student's result here (no marks, not absent or excused, no
+ * remark) - the only change the server accepts for a student no longer in the section.
+ */
+export function clearMovedEntry(studentId: string): AssessmentResultEntry {
+  return { studentId, absent: false, excused: false };
 }
 
 function sameMarks(typed: string, saved: string): boolean {
@@ -62,17 +89,22 @@ export function isResultsDirty(roster: StudentResult[], rows: Record<string, Res
     if (!row) return false;
     const saved = rowFromResult(student);
     if (row.absent !== saved.absent) return true;
+    if (!!row.excused !== saved.excused) return true;
     if (row.remarksText.trim() !== saved.remarksText.trim()) return true;
-    return !row.absent && !sameMarks(row.marksText, saved.marksText);
+    // Absent or Excused before and after: the marks box isn't used, so what's in it doesn't matter.
+    return !row.absent && !row.excused && !sameMarks(row.marksText, saved.marksText);
   });
 }
 
 /**
- * Builds the results save payload from the marks grid. A row is sent when it has marks, Absent, a
- * remark, or a result saved before. A row with none of those is left out, so it stays "not
- * entered" - the backend leaves rows it isn't sent untouched. A row that had something saved and
- * was cleared is still sent blank, since that's the only way to undo a mark. The backend replaces
- * the stored remark with the one sent, so every sent row carries its (trimmed) remark.
+ * Builds the results save payload from the marks grid. A row is sent when it has marks, Absent,
+ * Excused, a remark, or a result saved before. A row with none of those is left out, so it stays
+ * "not entered" - the backend leaves rows it isn't sent untouched. A row that had something saved
+ * and was cleared is still sent blank, since that's the only way to undo a mark. The backend
+ * replaces the stored remark with the one sent, so every sent row carries its (trimmed) remark.
+ *
+ * With `supportsExcused`, every sent row says whether it's excused (an excused row is sent like an
+ * absent one, with no marks). Without it (an older server) `excused` is never sent.
  *
  * `invalid` lists the students whose marks aren't a number from 0 to maxMarks with at most 2
  * decimal places - the caller should stop and say so rather than save.
@@ -80,22 +112,30 @@ export function isResultsDirty(roster: StudentResult[], rows: Record<string, Res
 export function buildResultsPayload(
   roster: StudentResult[],
   rows: Record<string, ResultRowState>,
-  maxMarks: number
+  maxMarks: number,
+  options: { supportsExcused?: boolean } = {}
 ): { results: AssessmentResultEntry[]; invalid: StudentResult[] } {
   const results: AssessmentResultEntry[] = [];
   const invalid: StudentResult[] = [];
+  const withExcused = options.supportsExcused === true;
   roster.forEach((student) => {
     const row = rows[student.studentId] ?? rowFromResult(student);
     const remarks = row.remarksText.trim();
     const base: AssessmentResultEntry = { studentId: student.studentId, absent: false };
+    if (withExcused) base.excused = false;
     if (remarks) base.remarks = remarks;
     if (row.absent) {
       results.push({ ...base, absent: true });
       return;
     }
+    if (withExcused && row.excused) {
+      results.push({ ...base, excused: true });
+      return;
+    }
     const text = row.marksText.trim();
     if (!text) {
-      const hadSavedResult = student.absent || student.marksObtained != null || !!student.remarks;
+      const hadSavedResult =
+        student.absent || student.excused === true || student.marksObtained != null || !!student.remarks;
       if (hadSavedResult || remarks) results.push(base);
       return;
     }
@@ -110,7 +150,7 @@ export function buildResultsPayload(
 }
 
 export interface ResultsSummary {
-  /** Students with a mark or Absent saved. */
+  /** Students with a mark, Absent or Excused saved. */
   entered: number;
   total: number;
   average: number | null;
@@ -121,10 +161,15 @@ export interface ResultsSummary {
   failCount: number | null;
 }
 
-/** Quick sanity-check stats over the saved marks, for the teacher before report cards are published. */
+/**
+ * Quick sanity-check stats over the saved marks, for the teacher before report cards are published.
+ * An excused student counts as entered but is left out of the average and Pass/Fail.
+ */
 export function summarizeResults(roster: StudentResult[], maxMarks: number, passMark: number | null): ResultsSummary {
-  const entered = roster.filter((r) => r.absent || r.marksObtained != null).length;
-  const marks = roster.filter((r) => !r.absent && r.marksObtained != null).map((r) => r.marksObtained as number);
+  const entered = roster.filter((r) => r.absent || r.excused === true || r.marksObtained != null).length;
+  const marks = roster
+    .filter((r) => !r.absent && r.excused !== true && r.marksObtained != null)
+    .map((r) => r.marksObtained as number);
   if (marks.length === 0) {
     return { entered, total: roster.length, average: null, highest: null, lowest: null, passCount: null, failCount: null };
   }
