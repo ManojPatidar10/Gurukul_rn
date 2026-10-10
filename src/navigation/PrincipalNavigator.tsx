@@ -47,6 +47,8 @@ import { InCallScreen } from '../screens/principal/InCallScreen';
 import { LeaderboardScreen } from '../screens/principal/LeaderboardScreen';
 import { NewChallengeScreen } from '../screens/principal/NewChallengeScreen';
 import { MyQuestionsScreen } from '../screens/principal/MyQuestionsScreen';
+import { QuizResultsScreen } from '../screens/principal/QuizResultsScreen';
+import { QuestionStatsScreen } from '../screens/principal/QuestionStatsScreen';
 import { QuestionAuthorScreen } from '../screens/principal/QuestionAuthorScreen';
 import { PickCallTargetScreen } from '../screens/principal/PickCallTargetScreen';
 import { ScheduleCallScreen } from '../screens/principal/ScheduleCallScreen';
@@ -213,6 +215,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
         <Stack.Screen name="QuestionAuthor" component={QuestionAuthorScreen} />
         <Stack.Screen name="MyQuestions" component={MyQuestionsScreen} />
+        <Stack.Screen name="QuizResults" component={QuizResultsScreen} />
+        <Stack.Screen name="QuestionStats" component={QuestionStatsScreen} />
         <Stack.Screen name="AcademicHelper" component={AcademicHelperScreen} />
         <Stack.Screen name="TeacherPerformance" component={TeacherPerformanceScreen} />
         <Stack.Screen name="TeacherToolsHub" component={TeacherToolsHubScreen} />
