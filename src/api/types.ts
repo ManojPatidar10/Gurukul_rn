@@ -1954,8 +1954,8 @@ export interface AiQuizGenerationResponse {
   teacherName: string;
   classSectionId: string;
   classSectionLabel: string;
-  /** Grade of the section, e.g. "Grade 8" - what the question bank is scoped to. */
-  className?: string;
+  /** Grade of the section, e.g. "Grade 8" - what the question bank is scoped to. Always sent. */
+  className: string;
   subjectId?: string | null;
   subjectName: string;
   assessmentType: TeacherAssessmentType;
@@ -1968,6 +1968,12 @@ export interface AiQuizGenerationResponse {
   reviewNote: string;
   model?: string;
   questions: GeneratedQuizQuestion[];
+}
+
+/** `data` of a 429 AI_RATE_LIMITED: the shared hourly AI quota (quiz generator + Academic Helper) is used up. */
+export interface AiRateLimitDetails {
+  retryAfterSeconds: number;
+  limitPerHour: number;
 }
 
 // --- Admissions (admin-only)
