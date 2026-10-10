@@ -15,15 +15,17 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { assessmentPermissions } from '../../utils/assessmentPermissions';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionSubjectsList'>;
 
 export function SectionSubjectsListScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
-  const canAssign = session.ownerType === 'EMPLOYEE';
   const classSection = route.params.classSection;
   const [assignments, setAssignments] = useState<SubjectAssignment[]>([]);
+  // The server lets only an admin or this section's class teacher assign subject teachers.
+  const canAssign = assessmentPermissions(session, classSection, assignments).canAssignSubjectTeachers;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAssign, setShowAssign] = useState(false);

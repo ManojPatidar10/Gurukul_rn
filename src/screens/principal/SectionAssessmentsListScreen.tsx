@@ -9,27 +9,27 @@ import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
+import { useSectionAssignments } from '../../hooks/useSectionAssignments';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { actionAccess, assessmentPermissions, rightsDependOnAssignments } from '../../utils/assessmentPermissions';
+import { assessmentStatus, localToday } from '../../utils/assessmentStatus';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAssessmentsList'>;
-
-// Whether the assessment date has passed yet - a full "awaiting results / published" tri-state
-// would need a per-term publication check against the backend; this stays a simple two-state
-// signal computed purely from the date, no extra network calls.
-function examStatus(assessmentDate: string): { label: string; variant: 'info' | 'success' } {
-  const today = new Date().toISOString().slice(0, 10);
-  return assessmentDate > today ? { label: 'Upcoming', variant: 'info' } : { label: 'Completed', variant: 'success' };
-}
 
 export function SectionAssessmentsListScreen({ route, navigation }: Props) {
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
-  const canManage = session.ownerType === 'EMPLOYEE';
   const classSection = route.params.classSection;
+  const isStaff = session.role === 'ADMIN' || session.role === 'TEACHER';
+  const sectionAssignments = useSectionAssignments(schoolId, isStaff ? classSection.id : null);
+  const canCreate = assessmentPermissions(session, classSection, sectionAssignments.assignments).canCreateAssessment;
+  const assignmentsMatter = rightsDependOnAssignments(session, classSection);
+  const createAccess = actionAccess(canCreate, assignmentsMatter, sectionAssignments.loading);
+  const today = localToday();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -75,16 +75,31 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <View style={styles.body}>
-        {canManage && (
+        {createAccess === 'allowed' ? (
           <Pressable
             style={styles.addButton}
             onPress={() => navigation.navigate('AssessmentForm', { classSection })}
           >
             <Text style={styles.addButtonText}>+ New assessment</Text>
           </Pressable>
-        )}
+        ) : createAccess === 'checking' ? (
+          // A subject teacher's "+ New assessment" waits on their subjects - say so rather than show nothing.
+          <View style={styles.checkingRow}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.checkingText}>Checking your subjects…</Text>
+          </View>
+        ) : null}
 
         {error && <ErrorNotice message={error} />}
+
+        {assignmentsMatter && sectionAssignments.error && (
+          <View style={styles.assignmentsNotice}>
+            <Text style={styles.assignmentsNoticeText}>Couldn&apos;t check which subjects you teach here.</Text>
+            <Pressable onPress={sectionAssignments.reload} disabled={sectionAssignments.loading}>
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
 
         {subjects.length > 1 && (
           <View style={styles.subjectFilterRow}>
@@ -122,12 +137,19 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
                   ? 'Could not load assessments.'
                   : subjectFilter
                     ? `No ${subjectFilter} assessments yet.`
-                    : '0 assessments yet — create the first one.'}
+                    : canCreate
+                      ? '0 assessments yet — create the first one.'
+                      : '0 assessments yet.'}
               </Text>
             )
           }
           renderItem={({ item }) => {
-            const status = examStatus(item.assessmentDate);
+            const status = assessmentStatus(
+              item.assessmentDate,
+              today,
+              { entered: item.marksEnteredCount, expected: item.marksExpectedCount },
+              isStaff
+            );
             return (
               <Pressable
                 style={styles.row}
@@ -136,7 +158,7 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
                 <View style={styles.rowMain}>
                   <Text style={styles.rowName}>{item.title}</Text>
                   <Text style={styles.rowMeta}>
-                    {item.subjectName} · {item.assessmentDate} · Max {item.maxMarks}
+                    {[item.subjectName, item.assessmentDate, `Max ${item.maxMarks}`].filter(Boolean).join(' · ')}
                   </Text>
                 </View>
                 <View style={styles.chipStack}>
@@ -165,6 +187,14 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
+  checkingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  checkingText: { fontSize: 13, color: colors.textMuted },
   subjectFilterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   subjectChip: {
     borderWidth: 1.5,
@@ -178,6 +208,15 @@ const styles = StyleSheet.create({
   subjectChipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   subjectChipTextSelected: { color: colors.white },
   error: { color: colors.error, marginBottom: spacing.md },
+  assignmentsNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  assignmentsNoticeText: { flex: 1, fontSize: 12, color: colors.textMuted },
+  retryText: { color: colors.primary, fontWeight: '700' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   loader: { marginTop: 40 },
   row: {
