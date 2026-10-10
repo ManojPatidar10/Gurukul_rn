@@ -673,9 +673,6 @@
     }
   },
   "teacherTools": {
-    "picker": {
-      "empty": "अभी तक कोई शिक्षक नहीं है।"
-    },
     "hub": {
       "title": "शिक्षक उपकरण",
       "selectTeacher": "शिक्षक चुनें",

@@ -673,9 +673,6 @@
     }
   },
   "teacherTools": {
-    "picker": {
-      "empty": "No teachers yet."
-    },
     "hub": {
       "title": "Teacher Tools",
       "selectTeacher": "Select teacher",

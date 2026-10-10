@@ -1,5 +1,5 @@
 import type { SubjectAssignment } from '../api/types';
-import { sectionTeachers } from '../utils/sectionTeachers';
+import { sectionTeachers, showIncompleteHint } from '../utils/sectionTeachers';
 
 function row(teacherId: string, teacherName: string, subjectName: string): SubjectAssignment {
   return { subjectId: `sub-${subjectName}`, subjectName, subjectCode: subjectName.slice(0, 3).toUpperCase(), teacherId, teacherName };
@@ -37,5 +37,33 @@ describe('sectionTeachers', () => {
 
   it('returns an empty list for a section with no subjects', () => {
     expect(sectionTeachers([])).toEqual([]);
+  });
+});
+
+describe('showIncompleteHint', () => {
+  const loaded = { sectionChosen: true, teacherChosen: false, teachersLoading: false, teachersError: false, teacherCount: 2 };
+
+  it('shows before a class-section is picked', () => {
+    expect(showIncompleteHint({ ...loaded, sectionChosen: false, teacherCount: 0 })).toBe(true);
+  });
+
+  it("shows once the section's teachers have loaded and none is picked", () => {
+    expect(showIncompleteHint(loaded)).toBe(true);
+  });
+
+  it('hides while the teachers are loading', () => {
+    expect(showIncompleteHint({ ...loaded, teachersLoading: true, teacherCount: 0 })).toBe(false);
+  });
+
+  it('hides when the teacher list failed to load', () => {
+    expect(showIncompleteHint({ ...loaded, teachersError: true, teacherCount: 0 })).toBe(false);
+  });
+
+  it('hides when the section has no subject teachers', () => {
+    expect(showIncompleteHint({ ...loaded, teacherCount: 0 })).toBe(false);
+  });
+
+  it('hides once a teacher is picked', () => {
+    expect(showIncompleteHint({ ...loaded, teacherChosen: true })).toBe(false);
   });
 });

@@ -14,7 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { ClassSection } from '../../api/types';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { sectionTeachers, type SectionTeacher } from '../../utils/sectionTeachers';
+import { sectionTeachers, showIncompleteHint, type SectionTeacher } from '../../utils/sectionTeachers';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TeacherToolsHub'>;
 
@@ -143,7 +143,13 @@ export function TeacherToolsHubScreen({ navigation }: Props) {
         )}
 
         {!ready ? (
-          <Text style={styles.hint}>{t('teacherTools.hub.incompleteHint')}</Text>
+          showIncompleteHint({
+            sectionChosen: classSection !== null,
+            teacherChosen: teacher !== null,
+            teachersLoading,
+            teachersError: teachersError !== null,
+            teacherCount: teachers.length,
+          }) && <Text style={styles.hint}>{t('teacherTools.hub.incompleteHint')}</Text>
         ) : (
           <View style={styles.options}>
             <Pressable style={styles.row} onPress={() => navigateTo('ResourceGenerator')}>

@@ -29,3 +29,24 @@ export function sectionTeachers(assignments: SubjectAssignment[]): SectionTeache
   }
   return Array.from(byId.values()).sort((a, b) => a.teacherName.localeCompare(b.teacherName));
 }
+
+export interface TeacherPickState {
+  sectionChosen: boolean;
+  teacherChosen: boolean;
+  teachersLoading: boolean;
+  teachersError: boolean;
+  teacherCount: number;
+}
+
+/**
+ * Whether the Teacher Tools hub shows "Select a class-section, then a teacher…". Only when that is
+ * the admin's next step: no section picked yet, or the section's teachers have loaded and none is
+ * picked. Not while they load, not after the load failed (the error and Retry say what to do), not
+ * when the section has no subject teachers (the no-teachers hint does), and not once a teacher is
+ * picked (the Generate row shows instead).
+ */
+export function showIncompleteHint(state: TeacherPickState): boolean {
+  if (!state.sectionChosen) return true;
+  if (state.teacherChosen) return false;
+  return !state.teachersLoading && !state.teachersError && state.teacherCount > 0;
+}
