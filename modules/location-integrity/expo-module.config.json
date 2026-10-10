@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["LocationIntegrityModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.locationintegrity.LocationIntegrityModule"]
+  }
+}

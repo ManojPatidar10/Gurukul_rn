@@ -707,6 +707,12 @@ export interface SelfMarkAttendanceRequest {
   mocked?: boolean;
   /** When the device took the fix, epoch ms; the server refuses stale fixes. */
   fixTimestamp?: number;
+  /** Developer options / root / cloner-app checks from the native module; the server refuses any that are true. */
+  deviceChecks?: {
+    developerOptionsEnabled: boolean;
+    rooted: boolean;
+    appCloned: boolean;
+  };
 }
 
 export interface StaffAttendanceRecord {
