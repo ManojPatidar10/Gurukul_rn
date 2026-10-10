@@ -18,6 +18,7 @@ import {
   buildResultsPayload,
   isResultsDirty,
   MAX_REMARK_LENGTH,
+  resultsGridMode,
   rowFromResult,
   summarizeResults,
   type ResultRowState,
@@ -89,7 +90,7 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
     fetchResults();
   };
 
-  const editable = !locked && !readOnly;
+  const { editable, inputsEnabled } = resultsGridMode({ locked, readOnly, saving });
   const dirty = useMemo(() => isResultsDirty(roster, rows), [roster, rows]);
 
   // Covers the header Back, Android Back and the iOS swipe.
@@ -230,15 +231,15 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
                     keyboardType="decimal-pad"
                     placeholder={t('assessmentResults.outOf', { max: maxMarks })}
                     placeholderTextColor={colors.textMuted}
-                    editable={editable && !row.absent}
+                    editable={inputsEnabled && !row.absent}
                     accessibilityLabel={t('assessmentResults.marksLabel', { name, roll: student.rollNumber, max: maxMarks })}
                   />
                   <Pressable
                     style={[styles.absentToggle, row.absent && styles.absentToggleActive, !editable && styles.readOnlyToggle]}
                     onPress={() => setRow(student.studentId, { absent: !row.absent })}
-                    disabled={!editable}
+                    disabled={!inputsEnabled}
                     accessibilityRole="checkbox"
-                    accessibilityState={{ checked: row.absent, disabled: !editable }}
+                    accessibilityState={{ checked: row.absent, disabled: !inputsEnabled }}
                     accessibilityLabel={t('assessmentResults.absentLabel', { name })}
                   >
                     <Text style={[styles.absentToggleText, row.absent && styles.absentToggleTextActive]}>
@@ -255,7 +256,7 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
                     placeholder={t('assessmentResults.remarkPlaceholder')}
                     placeholderTextColor={colors.textMuted}
                     maxLength={MAX_REMARK_LENGTH}
-                    editable={editable}
+                    editable={inputsEnabled}
                     multiline
                     accessibilityLabel={t('assessmentResults.remarkLabel', { name })}
                   />

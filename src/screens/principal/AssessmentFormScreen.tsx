@@ -16,7 +16,9 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import {
+  adminTeacherHint,
   assessmentPermissions,
+  creatorTeacherId,
   soleSubjectTeacher,
   type SubjectChoice,
   type TeacherChoice,
@@ -62,7 +64,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
   const [maxMarks, setMaxMarks] = useState(assessment ? String(assessment.maxMarks) : '');
   const [description, setDescription] = useState(assessment?.description ?? '');
   const [term, setTerm] = useState(assessment?.term ?? '');
-  // Admins only: the server records a teacher's own assessments as theirs and ignores teacherId.
+  // The admin's teacher chip. A teacher has no picker: the server records them as the creator.
   const [teacherId, setTeacherId] = useState<string | null>(isAdmin ? (assessment?.createdByTeacherId ?? null) : null);
   // Once the admin picks a teacher, changing the subject stops picking one for them.
   const [teacherTouched, setTeacherTouched] = useState(isEdit);
@@ -124,6 +126,13 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         ]
       : permissions.teacherChoices;
 
+  const teacherHint = adminTeacherHint({
+    assignmentsLoading,
+    assignmentsFailed: !!assignmentsError,
+    hasChoices: teacherOptions.length > 0,
+    adminIsEmployee: session.ownerType === 'EMPLOYEE',
+  });
+
   const pickSubject = (id: string) => {
     setSubjectId(id);
     if (isAdmin && !teacherTouched) setTeacherId(soleSubjectTeacher(assignments, id));
@@ -131,8 +140,8 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
 
   const pickTeacher = (id: string) => {
     setTeacherTouched(true);
-    // On create the admin may clear it, and the server then records the admin. On edit, leaving
-    // teacherId out keeps the current creator, so clearing would do nothing.
+    // On create the admin may clear it, and the admin is then recorded. On edit an empty pick keeps
+    // the current creator, so clearing would do nothing.
     setTeacherId(!isEdit && teacherId === id ? null : id);
   };
 
@@ -168,6 +177,9 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
     if (!type || !subjectId || parsedMaxMarks === null) return;
     setSubmitting(true);
     setError(null);
+    // Sent even by a teacher (the server ignores it from them): a server from before this change
+    // clears the creator when it's left out. See creatorTeacherId.
+    const creator = creatorTeacherId(session, teacherId, assessment ?? null);
     const fields = {
       title: title.trim(),
       type,
@@ -175,8 +187,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
       assessmentDate,
       maxMarks: parsedMaxMarks,
       term: savedTerm,
-      // Only sent when an admin chose one: the server ignores it from a teacher.
-      ...(isAdmin && teacherId ? { teacherId } : {}),
+      ...(creator ? { teacherId: creator } : {}),
     };
     try {
       const result = isEdit
@@ -352,13 +363,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
                 })}
               </View>
             )}
-            {!isEdit && (
-              <Text style={styles.termHint}>
-                {teacherOptions.length > 0
-                  ? 'Optional. Leave it empty to record yourself as the teacher.'
-                  : 'No teachers are assigned to this class yet, so you will be recorded as the teacher.'}
-              </Text>
-            )}
+            {!isEdit && teacherHint && <Text style={styles.termHint}>{teacherHint}</Text>}
           </>
         ) : (
           <Text style={styles.teacherText}>

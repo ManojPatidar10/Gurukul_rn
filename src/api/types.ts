@@ -526,7 +526,11 @@ export interface CreateAssessmentRequest {
   assessmentDate: string;
   maxMarks: number;
   description?: string;
-  /** ADMIN only: who is recorded as the creator. The server ignores it from a TEACHER (the creator is them). */
+  /**
+   * Who is recorded as the creator. Only an ADMIN can choose: the server ignores it from a TEACHER
+   * (the creator is them). Older servers clear the creator when it's left out - see
+   * utils/assessmentPermissions creatorTeacherId.
+   */
   teacherId?: string;
   term?: string;
 }

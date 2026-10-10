@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { deleteAssessment } from '../../api/assessments';
 import { ApiError } from '../../api/client';
@@ -14,7 +14,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { assessmentPermissions } from '../../utils/assessmentPermissions';
+import { actionAccess, assessmentPermissions, rightsDependOnAssignments } from '../../utils/assessmentPermissions';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentDetail'>;
 
@@ -34,10 +34,13 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
   const isStaff = session.role === 'ADMIN' || session.role === 'TEACHER';
   const sectionAssignments = useSectionAssignments(schoolId, isStaff ? classSection.id : null);
   const permissions = assessmentPermissions(session, classSection, sectionAssignments.assignments);
-  const canManage = permissions.canManageAssessment(assessment);
   const canView = permissions.canViewResults(assessment);
-  // Only a subject teacher's rights depend on the assignments - admins and the class teacher have them all.
-  const assignmentsMatter = session.role === 'TEACHER' && classSection.classTeacherId !== session.ownerId;
+  const assignmentsMatter = rightsDependOnAssignments(session, classSection);
+  const manageAccess = actionAccess(
+    permissions.canManageAssessment(assessment),
+    assignmentsMatter,
+    sectionAssignments.loading
+  );
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,7 +111,7 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {canManage ? (
+        {manageAccess === 'allowed' ? (
           <View style={styles.actions}>
             <Pressable style={styles.actionButton} onPress={openResults}>
               <Text style={styles.actionText}>Enter results</Text>
@@ -122,6 +125,12 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
             <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
               <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
             </Pressable>
+          </View>
+        ) : manageAccess === 'checking' ? (
+          // A subject teacher's buttons wait on their subjects - say so rather than show none.
+          <View style={styles.checkingRow}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.checkingText}>Checking your subjects…</Text>
           </View>
         ) : (
           canView && (
@@ -163,6 +172,8 @@ const styles = StyleSheet.create({
   },
   assignmentsNoticeText: { flex: 1, fontSize: 12, color: colors.textMuted },
   retryText: { color: colors.primary, fontWeight: '700' },
+  checkingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  checkingText: { fontSize: 13, color: colors.textMuted },
   actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   actionButton: {
     backgroundColor: colors.primaryLight,

@@ -4,7 +4,6 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 
 import { listSectionAssessments } from '../../api/assessments';
 import type { Assessment } from '../../api/types';
-import { toIsoDate } from '../../components/DatePickerField';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
@@ -15,8 +14,8 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { assessmentPermissions } from '../../utils/assessmentPermissions';
-import { assessmentStatus } from '../../utils/assessmentStatus';
+import { actionAccess, assessmentPermissions, rightsDependOnAssignments } from '../../utils/assessmentPermissions';
+import { assessmentStatus, localToday } from '../../utils/assessmentStatus';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAssessmentsList'>;
 
@@ -28,10 +27,9 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
   const isStaff = session.role === 'ADMIN' || session.role === 'TEACHER';
   const sectionAssignments = useSectionAssignments(schoolId, isStaff ? classSection.id : null);
   const canCreate = assessmentPermissions(session, classSection, sectionAssignments.assignments).canCreateAssessment;
-  // Only a subject teacher's rights depend on the assignments - admins and the class teacher have them all.
-  const assignmentsMatter = session.role === 'TEACHER' && classSection.classTeacherId !== session.ownerId;
-  // The phone's local date - toISOString() would be the UTC one, still yesterday before 05:30 IST.
-  const today = toIsoDate(new Date());
+  const assignmentsMatter = rightsDependOnAssignments(session, classSection);
+  const createAccess = actionAccess(canCreate, assignmentsMatter, sectionAssignments.loading);
+  const today = localToday();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -77,14 +75,20 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <View style={styles.body}>
-        {canCreate && (
+        {createAccess === 'allowed' ? (
           <Pressable
             style={styles.addButton}
             onPress={() => navigation.navigate('AssessmentForm', { classSection })}
           >
             <Text style={styles.addButtonText}>+ New assessment</Text>
           </Pressable>
-        )}
+        ) : createAccess === 'checking' ? (
+          // A subject teacher's "+ New assessment" waits on their subjects - say so rather than show nothing.
+          <View style={styles.checkingRow}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.checkingText}>Checking your subjects…</Text>
+          </View>
+        ) : null}
 
         {error && <ErrorNotice message={error} />}
 
@@ -183,6 +187,14 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
+  checkingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  checkingText: { fontSize: 13, color: colors.textMuted },
   subjectFilterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   subjectChip: {
     borderWidth: 1.5,

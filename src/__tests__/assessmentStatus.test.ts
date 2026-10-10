@@ -1,5 +1,5 @@
 import { toIsoDate } from '../components/DatePickerField';
-import { assessmentStatus } from '../utils/assessmentStatus';
+import { assessmentStatus, localToday } from '../utils/assessmentStatus';
 
 const TODAY = '2026-10-10';
 
@@ -48,12 +48,23 @@ describe('assessmentStatus', () => {
   });
 
   it('uses the local date, so just after midnight is already today (audit L1)', () => {
-    // 00:30 on 10 Oct on the phone. toISOString() is the UTC date, which in India (UTC+5:30) is still
-    // 9 Oct - the bug was that today's assessment showed as "Upcoming".
+    // 00:30 on 10 Oct on a phone in India. jest.globalSetup.js runs every test in Asia/Kolkata, so
+    // this fails on any machine if localToday goes back to the UTC date.
     const justAfterMidnight = new Date(2026, 9, 10, 0, 30);
-    const today = toIsoDate(justAfterMidnight);
+    // The bug: toISOString() is the UTC date, still 9 Oct, so today's assessment showed as "Upcoming".
+    expect(justAfterMidnight.toISOString().slice(0, 10)).toBe('2026-10-09');
+    const today = localToday(justAfterMidnight);
     expect(today).toBe('2026-10-10');
+    expect(toIsoDate(justAfterMidnight)).toBe(today);
     expect(assessmentStatus('2026-10-10', today, {}, false)).toEqual({ label: 'Today', variant: 'info' });
     expect(assessmentStatus('2026-10-09', today, {}, false)).toEqual({ label: 'Completed', variant: 'success' });
+  });
+
+  it('stays on the local date for the whole time the UTC date lags behind, until 05:30', () => {
+    const lastLaggingMinute = new Date(2026, 9, 10, 5, 29);
+    expect(lastLaggingMinute.toISOString().slice(0, 10)).toBe('2026-10-09');
+    expect(localToday(lastLaggingMinute)).toBe('2026-10-10');
+    expect(localToday(new Date(2026, 9, 10, 5, 30))).toBe('2026-10-10');
+    expect(localToday(new Date(2026, 9, 9, 23, 59))).toBe('2026-10-09');
   });
 });

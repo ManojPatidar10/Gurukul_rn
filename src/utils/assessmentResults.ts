@@ -22,6 +22,22 @@ export function parseMarks(text: string): number | null {
   return MARKS.test(trimmed) ? Number(trimmed) : null;
 }
 
+export interface ResultsGridMode {
+  /** The grid is for entering marks: Save and the remark boxes show. */
+  editable: boolean;
+  /**
+   * The inputs take typing. Off while a save is in flight: its response replaces every row, so
+   * anything typed meanwhile would be lost without a word (audit M7).
+   */
+  inputsEnabled: boolean;
+}
+
+/** How the marks grid behaves: read-only for a locked term or a caller who may only view. */
+export function resultsGridMode(state: { locked: boolean; readOnly: boolean; saving: boolean }): ResultsGridMode {
+  const editable = !state.locked && !state.readOnly;
+  return { editable, inputsEnabled: editable && !state.saving };
+}
+
 /** A row of the marks grid as it was saved. */
 export function rowFromResult(result: StudentResult): ResultRowState {
   return {

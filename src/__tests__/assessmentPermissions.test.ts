@@ -1,5 +1,12 @@
 import type { SubjectAssignment, UserRole } from '../api/types';
-import { assessmentPermissions, soleSubjectTeacher } from '../utils/assessmentPermissions';
+import {
+  actionAccess,
+  adminTeacherHint,
+  assessmentPermissions,
+  creatorTeacherId,
+  rightsDependOnAssignments,
+  soleSubjectTeacher,
+} from '../utils/assessmentPermissions';
 
 const CLASS_TEACHER = 'emp-class';
 const MATHS_TEACHER = 'emp-maths';
@@ -159,5 +166,93 @@ describe('soleSubjectTeacher', () => {
     expect(soleSubjectTeacher(ASSIGNMENTS, null)).toBeNull();
     expect(soleSubjectTeacher(ASSIGNMENTS, 'hindi')).toBeNull();
     expect(soleSubjectTeacher([...ASSIGNMENTS, assignment('maths', 'Maths', SCIENCE_TEACHER, 'Neha Joshi')], 'maths')).toBeNull();
+  });
+});
+
+describe('rightsDependOnAssignments', () => {
+  it('is true only for a teacher who is not the class teacher', () => {
+    expect(rightsDependOnAssignments({ role: 'TEACHER', ownerId: MATHS_TEACHER }, section)).toBe(true);
+    expect(rightsDependOnAssignments({ role: 'TEACHER', ownerId: OUTSIDER }, { classTeacherId: null })).toBe(true);
+    expect(rightsDependOnAssignments({ role: 'TEACHER', ownerId: CLASS_TEACHER }, section)).toBe(false);
+    expect(rightsDependOnAssignments({ role: 'ADMIN', ownerId: 'emp-admin' }, section)).toBe(false);
+    expect(rightsDependOnAssignments({ role: 'STUDENT', ownerId: 'stu-1' }, section)).toBe(false);
+  });
+});
+
+describe('actionAccess', () => {
+  it('shows an allowed action whether or not the assignments have loaded', () => {
+    expect(actionAccess(true, true, true)).toBe('allowed');
+    expect(actionAccess(true, false, false)).toBe('allowed');
+  });
+
+  it('says a subject teacher is being checked while their assignments load, instead of showing nothing', () => {
+    expect(actionAccess(false, true, true)).toBe('checking');
+  });
+
+  it('shows nothing once loaded, or when the assignments could not change the answer', () => {
+    expect(actionAccess(false, true, false)).toBe('denied');
+    // An admin, class teacher, student or parent: still loading doesn't make it "checking".
+    expect(actionAccess(false, false, true)).toBe('denied');
+  });
+});
+
+describe('creatorTeacherId', () => {
+  const teacher = { role: 'TEACHER' as const, ownerType: 'EMPLOYEE' as const, ownerId: MATHS_TEACHER };
+  const admin = { role: 'ADMIN' as const, ownerType: 'EMPLOYEE' as const, ownerId: 'emp-admin' };
+
+  it('sends a teacher as the creator of what they create, so an older server does not save it with none', () => {
+    expect(creatorTeacherId(teacher, null, null)).toBe(MATHS_TEACHER);
+  });
+
+  it("keeps the current creator when a teacher edits, so an older server doesn't clear it", () => {
+    expect(creatorTeacherId(teacher, null, { createdByTeacherId: SCIENCE_TEACHER })).toBe(SCIENCE_TEACHER);
+    expect(creatorTeacherId(teacher, null, { createdByTeacherId: null })).toBeUndefined();
+    // A teacher can't pick: anything passed in is ignored, as the server ignores it.
+    expect(creatorTeacherId(teacher, OUTSIDER, null)).toBe(MATHS_TEACHER);
+    expect(creatorTeacherId(teacher, OUTSIDER, { createdByTeacherId: SCIENCE_TEACHER })).toBe(SCIENCE_TEACHER);
+  });
+
+  it("sends an admin's pick on create and on edit", () => {
+    expect(creatorTeacherId(admin, MATHS_TEACHER, null)).toBe(MATHS_TEACHER);
+    expect(creatorTeacherId(admin, MATHS_TEACHER, { createdByTeacherId: SCIENCE_TEACHER })).toBe(MATHS_TEACHER);
+  });
+
+  it('with no pick, records the admin on create (as the current server does), and keeps the creator on edit', () => {
+    expect(creatorTeacherId(admin, null, null)).toBe('emp-admin');
+    expect(creatorTeacherId(admin, null, { createdByTeacherId: SCIENCE_TEACHER })).toBe(SCIENCE_TEACHER);
+    expect(creatorTeacherId(admin, null, { createdByTeacherId: null })).toBeUndefined();
+  });
+
+  it('never sends a non-employee id, which no server accepts as a teacher', () => {
+    expect(creatorTeacherId({ ...admin, ownerType: 'PARENT' }, null, null)).toBeUndefined();
+    expect(creatorTeacherId({ ...teacher, ownerType: 'STUDENT' }, null, null)).toBeUndefined();
+  });
+
+  it.each<UserRole>(['STUDENT', 'PARENT', 'DRIVER'])('sends nothing for a %s', (role) => {
+    expect(creatorTeacherId({ role, ownerType: 'EMPLOYEE', ownerId: 'x' }, MATHS_TEACHER, null)).toBeUndefined();
+  });
+});
+
+describe('adminTeacherHint', () => {
+  const loaded = { assignmentsLoading: false, assignmentsFailed: false, hasChoices: true, adminIsEmployee: true };
+
+  it("says nothing until the section's teachers are known", () => {
+    expect(adminTeacherHint({ ...loaded, assignmentsLoading: true, hasChoices: false })).toBeNull();
+    expect(adminTeacherHint({ ...loaded, assignmentsFailed: true, hasChoices: false })).toBeNull();
+    expect(adminTeacherHint({ ...loaded, assignmentsLoading: true })).toBeNull();
+  });
+
+  it('tells an employee admin they are recorded when they pick nobody', () => {
+    expect(adminTeacherHint(loaded)).toBe('Optional. Leave it empty to record yourself as the teacher.');
+    expect(adminTeacherHint({ ...loaded, hasChoices: false })).toBe(
+      'No teachers are assigned to this class yet, so you will be recorded as the teacher.'
+    );
+  });
+
+  it('does not promise an admin who is not an employee that they will be recorded', () => {
+    expect(adminTeacherHint({ ...loaded, adminIsEmployee: false })).toBe('Optional.');
+    expect(adminTeacherHint({ ...loaded, adminIsEmployee: false, hasChoices: false })).toBe(
+      'No teachers are assigned to this class yet.'
+    );
   });
 });

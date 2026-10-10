@@ -3,6 +3,7 @@ import {
   buildResultsPayload,
   isResultsDirty,
   parseMarks,
+  resultsGridMode,
   rowFromResult,
   summarizeResults,
   type ResultRowState,
@@ -166,5 +167,20 @@ describe('summarizeResults', () => {
       passCount: null,
       failCount: null,
     });
+  });
+});
+
+describe('resultsGridMode', () => {
+  it('takes input when the term is open and the caller may enter marks', () => {
+    expect(resultsGridMode({ locked: false, readOnly: false, saving: false })).toEqual({ editable: true, inputsEnabled: true });
+  });
+
+  it('freezes the inputs during a save, since its response replaces every row, but keeps the grid in edit mode', () => {
+    expect(resultsGridMode({ locked: false, readOnly: false, saving: true })).toEqual({ editable: true, inputsEnabled: false });
+  });
+
+  it('is read-only for a published term or a caller who may only view', () => {
+    expect(resultsGridMode({ locked: true, readOnly: false, saving: false })).toEqual({ editable: false, inputsEnabled: false });
+    expect(resultsGridMode({ locked: false, readOnly: true, saving: false })).toEqual({ editable: false, inputsEnabled: false });
   });
 });
