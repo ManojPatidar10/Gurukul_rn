@@ -1,5 +1,5 @@
 import type { AcademicTerm, PublishedTerm, ReportCardAssessment, SubjectResult, TermSummary } from '../api/types';
-import { latestPublishedTerm, publishedTermLabel, reportCardTermChips } from '../utils/academicTerms';
+import { draftSectionId, latestPublishedTerm, publishedTermLabel, reportCardTermChips } from '../utils/academicTerms';
 import { defaultSectionTerm } from '../utils/assessmentTerms';
 import {
   assessmentMarkLabel,
@@ -147,6 +147,52 @@ describe('reportCardTermChips', () => {
     ]);
     // Published only for an earlier class: today's class can still preview its draft.
     expect(reportCardTermChips([old], list, true).map((c) => c.key)).toEqual(['sec-6a:Term 1', ':Term 1', ':Term 2']);
+  });
+
+  it("loads today's class's draft of a term published only for an earlier class, not that class's card", () => {
+    // Without a class the server opens the term where it's published: 6A's card, not 7A's draft.
+    const chips = reportCardTermChips([old], list, true, 'sec-7a');
+    expect(chips).toEqual([
+      { key: 'sec-6a:Term 1', term: 'Term 1', sectionId: 'sec-6a', label: 'Term 1 · Class 6 A', published: true },
+      { key: 'sec-7a:Term 1', term: 'Term 1', sectionId: 'sec-7a', label: 'Term 1', published: false },
+      // Published nowhere: left to the server, which finds the class with the student's results in it.
+      { key: ':Term 2', term: 'Term 2', sectionId: undefined, label: 'Term 2', published: false },
+    ]);
+  });
+
+  it('gives a draft chip no class while the current class is unknown or the student has none', () => {
+    for (const current of [undefined, null]) {
+      expect(reportCardTermChips([old], list, true, current).map((c) => [c.key, c.sectionId])).toEqual([
+        ['sec-6a:Term 1', 'sec-6a'],
+        [':Term 1', undefined],
+        [':Term 2', undefined],
+      ]);
+    }
+  });
+});
+
+describe('draftSectionId', () => {
+  const old = published('Term 1', { classSectionId: 'sec-6a', className: 'Class 6', current: false });
+
+  it("names today's class when an earlier class published the term (ignoring case)", () => {
+    expect(draftSectionId('Term 1', [old], 'sec-7a')).toBe('sec-7a');
+    expect(draftSectionId(' term 1 ', [old], 'sec-7a')).toBe('sec-7a');
+  });
+
+  it('leaves a term published nowhere, or only here, to the server', () => {
+    expect(draftSectionId('Term 2', [old], 'sec-7a')).toBeUndefined();
+    expect(draftSectionId('Term 1', [published('Term 1')], 'sec-7a')).toBeUndefined();
+    expect(draftSectionId('Term 1', [], 'sec-7a')).toBeUndefined();
+  });
+
+  it("leaves it to the server for an older server's list, which has no `current`", () => {
+    const legacy: PublishedTerm = { term: 'Term 1', publishedAt: at('2026-10-01') };
+    expect(draftSectionId('Term 1', [legacy], 'sec-7a')).toBeUndefined();
+  });
+
+  it('needs the current class', () => {
+    expect(draftSectionId('Term 1', [old], null)).toBeUndefined();
+    expect(draftSectionId('Term 1', [old], undefined)).toBeUndefined();
   });
 });
 

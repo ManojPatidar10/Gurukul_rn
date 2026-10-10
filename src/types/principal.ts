@@ -129,8 +129,15 @@ export type PrincipalStackParamList = {
   ParentHome: undefined;
   ChildDashboard: { student: Pick<Student, 'id' | 'name' | 'classSectionId'> };
   ChildFees: { student: Pick<Student, 'id' | 'name'> };
-  /** `defaultSectionId`: the class the term was published for (an earlier class after promotion). */
-  ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string; defaultSectionId?: string };
+  /**
+   * `defaultSectionId`: the class the term was published for (an earlier class after promotion).
+   * `student.classSectionId`: the student's current class, for staff draft previews; looked up when left out.
+   */
+  ReportCard: {
+    student: Pick<Student, 'id' | 'name'> & { classSectionId?: string | null };
+    defaultTerm?: string;
+    defaultSectionId?: string;
+  };
   PublishReportCards: { classSection: ClassSection };
   SectionReportCardsGrid: { classSection: ClassSection };
   GradingScale: undefined;

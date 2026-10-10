@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { downloadStudentReportCardPdf, PDF_MIME_TYPE } from '../../api/reportCardPdf';
 import { getPublishedTerms, getReportCard } from '../../api/reportCards';
+import { getStudent } from '../../api/students';
 import type { PublishedTerm, ReportCard } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -18,7 +19,13 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { latestPublishedTerm, reportCardTermChips, termChipKey, termKey } from '../../utils/academicTerms';
+import {
+  draftSectionId,
+  latestPublishedTerm,
+  reportCardTermChips,
+  termChipKey,
+  termKey,
+} from '../../utils/academicTerms';
 import {
   assessmentMarkLabel,
   attendanceLabelKey,
@@ -46,7 +53,12 @@ export function ReportCardScreen({ route, navigation }: Props) {
     terms: listedTerms,
     configured: termListConfigured,
     loading: termListLoading,
+    error: termListError,
+    reload: reloadTermList,
   } = useAcademicTerms(schoolId, !isSelfView);
+  // The student's current class, so a staff draft preview opens today's class (draftSectionId).
+  // StudentDetail passes it; otherwise it's looked up. Null: the student has no class.
+  const [currentSectionId, setCurrentSectionId] = useState<string | null | undefined>(student.classSectionId);
   // Typed by staff in a school without a term list (or from an older server): today's free text.
   const [typedTerm, setTypedTerm] = useState(defaultTerm ?? '');
   // The chip shown as selected: `classSectionId:term` (termChipKey).
@@ -58,6 +70,10 @@ export function ReportCardScreen({ route, navigation }: Props) {
   const [hasLoaded, setHasLoaded] = useState(false);
   // Staff opening a student with nothing published yet: no term is guessed, they pick or type one.
   const [nothingPublished, setNothingPublished] = useState(false);
+  // Opening the screen couldn't load the published terms: Retry runs the opening again, as students
+  // and parents have no other way to pick a term.
+  const [publishedTermsFailed, setPublishedTermsFailed] = useState(false);
+  const [opening, setOpening] = useState(false);
   const [downloading, setDownloading] = useState(false);
   // Subjects whose per-assessment list is open.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -86,6 +102,12 @@ export function ReportCardScreen({ route, navigation }: Props) {
       });
   };
 
+  // Staff's typed term is a draft preview too, so it opens in the same class a draft chip would.
+  const viewTypedTerm = () => {
+    const term = typedTerm.trim();
+    load(term, draftSectionId(term, publishedTerms, currentSectionId));
+  };
+
   const handleDownloadPdf = async () => {
     setDownloading(true);
     try {
@@ -110,7 +132,10 @@ export function ReportCardScreen({ route, navigation }: Props) {
     }
   };
 
-  useEffect(() => {
+  // Opens the screen on the route's term, else the latest published one. Run on mount, and again by
+  // Retry when the published terms couldn't be loaded.
+  const openInitialTerm = () => {
+    setPublishedTermsFailed(false);
     if (defaultTerm) {
       // From a notification or a link: open that term (and class) straight away, and load the
       // published terms only for the chips.
@@ -130,13 +155,16 @@ export function ReportCardScreen({ route, navigation }: Props) {
             setSelectedKey((current) => (current === openedKey ? matchKey : current));
           }
         })
-        .catch(() => {});
+        // Only matters when the card failed too: then there's no chip to try another way.
+        .catch(() => setPublishedTermsFailed(true));
       return;
     }
     // Ask the server which terms are published rather than guessing a term name, and open the
     // latest by the term's dates (else by when it was published). With nothing published, a
     // student or parent is told so; staff get a prompt to pick or type a term to preview a draft,
     // never a guessed "Term 1".
+    setError(null);
+    setOpening(true);
     getPublishedTerms(schoolId, student.id)
       .then((terms) => {
         setPublishedTerms(terms);
@@ -149,13 +177,43 @@ export function ReportCardScreen({ route, navigation }: Props) {
           setNothingPublished(true);
         }
       })
-      .catch((e) => setError(getErrorMessage(e)));
+      .catch((e) => {
+        setPublishedTermsFailed(true);
+        setError(getErrorMessage(e));
+      })
+      .finally(() => setOpening(false));
+  };
+
+  useEffect(() => {
+    openInitialTerm();
     // Only auto-load once on mount - further loads are a tap on a term chip (or staff's "View"
     // button), so typing a term doesn't fire a request per keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const chips = reportCardTermChips(publishedTerms, termListConfigured ? listedTerms : [], !isSelfView);
+  useEffect(() => {
+    // Only staff preview drafts, and only a caller without the full student leaves the class out.
+    if (isSelfView || student.classSectionId !== undefined) return;
+    let active = true;
+    getStudent(schoolId, student.id)
+      .then((loaded) => {
+        if (active) setCurrentSectionId(loaded.classSectionId ?? null);
+      })
+      // Drafts then load without a class, and the server picks one.
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isSelfView, schoolId, student.id, student.classSectionId]);
+
+  const chips = reportCardTermChips(
+    publishedTerms,
+    termListConfigured ? listedTerms : [],
+    !isSelfView,
+    currentSectionId
+  );
+  // Retry only when opening failed: otherwise the chips (or staff's typed term) are the way to try again.
+  const showOpenRetry = !loading && !opening && !!error && publishedTermsFailed;
   // Students and parents only pick from chips. Staff type a term only while the school has no term list.
   const showTypedTerm = !isSelfView && !termListLoading && !termListConfigured;
 
@@ -178,6 +236,15 @@ export function ReportCardScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={`${student.name}'s report card`} onBack={() => navigation.goBack()} />
       <ScreenContainer>
+        {/* Staff only (the list isn't loaded for students and parents): without it, drafts fall back to a typed term. */}
+        {termListError && (
+          <View style={styles.noticeRow}>
+            <Text style={styles.noticeText}>{termListError}</Text>
+            <Pressable onPress={reloadTermList} accessibilityRole="button">
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        )}
         {showTypedTerm && (
           <View style={styles.termRow}>
             <TextInput
@@ -187,7 +254,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
               placeholder="Term (e.g. Term 1)"
               placeholderTextColor={colors.textMuted}
             />
-            <Pressable style={styles.viewButton} onPress={() => load(typedTerm.trim())} disabled={!typedTerm.trim() || loading}>
+            <Pressable style={styles.viewButton} onPress={viewTypedTerm} disabled={!typedTerm.trim() || loading}>
               {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.viewButtonText}>View</Text>}
             </Pressable>
           </View>
@@ -214,8 +281,13 @@ export function ReportCardScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
+        {(loading || opening) && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {!loading && error && <ErrorNotice message={error} />}
+        {showOpenRetry && (
+          <Pressable onPress={openInitialTerm} style={styles.retry} accessibilityRole="button">
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
+          </Pressable>
+        )}
         {!loading && !error && !hasLoaded && nothingPublished && (
           <Text style={styles.empty}>
             {termListConfigured
@@ -372,6 +444,16 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   chipTextSelected: { color: colors.white },
   loading: { marginTop: spacing.xl },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  noticeText: { flex: 1, fontSize: 12, color: colors.textMuted },
+  retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm, marginBottom: spacing.sm },
+  retryText: { color: colors.primary, fontWeight: '700' },
   error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.md },
   headerCard: {

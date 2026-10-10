@@ -225,13 +225,34 @@ export function termChipKey(term: string, sectionId?: string | null): string {
 }
 
 /**
+ * The class a staff draft preview of `term` loads, or undefined to let the server pick. Without a
+ * class the server opens the term wherever it's published, so a term published only for an earlier
+ * class (before a promotion) would open that class's published card instead of today's class's
+ * draft: then the current class is named. A term published nowhere is left to the server, which
+ * finds the class the student has results for in it (an earlier one after a promotion).
+ */
+export function draftSectionId(
+  term: string,
+  publishedTerms: PublishedTerm[],
+  currentSectionId: string | null | undefined
+): string | undefined {
+  if (!currentSectionId) return undefined;
+  const key = termKey(term);
+  // An older server leaves `current` out: it lists only the current class's publications.
+  const publishedElsewhere = publishedTerms.some((e) => e.current === false && termKey(e.term) === key);
+  return publishedElsewhere ? currentSectionId : undefined;
+}
+
+/**
  * The report card's term chips: every published term (students and parents get only these), and
- * for staff also the listed terms not published in the student's current class, which open a draft.
+ * for staff also the listed terms not published in the student's current class, which open a draft
+ * (in the class draftSectionId picks).
  */
 export function reportCardTermChips(
   publishedTerms: PublishedTerm[],
   listed: AcademicTerm[],
-  includeDrafts: boolean
+  includeDrafts: boolean,
+  currentSectionId?: string | null
 ): ReportCardTermChip[] {
   const chips: ReportCardTermChip[] = publishedTerms.map((entry) => ({
     key: termChipKey(entry.term, entry.classSectionId),
@@ -245,6 +266,9 @@ export function reportCardTermChips(
   const publishedHere = new Set(publishedTerms.filter((e) => e.current !== false).map((e) => termKey(e.term)));
   sortTerms(listed)
     .filter((t) => !publishedHere.has(termKey(t.name)))
-    .forEach((t) => chips.push({ key: termChipKey(t.name), term: t.name, label: t.name, published: false }));
+    .forEach((t) => {
+      const sectionId = draftSectionId(t.name, publishedTerms, currentSectionId);
+      chips.push({ key: termChipKey(t.name, sectionId), term: t.name, sectionId, label: t.name, published: false });
+    });
   return chips;
 }

@@ -27,7 +27,9 @@ export function publishWarnings(check: ReportCardPublishCheck): PublishWarning[]
     warnings.push({ code: 'untermedAssessments', count: check.untermedAssessmentCount });
   }
   if (check.alreadyPublished) warnings.push({ code: 'alreadyPublished', publishedAt: check.publishedAt });
-  if (check.lastUnpublishedAt) {
+  // Only before a first publish: the server sends the last unpublish even while the term is published
+  // again, and a re-publish of a published term notifies nobody.
+  if (check.lastUnpublishedAt && !check.alreadyPublished) {
     warnings.push({
       code: 'previouslyUnpublished',
       unpublishedAt: check.lastUnpublishedAt,

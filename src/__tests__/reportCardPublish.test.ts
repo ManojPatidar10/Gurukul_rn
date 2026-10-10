@@ -166,6 +166,23 @@ describe('publishConfirmation', () => {
     expect(message).toContain('• "Term 1" was unpublished on <2026-10-05T09:30:00Z>. Publishing it again notifies every family again.');
   });
 
+  it('on a re-publish after an earlier unpublish, keeps to "not notified again"', () => {
+    // The server sends the last unpublish even while the term is published again.
+    const republish = check({
+      alreadyPublished: true,
+      publishedAt: '2026-10-07T10:00:00Z',
+      lastUnpublishedAt: '2026-10-05T09:30:00Z',
+      lastUnpublishedByName: 'Meera Joshi',
+      lastUnpublishReason: 'Maths marks for roll 12 were wrong',
+    });
+    expect(publishWarnings(republish)).toEqual([{ code: 'alreadyPublished', publishedAt: '2026-10-07T10:00:00Z' }]);
+    const { message } = publishConfirmation(republish, formatDate);
+    expect(message).toContain('Students and parents are not notified again.');
+    expect(message).not.toContain('notifies every family again');
+    expect(message).not.toContain('was unpublished');
+    expect(message).not.toContain('will be notified');
+  });
+
   it('spells out each warning', () => {
     const { message } = publishConfirmation(
       check({ studentsWithMissingMarks: 1, missingMarksCount: 1, untermedAssessmentCount: 2 }),

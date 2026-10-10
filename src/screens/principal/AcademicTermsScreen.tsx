@@ -215,15 +215,21 @@ export function AcademicTermsScreen({ navigation }: Props) {
       />
       {formError && <ErrorNotice message={formError} />}
       <View style={styles.formButtons}>
-        <Pressable style={styles.secondaryButton} onPress={() => openDraft(null)}>
+        <Pressable style={styles.secondaryButton} onPress={() => openDraft(null)} accessibilityRole="button">
           <Text style={styles.secondaryText}>{t('common.cancel')}</Text>
         </Pressable>
-        <Pressable style={[styles.primaryButton, saving && styles.disabled]} disabled={saving} onPress={save}>
+        <Pressable
+          style={[styles.primaryButton, saving && styles.disabled]}
+          disabled={saving}
+          onPress={save}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: saving }}
+        >
           <Text style={styles.primaryText}>{saving ? t('common.saving') : t('common.save')}</Text>
         </Pressable>
       </View>
       {editing && (
-        <Pressable style={styles.removeButton} onPress={() => confirmDelete(editing)}>
+        <Pressable style={styles.removeButton} onPress={() => confirmDelete(editing)} accessibilityRole="button">
           <Text style={styles.removeText}>{t('academicTerms.delete')}</Text>
         </Pressable>
       )}
@@ -268,7 +274,11 @@ export function AcademicTermsScreen({ navigation }: Props) {
         )}
 
         {terms !== null && !draft && (
-          <Pressable style={styles.addButton} onPress={() => openDraft({ ...termDraft(), id: null })}>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => openDraft({ ...termDraft(), id: null })}
+            accessibilityRole="button"
+          >
             <Text style={styles.addText}>+ {t('academicTerms.add')}</Text>
           </Pressable>
         )}

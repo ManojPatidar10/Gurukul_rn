@@ -1638,6 +1638,7 @@
     "movedTitle": "Left this class",
     "movedHint": "These students have moved to another class but still have a result saved here. Clear a result that should not stay on this assessment.",
     "clear": "Clear",
+    "clearLabel": "Clear result: {{name}}",
     "clearConfirmTitle": "Clear this result?",
     "clearConfirmMessage": "Clear the marks, Absent, Excused and remark saved for {{name}} on this assessment?",
     "saveFirst": "Save or discard your changes first"

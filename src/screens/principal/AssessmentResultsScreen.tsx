@@ -351,6 +351,7 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
                       onPress={() => confirmClearMoved(student)}
                       disabled={dirty || !inputsEnabled}
                       accessibilityRole="button"
+                      accessibilityLabel={t('assessmentResults.clearLabel', { name: student.studentName })}
                       accessibilityState={{ disabled: dirty || !inputsEnabled }}
                     >
                       {clearingId === student.studentId ? (

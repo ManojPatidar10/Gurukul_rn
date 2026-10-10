@@ -36,8 +36,14 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
   const isAdmin = session.role === 'ADMIN';
   const classSection = route.params.classSection;
   // The school's term list: once it has terms, the chips follow it (in date order). An older server
-  // has none, and the screen works from the section's own terms as before.
-  const { terms: listedTerms, configured: termListConfigured } = useAcademicTerms(schoolId);
+  // has none, and the screen works from the section's own terms as before - and so does a failed
+  // load, which shows a notice with Retry.
+  const {
+    terms: listedTerms,
+    configured: termListConfigured,
+    error: termListError,
+    reload: reloadTermList,
+  } = useAcademicTerms(schoolId);
   // No pre-filled term: publishing notifies every family, so the term is always an explicit pick
   // from the ones this section's assessments actually use.
   const [term, setTerm] = useState<string | null>(null);
@@ -146,6 +152,13 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
     closeUnpublish();
   };
 
+  // Like publishFlow: `unpublishing` is only set once the confirmation is accepted, so a quick double
+  // tap could stack two confirmations and send two unpublishes (the second fails as not published).
+  const unpublishFlow = useRef(false);
+  const endUnpublishFlow = () => {
+    unpublishFlow.current = false;
+  };
+
   const unpublish = async (unpublishTerm: string, reason: string) => {
     setUnpublishing(true);
     setError(null);
@@ -159,14 +172,16 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
       setError(getErrorMessage(e));
     } finally {
       setUnpublishing(false);
+      endUnpublishFlow();
     }
   };
 
   const handleUnpublish = () => {
-    if (!term) return;
+    if (!term || unpublishFlow.current) return;
     setUnpublishTried(true);
     const reason = unpublishReason.trim();
     if (unpublishReasonError(reason)) return;
+    unpublishFlow.current = true;
     Alert.alert(
       t('reportCardUnpublish.confirmTitle'),
       t('reportCardUnpublish.confirmMessage', {
@@ -174,9 +189,10 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
         className: `${classSection.className} - ${classSection.section}`,
       }),
       [
-        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel', onPress: endUnpublishFlow },
         { text: t('reportCardUnpublish.confirm'), style: 'destructive', onPress: () => unpublish(term, reason) },
-      ]
+      ],
+      { onDismiss: endUnpublishFlow }
     );
   };
 
@@ -228,6 +244,14 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
         </Text>
 
         <Text style={styles.label}>Term</Text>
+        {termListError && (
+          <View style={styles.noticeRow}>
+            <Text style={styles.noticeText}>{termListError}</Text>
+            <Pressable onPress={reloadTermList} accessibilityRole="button">
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        )}
         {terms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
         {termsError && (
           <>
@@ -423,6 +447,14 @@ const styles = StyleSheet.create({
   termsLoading: { alignSelf: 'flex-start', marginBottom: spacing.lg },
   retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm, marginBottom: spacing.sm },
   retryText: { color: colors.primary, fontWeight: '700' },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  noticeText: { flex: 1, fontSize: 12, color: colors.textMuted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   chip: {
     borderWidth: 1.5,
