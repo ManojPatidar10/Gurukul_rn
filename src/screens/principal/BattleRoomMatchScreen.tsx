@@ -25,7 +25,8 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [openRooms, setOpenRooms] = useState<BattleRoomSummary[]>([]);
   // A failed refresh says so (with Retry) rather than claiming there are no open battles; the
-  // next successful 5-second refresh clears it.
+  // next successful 5-second refresh clears it. The failure also empties the list, so rooms from
+  // an earlier load (maybe for another subject) are never shown under the error as if current.
   const [roomsFailed, setRoomsFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
@@ -40,7 +41,9 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
           setRoomsFailed(false);
         })
         .catch(() => {
-          if (!cancelled) setRoomsFailed(true);
+          if (cancelled) return;
+          setOpenRooms([]);
+          setRoomsFailed(true);
         });
     };
     load();

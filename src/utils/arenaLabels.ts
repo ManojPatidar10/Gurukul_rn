@@ -1,3 +1,4 @@
+import { ApiError } from '../api/client';
 import type { BattleRoomState, ChallengeSummaryResponse } from '../api/types';
 
 /**
@@ -66,10 +67,12 @@ export function challengeXpLine(
 /**
  * True when an answer was refused because the challenge is over - it ran out of time ("This
  * challenge has expired") or was already closed ("This challenge is no longer active"). The screen
- * reloads to show why instead of leaving the student on a question they can't answer.
+ * reloads to show why instead of leaving the student on a question they can't answer. Takes the raw
+ * error, not the message shown to the user: only the server's 400 refusal counts, so a lapsed login
+ * ("Your session expired...") or a timeout is reported as an error, not treated as a closed challenge.
  */
-export function isChallengeClosedError(message: string | null | undefined): boolean {
-  return /expired|no longer active/i.test(message ?? '');
+export function isChallengeClosedError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 400 && /expired|no longer active/i.test(error.message);
 }
 
 type BattleOutcomeFields = Pick<BattleRoomState, 'draw' | 'winnerStudentId' | 'winnerName'>;

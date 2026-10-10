@@ -94,9 +94,10 @@ export function MyQuestionsScreen({ navigation }: Props) {
     }, [schoolId, subjectId, className, session.ownerId, includeRetired])
   );
 
+  // Success and failure both come back as a toast, so a teacher scrolled down to a card sees the
+  // result where they are. The list-level `error` is left alone: it is for list-load failures only.
   const runAction = async (q: QuizQuestionResponse, action: QuestionAction, done: string) => {
     setBusyId(q.id);
-    setError(null);
     try {
       const updated = await action(schoolId, q.id);
       setQuestions((prev) =>
@@ -106,7 +107,7 @@ export function MyQuestionsScreen({ navigation }: Props) {
       );
       showToast(done, 'success');
     } catch (e) {
-      setError(getErrorMessage(e));
+      showToast(getErrorMessage(e), 'error');
     } finally {
       setBusyId(null);
     }

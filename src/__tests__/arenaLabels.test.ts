@@ -1,3 +1,4 @@
+import { ApiError, NetworkError, SessionExpiredError } from '../api/client';
 import type { ChallengeSummaryResponse } from '../api/types';
 import {
   battleResultTitle,
@@ -9,6 +10,8 @@ import {
   isBattleTie,
   isChallengeClosedError,
 } from '../utils/arenaLabels';
+
+jest.mock('../api/authStorage', () => ({ setStoredSession: jest.fn(() => Promise.resolve()) }));
 
 function challenge(partial: Partial<ChallengeSummaryResponse>): ChallengeSummaryResponse {
   return {
@@ -102,10 +105,18 @@ describe('challengeXpLine', () => {
 });
 
 describe('isChallengeClosedError', () => {
-  it('spots the refusals that mean the challenge is over', () => {
-    expect(isChallengeClosedError('This challenge has expired')).toBe(true);
-    expect(isChallengeClosedError('This challenge is no longer active')).toBe(true);
-    expect(isChallengeClosedError('You already answered this question')).toBe(false);
+  it("spots the server's refusals that mean the challenge is over", () => {
+    expect(isChallengeClosedError(new ApiError('This challenge has expired', 400))).toBe(true);
+    expect(isChallengeClosedError(new ApiError('This challenge is no longer active', 400))).toBe(true);
+  });
+
+  it('treats every other failure as an error, even one whose wording mentions expiry', () => {
+    expect(isChallengeClosedError(new ApiError('You already answered this question', 400))).toBe(false);
+    // Its message is "Your session expired, please log in again." - a lapsed login, not a closed challenge.
+    expect(isChallengeClosedError(new SessionExpiredError())).toBe(false);
+    expect(isChallengeClosedError(new ApiError('This challenge has expired', 500))).toBe(false);
+    expect(isChallengeClosedError(new NetworkError('timeout'))).toBe(false);
+    expect(isChallengeClosedError(new Error('This challenge has expired'))).toBe(false);
     expect(isChallengeClosedError(null)).toBe(false);
   });
 });

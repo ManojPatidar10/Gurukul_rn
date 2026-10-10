@@ -7,6 +7,7 @@ import { getErrorMessage } from '../api/errorMessage';
 import type { QuizOption, QuizReviewItem } from '../api/types';
 import { useSchoolId } from '../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
+import { answerKeyChanged, reviewOptionMark } from '../utils/quizReview';
 
 const OPTIONS: { key: QuizOption; field: 'optionA' | 'optionB' | 'optionC' | 'optionD' }[] = [
   { key: 'A', field: 'optionA' },
@@ -25,7 +26,8 @@ type ReportState =
 /**
  * The end-of-game review for Arena and Practice: every question with the student's choice (marked
  * right or wrong), the correct option and the explanation. The answer key only arrives here, once
- * the game is over. Each card can report the answer as wrong to the question's author.
+ * the game is over. Each card can report the answer as wrong to the question's author. The student's
+ * option follows the mark recorded when they answered, not today's key (see utils/quizReview).
  */
 export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | undefined }) {
   const schoolId = useSchoolId();
@@ -75,18 +77,21 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
             <Text style={styles.questionText}>{item.questionText}</Text>
 
             {OPTIONS.map(({ key, field }) => {
-              const isCorrect = item.correctOption === key;
-              const isChosen = item.selectedOption === key;
+              const mark = reviewOptionMark(item, key);
               return (
                 <View
                   key={key}
-                  style={[styles.option, isCorrect && styles.optionCorrect, isChosen && !isCorrect && styles.optionWrong]}
+                  style={[
+                    styles.option,
+                    mark.tone === 'right' && styles.optionCorrect,
+                    mark.tone === 'wrong' && styles.optionWrong,
+                  ]}
                 >
                   <Text style={styles.optionKey}>{key}</Text>
                   <Text style={styles.optionText}>{item[field]}</Text>
-                  {(isCorrect || isChosen) && (
-                    <Text style={[styles.optionTag, { color: isCorrect ? colors.success : colors.error }]}>
-                      {isCorrect && isChosen ? 'Your answer ✓' : isCorrect ? 'Correct answer' : 'Your answer'}
+                  {mark.tag && (
+                    <Text style={[styles.optionTag, { color: mark.tone === 'wrong' ? colors.error : colors.success }]}>
+                      {mark.tag}
                     </Text>
                   )}
                 </View>
@@ -94,6 +99,11 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
             })}
 
             {!item.selectedOption && <Text style={styles.note}>You didn&apos;t answer this one.</Text>}
+            {answerKeyChanged(item) && (
+              <Text style={styles.note}>
+                The answer key was changed after you answered, so your mark stays as it was given.
+              </Text>
+            )}
             {!!item.explanation?.trim() && (
               <Text style={styles.explanation}>
                 <Text style={styles.explanationLabel}>Why: </Text>

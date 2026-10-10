@@ -66,13 +66,12 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
       // Both players are done: reload straight into the result and the review.
       if (result.challengeCompleted) await load();
     } catch (e) {
-      const message = getErrorMessage(e);
-      if (isChallengeClosedError(message)) {
+      if (isChallengeClosedError(e)) {
         // It ran out of time (or closed) while this question was open - reload to show that.
         setAnswered(null);
         await load();
       } else {
-        setError(message);
+        setError(getErrorMessage(e));
       }
     } finally {
       setSubmitting(false);
@@ -114,7 +113,9 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader title={`vs ${summary.opponentName}`} subtitle={summary.subjectName} onBack={() => navigation.goBack()} />
-      <ScreenContainer>
+      {/* The review's report box has a text field: taps on Send/Cancel go through while the keyboard
+          is up, and on iOS the list scrolls clear of the keyboard. */}
+      <ScreenContainer keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {error && <ErrorNotice message={error} />}
 
         {endsIn && <Text style={styles.endsIn}>{endsIn}</Text>}

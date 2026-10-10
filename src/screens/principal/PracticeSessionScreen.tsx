@@ -96,7 +96,9 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   return (
     <View style={styles.root}>
       <ScreenHeader title="Practice Mode" subtitle={session.subjectName} onBack={() => navigation.goBack()} />
-      <ScreenContainer>
+      {/* The review's report box has a text field: taps on Send/Cancel go through while the keyboard
+          is up, and on iOS the list scrolls clear of the keyboard. */}
+      <ScreenContainer keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {error && <ErrorNotice message={error} />}
 
         <Text style={styles.noXpNote}>Practice doesn&apos;t earn XP — it&apos;s just for prep.</Text>
