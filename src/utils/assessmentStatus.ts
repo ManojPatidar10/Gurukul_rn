@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 export interface AssessmentStatus {
   label: string;
   variant: 'info' | 'warning' | 'success';
@@ -31,15 +33,18 @@ export function assessmentStatus(
   assessmentDate: string,
   today: string,
   counts: MarksCounts,
-  isStaff: boolean
+  isStaff: boolean,
+  t: TFunction
 ): AssessmentStatus {
-  if (assessmentDate > today) return { label: 'Upcoming', variant: 'info' };
-  if (assessmentDate === today) return { label: 'Today', variant: 'info' };
+  if (assessmentDate > today) return { label: t('assessments.status.upcoming'), variant: 'info' };
+  if (assessmentDate === today) return { label: t('assessments.status.today'), variant: 'info' };
   const { entered, expected } = counts;
   if (!isStaff || entered == null || expected == null || expected === 0) {
-    return { label: 'Completed', variant: 'success' };
+    return { label: t('assessments.status.completed'), variant: 'success' };
   }
-  if (entered === 0) return { label: 'Marks pending', variant: 'warning' };
-  if (entered < expected) return { label: `Marks ${entered}/${expected}`, variant: 'warning' };
-  return { label: 'Marks entered', variant: 'success' };
+  if (entered === 0) return { label: t('assessments.status.marksPending'), variant: 'warning' };
+  if (entered < expected) {
+    return { label: t('assessments.status.marksProgress', { entered, expected }), variant: 'warning' };
+  }
+  return { label: t('assessments.status.marksEntered'), variant: 'success' };
 }

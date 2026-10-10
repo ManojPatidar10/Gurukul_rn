@@ -69,6 +69,10 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "globalSetup": "<rootDir>/jest.globalSetup.js"
+    "globalSetup": "<rootDir>/jest.globalSetup.js",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/src/__tests__/i18nFixture\\.ts$"
+    ]
   }
 }

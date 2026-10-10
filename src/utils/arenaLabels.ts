@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import { ApiError } from '../api/client';
 import type { BattleRoomState, ChallengeSummaryResponse } from '../api/types';
 
@@ -14,15 +16,17 @@ type ChallengeStatusFields = Pick<
 >;
 
 /** The Arena list's status chip: the result once it's over, otherwise whether it's the student's move. */
-export function challengeStatusLabel(c: ChallengeStatusFields): string {
+export function challengeStatusLabel(c: ChallengeStatusFields, t: TFunction): string {
   switch (c.status) {
     case 'COMPLETED':
-      if (c.draw) return 'Draw';
-      return c.youWon ? 'You won' : 'You lost';
+      if (c.draw) return t('games.labels.status.draw');
+      return c.youWon ? t('games.labels.status.won') : t('games.labels.status.lost');
     case 'EXPIRED':
-      return 'Expired';
+      return t('games.labels.status.expired');
     default:
-      return c.myAnsweredCount < c.totalQuestions ? 'Your turn' : 'Waiting';
+      return c.myAnsweredCount < c.totalQuestions
+        ? t('games.labels.status.yourTurn')
+        : t('games.labels.status.waiting');
   }
 }
 
@@ -39,28 +43,33 @@ export function challengeStatusVariant(c: ChallengeStatusFields): ChallengeChipV
 }
 
 /** "Ends in 5h" or "Ends in 40 min" until `expiresAt`; null when it's missing, unreadable or past. */
-export function endsInLabel(expiresAt: string | null | undefined, now: number): string | null {
+export function endsInLabel(expiresAt: string | null | undefined, now: number, t: TFunction): string | null {
   if (!expiresAt) return null;
   const end = Date.parse(expiresAt);
   if (Number.isNaN(end) || end <= now) return null;
   const minutes = Math.ceil((end - now) / 60_000);
-  return minutes < 60 ? `Ends in ${minutes} min` : `Ends in ${Math.floor(minutes / 60)}h`;
+  return minutes < 60
+    ? t('games.labels.endsInMinutes', { minutes })
+    : t('games.labels.endsInHours', { hours: Math.floor(minutes / 60) });
 }
 
 /** endsInLabel for a challenge still being played; null once it's over (or on an older server). */
-export function challengeEndsIn(c: Pick<ChallengeSummaryResponse, 'status' | 'expiresAt'>, now: number): string | null {
-  return c.status === 'ACTIVE' ? endsInLabel(c.expiresAt, now) : null;
+export function challengeEndsIn(
+  c: Pick<ChallengeSummaryResponse, 'status' | 'expiresAt'>,
+  now: number,
+  t: TFunction
+): string | null {
+  return c.status === 'ACTIVE' ? endsInLabel(c.expiresAt, now, t) : null;
 }
 
 /** The XP line under a finished challenge the student won: what they got, or why they got nothing. */
 export function challengeXpLine(
-  c: Pick<ChallengeSummaryResponse, 'status' | 'draw' | 'youWon' | 'xpAwarded' | 'xpLimitReached' | 'opponentName'>
+  c: Pick<ChallengeSummaryResponse, 'status' | 'draw' | 'youWon' | 'xpAwarded' | 'xpLimitReached' | 'opponentName'>,
+  t: TFunction
 ): string | null {
   if (c.status !== 'COMPLETED' || c.draw || !c.youWon) return null;
-  if ((c.xpAwarded ?? 0) > 0) return `+${c.xpAwarded} XP`;
-  if (c.xpLimitReached) {
-    return `No XP this time: you've reached today's limit for challenges with ${c.opponentName}`;
-  }
+  if ((c.xpAwarded ?? 0) > 0) return t('games.labels.xpAwarded', { xp: c.xpAwarded });
+  if (c.xpLimitReached) return t('games.labels.xpLimitReached', { name: c.opponentName });
   return null;
 }
 
@@ -86,7 +95,7 @@ export function isBattleTie(room: BattleOutcomeFields): boolean {
 }
 
 /** A finished Battle's headline. */
-export function battleResultTitle(room: BattleOutcomeFields): string {
-  if (isBattleTie(room)) return "It's a tie: no winner and no XP this time";
-  return `${room.winnerName ?? 'Someone'} wins!`;
+export function battleResultTitle(room: BattleOutcomeFields, t: TFunction): string {
+  if (isBattleTie(room)) return t('games.labels.battleTie');
+  return t('games.labels.battleWinner', { name: room.winnerName ?? t('games.labels.someone') });
 }

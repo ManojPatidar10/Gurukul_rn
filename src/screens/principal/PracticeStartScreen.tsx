@@ -1,6 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createPracticeSession } from '../../api/practice';
@@ -17,6 +18,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PracticeStart'>;
 
 export function PracticeStartScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [subject, setSubject] = useState<Subject | null>(null);
   const [starting, setStarting] = useState(false);
@@ -38,9 +40,9 @@ export function PracticeStartScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Practice Mode" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('games.practice.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <Text style={styles.intro}>Practice solo, at your own pace — no opponent, no XP, just prep.</Text>
+        <Text style={styles.intro}>{t('games.practice.intro')}</Text>
 
         <SubjectPicker schoolId={schoolId} selectedId={subject?.id ?? null} onSelect={setSubject} />
 
@@ -56,7 +58,7 @@ export function PracticeStartScreen({ navigation }: Props) {
           ) : (
             <>
               <FontAwesome5 name="graduation-cap" size={16} color={colors.white} />
-              <Text style={styles.startButtonText}>Start Practicing</Text>
+              <Text style={styles.startButtonText}>{t('games.practice.start')}</Text>
             </>
           )}
         </Pressable>

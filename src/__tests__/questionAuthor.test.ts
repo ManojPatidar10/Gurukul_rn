@@ -1,4 +1,5 @@
 import type { QuizQuestionResponse, TeacherSubjectAssignment } from '../api/types';
+import hi from '../i18n/locales/hi.json';
 import {
   draftFromQuestion,
   emptyQuestionDraft,
@@ -10,6 +11,7 @@ import {
   toUpdateQuestionRequest,
 } from '../utils/questionAuthor';
 import { validateBankDraft } from '../utils/quizBank';
+import { fill, tEn, tHi } from './i18nFixture';
 
 function assignment(subjectId: string, subjectName: string, className: string, section = 'A'): TeacherSubjectAssignment {
   return {
@@ -70,11 +72,12 @@ describe('question form', () => {
   it('starts with no answer chosen, and Save waits for one', () => {
     const draft = emptyQuestionDraft();
     expect(draft.correctOption).toBeNull();
-    expect(questionSaveHint(draft, false)).toBe('Pick a subject and a class');
-    expect(questionSaveHint(draft, true)).toBe('Tap the correct answer');
-    expect(questionSaveHint({ ...draft, correctOption: 'C' }, true)).toBeNull();
+    expect(questionSaveHint(draft, false, tEn)).toBe('Pick a subject and a class');
+    expect(questionSaveHint(draft, true, tEn)).toBe('Tap the correct answer');
+    expect(questionSaveHint({ ...draft, correctOption: 'C' }, true, tEn)).toBeNull();
     // Typed-answer questions (edit only) have no option to tap.
-    expect(questionSaveHint({ ...draft, questionType: 'NUMERIC' }, true)).toBeNull();
+    expect(questionSaveHint({ ...draft, questionType: 'NUMERIC' }, true, tEn)).toBeNull();
+    expect(questionSaveHint(draft, true, tHi)).toBe(hi.questionBank.author.saveHint.tapCorrect);
   });
 
   it('catches duplicate options and a missing answer before sending', () => {
@@ -152,9 +155,14 @@ describe('question form', () => {
 
 describe('reportWarning', () => {
   it('counts the students who reported a wrong answer', () => {
-    expect(reportWarning(1)).toBe('1 student reported a wrong answer');
-    expect(reportWarning(3)).toBe('3 students reported a wrong answer');
-    expect(reportWarning(0)).toBeNull();
-    expect(reportWarning(undefined)).toBeNull();
+    expect(reportWarning(1, tEn)).toBe('1 student reported a wrong answer');
+    expect(reportWarning(3, tEn)).toBe('3 students reported a wrong answer');
+    expect(reportWarning(0, tEn)).toBeNull();
+    expect(reportWarning(undefined, tEn)).toBeNull();
+  });
+
+  it('picks the singular for 1 and the plural for more, in Hindi too', () => {
+    expect(reportWarning(1, tHi)).toBe(fill(hi.questionBank.myQuestions.reportWarning_one, { count: 1 }));
+    expect(reportWarning(3, tHi)).toBe(fill(hi.questionBank.myQuestions.reportWarning_other, { count: 3 }));
   });
 });

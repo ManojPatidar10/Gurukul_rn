@@ -1,5 +1,7 @@
 import type { QuizOption, QuizReviewItem } from '../api/types';
+import hi from '../i18n/locales/hi.json';
 import { answerKeyChanged, reviewOptionMark } from '../utils/quizReview';
+import { tEn, tHi } from './i18nFixture';
 
 type Marks = Pick<QuizReviewItem, 'correctOption' | 'selectedOption' | 'correct'>;
 
@@ -7,7 +9,7 @@ const ALL: QuizOption[] = ['A', 'B', 'C', 'D'];
 
 /** Every option's mark, as "A:tone:tag" for the ones that get one. */
 function marked(item: Marks): string[] {
-  return ALL.map((o) => ({ o, mark: reviewOptionMark(item, o) }))
+  return ALL.map((o) => ({ o, mark: reviewOptionMark(item, o, tEn) }))
     .filter(({ mark }) => mark.tone !== null)
     .map(({ o, mark }) => `${o}:${mark.tone}:${mark.tag}`);
 }
@@ -49,5 +51,13 @@ describe('reviewOptionMark / answerKeyChanged', () => {
     const item = { correctOption: 'D', selectedOption: 'A', correct: false } as const;
     expect(marked(item)).toEqual(['A:wrong:Your answer', 'D:right:Correct answer']);
     expect(answerKeyChanged(item)).toBe(false);
+  });
+
+  it('tags a changed key in Hindi', () => {
+    // Answered B, marked right; the teacher then changed the key to C.
+    const item = { correctOption: 'C', selectedOption: 'B', correct: true } as const;
+    expect(reviewOptionMark(item, 'B', tHi)).toEqual({ tone: 'right', tag: hi.games.review.tags.yourAnswerRight });
+    expect(reviewOptionMark(item, 'C', tHi)).toEqual({ tone: 'right', tag: hi.games.review.tags.correctAnswerNow });
+    expect(reviewOptionMark(item, 'A', tHi)).toEqual({ tone: null, tag: null });
   });
 });

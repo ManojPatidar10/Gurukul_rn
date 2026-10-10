@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getPracticeSession, submitPracticeAnswer } from '../../api/practice';
@@ -23,6 +24,7 @@ const OPTIONS: { key: QuizOption; field: keyof PublicQuizQuestionResponse }[] = 
 ];
 
 export function PracticeSessionScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const { sessionId } = route.params;
   const schoolId = useSchoolId();
   const [session, setSession] = useState<PracticeSessionResponse | null>(null);
@@ -76,7 +78,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   if (loading) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Practice Mode" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.practice.title')} onBack={() => navigation.goBack()} />
         <ActivityIndicator color={colors.primary} style={styles.loading} />
       </View>
     );
@@ -85,9 +87,9 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   if (!session) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Practice Mode" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.practice.title')} onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <ErrorNotice message={error ?? 'Could not load this practice session.'} />
+          <ErrorNotice message={error ?? t('games.practice.loadFailed')} />
         </ScreenContainer>
       </View>
     );
@@ -95,19 +97,23 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Practice Mode" subtitle={session.subjectName} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('games.practice.title')}
+        subtitle={session.subjectName}
+        onBack={() => navigation.goBack()}
+      />
       {/* The review's report box has a text field: taps on Send/Cancel go through while the keyboard
           is up, and on iOS the list scrolls clear of the keyboard. */}
       <ScreenContainer keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {error && <ErrorNotice message={error} />}
 
-        <Text style={styles.noXpNote}>Practice doesn&apos;t earn XP — it&apos;s just for prep.</Text>
+        <Text style={styles.noXpNote}>{t('games.practice.noXp')}</Text>
 
         {session.status === 'COMPLETED' && (
           <View style={styles.resultBanner}>
-            <Text style={styles.resultTitle}>Practice complete!</Text>
+            <Text style={styles.resultTitle}>{t('games.practice.complete')}</Text>
             <Text style={styles.resultMeta}>
-              {session.correctCount}/{session.totalQuestions} correct
+              {t('games.practice.score', { correct: session.correctCount, total: session.totalQuestions })}
             </Text>
           </View>
         )}
@@ -116,13 +122,16 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
         {session.status === 'ACTIVE' && currentQuestion && (
           <View style={styles.questionCard}>
             <Text style={styles.progress}>
-              Question {myAnsweredQuestionIds.length + 1} of {session.totalQuestions}
+              {t('games.common.questionOf', {
+                number: myAnsweredQuestionIds.length + 1,
+                total: session.totalQuestions,
+              })}
             </Text>
             <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
 
             {answered && answered.questionId === currentQuestion.id && (
               <Text style={[styles.feedback, answered.correct ? styles.feedbackCorrect : styles.feedbackWrong]}>
-                {answered.correct ? 'Correct!' : 'Not quite.'}
+                {answered.correct ? t('games.common.correct') : t('games.common.notQuite')}
               </Text>
             )}
 
@@ -147,7 +156,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
                 {submitting ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.nextButtonText}>Next Question</Text>
+                  <Text style={styles.nextButtonText}>{t('games.common.nextQuestion')}</Text>
                 )}
               </Pressable>
             )}

@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { listSectionAssessments } from '../../api/assessments';
@@ -14,12 +15,14 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { assessmentTypeLabel } from '../../utils/assessmentLabels';
 import { actionAccess, assessmentPermissions, rightsDependOnAssignments } from '../../utils/assessmentPermissions';
 import { assessmentStatus, localToday } from '../../utils/assessmentStatus';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAssessmentsList'>;
 
 export function SectionAssessmentsListScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -71,7 +74,7 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Assessments"
+        subtitle={t('assessments.list.subtitle')}
         onBack={() => navigation.goBack()}
       />
       <View style={styles.body}>
@@ -80,13 +83,13 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
             style={styles.addButton}
             onPress={() => navigation.navigate('AssessmentForm', { classSection })}
           >
-            <Text style={styles.addButtonText}>+ New assessment</Text>
+            <Text style={styles.addButtonText}>{t('assessments.list.new')}</Text>
           </Pressable>
         ) : createAccess === 'checking' ? (
           // A subject teacher's "+ New assessment" waits on their subjects - say so rather than show nothing.
           <View style={styles.checkingRow}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.checkingText}>Checking your subjects…</Text>
+            <Text style={styles.checkingText}>{t('assessments.checkingSubjects')}</Text>
           </View>
         ) : null}
 
@@ -94,9 +97,9 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
 
         {assignmentsMatter && sectionAssignments.error && (
           <View style={styles.assignmentsNotice}>
-            <Text style={styles.assignmentsNoticeText}>Couldn&apos;t check which subjects you teach here.</Text>
+            <Text style={styles.assignmentsNoticeText}>{t('assessments.subjectsCheckFailed')}</Text>
             <Pressable onPress={sectionAssignments.reload} disabled={sectionAssignments.loading}>
-              <Text style={styles.retryText}>Retry</Text>
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
             </Pressable>
           </View>
         )}
@@ -107,7 +110,9 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
               style={[styles.subjectChip, subjectFilter === null && styles.subjectChipSelected]}
               onPress={() => setSubjectFilter(null)}
             >
-              <Text style={[styles.subjectChipText, subjectFilter === null && styles.subjectChipTextSelected]}>All</Text>
+              <Text style={[styles.subjectChipText, subjectFilter === null && styles.subjectChipTextSelected]}>
+                {t('assessments.list.all')}
+              </Text>
             </Pressable>
             {subjects.map((subject) => (
               <Pressable
@@ -134,12 +139,12 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
             ) : (
               <Text style={styles.empty}>
                 {error
-                  ? 'Could not load assessments.'
+                  ? t('assessments.list.loadFailed')
                   : subjectFilter
-                    ? `No ${subjectFilter} assessments yet.`
+                    ? t('assessments.list.emptySubject', { subject: subjectFilter })
                     : canCreate
-                      ? '0 assessments yet — create the first one.'
-                      : '0 assessments yet.'}
+                      ? t('assessments.list.emptyCanCreate')
+                      : t('assessments.list.empty')}
               </Text>
             )
           }
@@ -148,7 +153,8 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
               item.assessmentDate,
               today,
               { entered: item.marksEnteredCount, expected: item.marksExpectedCount },
-              isStaff
+              isStaff,
+              t
             );
             return (
               <Pressable
@@ -158,11 +164,13 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
                 <View style={styles.rowMain}>
                   <Text style={styles.rowName}>{item.title}</Text>
                   <Text style={styles.rowMeta}>
-                    {[item.subjectName, item.assessmentDate, `Max ${item.maxMarks}`].filter(Boolean).join(' · ')}
+                    {[item.subjectName, item.assessmentDate, t('assessments.list.maxMarks', { max: item.maxMarks })]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </Text>
                 </View>
                 <View style={styles.chipStack}>
-                  <StatusChip label={item.type} variant="neutral" />
+                  <StatusChip label={assessmentTypeLabel(item.type, t)} variant="neutral" />
                   <StatusChip label={status.label} variant={status.variant} />
                 </View>
               </Pressable>
