@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import type { QuizOption, QuizReviewItem } from '../api/types';
 
 /**
@@ -25,13 +27,21 @@ export function answerKeyChanged(item: ReviewMarkFields): boolean {
   return (item.selectedOption === item.correctOption) !== item.correct;
 }
 
-export function reviewOptionMark(item: ReviewMarkFields, option: QuizOption): ReviewOptionMark {
+export function reviewOptionMark(item: ReviewMarkFields, option: QuizOption, t: TFunction): ReviewOptionMark {
   const isKey = item.correctOption === option;
   if (item.selectedOption === option) {
-    if (item.correct) return { tone: 'right', tag: 'Your answer ✓' };
+    if (item.correct) return { tone: 'right', tag: t('games.review.tags.yourAnswerRight') };
     // Marked wrong when it was given, though the key has since been changed to this option.
-    return { tone: 'wrong', tag: isKey ? 'Your answer (correct now)' : 'Your answer' };
+    return {
+      tone: 'wrong',
+      tag: isKey ? t('games.review.tags.yourAnswerCorrectNow') : t('games.review.tags.yourAnswer'),
+    };
   }
-  if (isKey) return { tone: 'right', tag: answerKeyChanged(item) ? 'Correct answer now' : 'Correct answer' };
+  if (isKey) {
+    return {
+      tone: 'right',
+      tag: answerKeyChanged(item) ? t('games.review.tags.correctAnswerNow') : t('games.review.tags.correctAnswer'),
+    };
+  }
   return { tone: null, tag: null };
 }

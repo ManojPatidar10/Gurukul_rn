@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { getMyLeaderboard } from '../../api/gamification';
@@ -14,18 +15,20 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Leaderboard'>;
 
-const TIER_LABELS: Record<LeagueTier, string> = {
-  BRONZE: 'Bronze League',
-  SILVER: 'Silver League',
-  GOLD: 'Gold League',
-  PLATINUM: 'Platinum League',
-  DIAMOND: 'Diamond League',
-  GURUKUL_MASTER: 'Gurukul Master League',
+/** Locale keys, resolved at render time so a language switch re-renders them. */
+const TIER_KEYS: Record<LeagueTier, string> = {
+  BRONZE: 'games.leaderboard.tiers.BRONZE',
+  SILVER: 'games.leaderboard.tiers.SILVER',
+  GOLD: 'games.leaderboard.tiers.GOLD',
+  PLATINUM: 'games.leaderboard.tiers.PLATINUM',
+  DIAMOND: 'games.leaderboard.tiers.DIAMOND',
+  GURUKUL_MASTER: 'games.leaderboard.tiers.GURUKUL_MASTER',
 };
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 export function LeaderboardScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [board, setBoard] = useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,21 +43,25 @@ export function LeaderboardScreen({ navigation }: Props) {
       .finally(() => setLoading(false));
   }, [schoolId]);
 
+  // A tier a newer server adds shows as sent.
+  const tierLabel = (tier: LeagueTier) => {
+    const key = TIER_KEYS[tier] as string | undefined;
+    return key ? t(key) : tier;
+  };
+
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Leaderboard" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('games.leaderboard.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && <ErrorNotice message={error} />}
 
         {board && (
           <>
-            <Text style={styles.tierTitle}>{TIER_LABELS[board.tier]}</Text>
-            <Text style={styles.tierSub}>{board.classSectionLabel} · resets weekly</Text>
+            <Text style={styles.tierTitle}>{tierLabel(board.tier)}</Text>
+            <Text style={styles.tierSub}>{t('games.leaderboard.subtitle', { section: board.classSectionLabel })}</Text>
 
-            {board.entries.length === 0 && (
-              <Text style={styles.empty}>No one in this league has earned XP yet this week.</Text>
-            )}
+            {board.entries.length === 0 && <Text style={styles.empty}>{t('games.leaderboard.empty')}</Text>}
 
             {board.entries.map((entry) => (
               <View key={entry.studentId} style={[styles.row, entry.rank <= 3 && styles.rowTop, entry.isYou && styles.rowYou]}>
@@ -63,8 +70,7 @@ export function LeaderboardScreen({ navigation }: Props) {
                 </Text>
                 <View style={styles.who}>
                   <Text style={styles.whoName} numberOfLines={1}>
-                    {entry.name}
-                    {entry.isYou ? ' (you)' : ''}
+                    {entry.isYou ? t('games.leaderboard.nameYou', { name: entry.name }) : entry.name}
                   </Text>
                 </View>
                 <Text style={styles.xpTag}>+{entry.weeklyXp}</Text>
@@ -72,12 +78,15 @@ export function LeaderboardScreen({ navigation }: Props) {
             ))}
 
             <View style={styles.progressCard}>
-              <Text style={styles.progressTitle}>Your progress</Text>
+              <Text style={styles.progressTitle}>{t('games.leaderboard.progressTitle')}</Text>
               <Text style={styles.progressBody}>
                 {board.yourRank > 0
-                  ? `You're #${board.yourRank} in your league this week.`
-                  : "You haven't earned XP yet this week."}{' '}
-                Current streak: {board.currentStreakDays} days · Longest ever: {board.longestStreakDays} days.
+                  ? t('games.leaderboard.yourRank', { rank: board.yourRank })
+                  : t('games.leaderboard.noXpYet')}{' '}
+                {t('games.leaderboard.streaks', {
+                  current: t('games.leaderboard.days', { count: board.currentStreakDays }),
+                  longest: t('games.leaderboard.days', { count: board.longestStreakDays }),
+                })}
               </Text>
             </View>
           </>

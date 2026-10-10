@@ -124,7 +124,7 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
     });
 
   const placed = isEdit ? question !== null : subjectId !== null && className !== null;
-  const saveHint = questionSaveHint(draft, placed);
+  const saveHint = questionSaveHint(draft, placed, t);
   const canSave = !loading && !loadError && saveHint === null && !submitting;
 
   const handleSave = async () => {
@@ -155,28 +155,25 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
       return (
         <View style={styles.fixedCard}>
           <Text style={styles.fixedRow}>
-            <Text style={styles.fixedLabel}>Subject: </Text>
+            <Text style={styles.fixedLabel}>{t('questionBank.author.subjectLabel')}</Text>{' '}
             {question.subjectName ?? '—'}
           </Text>
           <Text style={styles.fixedRow}>
-            <Text style={styles.fixedLabel}>Class: </Text>
+            <Text style={styles.fixedLabel}>{t('questionBank.author.classLabel')}</Text>{' '}
             {question.className}
           </Text>
           <Text style={styles.fixedRow}>
-            <Text style={styles.fixedLabel}>Type: </Text>
+            <Text style={styles.fixedLabel}>{t('questionBank.author.typeLabel')}</Text>{' '}
             {t(`teacherTools.bank.types.${draft.questionType}`)}
           </Text>
-          <Text style={styles.fixedNote}>
-            These can&apos;t change. To change one, retire this question and add a new one. Edits apply to
-            games from now on; past answers keep their marks.
-          </Text>
-          {question.retired && <Text style={styles.fixedNote}>This question is retired. Saving keeps it retired.</Text>}
+          <Text style={styles.fixedNote}>{t('questionBank.author.fixedNote')}</Text>
+          {question.retired && <Text style={styles.fixedNote}>{t('questionBank.author.retiredNote')}</Text>}
         </View>
       );
     }
     return (
       <>
-        <Text style={styles.fieldLabel}>Subject</Text>
+        <Text style={styles.fieldLabel}>{t('questionBank.author.subject')}</Text>
         <View style={styles.chips}>
           {subjects.map((subject) => (
             <Pressable
@@ -189,14 +186,12 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
           ))}
           {subjects.length === 0 && (
             <Text style={styles.empty}>
-              {isAdmin
-                ? 'No subjects set up yet.'
-                : "You aren't assigned to teach any subject yet, so you can't add questions."}
+              {isAdmin ? t('questionBank.author.noSubjectsAdmin') : t('questionBank.author.noSubjectsTeacher')}
             </Text>
           )}
         </View>
 
-        <Text style={styles.fieldLabel}>Class</Text>
+        <Text style={styles.fieldLabel}>{t('questionBank.author.class')}</Text>
         <View style={styles.chips}>
           {classNames.map((name) => (
             <Pressable
@@ -208,7 +203,9 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
             </Pressable>
           ))}
           {classNames.length === 0 && (
-            <Text style={styles.empty}>{!isAdmin && !subjectId ? 'Pick a subject first.' : 'No classes set up yet.'}</Text>
+            <Text style={styles.empty}>
+              {!isAdmin && !subjectId ? t('questionBank.author.pickSubjectFirst') : t('questionBank.author.noClasses')}
+            </Text>
           )}
         </View>
       </>
@@ -217,7 +214,10 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={isEdit ? 'Edit question' : 'Add a quiz question'} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={isEdit ? t('questionBank.author.editTitle') : t('questionBank.author.addTitle')}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         {loading ? (
           <ActivityIndicator color={colors.primary} style={styles.loading} />
@@ -225,7 +225,7 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
           <>
             <ErrorNotice message={loadError} />
             <Pressable style={styles.retryButton} onPress={retry}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
             </Pressable>
           </>
         ) : (
@@ -233,11 +233,11 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
             {renderPlacement()}
 
             <LabeledInput
-              label="Question"
+              label={t('teacherTools.bank.questionText')}
               value={draft.questionText}
               onChangeText={(questionText) => update({ questionText })}
               multiline
-              placeholder="e.g. What is the capital of India?"
+              placeholder={t('questionBank.author.questionPlaceholder')}
             />
 
             {draft.questionType === 'MCQ' ? (
@@ -245,13 +245,13 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
                 {OPTION_LETTERS.map((key, optionIndex) => (
                   <LabeledInput
                     key={key}
-                    label={`Option ${key}`}
+                    label={t('teacherTools.bank.option', { letter: key })}
                     value={draft.options[optionIndex]}
                     onChangeText={(text) => updateOption(optionIndex, text)}
                   />
                 ))}
 
-                <Text style={styles.fieldLabel}>Correct answer</Text>
+                <Text style={styles.fieldLabel}>{t('questionBank.author.correctAnswer')}</Text>
                 <View style={styles.chips}>
                   {OPTION_LETTERS.map((key) => (
                     <Pressable
@@ -282,7 +282,7 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
               value={draft.explanation}
               onChangeText={(explanation) => update({ explanation })}
               multiline
-              placeholder="Optional - why this answer is right"
+              placeholder={t('questionBank.author.explanationPlaceholder')}
             />
 
             {error && <ErrorNotice message={error} />}
@@ -291,7 +291,9 @@ export function QuestionAuthorScreen({ route, navigation }: Props) {
               {submitting ? (
                 <ActivityIndicator color={colors.white} />
               ) : (
-                <Text style={styles.submitText}>{isEdit ? 'Save changes' : 'Save question'}</Text>
+                <Text style={styles.submitText}>
+                  {isEdit ? t('common.saveChanges') : t('questionBank.author.saveQuestion')}
+                </Text>
               )}
             </Pressable>
             {saveHint && <Text style={styles.saveHint}>{saveHint}</Text>}

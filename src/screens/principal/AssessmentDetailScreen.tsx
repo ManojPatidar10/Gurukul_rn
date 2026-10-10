@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { deleteAssessment } from '../../api/assessments';
@@ -14,6 +15,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { assessmentTypeLabel, hasMarksMessage } from '../../utils/assessmentLabels';
 import { actionAccess, assessmentPermissions, rightsDependOnAssignments } from '../../utils/assessmentPermissions';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentDetail'>;
@@ -28,6 +30,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function AssessmentDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { assessment, classSection } = route.params;
@@ -47,10 +50,10 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
   const openResults = () => navigation.navigate('AssessmentResults', { assessment });
 
   const handleDelete = () => {
-    Alert.alert('Delete assessment', `Remove "${assessment.title}"? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('assessments.detail.deleteTitle'), t('assessments.detail.deleteBody', { title: assessment.title }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           setDeleting(true);
@@ -62,9 +65,9 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
             setDeleting(false);
             // The server refuses while any student has marks, Absent or a remark saved, and says how many.
             if (e instanceof ApiError && e.status === 409 && e.errorCode === 'ASSESSMENT_HAS_MARKS') {
-              Alert.alert("Can't delete this assessment", e.message, [
-                { text: 'Close', style: 'cancel' },
-                { text: 'Enter results', onPress: openResults },
+              Alert.alert(t('assessments.detail.cannotDeleteTitle'), hasMarksMessage(e, t), [
+                { text: t('assessments.detail.close'), style: 'cancel' },
+                { text: t('assessments.detail.enterResults'), onPress: openResults },
               ]);
               return;
             }
@@ -88,25 +91,25 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
       />
       <ScreenContainer>
         <View style={styles.statusRow}>
-          <StatusChip label={assessment.type} variant="neutral" />
+          <StatusChip label={assessmentTypeLabel(assessment.type, t)} variant="neutral" />
         </View>
 
         <View style={styles.card}>
-          <Field label="Subject" value={subject} />
-          <Field label="Date" value={assessment.assessmentDate} />
-          <Field label="Max marks" value={String(assessment.maxMarks)} />
-          <Field label="Term" value={assessment.term ?? ''} />
-          <Field label="Description" value={assessment.description} />
-          <Field label="Created by" value={assessment.createdByTeacherName ?? ''} />
+          <Field label={t('assessments.detail.subject')} value={subject} />
+          <Field label={t('assessments.detail.date')} value={assessment.assessmentDate} />
+          <Field label={t('assessments.detail.maxMarks')} value={String(assessment.maxMarks)} />
+          <Field label={t('assessments.detail.term')} value={assessment.term ?? ''} />
+          <Field label={t('assessments.detail.description')} value={assessment.description} />
+          <Field label={t('assessments.detail.createdBy')} value={assessment.createdByTeacherName ?? ''} />
         </View>
 
         {error && <ErrorNotice message={error} />}
 
         {assignmentsMatter && sectionAssignments.error && (
           <View style={styles.assignmentsNotice}>
-            <Text style={styles.assignmentsNoticeText}>Couldn&apos;t check which subjects you teach here.</Text>
+            <Text style={styles.assignmentsNoticeText}>{t('assessments.subjectsCheckFailed')}</Text>
             <Pressable onPress={sectionAssignments.reload} disabled={sectionAssignments.loading}>
-              <Text style={styles.retryText}>Retry</Text>
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
             </Pressable>
           </View>
         )}
@@ -114,23 +117,23 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
         {manageAccess === 'allowed' ? (
           <View style={styles.actions}>
             <Pressable style={styles.actionButton} onPress={openResults}>
-              <Text style={styles.actionText}>Enter results</Text>
+              <Text style={styles.actionText}>{t('assessments.detail.enterResults')}</Text>
             </Pressable>
             <Pressable
               style={styles.actionButton}
               onPress={() => navigation.navigate('AssessmentForm', { classSection, assessment })}
             >
-              <Text style={styles.actionText}>Edit</Text>
+              <Text style={styles.actionText}>{t('common.edit')}</Text>
             </Pressable>
             <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete} disabled={deleting}>
-              <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+              <Text style={styles.deleteText}>{deleting ? t('common.deleting') : t('common.delete')}</Text>
             </Pressable>
           </View>
         ) : manageAccess === 'checking' ? (
           // A subject teacher's buttons wait on their subjects - say so rather than show none.
           <View style={styles.checkingRow}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.checkingText}>Checking your subjects…</Text>
+            <Text style={styles.checkingText}>{t('assessments.checkingSubjects')}</Text>
           </View>
         ) : (
           canView && (
@@ -139,7 +142,7 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
                 style={styles.actionButton}
                 onPress={() => navigation.navigate('AssessmentResults', { assessment, readOnly: true })}
               >
-                <Text style={styles.actionText}>View results</Text>
+                <Text style={styles.actionText}>{t('assessments.detail.viewResults')}</Text>
               </Pressable>
             </View>
           )

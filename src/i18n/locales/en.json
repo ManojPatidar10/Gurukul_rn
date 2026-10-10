@@ -273,6 +273,7 @@
       "parentName": "Parent name",
       "parentContact": "Parent contact",
       "admissionDate": "Admission date",
+      "registrationNumber": "Registration number",
       "transferClass": "Transfer class",
       "cancelTransfer": "Cancel transfer",
       "transferring": "Transferring…",
@@ -1570,6 +1571,318 @@
     "admin": "Admin",
     "parentOf": "{{name}} (Parent of {{children}})",
     "searchTeachers": "Search teachers by name"
+  },
+  "games": {
+    "common": {
+      "vs": "vs {{name}}",
+      "you": "You",
+      "points": "{{points}} pts",
+      "questionOf": "Question {{number}} of {{total}}",
+      "correct": "Correct!",
+      "notQuite": "Not quite.",
+      "nextQuestion": "Next Question"
+    },
+    "labels": {
+      "status": {
+        "draw": "Draw",
+        "won": "You won",
+        "lost": "You lost",
+        "expired": "Expired",
+        "yourTurn": "Your turn",
+        "waiting": "Waiting"
+      },
+      "endsInMinutes": "Ends in {{minutes}} min",
+      "endsInHours": "Ends in {{hours}}h",
+      "xpAwarded": "+{{xp}} XP",
+      "xpLimitReached": "No XP this time: you've reached today's limit for challenges with {{name}}",
+      "battleTie": "It's a tie: no winner and no XP this time",
+      "battleWinner": "{{name}} wins!",
+      "someone": "Someone"
+    },
+    "hub": {
+      "title": "Game Hub",
+      "level": "LVL",
+      "streak": "{{days}}-day streak",
+      "xpTotal": "{{xp}} XP total",
+      "xpToNextLevel": "{{xp}} XP to Level {{level}}",
+      "longestStreak": "Longest streak",
+      "totalXp": "Total XP",
+      "play": "Play",
+      "modes": {
+        "leaderboard": {
+          "title": "Leaderboard",
+          "subtitle": "Your league ranking"
+        },
+        "houseWars": {
+          "title": "House Wars",
+          "subtitle": "School-wide standings"
+        },
+        "battleRoom": {
+          "title": "Battle Room",
+          "subtitle": "Live group quiz"
+        },
+        "arena": {
+          "title": "Gurukul Arena",
+          "subtitle": "Challenge a classmate"
+        },
+        "practice": {
+          "title": "Practice",
+          "subtitle": "Solo, no opponent"
+        }
+      },
+      "badgesSoon": "Badges are coming in the next update."
+    },
+    "arena": {
+      "title": "Gurukul Arena",
+      "teacherIntro": "Students challenge each other to 1v1 quizzes here. Build the question bank each subject draws from below.",
+      "addQuestion": "Add a quiz question",
+      "myQuestions": "My questions",
+      "challengeClassmate": "Challenge a classmate",
+      "empty": "No challenges yet — start one above.",
+      "cardMeta": "{{subject}} · {{answered}}/{{total}} answered",
+      "cardMetaEndsIn": "{{subject}} · {{answered}}/{{total}} answered · {{endsIn}}"
+    },
+    "newChallenge": {
+      "title": "Challenge a classmate",
+      "subject": "Subject",
+      "noSubjects": "No subjects set up yet.",
+      "opponent": "Opponent",
+      "searchPlaceholder": "Search classmates by name…",
+      "noClassmates": "No classmates found.",
+      "noMatch": "No match for \"{{query}}\".",
+      "section": "Section {{section}}",
+      "send": "Send challenge"
+    },
+    "challenge": {
+      "title": "Quiz Battle",
+      "loadFailed": "Could not load this challenge.",
+      "draw": "It's a draw!",
+      "won": "You won! 🎉",
+      "lost": "You lost this one",
+      "answeredSummary": "{{mine}}/{{total}} answered by you · {{theirs}}/{{total}} by {{opponent}}",
+      "expired": "This challenge expired. Nobody gets XP.",
+      "waitingFor": "Waiting for {{name}}…",
+      "allAnswered_one": "You've answered the {{count}} question.",
+      "allAnswered_other": "You've answered all {{count}} questions."
+    },
+    "practice": {
+      "title": "Practice Mode",
+      "intro": "Practice solo, at your own pace — no opponent, no XP, just prep.",
+      "start": "Start Practicing",
+      "loadFailed": "Could not load this practice session.",
+      "noXp": "Practice doesn't earn XP — it's just for prep.",
+      "complete": "Practice complete!",
+      "score": "{{correct}}/{{total}} correct"
+    },
+    "battleMatch": {
+      "title": "Battle Room",
+      "intro": "Pick a subject, then quick-match into an open room from your class or create a new one for classmates to join.",
+      "openBattles": "Open battles in your class",
+      "loadFailed": "Couldn't load open battles",
+      "empty": "No open battles right now — start one below.",
+      "roomMeta": "{{joined}}/{{max}} players · {{code}}",
+      "join": "Join",
+      "inProgress": "In progress",
+      "orStartOwn": "— or start your own —",
+      "quickMatch": "Quick Match",
+      "createRoom": "Create Room",
+      "orJoin": "— or join a room a classmate created —",
+      "roomCode": "Room Code",
+      "roomCodePlaceholder": "e.g. UZX4VM",
+      "joinRoom": "Join Room"
+    },
+    "battle": {
+      "title": "Battle Room",
+      "notFound": "Room not found.",
+      "subjectBattle": "{{subject}} Battle",
+      "waitingForPlayers": "Waiting for players…",
+      "joinedSummary": "{{joined}}/{{max}} joined · needs {{min}} to start",
+      "roomCodeHint": "Room code — share to invite",
+      "startNow": "Start now",
+      "lockedIn": "LOCKED IN",
+      "correctAnswer": "Correct answer",
+      "finalCorrectAnswer": "Final question — correct answer",
+      "reveal": "{{title}}: {{option}}",
+      "revealWithText": "{{title}}: {{option}} — {{text}}",
+      "nextQuestionIn": "Next question in {{seconds}}…",
+      "waitingForOthers": "Waiting for others…",
+      "getReady": "Get ready…",
+      "nextOnTheWay": "Next question is on its way.",
+      "finalRow": "{{name}} — {{points}} pts ({{correct}} correct)",
+      "cancelled": "Room cancelled"
+    },
+    "leaderboard": {
+      "title": "Leaderboard",
+      "tiers": {
+        "BRONZE": "Bronze League",
+        "SILVER": "Silver League",
+        "GOLD": "Gold League",
+        "PLATINUM": "Platinum League",
+        "DIAMOND": "Diamond League",
+        "GURUKUL_MASTER": "Gurukul Master League"
+      },
+      "subtitle": "{{section}} · resets weekly",
+      "empty": "No one in this league has earned XP yet this week.",
+      "nameYou": "{{name}} (you)",
+      "progressTitle": "Your progress",
+      "yourRank": "You're #{{rank}} in your league this week.",
+      "noXpYet": "You haven't earned XP yet this week.",
+      "streaks": "Current streak: {{current}} · Longest ever: {{longest}}.",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days"
+    },
+    "houseWars": {
+      "title": "House Wars",
+      "empty": "No houses have been set up for this school yet.",
+      "nameYourHouse": "{{name}} · Your House",
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "award": "Award spot recognition",
+      "recent": "Recent recognition",
+      "nothingYet": "Nothing yet."
+    },
+    "review": {
+      "heading": "Review your answers",
+      "questionNumber": "Question {{number}}",
+      "right": "Right",
+      "wrong": "Wrong",
+      "notAnswered": "Not answered",
+      "didNotAnswer": "You didn't answer this one.",
+      "keyChanged": "The answer key was changed after you answered, so your mark stays as it was given.",
+      "why": "Why:",
+      "reported": "Reported. Thanks!",
+      "reportPlaceholder": "What looks wrong? (optional)",
+      "sendReport": "Send report",
+      "reportLink": "Report a wrong answer",
+      "tags": {
+        "yourAnswerRight": "Your answer ✓",
+        "yourAnswerCorrectNow": "Your answer (correct now)",
+        "yourAnswer": "Your answer",
+        "correctAnswerNow": "Correct answer now",
+        "correctAnswer": "Correct answer"
+      }
+    }
+  },
+  "questionBank": {
+    "author": {
+      "addTitle": "Add a quiz question",
+      "editTitle": "Edit question",
+      "subjectLabel": "Subject:",
+      "classLabel": "Class:",
+      "typeLabel": "Type:",
+      "fixedNote": "These can't change. To change one, retire this question and add a new one. Edits apply to games from now on; past answers keep their marks.",
+      "retiredNote": "This question is retired. Saving keeps it retired.",
+      "subject": "Subject",
+      "class": "Class",
+      "noSubjectsAdmin": "No subjects set up yet.",
+      "noSubjectsTeacher": "You aren't assigned to teach any subject yet, so you can't add questions.",
+      "pickSubjectFirst": "Pick a subject first.",
+      "noClasses": "No classes set up yet.",
+      "questionPlaceholder": "e.g. What is the capital of India?",
+      "correctAnswer": "Correct answer",
+      "explanationPlaceholder": "Optional - why this answer is right",
+      "saveQuestion": "Save question",
+      "saveHint": {
+        "pickPlacement": "Pick a subject and a class",
+        "tapCorrect": "Tap the correct answer"
+      }
+    },
+    "myQuestions": {
+      "questionStats": "Question stats",
+      "title": "My Questions",
+      "subject": "Subject",
+      "class": "Class",
+      "noClasses": "No classes set up yet.",
+      "showRetired": "Show retired",
+      "empty": "You haven't added any questions for this subject/class yet.",
+      "retired": "Retired",
+      "aiMade": "AI-made",
+      "correctAnswer": "Correct answer: {{option}}",
+      "numericAnswer": "Number answer (exact match)",
+      "shortWordAnswer": "One/two-word answer (case ignored)",
+      "answer": "Answer: {{answer}}",
+      "explanationLabel": "Explanation:",
+      "reportWarning_one": "{{count}} student reported a wrong answer",
+      "reportWarning_other": "{{count}} students reported a wrong answer",
+      "restore": "Restore",
+      "retire": "Retire",
+      "markChecked": "Mark as checked",
+      "retiredToast": "Question retired",
+      "restoredToast": "Question restored",
+      "checkedToast": "Marked as checked",
+      "retireTitle": "Retire this question?",
+      "retireBody": "New games won't use it. Past answers and games stay as they are, and you can restore it later."
+    }
+  },
+  "assessments": {
+    "checkingSubjects": "Checking your subjects…",
+    "subjectsCheckFailed": "Couldn't check which subjects you teach here.",
+    "types": {
+      "ASSIGNMENT": "Assignment",
+      "QUIZ": "Quiz",
+      "TEST": "Test",
+      "EXAM": "Exam"
+    },
+    "status": {
+      "upcoming": "Upcoming",
+      "today": "Today",
+      "completed": "Completed",
+      "marksPending": "Marks pending",
+      "marksProgress": "Marks {{entered}}/{{expected}}",
+      "marksEntered": "Marks entered"
+    },
+    "list": {
+      "subtitle": "Assessments",
+      "new": "+ New assessment",
+      "all": "All",
+      "loadFailed": "Could not load assessments.",
+      "emptySubject": "No {{subject}} assessments yet.",
+      "emptyCanCreate": "0 assessments yet — create the first one.",
+      "empty": "0 assessments yet.",
+      "maxMarks": "Max {{max}}"
+    },
+    "detail": {
+      "subject": "Subject",
+      "date": "Date",
+      "maxMarks": "Max marks",
+      "term": "Term",
+      "description": "Description",
+      "createdBy": "Created by",
+      "enterResults": "Enter results",
+      "viewResults": "View results",
+      "deleteTitle": "Delete assessment",
+      "deleteBody": "Remove \"{{title}}\"? This cannot be undone.",
+      "cannotDeleteTitle": "Can't delete this assessment",
+      "close": "Close",
+      "hasMarks_one": "{{count}} student has marks, an absence or a remark saved for this assessment, so it can't be deleted. Clear it on the Enter results screen first.",
+      "hasMarks_other": "{{count}} students have marks, absences or remarks saved for this assessment, so it can't be deleted. Clear them on the Enter results screen first.",
+      "movedStudents_one": "{{count}} of them has since moved to another class.",
+      "movedStudents_other": "{{count}} of them have since moved to another class."
+    }
+  },
+  "gradingScale": {
+    "title": "Grading Scale",
+    "subtitle": "Marks-to-grade bands",
+    "description": "Marks-percentage bands used to compute a letter grade on every grade card and report card. Bands must cover 0-100% with no gaps or overlaps. A percentage on the boundary between two bands gets the higher one.",
+    "saved": "Grading scale updated.",
+    "minPlaceholder": "Min %",
+    "maxPlaceholder": "Max %",
+    "gradePlaceholder": "Grade",
+    "addBand": "+ Add band",
+    "save": "Save grading scale",
+    "confirmTitle": "Save grading scale?",
+    "confirmBody": "{{bands}}\n\nEvery report card is graded with this scale, including report cards already published, so their grades may change.",
+    "errors": {
+      "empty": "Add at least one grade band.",
+      "missingLabel": "Band {{band}}: enter a grade, e.g. A+.",
+      "labelTooLong": "Band {{band}}: a grade can be at most {{max}} characters.",
+      "duplicateLabel": "Grade \"{{label}}\" is used for more than one band.",
+      "badNumber": "Band {{band}}: enter the min and max as numbers, e.g. 75 and 90.",
+      "outOfRange": "Band {{band}}: percentages must be between 0 and 100.",
+      "minAboveMax": "Band {{band}}: the min can't be more than the max.",
+      "overlap": "Bands \"{{otherLabel}}\" and \"{{label}}\" overlap.",
+      "gap": "No band covers the percentages between {{from}}% and {{to}}%. Bands must cover 0-100% with no gaps."
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

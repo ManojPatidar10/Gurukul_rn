@@ -1,6 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getHouseWars } from '../../api/houses';
@@ -17,6 +18,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'HouseWars'>;
 
 export function HouseWarsScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [wars, setWars] = useState<HouseWarsResponse | null>(null);
@@ -45,23 +47,22 @@ export function HouseWarsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="House Wars" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('games.houseWars.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && <ErrorNotice message={error} />}
 
-        {wars && wars.standings.length === 0 && (
-          <Text style={styles.empty}>No houses have been set up for this school yet.</Text>
-        )}
+        {wars && wars.standings.length === 0 && <Text style={styles.empty}>{t('games.houseWars.empty')}</Text>}
 
         {wars?.standings.map((house) => (
           <View key={house.houseId} style={styles.houseCard}>
             <View style={styles.houseHeader}>
               <Text style={styles.houseName}>
-                {house.name}
-                {wars.yourHouseId === house.houseId ? ' · Your House' : ''}
+                {wars.yourHouseId === house.houseId
+                  ? t('games.houseWars.nameYourHouse', { name: house.name })
+                  : house.name}
               </Text>
-              <Text style={styles.housePoints}>{house.totalPoints} pts</Text>
+              <Text style={styles.housePoints}>{t('games.common.points', { points: house.totalPoints })}</Text>
             </View>
             <View style={styles.track}>
               <View
@@ -71,19 +72,19 @@ export function HouseWarsScreen({ navigation }: Props) {
                 ]}
               />
             </View>
-            <Text style={styles.memberCount}>{house.memberCount} members</Text>
+            <Text style={styles.memberCount}>{t('games.houseWars.members', { count: house.memberCount })}</Text>
           </View>
         ))}
 
         {canAward && (
           <Pressable style={styles.awardButton} onPress={() => navigation.navigate('AwardRecognition')}>
             <FontAwesome5 name="star" size={14} color={colors.white} />
-            <Text style={styles.awardButtonText}>Award spot recognition</Text>
+            <Text style={styles.awardButtonText}>{t('games.houseWars.award')}</Text>
           </Pressable>
         )}
 
-        <Text style={styles.sectionTitle}>Recent recognition</Text>
-        {wars && wars.recentFeed.length === 0 && <Text style={styles.empty}>Nothing yet.</Text>}
+        <Text style={styles.sectionTitle}>{t('games.houseWars.recent')}</Text>
+        {wars && wars.recentFeed.length === 0 && <Text style={styles.empty}>{t('games.houseWars.nothingYet')}</Text>}
         {wars?.recentFeed.map((item, index) => (
           <View key={index} style={styles.feedRow}>
             <FontAwesome5 name="award" size={13} color={colors.textMuted} />

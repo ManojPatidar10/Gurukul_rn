@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import {
@@ -29,6 +30,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyQuestions'>;
 type QuestionAction = (schoolId: string, id: string) => Promise<QuizQuestionResponse>;
 
 export function MyQuestionsScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
@@ -115,20 +117,20 @@ export function MyQuestionsScreen({ navigation }: Props) {
   };
 
   const confirmRetire = (q: QuizQuestionResponse) =>
-    Alert.alert(
-      'Retire this question?',
-      "New games won't use it. Past answers and games stay as they are, and you can restore it later.",
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Retire', style: 'destructive', onPress: () => runAction(q, retireQuizQuestion, 'Question retired') },
-      ]
-    );
+    Alert.alert(t('questionBank.myQuestions.retireTitle'), t('questionBank.myQuestions.retireBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('questionBank.myQuestions.retire'),
+        style: 'destructive',
+        onPress: () => runAction(q, retireQuizQuestion, t('questionBank.myQuestions.retiredToast')),
+      },
+    ]);
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="My Questions" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('questionBank.myQuestions.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <Text style={styles.fieldLabel}>Subject</Text>
+        <Text style={styles.fieldLabel}>{t('questionBank.myQuestions.subject')}</Text>
         <SubjectPicker
           schoolId={schoolId}
           selectedId={subjectId}
@@ -138,12 +140,12 @@ export function MyQuestionsScreen({ navigation }: Props) {
           }}
         />
 
-        <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>Class</Text>
+        <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>{t('questionBank.myQuestions.class')}</Text>
         {classNamesError ? (
           <>
             <ErrorNotice message={classNamesError} />
             <Pressable style={styles.retryButton} onPress={retryClassNames}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
             </Pressable>
           </>
         ) : (
@@ -161,14 +163,14 @@ export function MyQuestionsScreen({ navigation }: Props) {
                     {name}
                   </Text>
                 ))}
-                {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
+                {classNames.length === 0 && <Text style={styles.empty}>{t('questionBank.myQuestions.noClasses')}</Text>}
               </>
             )}
           </View>
         )}
 
         <View style={styles.switchRow}>
-          <Text style={styles.switchText}>Show retired</Text>
+          <Text style={styles.switchText}>{t('questionBank.myQuestions.showRetired')}</Text>
           <Switch
             value={includeRetired}
             onValueChange={setIncludeRetired}
@@ -185,7 +187,7 @@ export function MyQuestionsScreen({ navigation }: Props) {
               navigation.navigate('QuestionStats', { subjectId, subjectName: subjectName ?? undefined, className })
             }
           >
-            <Text style={styles.retryButtonText}>Question stats</Text>
+            <Text style={styles.retryButtonText}>{t('questionBank.myQuestions.questionStats')}</Text>
           </Pressable>
         )}
 
@@ -193,19 +195,19 @@ export function MyQuestionsScreen({ navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         {!loading && subjectId && className && questions.length === 0 && !error && (
-          <Text style={styles.empty}>You haven&apos;t added any questions for this subject/class yet.</Text>
+          <Text style={styles.empty}>{t('questionBank.myQuestions.empty')}</Text>
         )}
 
         {questions.map((q) => {
-          const warning = reportWarning(q.openReportCount);
+          const warning = reportWarning(q.openReportCount, t);
           const comments = q.openReportComments ?? [];
           const busy = busyId === q.id;
           return (
             <View key={q.id} style={[styles.card, q.retired && styles.cardRetired]}>
               {(q.source === 'AI' || q.retired) && (
                 <View style={styles.badges}>
-                  {q.retired && <StatusChip label="Retired" variant="neutral" />}
-                  {q.source === 'AI' && <StatusChip label="AI-made" variant="info" />}
+                  {q.retired && <StatusChip label={t('questionBank.myQuestions.retired')} variant="neutral" />}
+                  {q.source === 'AI' && <StatusChip label={t('questionBank.myQuestions.aiMade')} variant="info" />}
                 </View>
               )}
               <Text style={styles.questionText}>{q.questionText}</Text>
@@ -215,20 +217,24 @@ export function MyQuestionsScreen({ navigation }: Props) {
                   <Text style={styles.optionText}>B. {q.optionB}</Text>
                   <Text style={styles.optionText}>C. {q.optionC}</Text>
                   <Text style={styles.optionText}>D. {q.optionD}</Text>
-                  <Text style={styles.correct}>Correct answer: {q.correctOption}</Text>
+                  <Text style={styles.correct}>
+                    {t('questionBank.myQuestions.correctAnswer', { option: q.correctOption })}
+                  </Text>
                 </>
               ) : (
                 <>
                   {/* Typed-answer questions aren't used by Arena games (tap-to-answer, MCQ only). */}
                   <Text style={styles.optionText}>
-                    {q.questionType === 'NUMERIC' ? 'Number answer (exact match)' : 'One/two-word answer (case ignored)'}
+                    {q.questionType === 'NUMERIC'
+                      ? t('questionBank.myQuestions.numericAnswer')
+                      : t('questionBank.myQuestions.shortWordAnswer')}
                   </Text>
-                  <Text style={styles.correct}>Answer: {q.answerText}</Text>
+                  <Text style={styles.correct}>{t('questionBank.myQuestions.answer', { answer: q.answerText })}</Text>
                 </>
               )}
               {!!q.explanation?.trim() && (
                 <Text style={styles.explanation}>
-                  <Text style={styles.explanationLabel}>Explanation: </Text>
+                  <Text style={styles.explanationLabel}>{t('questionBank.myQuestions.explanationLabel')}</Text>{' '}
                   {q.explanation.trim()}
                 </Text>
               )}
@@ -251,23 +257,30 @@ export function MyQuestionsScreen({ navigation }: Props) {
                   ) : (
                     <>
                       <Pressable onPress={() => navigation.navigate('QuestionAuthor', { questionId: q.id })} hitSlop={6}>
-                        <Text style={styles.action}>Edit</Text>
+                        <Text style={styles.action}>{t('common.edit')}</Text>
                       </Pressable>
                       {q.retired ? (
-                        <Pressable onPress={() => runAction(q, restoreQuizQuestion, 'Question restored')} hitSlop={6}>
-                          <Text style={styles.action}>Restore</Text>
+                        <Pressable
+                          onPress={() => runAction(q, restoreQuizQuestion, t('questionBank.myQuestions.restoredToast'))}
+                          hitSlop={6}
+                        >
+                          <Text style={styles.action}>{t('questionBank.myQuestions.restore')}</Text>
                         </Pressable>
                       ) : (
                         <Pressable onPress={() => confirmRetire(q)} hitSlop={6}>
-                          <Text style={[styles.action, styles.actionDanger]}>Retire</Text>
+                          <Text style={[styles.action, styles.actionDanger]}>
+                            {t('questionBank.myQuestions.retire')}
+                          </Text>
                         </Pressable>
                       )}
                       {(q.openReportCount ?? 0) > 0 && (
                         <Pressable
-                          onPress={() => runAction(q, dismissQuizQuestionReports, 'Marked as checked')}
+                          onPress={() =>
+                            runAction(q, dismissQuizQuestionReports, t('questionBank.myQuestions.checkedToast'))
+                          }
                           hitSlop={6}
                         >
-                          <Text style={styles.action}>Mark as checked</Text>
+                          <Text style={styles.action}>{t('questionBank.myQuestions.markChecked')}</Text>
                         </Pressable>
                       )}
                     </>

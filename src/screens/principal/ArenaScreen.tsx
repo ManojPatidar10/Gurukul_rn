@@ -1,6 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { listMyChallenges } from '../../api/arena';
@@ -20,6 +21,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Arena'>;
 
 export function ArenaScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const [challenges, setChallenges] = useState<ChallengeSummaryResponse[]>([]);
@@ -47,19 +49,16 @@ export function ArenaScreen({ navigation }: Props) {
   if (session.ownerType !== 'STUDENT') {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Gurukul Arena" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.arena.title')} onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <Text style={styles.teacherIntro}>
-            Students challenge each other to 1v1 quizzes here. Build the question bank each subject
-            draws from below.
-          </Text>
+          <Text style={styles.teacherIntro}>{t('games.arena.teacherIntro')}</Text>
           <Pressable style={styles.primaryButton} onPress={() => navigation.navigate('QuestionAuthor')}>
             <FontAwesome5 name="plus" size={14} color={colors.white} />
-            <Text style={styles.primaryButtonText}>Add a quiz question</Text>
+            <Text style={styles.primaryButtonText}>{t('games.arena.addQuestion')}</Text>
           </Pressable>
           <Pressable style={styles.secondaryButton} onPress={() => navigation.navigate('MyQuestions')}>
             <FontAwesome5 name="list" size={14} color={colors.primary} />
-            <Text style={styles.secondaryButtonText}>My questions</Text>
+            <Text style={styles.secondaryButtonText}>{t('games.arena.myQuestions')}</Text>
           </Pressable>
         </ScreenContainer>
       </View>
@@ -68,28 +67,28 @@ export function ArenaScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Gurukul Arena" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('games.arena.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         <Pressable style={styles.primaryButton} onPress={() => navigation.navigate('NewChallenge')}>
           <FontAwesome5 name="bolt" size={14} color={colors.white} />
-          <Text style={styles.primaryButtonText}>Challenge a classmate</Text>
+          <Text style={styles.primaryButtonText}>{t('games.arena.challengeClassmate')}</Text>
         </Pressable>
 
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
         {error && <ErrorNotice message={error} />}
-        {!loading && challenges.length === 0 && <Text style={styles.empty}>No challenges yet — start one above.</Text>}
+        {!loading && challenges.length === 0 && <Text style={styles.empty}>{t('games.arena.empty')}</Text>}
 
         {challenges.map((c) => {
-          const endsIn = challengeEndsIn(c, serverNow());
+          const endsIn = challengeEndsIn(c, serverNow(), t);
+          const meta = { subject: c.subjectName, answered: c.myAnsweredCount, total: c.totalQuestions };
           return (
             <Pressable key={c.id} style={styles.card} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: c.id })}>
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>vs {c.opponentName}</Text>
-                <StatusChip label={challengeStatusLabel(c)} variant={challengeStatusVariant(c)} />
+                <Text style={styles.cardTitle}>{t('games.common.vs', { name: c.opponentName })}</Text>
+                <StatusChip label={challengeStatusLabel(c, t)} variant={challengeStatusVariant(c)} />
               </View>
               <Text style={styles.cardMeta}>
-                {c.subjectName} · {c.myAnsweredCount}/{c.totalQuestions} answered
-                {endsIn ? ` · ${endsIn}` : ''}
+                {endsIn ? t('games.arena.cardMetaEndsIn', { ...meta, endsIn }) : t('games.arena.cardMeta', meta)}
               </Text>
             </Pressable>
           );

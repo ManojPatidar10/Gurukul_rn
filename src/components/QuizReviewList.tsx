@@ -1,5 +1,6 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { reportQuizQuestion } from '../api/arena';
@@ -30,6 +31,7 @@ type ReportState =
  * option follows the mark recorded when they answered, not today's key (see utils/quizReview).
  */
 export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | undefined }) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [reports, setReports] = useState<Record<string, ReportState>>({});
 
@@ -56,13 +58,13 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
 
   return (
     <View style={styles.list}>
-      <Text style={styles.heading}>Review your answers</Text>
+      <Text style={styles.heading}>{t('games.review.heading')}</Text>
       {items.map((item, index) => {
         const report = reports[item.questionId];
         return (
           <View key={item.questionId} style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.number}>Question {index + 1}</Text>
+              <Text style={styles.number}>{t('games.review.questionNumber', { number: index + 1 })}</Text>
               <View style={[styles.verdict, item.correct ? styles.verdictCorrect : styles.verdictWrong]}>
                 <FontAwesome5
                   name={item.correct ? 'check' : 'times'}
@@ -70,14 +72,18 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
                   color={item.correct ? colors.success : colors.error}
                 />
                 <Text style={[styles.verdictText, { color: item.correct ? colors.success : colors.error }]}>
-                  {item.correct ? 'Right' : item.selectedOption ? 'Wrong' : 'Not answered'}
+                  {item.correct
+                    ? t('games.review.right')
+                    : item.selectedOption
+                      ? t('games.review.wrong')
+                      : t('games.review.notAnswered')}
                 </Text>
               </View>
             </View>
             <Text style={styles.questionText}>{item.questionText}</Text>
 
             {OPTIONS.map(({ key, field }) => {
-              const mark = reviewOptionMark(item, key);
+              const mark = reviewOptionMark(item, key, t);
               return (
                 <View
                   key={key}
@@ -98,28 +104,24 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
               );
             })}
 
-            {!item.selectedOption && <Text style={styles.note}>You didn&apos;t answer this one.</Text>}
-            {answerKeyChanged(item) && (
-              <Text style={styles.note}>
-                The answer key was changed after you answered, so your mark stays as it was given.
-              </Text>
-            )}
+            {!item.selectedOption && <Text style={styles.note}>{t('games.review.didNotAnswer')}</Text>}
+            {answerKeyChanged(item) && <Text style={styles.note}>{t('games.review.keyChanged')}</Text>}
             {!!item.explanation?.trim() && (
               <Text style={styles.explanation}>
-                <Text style={styles.explanationLabel}>Why: </Text>
+                <Text style={styles.explanationLabel}>{t('games.review.why')}</Text>{' '}
                 {item.explanation.trim()}
               </Text>
             )}
 
             {report?.step === 'done' ? (
-              <Text style={styles.reported}>Reported. Thanks!</Text>
+              <Text style={styles.reported}>{t('games.review.reported')}</Text>
             ) : report ? (
               <View style={styles.reportBox}>
                 <TextInput
                   style={styles.reportInput}
                   value={report.comment}
                   onChangeText={(comment) => setReport(item.questionId, { step: 'writing', comment })}
-                  placeholder="What looks wrong? (optional)"
+                  placeholder={t('games.review.reportPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   maxLength={COMMENT_MAX}
                   multiline
@@ -132,7 +134,7 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
                     disabled={report.step === 'sending'}
                     hitSlop={8}
                   >
-                    <Text style={styles.reportCancel}>Cancel</Text>
+                    <Text style={styles.reportCancel}>{t('common.cancel')}</Text>
                   </Pressable>
                   <Pressable
                     style={styles.reportSend}
@@ -142,7 +144,7 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
                     {report.step === 'sending' ? (
                       <ActivityIndicator color={colors.white} size="small" />
                     ) : (
-                      <Text style={styles.reportSendText}>Send report</Text>
+                      <Text style={styles.reportSendText}>{t('games.review.sendReport')}</Text>
                     )}
                   </Pressable>
                 </View>
@@ -153,7 +155,7 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
                 accessibilityRole="button"
                 hitSlop={8}
               >
-                <Text style={styles.reportLink}>Report a wrong answer</Text>
+                <Text style={styles.reportLink}>{t('games.review.reportLink')}</Text>
               </Pressable>
             )}
           </View>

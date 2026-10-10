@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getChallenge, submitAnswer } from '../../api/arena';
@@ -25,6 +26,7 @@ const OPTIONS: { key: QuizOption; field: keyof PublicQuizQuestionResponse }[] = 
 ];
 
 export function ChallengeDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const { challengeId } = route.params;
   const schoolId = useSchoolId();
   const [detail, setDetail] = useState<ChallengeDetailResponse | null>(null);
@@ -88,7 +90,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   if (loading) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Quiz Battle" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.challenge.title')} onBack={() => navigation.goBack()} />
         <ActivityIndicator color={colors.primary} style={styles.loading} />
       </View>
     );
@@ -97,9 +99,9 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   if (!detail) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Quiz Battle" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.challenge.title')} onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <ErrorNotice message={error ?? 'Could not load this challenge.'} />
+          <ErrorNotice message={error ?? t('games.challenge.loadFailed')} />
         </ScreenContainer>
       </View>
     );
@@ -107,12 +109,22 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
 
   const { summary, questions, myAnsweredQuestionIds } = detail;
   const currentQuestion = questions.find((q) => !myAnsweredQuestionIds.includes(q.id));
-  const endsIn = challengeEndsIn(summary, now);
-  const xpLine = challengeXpLine(summary);
+  const endsIn = challengeEndsIn(summary, now, t);
+  const xpLine = challengeXpLine(summary, t);
+  const answeredSummary = t('games.challenge.answeredSummary', {
+    mine: summary.myAnsweredCount,
+    theirs: summary.opponentAnsweredCount,
+    total: summary.totalQuestions,
+    opponent: summary.opponentName,
+  });
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={`vs ${summary.opponentName}`} subtitle={summary.subjectName} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('games.common.vs', { name: summary.opponentName })}
+        subtitle={summary.subjectName}
+        onBack={() => navigation.goBack()}
+      />
       {/* The review's report box has a text field: taps on Send/Cancel go through while the keyboard
           is up, and on iOS the list scrolls clear of the keyboard. */}
       <ScreenContainer keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
@@ -123,12 +135,13 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
         {summary.status === 'COMPLETED' && (
           <View style={styles.resultBanner}>
             <Text style={styles.resultTitle}>
-              {summary.draw ? "It's a draw!" : summary.youWon ? 'You won! 🎉' : 'You lost this one'}
+              {summary.draw
+                ? t('games.challenge.draw')
+                : summary.youWon
+                  ? t('games.challenge.won')
+                  : t('games.challenge.lost')}
             </Text>
-            <Text style={styles.resultMeta}>
-              {summary.myAnsweredCount}/{summary.totalQuestions} answered by you · {summary.opponentAnsweredCount}/
-              {summary.totalQuestions} by {summary.opponentName}
-            </Text>
+            <Text style={styles.resultMeta}>{answeredSummary}</Text>
             {xpLine && (
               <Text style={[styles.xpLine, (summary.xpAwarded ?? 0) > 0 ? styles.xpWon : styles.xpNone]}>{xpLine}</Text>
             )}
@@ -137,31 +150,31 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
 
         {summary.status === 'EXPIRED' && (
           <View style={styles.resultBanner}>
-            <Text style={styles.resultTitle}>This challenge expired. Nobody gets XP.</Text>
-            <Text style={styles.resultMeta}>
-              {summary.myAnsweredCount}/{summary.totalQuestions} answered by you · {summary.opponentAnsweredCount}/
-              {summary.totalQuestions} by {summary.opponentName}
-            </Text>
+            <Text style={styles.resultTitle}>{t('games.challenge.expired')}</Text>
+            <Text style={styles.resultMeta}>{answeredSummary}</Text>
           </View>
         )}
 
         {summary.status === 'ACTIVE' && !currentQuestion && (
           <View style={styles.resultBanner}>
-            <Text style={styles.resultTitle}>Waiting for {summary.opponentName}…</Text>
-            <Text style={styles.resultMeta}>You&apos;ve answered all {summary.totalQuestions} questions.</Text>
+            <Text style={styles.resultTitle}>{t('games.challenge.waitingFor', { name: summary.opponentName })}</Text>
+            <Text style={styles.resultMeta}>{t('games.challenge.allAnswered', { count: summary.totalQuestions })}</Text>
           </View>
         )}
 
         {summary.status === 'ACTIVE' && currentQuestion && (
           <View style={styles.questionCard}>
             <Text style={styles.progress}>
-              Question {myAnsweredQuestionIds.length + 1} of {summary.totalQuestions}
+              {t('games.common.questionOf', {
+                number: myAnsweredQuestionIds.length + 1,
+                total: summary.totalQuestions,
+              })}
             </Text>
             <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
 
             {answered && answered.questionId === currentQuestion.id && (
               <Text style={[styles.feedback, answered.correct ? styles.feedbackCorrect : styles.feedbackWrong]}>
-                {answered.correct ? 'Correct!' : 'Not quite.'}
+                {answered.correct ? t('games.common.correct') : t('games.common.notQuite')}
               </Text>
             )}
 
@@ -186,7 +199,7 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
                 {submitting ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.nextButtonText}>Next Question</Text>
+                  <Text style={styles.nextButtonText}>{t('games.common.nextQuestion')}</Text>
                 )}
               </Pressable>
             )}

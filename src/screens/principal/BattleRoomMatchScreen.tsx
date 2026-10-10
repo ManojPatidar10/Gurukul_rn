@@ -1,6 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createBattleRoom, joinBattleRoom, joinBattleRoomByCode, listBattleRooms, matchBattleRoom } from '../../api/battleRooms';
@@ -18,6 +19,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'BattleRoomMatch'>;
 
 export function BattleRoomMatchScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [subject, setSubject] = useState<Subject | null>(null);
   const [roomCode, setRoomCode] = useState('');
@@ -101,29 +103,24 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Battle Room" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('games.battleMatch.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <Text style={styles.intro}>
-          Pick a subject, then quick-match into an open room from your class or create a new one for
-          classmates to join.
-        </Text>
+        <Text style={styles.intro}>{t('games.battleMatch.intro')}</Text>
 
         <SubjectPicker schoolId={schoolId} selectedId={subject?.id ?? null} onSelect={setSubject} />
 
         {error && <ErrorNotice message={error} />}
 
-        <Text style={styles.fieldLabel}>Open battles in your class</Text>
+        <Text style={styles.fieldLabel}>{t('games.battleMatch.openBattles')}</Text>
         {roomsFailed && (
           <>
-            <ErrorNotice message="Couldn't load open battles" />
+            <ErrorNotice message={t('games.battleMatch.loadFailed')} />
             <Pressable style={styles.retryButton} onPress={() => setRetryCount((n) => n + 1)}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
             </Pressable>
           </>
         )}
-        {!roomsFailed && openRooms.length === 0 && (
-          <Text style={styles.empty}>No open battles right now — start one below.</Text>
-        )}
+        {!roomsFailed && openRooms.length === 0 && <Text style={styles.empty}>{t('games.battleMatch.empty')}</Text>}
         {openRooms.map((room) => {
           const isWaiting = room.status === 'WAITING';
           return (
@@ -138,21 +135,25 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
                   {room.subjectName} · {room.className}
                 </Text>
                 <Text style={styles.roomRowMeta}>
-                  {room.participantCount}/{room.maxPlayers} players · {room.roomCode}
+                  {t('games.battleMatch.roomMeta', {
+                    joined: room.participantCount,
+                    max: room.maxPlayers,
+                    code: room.roomCode,
+                  })}
                 </Text>
               </View>
               {joiningRoomId === room.id ? (
                 <ActivityIndicator color={colors.primary} />
               ) : isWaiting ? (
-                <Text style={styles.roomRowJoin}>Join</Text>
+                <Text style={styles.roomRowJoin}>{t('games.battleMatch.join')}</Text>
               ) : (
-                <Text style={styles.roomRowActive}>In progress</Text>
+                <Text style={styles.roomRowActive}>{t('games.battleMatch.inProgress')}</Text>
               )}
             </Pressable>
           );
         })}
 
-        <Text style={styles.orDivider}>— or start your own —</Text>
+        <Text style={styles.orDivider}>{t('games.battleMatch.orStartOwn')}</Text>
 
         <Pressable
           style={[styles.actionButton, styles.matchButton, !subject && styles.disabled]}
@@ -164,7 +165,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
           ) : (
             <>
               <FontAwesome5 name="bolt" size={16} color={colors.white} />
-              <Text style={styles.actionButtonText}>Quick Match</Text>
+              <Text style={styles.actionButtonText}>{t('games.battleMatch.quickMatch')}</Text>
             </>
           )}
         </Pressable>
@@ -179,18 +180,18 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
           ) : (
             <>
               <FontAwesome5 name="plus" size={16} color={gameColors.ink} />
-              <Text style={styles.createButtonText}>Create Room</Text>
+              <Text style={styles.createButtonText}>{t('games.battleMatch.createRoom')}</Text>
             </>
           )}
         </Pressable>
 
-        <Text style={styles.orDivider}>— or join a room a classmate created —</Text>
+        <Text style={styles.orDivider}>{t('games.battleMatch.orJoin')}</Text>
 
         <LabeledInput
-          label="Room Code"
+          label={t('games.battleMatch.roomCode')}
           value={roomCode}
           onChangeText={setRoomCode}
-          placeholder="e.g. UZX4VM"
+          placeholder={t('games.battleMatch.roomCodePlaceholder')}
           autoCapitalize="characters"
         />
 
@@ -204,7 +205,7 @@ export function BattleRoomMatchScreen({ navigation }: Props) {
           ) : (
             <>
               <FontAwesome5 name="door-open" size={16} color={colors.white} />
-              <Text style={styles.actionButtonText}>Join Room</Text>
+              <Text style={styles.actionButtonText}>{t('games.battleMatch.joinRoom')}</Text>
             </>
           )}
         </Pressable>

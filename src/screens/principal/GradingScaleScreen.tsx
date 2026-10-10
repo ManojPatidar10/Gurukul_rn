@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getGradingScale, replaceGradingScale } from '../../api/gradingScale';
@@ -29,6 +30,7 @@ let nextKey = 0;
 const newRowKey = () => `new-${nextKey++}`;
 
 export function GradingScaleScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [rows, setRows] = useState<BandRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,11 +102,11 @@ export function GradingScaleScreen({ navigation }: Props) {
     saveFlow.current = true;
     const bands = gradingBandRowsToRequest(rows);
     Alert.alert(
-      'Save grading scale?',
-      `${describeGradingBands(bands)}\n\nEvery report card is graded with this scale, including report cards already published, so their grades may change.`,
+      t('gradingScale.confirmTitle'),
+      t('gradingScale.confirmBody', { bands: describeGradingBands(bands) }),
       [
-        { text: 'Cancel', style: 'cancel', onPress: endSaveFlow },
-        { text: 'Save', onPress: () => save(bands) },
+        { text: t('common.cancel'), style: 'cancel', onPress: endSaveFlow },
+        { text: t('common.save'), onPress: () => save(bands) },
       ],
       { onDismiss: endSaveFlow }
     );
@@ -112,17 +114,17 @@ export function GradingScaleScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Grading Scale" subtitle="Marks-to-grade bands" onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('gradingScale.title')}
+        subtitle={t('gradingScale.subtitle')}
+        onBack={() => navigation.goBack()}
+      />
       <View style={styles.body}>
-        <Text style={styles.description}>
-          Marks-percentage bands used to compute a letter grade on every grade card and report
-          card. Bands must cover 0-100% with no gaps or overlaps. A percentage on the boundary
-          between two bands gets the higher one.
-        </Text>
+        <Text style={styles.description}>{t('gradingScale.description')}</Text>
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <ErrorNotice message={error} />}
-        {success && <Text style={styles.success}>Grading scale updated.</Text>}
+        {success && <Text style={styles.success}>{t('gradingScale.saved')}</Text>}
 
         {!loading &&
           rows.map((row) => (
@@ -132,7 +134,7 @@ export function GradingScaleScreen({ navigation }: Props) {
                 value={row.minPercentage}
                 onChangeText={(text) => updateRow(row.key, { minPercentage: text })}
                 keyboardType="numeric"
-                placeholder="Min %"
+                placeholder={t('gradingScale.minPlaceholder')}
                 placeholderTextColor={colors.textMuted}
               />
               <Text style={styles.dash}>–</Text>
@@ -141,14 +143,14 @@ export function GradingScaleScreen({ navigation }: Props) {
                 value={row.maxPercentage}
                 onChangeText={(text) => updateRow(row.key, { maxPercentage: text })}
                 keyboardType="numeric"
-                placeholder="Max %"
+                placeholder={t('gradingScale.maxPlaceholder')}
                 placeholderTextColor={colors.textMuted}
               />
               <TextInput
                 style={[styles.input, styles.inputLabel]}
                 value={row.label}
                 onChangeText={(text) => updateRow(row.key, { label: text })}
-                placeholder="Grade"
+                placeholder={t('gradingScale.gradePlaceholder')}
                 maxLength={MAX_GRADE_LABEL_LENGTH}
                 placeholderTextColor={colors.textMuted}
               />
@@ -160,12 +162,12 @@ export function GradingScaleScreen({ navigation }: Props) {
 
         {!loading && (
           <Pressable style={styles.addButton} onPress={addRow}>
-            <Text style={styles.addButtonText}>+ Add band</Text>
+            <Text style={styles.addButtonText}>{t('gradingScale.addBand')}</Text>
           </Pressable>
         )}
 
         {validationError && (rows.length > 0 || !error) && (
-          <Text style={styles.validation}>{gradingBandErrorMessage(validationError)}</Text>
+          <Text style={styles.validation}>{gradingBandErrorMessage(validationError, t)}</Text>
         )}
 
         {!loading && (
@@ -174,7 +176,11 @@ export function GradingScaleScreen({ navigation }: Props) {
             onPress={handleSave}
             disabled={!canSave || saving}
           >
-            {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveButtonText}>Save grading scale</Text>}
+            {saving ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.saveButtonText}>{t('gradingScale.save')}</Text>
+            )}
           </Pressable>
         )}
       </View>

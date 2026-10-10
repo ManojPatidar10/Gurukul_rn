@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import type {
   CreateQuizQuestionRequest,
   QuizQuestionResponse,
@@ -69,9 +71,9 @@ export function draftFromQuestion(q: QuizQuestionResponse): BankDraft {
 }
 
 /** Why Save is still disabled, shown under the button; null once it can be pressed. */
-export function questionSaveHint(d: BankDraft, subjectAndClassChosen: boolean): string | null {
-  if (!subjectAndClassChosen) return 'Pick a subject and a class';
-  if (d.questionType === 'MCQ' && !d.correctOption) return 'Tap the correct answer';
+export function questionSaveHint(d: BankDraft, subjectAndClassChosen: boolean, t: TFunction): string | null {
+  if (!subjectAndClassChosen) return t('questionBank.author.saveHint.pickPlacement');
+  if (d.questionType === 'MCQ' && !d.correctOption) return t('questionBank.author.saveHint.tapCorrect');
   return null;
 }
 
@@ -112,9 +114,7 @@ export function toUpdateQuestionRequest(d: BankDraft): UpdateQuizQuestionRequest
 }
 
 /** The warning on a question card when students have flagged its answer; null when nobody has. */
-export function reportWarning(openReportCount: number | null | undefined): string | null {
+export function reportWarning(openReportCount: number | null | undefined, t: TFunction): string | null {
   if (!openReportCount || openReportCount <= 0) return null;
-  return openReportCount === 1
-    ? '1 student reported a wrong answer'
-    : `${openReportCount} students reported a wrong answer`;
+  return t('questionBank.myQuestions.reportWarning', { count: openReportCount });
 }

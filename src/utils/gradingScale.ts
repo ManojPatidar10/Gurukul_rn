@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import type { GradingBand } from '../api/types';
 
 /** An editable row of the Grading Scale screen - the numbers are still the text the admin typed. */
@@ -103,26 +105,26 @@ export function gradingBandRowsToRequest(rows: GradingBandRow[]): Omit<GradingBa
     .sort((a, b) => b.minPercentage - a.minPercentage);
 }
 
-export function gradingBandErrorMessage(error: GradingBandError): string {
+export function gradingBandErrorMessage(error: GradingBandError, t: TFunction): string {
   switch (error.code) {
     case 'empty':
-      return 'Add at least one grade band.';
+      return t('gradingScale.errors.empty');
     case 'missingLabel':
-      return `Band ${error.band}: enter a grade, e.g. A+.`;
+      return t('gradingScale.errors.missingLabel', { band: error.band });
     case 'labelTooLong':
-      return `Band ${error.band}: a grade can be at most ${error.max} characters.`;
+      return t('gradingScale.errors.labelTooLong', { band: error.band, max: error.max });
     case 'duplicateLabel':
-      return `Grade "${error.label}" is used for more than one band.`;
+      return t('gradingScale.errors.duplicateLabel', { label: error.label });
     case 'badNumber':
-      return `Band ${error.band}: enter the min and max as numbers, e.g. 75 and 90.`;
+      return t('gradingScale.errors.badNumber', { band: error.band });
     case 'outOfRange':
-      return `Band ${error.band}: percentages must be between 0 and 100.`;
+      return t('gradingScale.errors.outOfRange', { band: error.band });
     case 'minAboveMax':
-      return `Band ${error.band}: the min can't be more than the max.`;
+      return t('gradingScale.errors.minAboveMax', { band: error.band });
     case 'overlap':
-      return `Bands "${error.otherLabel}" and "${error.label}" overlap.`;
+      return t('gradingScale.errors.overlap', { label: error.label, otherLabel: error.otherLabel });
     case 'gap':
-      return `No band covers the percentages between ${error.from}% and ${error.to}%. Bands must cover 0-100% with no gaps.`;
+      return t('gradingScale.errors.gap', { from: error.from, to: error.to });
   }
 }
 
