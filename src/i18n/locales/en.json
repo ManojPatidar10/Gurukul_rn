@@ -1287,6 +1287,11 @@
     "savedTo": "Saved to {{path}}",
     "failed": "Could not download the PDF: {{message}}"
   },
+  "reportCardStatus": {
+    "marksMissing_one": "{{count}} mark missing",
+    "marksMissing_other": "{{count}} marks missing",
+    "noTerms": "No assessment in this section has a term yet, so there are no report cards to show. Give each assessment a term first."
+  },
   "schoolLogo": {
     "title": "School Logo",
     "intro": "Your school logo is printed on report-card PDFs. Without one, PDFs show a Gurukul placeholder mark.",

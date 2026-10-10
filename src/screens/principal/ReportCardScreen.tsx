@@ -17,10 +17,9 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { formatOverallGrade, formatOverallPercentage, missingMarksCount } from '../../utils/reportCardDisplay';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ReportCard'>;
-
-const FALLBACK_TERM = 'Term 1';
 
 export function ReportCardScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
@@ -35,6 +34,8 @@ export function ReportCardScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+  // Staff opening a student with nothing published yet: no term is guessed, they type one to preview.
+  const [nothingPublished, setNothingPublished] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const load = (t: string) => {
@@ -79,8 +80,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
     // A student/parent opening their own report card is the common case this fixes: rather than
     // guessing a hardcoded term string that may not match whatever a teacher actually typed at
     // publish time, ask the backend which terms are actually published and default to the latest.
-    // A teacher/admin previewing a student's card can still freely type any term below (including
-    // an unpublished draft), so falling back to a sensible starting guess for them is fine.
+    // A teacher/admin previewing a student's card can type any term below (including an unpublished
+    // draft). With nothing published they get a prompt, not a guessed "Term 1": a section that names
+    // its terms differently would just see an empty card for the wrong term.
     getPublishedTerms(schoolId, student.id)
       .then((terms) => {
         setPublishedTerms(terms);
@@ -90,8 +92,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
         } else if (isSelfView) {
           setError('No report card has been published for your class yet.');
         } else {
-          setTerm(FALLBACK_TERM);
-          load(FALLBACK_TERM);
+          setNothingPublished(true);
         }
       })
       .catch((e) => setError(getErrorMessage(e)));
@@ -99,6 +100,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
     // term chip, so typing a new term doesn't fire a request per keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Shown on the card so a half-filled one doesn't look finished.
+  const missingMarks = missingMarksCount(reportCard?.missingMarksCount);
 
   return (
     <View style={styles.root}>
@@ -136,6 +140,12 @@ export function ReportCardScreen({ route, navigation }: Props) {
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {!loading && error && <ErrorNotice message={error} />}
+        {!loading && !error && !hasLoaded && nothingPublished && (
+          <Text style={styles.empty}>
+            No report card has been published for this student yet. Type a term above and tap View to
+            preview one.
+          </Text>
+        )}
 
         {!loading && !error && hasLoaded && reportCard && (
           <>
@@ -149,13 +159,18 @@ export function ReportCardScreen({ route, navigation }: Props) {
                   variant={reportCard.published ? 'success' : 'neutral'}
                 />
               </View>
+              {missingMarks > 0 && (
+                <View style={styles.missingRow}>
+                  <StatusChip label={t('reportCardStatus.marksMissing', { count: missingMarks })} variant="warning" />
+                </View>
+              )}
               <View style={styles.statRow}>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{reportCard.overallPercentage}%</Text>
+                  <Text style={styles.statValue}>{formatOverallPercentage(reportCard.overallPercentage)}</Text>
                   <Text style={styles.statLabel}>Overall</Text>
                 </View>
                 <View style={styles.statCard}>
-                  <Text style={styles.statValue}>{reportCard.overallGrade}</Text>
+                  <Text style={styles.statValue}>{formatOverallGrade(reportCard.overallGrade)}</Text>
                   <Text style={styles.statLabel}>Grade</Text>
                 </View>
                 <View style={styles.statCard}>
@@ -240,6 +255,7 @@ const styles = StyleSheet.create({
   },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   headerClass: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  missingRow: { flexDirection: 'row', marginBottom: spacing.md },
   statRow: { flexDirection: 'row', gap: spacing.sm },
   statCard: {
     flex: 1,
