@@ -46,7 +46,7 @@ export function SectionDetailScreen({ route, navigation }: Props) {
     },
     {
       title: 'Assessments',
-      description: 'Assignments, quizzes, tests, and exams',
+      description: 'Tests, quizzes and exams for this class',
       onPress: () => navigation.navigate('SectionAssessmentsList', { classSection }),
     },
     {

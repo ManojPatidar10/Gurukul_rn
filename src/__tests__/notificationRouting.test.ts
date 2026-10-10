@@ -1,4 +1,8 @@
+import { getMyChildren } from '../api/parents';
 import { notificationTarget } from '../utils/notificationRouting';
+import { openNotificationTarget } from '../utils/openNotificationTarget';
+
+jest.mock('../api/parents', () => ({ getMyChildren: jest.fn() }));
 
 describe('notificationTarget', () => {
   it('opens the child attendance history for a parent absence alert', () => {
@@ -39,5 +43,70 @@ describe('notificationTarget', () => {
   it('returns null for unknown or missing payloads', () => {
     expect(notificationTarget(undefined, 'PARENT')).toBeNull();
     expect(notificationTarget({ type: 'SOMETHING_NEW' }, 'PARENT')).toBeNull();
+  });
+
+  it("opens the named child's report card for that term for a parent", () => {
+    const published = { type: 'REPORT_CARD_PUBLISHED', sectionId: 'sec1', term: 'Term 1', studentId: 's1' };
+    expect(notificationTarget(published, 'PARENT')).toEqual({ screen: 'ReportCard', studentId: 's1', term: 'Term 1' });
+  });
+
+  it('ignores a report-card alert without a studentId, or for a student', () => {
+    expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', sectionId: 'sec1', term: 'Term 1' }, 'PARENT')).toBeNull();
+    // A student's copy has no studentId; even with one, students have no inbox route here.
+    expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', sectionId: 'sec1', term: 'Term 1' }, 'STUDENT')).toBeNull();
+    expect(
+      notificationTarget({ type: 'REPORT_CARD_PUBLISHED', term: 'Term 1', studentId: 's1' }, 'STUDENT')
+    ).toBeNull();
+  });
+
+  it('drops a report-card term that is not a string', () => {
+    expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', term: 2, studentId: 's1' }, 'PARENT')).toEqual({
+      screen: 'ReportCard',
+      studentId: 's1',
+    });
+    expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', studentId: 's1' }, 'PARENT')).toEqual({
+      screen: 'ReportCard',
+      studentId: 's1',
+    });
+  });
+});
+
+describe('openNotificationTarget', () => {
+  const mockedGetMyChildren = getMyChildren as jest.MockedFunction<typeof getMyChildren>;
+  const children = [{ id: 's1', name: 'Asha', classSectionId: 'sec1' }, { id: 's2', name: 'Ravi', classSectionId: 'sec2' }];
+
+  beforeEach(() => {
+    mockedGetMyChildren.mockReset();
+    mockedGetMyChildren.mockResolvedValue(children as unknown as Awaited<ReturnType<typeof getMyChildren>>);
+  });
+
+  it("opens a linked child's report card at the alert's term", async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'ReportCard', studentId: 's2', term: 'Term 1' }, navigate);
+    expect(mockedGetMyChildren).toHaveBeenCalledWith('school1');
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith('ReportCard', { student: { id: 's2', name: 'Ravi' }, defaultTerm: 'Term 1' });
+  });
+
+  it('opens nothing for a child who is no longer linked', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'ReportCard', studentId: 'gone', term: 'Term 1' }, navigate);
+    await openNotificationTarget('school1', { screen: 'ChildFees', studentId: 'gone' }, navigate);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('still opens fees and attendance with just the child', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'ChildFees', studentId: 's1' }, navigate);
+    await openNotificationTarget('school1', { screen: 'AttendanceHistory', studentId: 's1' }, navigate);
+    expect(navigate).toHaveBeenNthCalledWith(1, 'ChildFees', { student: { id: 's1', name: 'Asha' } });
+    expect(navigate).toHaveBeenNthCalledWith(2, 'AttendanceHistory', { student: { id: 's1', name: 'Asha' } });
+  });
+
+  it('opens screens without a child straight away, without looking up children', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'Announcements' }, navigate);
+    expect(navigate).toHaveBeenCalledWith('Announcements');
+    expect(mockedGetMyChildren).not.toHaveBeenCalled();
   });
 });
