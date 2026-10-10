@@ -749,6 +749,21 @@ export interface SelfMarkAttendanceRequest {
     rooted: boolean;
     appCloned: boolean;
   };
+  /** The server treats a missing platform as Android (older builds don't send it). */
+  platform?: 'android' | 'ios';
+  /** Android: Play Integrity token requested with `integrityNonce`; required when the server enforces it. */
+  integrityToken?: string;
+  integrityNonce?: string;
+}
+
+/** How the server treats Play Integrity on Android self check-in: ignored, logged only, or required. */
+export type IntegrityMode = 'OFF' | 'REPORT' | 'ENFORCE';
+
+/** A single-use nonce for one self check-in; a newer one replaces it. */
+export interface SelfMarkNonce {
+  nonce: string;
+  expiresAt: string;
+  integrityMode: IntegrityMode;
 }
 
 export interface StaffAttendanceRecord {
