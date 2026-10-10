@@ -768,7 +768,8 @@
       "rollNo": "Roll no.",
       "date": "Date",
       "answerKey": "Answer key",
-      "marks": "({{marks}} marks)",
+      "marks_one": "({{count}} mark)",
+      "marks_other": "({{count}} marks)",
       "aiNote": "AI-generated draft: check every answer before use."
     },
     "upload": {

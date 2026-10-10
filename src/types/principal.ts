@@ -178,7 +178,14 @@ export type PrincipalStackParamList = {
   // Undefined = a teacher generating for themselves (from their dashboard tile); set = a principal
   // acting for a teacher from the Teacher Tools hub.
   ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string } | undefined;
-  QuizBankReview: { subjectId: string; subjectName: string; className: string; questions: GeneratedQuizQuestion[]; draftKey?: string };
+  // storedDraft: the stored AI draft the questions came from (its key + savedAt), to record them as saved on it.
+  QuizBankReview: {
+    subjectId: string;
+    subjectName: string;
+    className: string;
+    questions: GeneratedQuizQuestion[];
+    storedDraft?: { key: string; savedAt: string };
+  };
   NewAdmission: { admission?: Admission } | undefined;
   AdmissionsList: undefined;
   AdmissionDetail: { admissionId: string };

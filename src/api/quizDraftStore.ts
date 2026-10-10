@@ -1,6 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { mergeSavedNumbers, parseStoredQuizDraft, type StoredQuizDraft } from '../utils/quizGenerator';
+import {
+  markSavedOnDraft,
+  parseStoredQuizDraft,
+  shouldDiscardStoredDraft,
+  type StoredQuizDraft,
+} from '../utils/quizGenerator';
 
 export type { StoredQuizDraft } from '../utils/quizGenerator';
 
@@ -45,19 +50,27 @@ export async function saveQuizDraft(key: string, draft: StoredQuizDraft): Promis
   }
 }
 
-/** Records question numbers just saved to the question bank, so they show as saved and can't be picked again. */
-export async function markQuizDraftSaved(key: string, numbers: number[]): Promise<void> {
+/**
+ * Records question numbers just saved to the question bank, so they show as saved and can't be
+ * picked again - only on the draft they came from (`savedAt`), never on one generated since.
+ */
+export async function markQuizDraftSaved(key: string, savedAt: string, numbers: number[]): Promise<void> {
   try {
-    const draft = parseStoredQuizDraft(await AsyncStorage.getItem(key));
-    if (!draft) return;
-    await AsyncStorage.setItem(key, JSON.stringify({ ...draft, savedToBank: mergeSavedNumbers(draft.savedToBank, numbers) }));
+    const updated = markSavedOnDraft(parseStoredQuizDraft(await AsyncStorage.getItem(key)), savedAt, numbers);
+    if (!updated) return;
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
   } catch (e) {
     console.warn('[quizDraft] Failed to mark questions as saved', e);
   }
 }
 
-export async function discardQuizDraft(key: string): Promise<void> {
+/**
+ * Removes the stored draft if it is the one on screen (`onScreenSavedAt`, null when that one
+ * couldn't be stored) - a newer one the teacher hasn't seen is kept.
+ */
+export async function discardQuizDraft(key: string, onScreenSavedAt: string | null): Promise<void> {
   try {
+    if (!shouldDiscardStoredDraft(parseStoredQuizDraft(await AsyncStorage.getItem(key)), onScreenSavedAt)) return;
     await AsyncStorage.removeItem(key);
   } catch (e) {
     console.warn('[quizDraft] Failed to discard the draft', e);

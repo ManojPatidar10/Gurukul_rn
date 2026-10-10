@@ -9,10 +9,12 @@ import {
   assignmentKeyOf,
   bankSelectableNumbers,
   effectiveAssignmentKey,
+  markSavedOnDraft,
   mergeSavedNumbers,
   parseStoredQuizDraft,
   questionsForBank,
   quizGenErrorMessage,
+  shouldDiscardStoredDraft,
   shouldRestoreDraft,
   type StoredQuizDraft,
 } from '../utils/quizGenerator';
@@ -167,6 +169,24 @@ describe('draft restore and bank selection', () => {
   });
 });
 
+describe('writes tied to the draft on screen', () => {
+  const older = draft({ savedAt: '2026-10-10T09:30:00.000Z', savedToBank: [1] });
+  const newer = draft({ savedAt: '2026-10-10T09:34:00.000Z' });
+
+  it('marks saved questions only on the draft they came from', () => {
+    expect(markSavedOnDraft(older, older.savedAt, [3, 1])?.savedToBank).toEqual([1, 3]);
+    expect(markSavedOnDraft(newer, older.savedAt, [3])).toBeNull();
+    expect(markSavedOnDraft(null, older.savedAt, [3])).toBeNull();
+  });
+
+  it('discards the draft on screen, or an older one when the one on screen was never stored, never a newer one', () => {
+    expect(shouldDiscardStoredDraft(older, older.savedAt)).toBe(true);
+    expect(shouldDiscardStoredDraft(older, null)).toBe(true);
+    expect(shouldDiscardStoredDraft(null, older.savedAt)).toBe(true);
+    expect(shouldDiscardStoredDraft(newer, older.savedAt)).toBe(false);
+  });
+});
+
 describe('quizDraftStore', () => {
   const key = quizDraftKey('school1', 'owner1', 'teacher1');
 
@@ -180,16 +200,41 @@ describe('quizDraftStore', () => {
     expect(await saveQuizDraft(key, draft())).toBe(true);
     expect(await loadQuizDraft(key)).toEqual(draft());
 
-    await markQuizDraftSaved(key, [1, 3]);
-    await markQuizDraftSaved(key, [3, 5]);
+    const { savedAt } = draft();
+    await markQuizDraftSaved(key, savedAt, [1, 3]);
+    await markQuizDraftSaved(key, savedAt, [3, 5]);
     expect((await loadQuizDraft(key))?.savedToBank).toEqual([1, 3, 5]);
 
-    await discardQuizDraft(key);
+    await discardQuizDraft(key, savedAt);
     expect(await loadQuizDraft(key)).toBeNull();
   });
 
   it('marking saved questions without a stored draft does nothing', async () => {
-    await markQuizDraftSaved(key, [1]);
+    await markQuizDraftSaved(key, draft().savedAt, [1]);
+    expect(await AsyncStorage.getItem(key)).toBeNull();
+  });
+
+  it('a generation that finished while the old draft was being reviewed keeps its own flags and is not discarded', async () => {
+    const d0 = draft({ savedAt: '2026-10-10T09:30:00.000Z' });
+    const d2 = draft({ savedAt: '2026-10-10T09:34:00.000Z' });
+    await saveQuizDraft(key, d0);
+    await saveQuizDraft(key, d2);
+
+    // Questions from D0 saved on the review screen after D2 replaced it.
+    await markQuizDraftSaved(key, d0.savedAt, [1, 3, 5]);
+    expect(await loadQuizDraft(key)).toEqual(d2);
+
+    // "Discard draft" on a screen still showing D0 leaves D2, which the teacher hasn't seen.
+    await discardQuizDraft(key, d0.savedAt);
+    expect(await loadQuizDraft(key)).toEqual(d2);
+
+    await discardQuizDraft(key, d2.savedAt);
+    expect(await loadQuizDraft(key)).toBeNull();
+  });
+
+  it('discarding a draft that could not be stored removes the older one it replaced', async () => {
+    await saveQuizDraft(key, draft());
+    await discardQuizDraft(key, null);
     expect(await AsyncStorage.getItem(key)).toBeNull();
   });
 

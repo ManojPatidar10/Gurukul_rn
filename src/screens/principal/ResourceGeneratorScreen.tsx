@@ -284,7 +284,7 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
     }
   };
 
-  // Removes the draft from the phone; the form keeps what was typed.
+  // Removes the draft from the phone (not a newer one stored since); the form keeps what was typed.
   const confirmDiscard = () => {
     Alert.alert(t('teacherTools.generator.discardConfirmTitle'), t('teacherTools.generator.discardConfirmBody'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -292,7 +292,7 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
         text: t('teacherTools.generator.discard'),
         style: 'destructive',
         onPress: async () => {
-          await discardQuizDraft(draftKey);
+          await discardQuizDraft(draftKey, draftSavedAt);
           setResult(null);
           setDraftSavedAt(null);
           setRestoredAt(null);
@@ -317,13 +317,17 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
       subjectName: result.subjectName,
       className: bankClassName,
       questions: bankQuestions,
-      // Only when the draft on screen is the stored one, so its saved flags are recorded on the right draft.
-      draftKey: draftSavedAt ? draftKey : undefined,
+      // Only when the draft on screen is the stored one; savedAt makes sure the saved flags land on
+      // this draft and not on one a later generation stored under the same key.
+      storedDraft: draftSavedAt ? { key: draftKey, savedAt: draftSavedAt } : undefined,
     });
   };
 
   const subtitle = selfMode ? classSectionLabel || undefined : `${params.teacherName} · ${params.classSectionLabel}`;
   const generateDisabled = generating || !!setupError;
+  // While generating, the draft on screen may be replaced underneath: Review & save and Discard wait
+  // until the generation settles (it stays on screen and shareable).
+  const reviewDisabled = generating || bankQuestions.length === 0;
 
   return (
     <View style={styles.root}>
@@ -484,7 +488,13 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
                   <Text style={styles.sharingText}>{t('teacherTools.generator.sharing')}</Text>
                 </View>
               )}
-              <Pressable onPress={confirmDiscard} hitSlop={8} style={styles.discard} accessibilityRole="button">
+              <Pressable
+                onPress={confirmDiscard}
+                hitSlop={8}
+                style={[styles.discard, generating && styles.generateButtonDisabled]}
+                disabled={generating}
+                accessibilityRole="button"
+              >
                 <Text style={styles.discardText}>{t('teacherTools.generator.discardDraft')}</Text>
               </Pressable>
             </View>
@@ -540,9 +550,9 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
             })}
             {canSaveToBank ? (
               <Pressable
-                style={[styles.generateButton, bankQuestions.length === 0 && styles.generateButtonDisabled]}
+                style={[styles.generateButton, reviewDisabled && styles.generateButtonDisabled]}
                 onPress={openReview}
-                disabled={bankQuestions.length === 0}
+                disabled={reviewDisabled}
               >
                 <Text style={styles.generateButtonText}>
                   {t('teacherTools.bank.reviewAndSave', { count: bankQuestions.length })}

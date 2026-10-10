@@ -70,7 +70,10 @@ export function QuizBankReviewScreen({ route, navigation }: Props) {
         questions: drafts.map(toBankInput),
       });
       showToast(t('teacherTools.bank.saved', { count: saved.length }), 'success');
-      if (route.params.draftKey) await markQuizDraftSaved(route.params.draftKey, drafts.map((d) => d.number)).catch(() => {});
+      const { storedDraft } = route.params;
+      if (storedDraft) {
+        await markQuizDraftSaved(storedDraft.key, storedDraft.savedAt, drafts.map((d) => d.number)).catch(() => {});
+      }
       navigation.goBack();
     } catch (e) {
       showToast(e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e), 'error');

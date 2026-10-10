@@ -768,7 +768,8 @@
       "rollNo": "अनुक्रमांक",
       "date": "दिनांक",
       "answerKey": "उत्तर कुंजी",
-      "marks": "({{marks}} अंक)",
+      "marks_one": "({{count}} अंक)",
+      "marks_other": "({{count}} अंक)",
       "aiNote": "AI-निर्मित ड्राफ्ट: उपयोग से पहले हर उत्तर जांचें।"
     },
     "upload": {

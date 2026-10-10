@@ -82,7 +82,9 @@ export function buildQuizPaperHtml(
   t: TFunction
 ): string {
   const e = escapeHtml;
-  const marks = (value: number) => e(t('teacherTools.paper.marks', { marks: value }));
+  const marks = (value: number) => e(t('teacherTools.paper.marks', { count: value }));
+  // "Q1" / "प्रश्न 1", as on the generator screen.
+  const label = (number: number) => e(t('teacherTools.generator.questionLabel', { number }));
   const typeLabel = t(`teacherTools.generator.assessmentTypes.${paper.assessmentType}`);
 
   const blanks = [t('teacherTools.paper.name'), t('teacherTools.paper.rollNo'), t('teacherTools.paper.date')]
@@ -106,7 +108,7 @@ export function buildQuizPaperHtml(
       const lines = lineCount > 0 ? `<div class="lines">${'<div class="line"></div>'.repeat(lineCount)}</div>` : '';
       return (
         `<div class="question"><div class="q-head">` +
-        `<div class="q-text"><strong>Q${e(q.number)}.</strong> <span class="pre">${e(q.question)}</span></div>` +
+        `<div class="q-text"><strong>${label(q.number)}.</strong> <span class="pre">${e(q.question)}</span></div>` +
         `<div class="q-marks">${marks(q.marks)}</div></div>${options}${lines}</div>`
       );
     })
@@ -118,7 +120,7 @@ export function buildQuizPaperHtml(
         .map((q) => {
           const explanation = q.explanation?.trim() ? `<div class="explanation pre">${e(q.explanation.trim())}</div>` : '';
           return (
-            `<div class="key-item"><div><strong>Q${e(q.number)}.</strong> <span class="pre">${e(answerKeyText(q))}</span></div>` +
+            `<div class="key-item"><div><strong>${label(q.number)}.</strong> <span class="pre">${e(answerKeyText(q))}</span></div>` +
             `${explanation}<div class="key-marks">${marks(q.marks)}</div></div>`
           );
         })

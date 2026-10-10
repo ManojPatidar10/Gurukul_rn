@@ -69,6 +69,30 @@ export function mergeSavedNumbers(existing: number[], added: number[]): number[]
 }
 
 /**
+ * The stored draft with `numbers` recorded as saved to the bank, or null when there is nothing to
+ * write. `savedAt` identifies the draft the questions came from: a generation can finish (even
+ * after Back) and store a new draft under the same key while the old one is still on screen or
+ * being reviewed, and the old draft's question numbers must not be marked on the new one.
+ */
+export function markSavedOnDraft(draft: StoredQuizDraft | null, savedAt: string, numbers: number[]): StoredQuizDraft | null {
+  if (!draft || draft.savedAt !== savedAt) return null;
+  return { ...draft, savedToBank: mergeSavedNumbers(draft.savedToBank, numbers) };
+}
+
+/**
+ * Whether "Discard draft" removes what is stored. Yes when it is the draft on screen
+ * (`onScreenSavedAt`), or when the draft on screen couldn't be stored (null) - then anything stored
+ * is the older draft the teacher already replaced. No when a newer generation stored one the
+ * teacher hasn't seen. Nothing readable stored: removing is harmless.
+ */
+export function shouldDiscardStoredDraft(
+  stored: Pick<StoredQuizDraft, 'savedAt'> | null,
+  onScreenSavedAt: string | null
+): boolean {
+  return stored === null || onScreenSavedAt === null || stored.savedAt === onScreenSavedAt;
+}
+
+/**
  * Whether a stored draft belongs on the screen as it is open now. A teacher generating for
  * themselves always gets it back; a principal opened on one section (`openSectionId`) only sees a
  * draft made for that section - one for another section stays stored, unshown.

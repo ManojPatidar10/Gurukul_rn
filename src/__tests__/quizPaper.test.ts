@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import type { AiQuizGenerationResponse, GeneratedQuizQuestion } from '../api/types';
 import i18n from '../i18n';
 import en from '../i18n/locales/en.json';
+import hi from '../i18n/locales/hi.json';
 import { answerKeyText, answerLineCount, buildQuizPaperHtml, escapeHtml, quizPaperFileName } from '../utils/quizPaper';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -13,6 +14,7 @@ beforeAll(async () => {
   if (!i18n.isInitialized) {
     await i18n.init({ lng: 'en', resources: { en: { translation: en } }, interpolation: { escapeValue: false } });
   }
+  i18n.addResourceBundle('hi', 'translation', hi, true, true);
   await i18n.changeLanguage('en');
 });
 
@@ -125,6 +127,28 @@ describe('buildQuizPaperHtml', () => {
     expect(html).toContain('<span>Roll no.:</span>');
     expect(html).toContain('<span>Date:</span>');
     expect(html).toContain('(2 marks)');
+  });
+
+  it('says "1 mark", not "1 marks", on the questions and in the key', () => {
+    const html = buildQuizPaperHtml(paper([mcq, trueFalse]), { includeAnswerKey: true }, t);
+    expect(count(html, '(1 mark)')).toBe(2);
+    expect(html).not.toContain('(1 marks)');
+    expect(count(html, '(2 marks)')).toBe(2);
+  });
+
+  it("numbers the questions with the app's question label, in the key too", () => {
+    const html = buildQuizPaperHtml(paper([mcq, trueFalse]), { includeAnswerKey: true }, t);
+    expect(count(html, '<strong>Q1.</strong>')).toBe(2);
+    expect(count(html, '<strong>Q2.</strong>')).toBe(2);
+  });
+
+  it('prints the question label and marks in Hindi for a Hindi teacher', () => {
+    const html = buildQuizPaperHtml(paper([mcq, trueFalse]), { includeAnswerKey: true }, i18n.getFixedT('hi'));
+    expect(count(html, '<strong>प्रश्न 1.</strong>')).toBe(2);
+    expect(count(html, '<strong>प्रश्न 2.</strong>')).toBe(2);
+    expect(html).not.toContain('<strong>Q');
+    expect(count(html, '(1 अंक)')).toBe(2);
+    expect(count(html, '(2 अंक)')).toBe(2);
   });
 
   it('has no answer key and no AI note on the question paper only', () => {
