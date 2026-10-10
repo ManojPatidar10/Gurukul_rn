@@ -17,6 +17,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { readSelfMarkLocation, SelfMarkLocationError } from '../../utils/selfMarkLocation';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MarkMyAttendance'>;
 
@@ -104,24 +105,13 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
         return;
       }
 
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      if (position.mocked) {
-        setError('Your phone is using a fake (mock) location. Turn off any fake GPS app and try again.');
-        setStatus('error');
-        return;
-      }
+      const request = await readSelfMarkLocation();
       setStatus('submitting');
-      const saved = await selfMarkAttendance(schoolId, {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy ?? undefined,
-        mocked: position.mocked ?? false,
-        fixTimestamp: position.timestamp,
-      });
+      const saved = await selfMarkAttendance(schoolId, request);
       setRecord(saved);
       setStatus('success');
     } catch (e) {
-      setError(getErrorMessage(e));
+      setError(e instanceof SelfMarkLocationError ? e.message : getErrorMessage(e));
       if (e instanceof ApiError && e.errorCode === ATTENDANCE_SET_BY_ADMIN) {
         setStatus('setByAdmin');
         // Reload the calendar so it shows the admin's entry for today.
