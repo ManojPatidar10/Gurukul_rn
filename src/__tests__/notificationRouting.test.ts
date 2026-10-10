@@ -45,9 +45,20 @@ describe('notificationTarget', () => {
     expect(notificationTarget({ type: 'SOMETHING_NEW' }, 'PARENT')).toBeNull();
   });
 
-  it("opens the named child's report card for that term for a parent", () => {
+  it("opens the named child's report card for that term and class for a parent", () => {
     const published = { type: 'REPORT_CARD_PUBLISHED', sectionId: 'sec1', term: 'Term 1', studentId: 's1' };
-    expect(notificationTarget(published, 'PARENT')).toEqual({ screen: 'ReportCard', studentId: 's1', term: 'Term 1' });
+    expect(notificationTarget(published, 'PARENT')).toEqual({
+      screen: 'ReportCard',
+      studentId: 's1',
+      term: 'Term 1',
+      sectionId: 'sec1',
+    });
+    // An alert without a section still opens the term; the server then picks the class.
+    expect(notificationTarget({ ...published, sectionId: undefined }, 'PARENT')).toEqual({
+      screen: 'ReportCard',
+      studentId: 's1',
+      term: 'Term 1',
+    });
   });
 
   it('ignores a report-card alert without a studentId, or for a student', () => {
@@ -86,6 +97,20 @@ describe('openNotificationTarget', () => {
     expect(mockedGetMyChildren).toHaveBeenCalledWith('school1');
     expect(navigate).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith('ReportCard', { student: { id: 's2', name: 'Ravi' }, defaultTerm: 'Term 1' });
+  });
+
+  it("passes on the alert's section, so the card from that class opens after a promotion", async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget(
+      'school1',
+      { screen: 'ReportCard', studentId: 's2', term: 'Term 1', sectionId: 'sec-6a' },
+      navigate
+    );
+    expect(navigate).toHaveBeenCalledWith('ReportCard', {
+      student: { id: 's2', name: 'Ravi' },
+      defaultTerm: 'Term 1',
+      defaultSectionId: 'sec-6a',
+    });
   });
 
   it('opens nothing for a child who is no longer linked', async () => {

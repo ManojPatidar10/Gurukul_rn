@@ -21,7 +21,11 @@ export async function openNotificationTarget(schoolId: string, target: Notificat
   if (!child) return;
   const student = { id: child.id, name: child.name };
   if (target.screen === 'ReportCard') {
-    navigate('ReportCard', { student, defaultTerm: target.term });
+    navigate('ReportCard', {
+      student,
+      defaultTerm: target.term,
+      ...(target.sectionId ? { defaultSectionId: target.sectionId } : {}),
+    });
   } else {
     navigate(target.screen, { student });
   }

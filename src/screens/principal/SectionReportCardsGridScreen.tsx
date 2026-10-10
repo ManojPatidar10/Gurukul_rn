@@ -17,7 +17,12 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { defaultSectionTerm } from '../../utils/assessmentTerms';
-import { formatOverallGrade, formatOverallPercentage, missingMarksCount } from '../../utils/reportCardDisplay';
+import {
+  formatOverallGrade,
+  formatOverallPercentage,
+  gridSubjectCell,
+  missingMarksCount,
+} from '../../utils/reportCardDisplay';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionReportCardsGrid'>;
 
@@ -62,7 +67,8 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
     [schoolId, classSection.id]
   );
 
-  // Opens on the latest published term, else the first one; further loads are a tap on a term chip.
+  // Opens on the latest published term (by the term's dates, else when it was published), else the
+  // first one; further loads are a tap on a term chip. The chips keep the server's (date) order.
   const loadTerms = useCallback(() => {
     listSectionTerms(schoolId, classSection.id)
       .then((loaded) => {
@@ -219,6 +225,12 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
                     <Text style={styles.nameCell} numberOfLines={1}>
                       {r.studentName}
                     </Text>
+                    {/* Moved to another class since, but with marks here for this term. */}
+                    {r.movedOut === true && (
+                      <Text style={styles.movedChip} numberOfLines={1}>
+                        {t('reportCardDetail.moved')}
+                      </Text>
+                    )}
                     {missingMarksCount(r.missingMarksCount) > 0 && (
                       <Text style={styles.missingChip} numberOfLines={1}>
                         {t('reportCardStatus.marksMissing', { count: missingMarksCount(r.missingMarksCount) })}
@@ -229,7 +241,7 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
                     const subject = r.subjects.find((s) => s.subjectId === col.subjectId);
                     return (
                       <Text key={col.subjectId} style={[styles.cell, { width: SUBJECT_WIDTH }]}>
-                        {subject ? `${subject.marksObtained}/${subject.maxMarks}` : '—'}
+                        {subject ? gridSubjectCell(subject) : '—'}
                       </Text>
                     );
                   })}
@@ -313,6 +325,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: '#FFF3E0',
     color: colors.warning,
+    fontSize: 10.5,
+    fontWeight: '700',
+    overflow: 'hidden',
+  },
+  movedChip: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    paddingHorizontal: spacing.xs + 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceMuted,
+    color: colors.textSecondary,
     fontSize: 10.5,
     fontWeight: '700',
     overflow: 'hidden',

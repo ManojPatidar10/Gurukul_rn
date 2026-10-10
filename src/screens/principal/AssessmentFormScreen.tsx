@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { createAssessment, listSectionTerms, updateAssessment } from '../../api/assessments';
 import type { AssessmentType, TermSummary } from '../../api/types';
@@ -10,6 +11,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useAcademicTerms } from '../../hooks/useAcademicTerms';
 import { useSectionAssignments } from '../../hooks/useSectionAssignments';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
@@ -24,6 +26,7 @@ import {
   type TeacherChoice,
 } from '../../utils/assessmentPermissions';
 import { parseMarks } from '../../utils/assessmentResults';
+import { formTermChoices, termKey } from '../../utils/academicTerms';
 import { canonicalTerm, findExistingTerm } from '../../utils/assessmentTerms';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentForm'>;
@@ -41,6 +44,7 @@ const MAX_DESCRIPTION_LENGTH = 1000;
 const MAX_TERM_LENGTH = 50;
 
 export function AssessmentFormScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { classSection, assessment } = route.params;
@@ -80,6 +84,16 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
       .then(setSectionTerms)
       .catch((e) => setTermsError(getErrorMessage(e)));
   }, [schoolId, classSection.id]);
+  // The school's term list. Once it has a term, the server only accepts listed terms (and an old
+  // assessment's own term on edit), so the term becomes a pick from the list, never typed. Without
+  // one (or from an older server, which has no list) the form works as before.
+  const {
+    terms: listedTerms,
+    configured: termListConfigured,
+    loading: termListLoading,
+    error: termListError,
+    reload: reloadTermList,
+  } = useAcademicTerms(schoolId);
 
   useEffect(loadTerms, [loadTerms]);
 
@@ -154,8 +168,10 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
   const maxMarksValid = parsedMaxMarks !== null && parsedMaxMarks > 0;
 
   const termNames = (sectionTerms ?? []).map((t) => t.term);
-  const savedTerm = canonicalTerm(term, termNames);
+  // From the list, the chip's value is sent as it is: it's already the section's own spelling.
+  const savedTerm = termListConfigured ? term.trim() : canonicalTerm(term, termNames);
   const termMatch = findExistingTerm(term, termNames);
+  const listChoices = termListConfigured ? formTermChoices(listedTerms, sectionTerms ?? [], assessment?.term) : [];
   // A published term is locked: the server refuses moving an assessment into it, and refuses any
   // edit at all to an assessment already in one, so say so up front instead of after Save.
   const isLockedTerm = (candidate: string) => (sectionTerms ?? []).some((t) => t.published && t.term === candidate);
@@ -277,61 +293,122 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         ) : isEdit ? (
           <Text style={styles.termHint}>Can&apos;t go below a mark already entered.</Text>
         ) : null}
-        <LabeledInput
-          label="Term (for report cards)"
-          required
-          value={term}
-          onChangeText={setTerm}
-          maxLength={MAX_TERM_LENGTH}
-          placeholder={
-            sectionTerms && sectionTerms.length > 0 ? 'Pick one below or type a new term, e.g. Term 1' : 'Type a term, e.g. Term 1'
-          }
-        />
-        {sectionTerms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
-        {termsError && (
+        {termListLoading ? (
           <>
-            <ErrorNotice message={termsError} />
-            <Pressable onPress={retryTerms} style={styles.retry}>
-              <Text style={styles.retryText}>Retry</Text>
-            </Pressable>
+            <Text style={styles.label}>Term (for report cards)</Text>
+            <ActivityIndicator style={styles.termsLoading} color={colors.primary} />
           </>
-        )}
-        {sectionTerms && sectionTerms.length > 0 && (
+        ) : termListConfigured ? (
           <>
-            <Text style={styles.termHint}>Terms this section already uses (✓ = report cards published):</Text>
+            <Text style={styles.label}>
+              Term (for report cards)<Text style={styles.required}> *</Text>
+            </Text>
+            {sectionTerms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
+            {termsError && (
+              <>
+                <ErrorNotice message={termsError} />
+                <Pressable onPress={retryTerms} style={styles.retry}>
+                  <Text style={styles.retryText}>Retry</Text>
+                </Pressable>
+              </>
+            )}
             <View style={styles.typeRow}>
-              {sectionTerms.map((t) => {
-                const selected = savedTerm === t.term;
-                const locked = isLockedTerm(t.term);
+              {listChoices.map((choice) => {
+                const selected = !!savedTerm && termKey(savedTerm) === termKey(choice.term);
                 return (
                   <Pressable
-                    key={t.term}
-                    style={[styles.typeChip, selected && styles.typeChipSelected, locked && styles.disabled]}
-                    onPress={() => setTerm(t.term)}
-                    disabled={locked}
+                    key={choice.term}
+                    style={[styles.typeChip, selected && styles.typeChipSelected, choice.published && styles.disabled]}
+                    onPress={() => setTerm(choice.term)}
+                    disabled={choice.published}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected, disabled: choice.published }}
                   >
                     <Text style={[styles.typeChipText, selected && styles.typeChipTextSelected]}>
-                      {t.term}
-                      {t.published ? ' ✓' : ''}
+                      {choice.listed ? choice.listed.name : choice.term}
+                      {choice.published ? ' ✓' : ''}
+                      {choice.listed ? '' : ` ${t('academicTerms.picker.notInList')}`}
                     </Text>
                   </Pressable>
                 );
               })}
             </View>
+            {editLocked ? null : termLocked ? (
+              <Text style={styles.termWarning}>
+                Report cards for &quot;{savedTerm}&quot; are already published, so assessments can&apos;t be added to it.
+              </Text>
+            ) : !savedTerm ? (
+              <Text style={isEdit ? styles.termWarning : styles.termHint}>{t('academicTerms.picker.pickOne')}</Text>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <LabeledInput
+              label="Term (for report cards)"
+              required
+              value={term}
+              onChangeText={setTerm}
+              maxLength={MAX_TERM_LENGTH}
+              placeholder={
+                sectionTerms && sectionTerms.length > 0 ? 'Pick one below or type a new term, e.g. Term 1' : 'Type a term, e.g. Term 1'
+              }
+            />
+            {sectionTerms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
+            {termsError && (
+              <>
+                <ErrorNotice message={termsError} />
+                <Pressable onPress={retryTerms} style={styles.retry}>
+                  <Text style={styles.retryText}>Retry</Text>
+                </Pressable>
+              </>
+            )}
+            {sectionTerms && sectionTerms.length > 0 && (
+              <>
+                <Text style={styles.termHint}>Terms this section already uses (✓ = report cards published):</Text>
+                <View style={styles.typeRow}>
+                  {sectionTerms.map((summary) => {
+                    const selected = savedTerm === summary.term;
+                    const locked = isLockedTerm(summary.term);
+                    return (
+                      <Pressable
+                        key={summary.term}
+                        style={[styles.typeChip, selected && styles.typeChipSelected, locked && styles.disabled]}
+                        onPress={() => setTerm(summary.term)}
+                        disabled={locked}
+                      >
+                        <Text style={[styles.typeChipText, selected && styles.typeChipTextSelected]}>
+                          {summary.term}
+                          {summary.published ? ' ✓' : ''}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+            {editLocked ? null : termLocked ? (
+              <Text style={styles.termWarning}>
+                Report cards for &quot;{savedTerm}&quot; are already published, so assessments can&apos;t be added to it.
+              </Text>
+            ) : termMatch && termMatch !== term.trim() ? (
+              <Text style={styles.termHint}>Will be saved as &quot;{termMatch}&quot;, the spelling this section already uses.</Text>
+            ) : !savedTerm ? (
+              // Otherwise Save is greyed out with no reason given - e.g. editing an old assessment saved without a term.
+              <Text style={isEdit ? styles.termWarning : styles.termHint}>
+                Pick or type a term - an assessment without one is left off every report card.
+              </Text>
+            ) : null}
+            {termListError && (
+              <View style={styles.noticeRow}>
+                <Text style={styles.noticeText}>{termListError}</Text>
+                <Pressable onPress={reloadTermList}>
+                  <Text style={styles.retryText}>{t('common.retry')}</Text>
+                </Pressable>
+              </View>
+            )}
+            {isAdmin && !termListError && <Text style={styles.termHint}>{t('academicTerms.picker.setupHint')}</Text>}
           </>
         )}
-        {editLocked ? null : termLocked ? (
-          <Text style={styles.termWarning}>
-            Report cards for &quot;{savedTerm}&quot; are already published, so assessments can&apos;t be added to it.
-          </Text>
-        ) : termMatch && termMatch !== term.trim() ? (
-          <Text style={styles.termHint}>Will be saved as &quot;{termMatch}&quot;, the spelling this section already uses.</Text>
-        ) : !savedTerm ? (
-          // Otherwise Save is greyed out with no reason given - e.g. editing an old assessment saved without a term.
-          <Text style={isEdit ? styles.termWarning : styles.termHint}>
-            Pick or type a term - an assessment without one is left off every report card.
-          </Text>
-        ) : null}
         <LabeledInput
           label="Description (optional)"
           value={description}
@@ -388,6 +465,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
+  required: { color: colors.error },
   fieldHint: { fontSize: 12, color: colors.warning, marginTop: -spacing.xs, marginBottom: spacing.md },
   noticeRow: {
     flexDirection: 'row',
