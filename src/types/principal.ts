@@ -125,7 +125,7 @@ export type PrincipalStackParamList = {
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
   RegistrationInbox: undefined;
   ParentHome: undefined;
-  ChildDashboard: { student: Pick<Student, 'id' | 'name'> };
+  ChildDashboard: { student: Pick<Student, 'id' | 'name' | 'classSectionId'> };
   ChildFees: { student: Pick<Student, 'id' | 'name'> };
   ReportCard: { student: Pick<Student, 'id' | 'name'>; defaultTerm?: string };
   PublishReportCards: { classSection: ClassSection };
@@ -172,7 +172,6 @@ export type PrincipalStackParamList = {
   EventDetail: { eventId: string };
   EventForm: undefined;
   AcademicHelper: undefined;
-  StudentPerformance: { student: Student };
   TeacherPerformance: { employee: Employee };
   TeacherToolsHub: undefined;
   SectionHub: { section: HubSection };

@@ -237,9 +237,6 @@ export function StudentDetailScreen({ route, navigation }: Props) {
                 <Text style={styles.actionText}>{t('common.edit')}</Text>
               </Pressable>
             )}
-            <Pressable style={styles.actionButton} onPress={() => navigation.navigate('StudentPerformance', { student })}>
-              <Text style={styles.actionText}>{t('performance.title')}</Text>
-            </Pressable>
             {isViewerAdmin && (
               <Pressable style={styles.actionButton} onPress={() => setShowTransfer((v) => !v)}>
                 <Text style={styles.actionText}>

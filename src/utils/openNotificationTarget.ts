@@ -18,7 +18,11 @@ export async function openNotificationTarget(schoolId: string, target: Notificat
     return;
   }
   const child = (await getMyChildren(schoolId)).find((c) => c.id === target.studentId);
-  if (child) {
-    navigate(target.screen, { student: { id: child.id, name: child.name } });
+  if (!child) return;
+  const student = { id: child.id, name: child.name };
+  if (target.screen === 'ReportCard') {
+    navigate('ReportCard', { student, defaultTerm: target.term });
+  } else {
+    navigate(target.screen, { student });
   }
 }
