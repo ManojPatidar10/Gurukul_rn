@@ -99,7 +99,7 @@
       },
       "teacherTools": {
         "title": "Teacher Tools",
-        "description": "AI quiz generator and resource uploads for teachers"
+        "description": "Quiz question bank and AI quiz generator"
       },
       "infraExpenses": {
         "title": "Infra Expenses",
@@ -207,7 +207,7 @@
       },
       "academics": {
         "title": "Academics",
-        "description": "Classes, timetables, bell schedule and grading"
+        "description": "Classes, timetables, grading and quiz tools"
       },
       "reports": {
         "title": "Reports",
@@ -673,14 +673,16 @@
     }
   },
   "teacherTools": {
-    "picker": {
-      "empty": "No teachers yet."
-    },
     "hub": {
       "title": "Teacher Tools",
       "selectTeacher": "Select teacher",
       "selectClass": "Select class-section",
-      "incompleteHint": "Select a teacher and a class-section to continue.",
+      "questionBank": {
+        "title": "Quiz question bank",
+        "description": "Add quiz questions for Gurukul Arena and see the ones you wrote"
+      },
+      "incompleteHint": "Select a class-section, then a teacher, to generate a quiz.",
+      "noTeachers": "No subject teachers are assigned to this class-section yet. Assign them under Academics → Classes.",
       "generate": {
         "title": "Generate Resource (AI)",
         "description": "Create a quiz or test draft from a syllabus"
@@ -787,6 +789,7 @@
       "correctOption": "Correct option",
       "numericAnswer": "Answer (number)",
       "shortWordAnswer": "Answer (one or two words)",
+      "explanation": "Explanation (shown to students after they answer)",
       "types": {
         "MCQ": "Multiple choice",
         "NUMERIC": "Number",
@@ -811,7 +814,8 @@
         "correctOption": "Choose the correct option.",
         "numericAnswer": "Enter a plain number, with no units.",
         "shortWordAnswer": "Enter a one- or two-word answer.",
-        "answerTooLong": "The answer is too long."
+        "answerTooLong": "The answer is too long.",
+        "explanationTooLong": "The explanation is too long (max 1000 characters)."
       }
     }
   },
@@ -1006,7 +1010,18 @@
     "reportCard": "Report Card",
     "idCard": "ID Card",
     "timetable": "Timetable",
-    "schoolBus": "School bus"
+    "schoolBus": "School bus",
+    "upcoming": {
+      "title": "Upcoming assessments",
+      "empty": "No upcoming tests or exams.",
+      "more": "+{{count}} more",
+      "types": {
+        "ASSIGNMENT": "Assignment",
+        "QUIZ": "Quiz",
+        "TEST": "Test",
+        "EXAM": "Exam"
+      }
+    }
   },
   "myFees": {
     "title": "My Fees",
@@ -1409,7 +1424,7 @@
     },
     "prompt": {
       "askTitle": "Stay in the loop",
-      "askBody": "Get notified about messages, homework and battles.",
+      "askBody": "Get notified about messages, report cards and battles.",
       "allow": "Allow notifications",
       "offTitle": "Notifications are off",
       "offBody": "You'll miss messages and battle invites.",
