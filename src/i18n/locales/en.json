@@ -220,6 +220,10 @@
       "schoolBus": {
         "title": "School bus",
         "description": "Where your bus is right now"
+      },
+      "greetings": {
+        "title": "Greetings",
+        "description": "Birthday wishes, festivals and events"
       }
     },
     "adminCopy": {
@@ -331,7 +335,8 @@
         "contactPhone": "Enter a valid 10-digit contact phone number.",
         "bankAccount": "Bank account number must be 9-18 digits.",
         "contactEmail": "Enter a valid email address."
-      }
+      },
+      "dob": "Date of birth (for birthday wishes)"
     },
     "picker": {
       "empty": "No employees yet.",
@@ -1635,6 +1640,72 @@
       "dropped": "{{name}} was dropped home at {{time}}.",
       "invalid": "This tracking link is not valid.",
       "offline": "No connection - retrying…"
+    }
+  },
+  "greetings": {
+    "title": "Greetings",
+    "tabs": {
+      "upcoming": "Upcoming",
+      "birthdays": "Birthdays",
+      "sent": "Sent"
+    },
+    "new": "New greeting",
+    "appOnlyHint": "Festival and event greetings go out as an app notification at about 8 AM on the chosen day, and stay in everyone's in-app alerts.",
+    "pickTitle": "Choose a greeting",
+    "custom": "Write your own",
+    "events": "Upcoming school events",
+    "festivals": "Festivals and national days",
+    "alreadyScheduled": "already scheduled",
+    "newTitle": "New greeting",
+    "form": {
+      "title": "Title",
+      "message": "Message",
+      "date": "Send on",
+      "pickDate": "Pick the date",
+      "audience": "Send to",
+      "checkDate": "Festival dates change every year - please check the date before scheduling.",
+      "gradeHint": "Goes to every section of {{name}}."
+    },
+    "audience": {
+      "EVERYONE": "Everyone",
+      "FAMILIES": "All families",
+      "STAFF": "All staff",
+      "GRADE": "A class",
+      "SECTION": "A section",
+      "GRADE_named": "{{name}} (all sections)",
+      "SECTION_named": "{{name}}"
+    },
+    "status": {
+      "SCHEDULED": "Scheduled",
+      "SENT": "Sent",
+      "CANCELLED": "Cancelled",
+      "MISSED": "Missed"
+    },
+    "sentTo": "sent to {{count}}",
+    "schedule": "Schedule",
+    "scheduled": "Greeting scheduled",
+    "sendTest": "Send test to me",
+    "testSent": "Test sent to your phone",
+    "sendNow": "Send now",
+    "sendNowBody": "Send this greeting to {{audience}} right now?",
+    "sentToast": "Greeting sent",
+    "cancel": "Cancel greeting",
+    "cancelBody": "This greeting won't be sent.",
+    "cancelled": "Greeting cancelled",
+    "noneUpcoming": "No greetings scheduled. Tap “New greeting” to add one.",
+    "noneSent": "No greetings sent yet.",
+    "birthdays": {
+      "enabled": "Birthday wishes",
+      "enabledHint": "Every morning at 8 AM, wish students and staff on their birthday (app notification).",
+      "whatsapp": "Also on WhatsApp",
+      "whatsappHint": "Students' wishes go to the parents' WhatsApp; staff get theirs on their own number.",
+      "next7": "Next 7 days",
+      "none": "No birthdays in the next 7 days.",
+      "today": "Today",
+      "student": "Student",
+      "staff": "Staff",
+      "noPhone": "no phone number",
+      "staffHint": "Staff birthdays appear once their date of birth is added under Staff."
     }
   }
 }
