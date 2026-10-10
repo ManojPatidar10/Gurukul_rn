@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { StaffAttendanceEntry, StudentResult } from '../api/types';
 import { endSessionOnServer } from '../push/pushLogout';
 import { clearPushRegistration, getLastExpoPushToken, updatePushStatus } from '../push/pushStatus';
-import { buildResultsPayload } from '../utils/assessmentResults';
+import { buildResultsPayload, type ResultRowState } from '../utils/assessmentResults';
 import { changedStaffAttendanceRecords } from '../utils/staffAttendance';
 
 jest.mock('expo-notifications', () => ({}));
@@ -15,11 +15,15 @@ function student(id: string, saved: Partial<StudentResult> = {}): StudentResult 
   return { studentId: id, studentName: `Student ${id}`, rollNumber: id, marksObtained: null, absent: false, remarks: null, ...saved };
 }
 
+function row(marksText: string, absent = false, remarksText = ''): ResultRowState {
+  return { marksText, absent, remarksText };
+}
+
 describe('buildResultsPayload', () => {
   it('leaves out blank rows that were never saved', () => {
     const { results, invalid } = buildResultsPayload(
       [student('1'), student('2'), student('3')],
-      { '1': { marksText: '42', absent: false }, '2': { marksText: '  ', absent: false }, '3': { marksText: '', absent: true } },
+      { '1': row('42'), '2': row('  '), '3': row('', true) },
       50
     );
     expect(invalid).toEqual([]);
@@ -29,39 +33,54 @@ describe('buildResultsPayload', () => {
     ]);
   });
 
-  it('still sends a cleared row that had a saved mark, so the mark can be undone', () => {
+  it('still sends a cleared row that had a saved mark, absence or remark, so it can be undone', () => {
     const { results } = buildResultsPayload(
-      [student('1', { marksObtained: 30 }), student('2', { absent: true })],
-      { '1': { marksText: '', absent: false }, '2': { marksText: '', absent: false } },
+      [student('1', { marksObtained: 30 }), student('2', { absent: true }), student('3', { remarks: 'Late' })],
+      { '1': row(''), '2': row(''), '3': row('') },
       50
     );
     expect(results).toEqual([
       { studentId: '1', absent: false },
       { studentId: '2', absent: false },
+      { studentId: '3', absent: false },
     ]);
   });
 
-  it('keeps saved remarks, which the backend would otherwise overwrite', () => {
+  it('sends the remark typed on the row, trimmed, since the backend replaces the stored one', () => {
     const { results } = buildResultsPayload(
       [student('1', { marksObtained: 30, remarks: 'Improving' })],
-      { '1': { marksText: '35', absent: false } },
+      { '1': row('35', false, '  Much improved  ') },
       50
     );
-    expect(results).toEqual([{ studentId: '1', absent: false, marksObtained: 35, remarks: 'Improving' }]);
+    expect(results).toEqual([{ studentId: '1', absent: false, marksObtained: 35, remarks: 'Much improved' }]);
   });
 
-  it('flags marks that are not a number or are out of range', () => {
+  it('sends a remark-only row, and an absent row with its remark', () => {
+    const { results } = buildResultsPayload(
+      [student('1'), student('2')],
+      { '1': row('', false, 'Did not submit'), '2': row('12', true, 'Medical leave') },
+      50
+    );
+    expect(results).toEqual([
+      { studentId: '1', absent: false, remarks: 'Did not submit' },
+      { studentId: '2', absent: true, remarks: 'Medical leave' },
+    ]);
+  });
+
+  it('flags marks that are not a strict number from 0 to max marks', () => {
     const { invalid } = buildResultsPayload(
-      [student('1'), student('2'), student('3'), student('4')],
+      [student('1'), student('2'), student('3'), student('4'), student('5'), student('6')],
       {
-        '1': { marksText: '4o', absent: false },
-        '2': { marksText: '-1', absent: false },
-        '3': { marksText: '51', absent: false },
-        '4': { marksText: '50', absent: false },
+        '1': row('4o'),
+        '2': row('-1'),
+        '3': row('51'),
+        '4': row('50'),
+        '5': row('1e1'),
+        '6': row('12.345'),
       },
       50
     );
-    expect(invalid.map((s) => s.studentId)).toEqual(['1', '2', '3']);
+    expect(invalid.map((s) => s.studentId)).toEqual(['1', '2', '3', '5', '6']);
   });
 });
 

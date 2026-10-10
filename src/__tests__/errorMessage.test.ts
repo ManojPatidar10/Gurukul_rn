@@ -45,6 +45,12 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(new TypeError('Network request failed'))).toBe(en.errors.offline);
   });
 
+  it('explains a used-up hourly AI quota by its error code', () => {
+    expect(getErrorMessage(new ApiError('Request failed with status 429', 429, 'AI_RATE_LIMITED'))).toBe(
+      en.errors.codes.AI_RATE_LIMITED
+    );
+  });
+
   it('explains a bare permission refusal', () => {
     expect(getErrorMessage(new ApiError('Forbidden', 403))).toBe(en.errors.forbidden);
   });
