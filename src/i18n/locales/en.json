@@ -220,6 +220,10 @@
       "schoolBus": {
         "title": "School bus",
         "description": "Where your bus is right now"
+      },
+      "holidays": {
+        "title": "Holidays & festivals",
+        "description": "School holidays and festival greetings"
       }
     },
     "adminCopy": {
@@ -1637,5 +1641,34 @@
       "invalid": "This tracking link is not valid.",
       "offline": "No connection - retrying…"
     }
+  },
+  "holidays": {
+    "title": "Holidays & festivals",
+    "hint": "Festivals with the greeting on are greeted automatically at about 8 AM on their day (app notification to everyone). National days and festivals are added for you; add your school's own holidays too.",
+    "add": "Add holiday or festival",
+    "edit": "Edit",
+    "newTitle": "New holiday or festival",
+    "kind": {
+      "FESTIVAL": "Festival",
+      "HOLIDAY": "Holiday"
+    },
+    "form": {
+      "name": "Name",
+      "date": "Date",
+      "kind": "Type",
+      "greeting": "Send a greeting on this day",
+      "greetingTitle": "Greeting title",
+      "greetingMessage": "Greeting message",
+      "textHint": "Leave the text as it is, or change it for your school."
+    },
+    "greetingOn": "Greeting on",
+    "greetingOff": "No greeting",
+    "builtIn": "national list",
+    "deleteTitle": "Remove this?",
+    "deleteBody": "{{name}} will be removed from the list and won't be greeted.",
+    "remove": "Remove",
+    "saved": "Saved",
+    "empty": "Nothing in the next 12 months.",
+    "dateCheck": "Festival dates follow the official government list - please check them for your area."
   }
 }

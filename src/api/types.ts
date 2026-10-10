@@ -1998,3 +1998,30 @@ export interface LocationFix {
   accuracy?: number | null;
   at: string;
 }
+
+// ---------------------------------------------------------------- holidays & festivals
+
+export type HolidayKind = 'FESTIVAL' | 'HOLIDAY';
+
+export interface HolidayRequest {
+  name: string;
+  date: string;
+  kind: HolidayKind;
+  greetingEnabled?: boolean;
+  /** Blank: the ready-written / default text. */
+  greetingTitle?: string;
+  greetingMessage?: string;
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  date: string;
+  kind: HolidayKind;
+  /** Set on national days / festivals pre-filled from the built-in list. */
+  festivalKey: string | null;
+  greetingEnabled: boolean;
+  /** What will be sent. */
+  greetingTitle: string;
+  greetingMessage: string;
+}

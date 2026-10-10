@@ -42,6 +42,7 @@ const SECTIONS: Record<HubSection, HubItem[]> = {
     { key: 'timetableEditor', accentKey: 'timetableEditor', icon: 'table', copyKey: 'dashboard.features.timetableEditor', navigate: (n) => n.navigate('TimetableEditor') },
     { key: 'bellSchedule', accentKey: 'bellSchedule', icon: 'bell', copyKey: 'dashboard.features.bellSchedule', navigate: (n) => n.navigate('PeriodSetup') },
     { key: 'gradingScale', accentKey: 'gradingScale', icon: 'sliders-h', copyKey: 'dashboard.features.gradingScale', navigate: (n) => n.navigate('GradingScale') },
+    { key: 'holidays', accentKey: 'holidays', icon: 'calendar-day', copyKey: 'dashboard.features.holidays', navigate: (n) => n.navigate('Holidays') },
   ],
   reports: [
     { key: 'attendanceExport', accentKey: 'attendanceExport', icon: 'file-excel', copyKey: 'dashboard.features.attendanceExport', navigate: (n) => n.navigate('AttendanceExport') },
