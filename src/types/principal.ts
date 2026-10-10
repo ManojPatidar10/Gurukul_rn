@@ -165,6 +165,8 @@ export type PrincipalStackParamList = {
   // Undefined = add a new question; questionId = edit that saved question.
   QuestionAuthor: { questionId?: string } | undefined;
   MyQuestions: undefined;
+  QuizResults: { classSection: ClassSection };
+  QuestionStats: { subjectId: string; subjectName?: string; className: string; classSection?: ClassSection };
   BattleRoomMatch: undefined;
   BattleRoom: { roomId: string };
   PracticeStart: undefined;
