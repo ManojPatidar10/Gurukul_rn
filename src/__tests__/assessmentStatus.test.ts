@@ -1,7 +1,7 @@
 import { toIsoDate } from '../components/DatePickerField';
 import hi from '../i18n/locales/hi.json';
+import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 import { assessmentStatus, localToday } from '../utils/assessmentStatus';
-import { fill, tEn, tHi } from './i18nFixture';
 
 const TODAY = '2026-10-10';
 

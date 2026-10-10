@@ -1,7 +1,7 @@
 import type { QuizOption, QuizReviewItem } from '../api/types';
 import hi from '../i18n/locales/hi.json';
+import { tEn, tHi } from '../testUtils/i18nFixture';
 import { answerKeyChanged, reviewOptionMark } from '../utils/quizReview';
-import { tEn, tHi } from './i18nFixture';
 
 type Marks = Pick<QuizReviewItem, 'correctOption' | 'selectedOption' | 'correct'>;
 

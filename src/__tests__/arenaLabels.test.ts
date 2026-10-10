@@ -1,6 +1,7 @@
 import { ApiError, NetworkError, SessionExpiredError } from '../api/client';
 import type { ChallengeSummaryResponse } from '../api/types';
 import hi from '../i18n/locales/hi.json';
+import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 import {
   battleResultTitle,
   challengeEndsIn,
@@ -11,7 +12,6 @@ import {
   isBattleTie,
   isChallengeClosedError,
 } from '../utils/arenaLabels';
-import { fill, tEn, tHi } from './i18nFixture';
 
 jest.mock('../api/authStorage', () => ({ setStoredSession: jest.fn(() => Promise.resolve()) }));
 

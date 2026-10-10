@@ -6,8 +6,9 @@ import hi from '../i18n/locales/hi.json';
 /**
  * Real `t` functions over the app's own locale files, for testing helpers that take `t`. Set up like
  * src/i18n/index.ts: English fallback, and no HTML escaping - without escapeValue: false the quotes
- * in `Bands "B" and "A" overlap.` would come out as &quot;. Not a test file itself: jest-expo only
- * runs files whose names end in test or spec.
+ * in `Bands "B" and "A" overlap.` would come out as &quot;. It lives here rather than in
+ * src/__tests__ because jest runs every file in a __tests__ folder as a test, and a file with no
+ * tests in it fails the run.
  */
 function fixedT(lng: 'en' | 'hi'): TFunction {
   const instance = createInstance();

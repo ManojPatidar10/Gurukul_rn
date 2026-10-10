@@ -1,5 +1,6 @@
 import type { QuizQuestionResponse, TeacherSubjectAssignment } from '../api/types';
 import hi from '../i18n/locales/hi.json';
+import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 import {
   draftFromQuestion,
   emptyQuestionDraft,
@@ -11,7 +12,6 @@ import {
   toUpdateQuestionRequest,
 } from '../utils/questionAuthor';
 import { validateBankDraft } from '../utils/quizBank';
-import { fill, tEn, tHi } from './i18nFixture';
 
 function assignment(subjectId: string, subjectName: string, className: string, section = 'A'): TeacherSubjectAssignment {
   return {

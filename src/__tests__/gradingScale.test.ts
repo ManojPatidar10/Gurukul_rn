@@ -7,7 +7,7 @@ import {
   type GradingBandRow,
 } from '../utils/gradingScale';
 import hi from '../i18n/locales/hi.json';
-import { fill, tEn, tHi } from './i18nFixture';
+import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 
 const band = (min: string, max: string, label: string): GradingBandRow => ({
   minPercentage: min,

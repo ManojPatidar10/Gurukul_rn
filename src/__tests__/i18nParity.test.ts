@@ -1,10 +1,13 @@
-// Reads the app's source files, so it needs Node's types (the app's tsconfig only loads jest's).
-/// <reference types="node" />
-import fs from 'fs';
-import path from 'path';
-
 import en from '../i18n/locales/en.json';
 import hi from '../i18n/locales/hi.json';
+
+// Reads the app's source files with Node's fs. The two calls are typed here rather than through
+// @types/node, which would put Node globals like Buffer into the type check for all the app code.
+declare const __dirname: string;
+const fs = jest.requireActual<{
+  readdirSync(dir: string, options: { withFileTypes: true }): { name: string; isDirectory(): boolean }[];
+  readFileSync(file: string, encoding: 'utf8'): string;
+}>('fs');
 
 /**
  * Keeps en.json and hi.json in step: the same keys, the same {{variables}}, complete plural pairs,
@@ -74,19 +77,20 @@ describe('locale parity (en.json / hi.json)', () => {
   });
 
   it('has every key the app asks for by name', () => {
-    const SRC = path.join(__dirname, '..');
+    // Paths relative to src/, joined with '/' (which fs accepts on Windows too).
+    const SRC = `${__dirname}/..`;
     const files: string[] = [];
     const walk = (dir: string) => {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, entry.name);
+      for (const entry of fs.readdirSync(`${SRC}/${dir}`, { withFileTypes: true })) {
+        const file = dir ? `${dir}/${entry.name}` : entry.name;
         if (entry.isDirectory()) {
-          if (entry.name !== '__tests__') walk(full);
+          if (entry.name !== '__tests__' && entry.name !== 'testUtils') walk(file);
         } else if (/\.tsx?$/.test(entry.name)) {
-          files.push(full);
+          files.push(file);
         }
       }
     };
-    walk(SRC);
+    walk('');
 
     // t('a.b') / t("a.b") calls, plus any quoted key in this task's namespaces - those include the
     // enum-to-key maps (Record<Union, string>), which hold keys rather than call t with them.
@@ -96,9 +100,9 @@ describe('locale parity (en.json / hi.json)', () => {
 
     const used = new Map<string, string>();
     for (const file of files) {
-      const text = fs.readFileSync(file, 'utf8');
+      const text = fs.readFileSync(`${SRC}/${file}`, 'utf8');
       for (const regex of [T_CALL, NAMESPACED]) {
-        for (const match of text.matchAll(regex)) used.set(match[2], path.relative(SRC, file));
+        for (const match of text.matchAll(regex)) used.set(match[2], file);
       }
     }
     expect(used.size).toBeGreaterThan(100);
