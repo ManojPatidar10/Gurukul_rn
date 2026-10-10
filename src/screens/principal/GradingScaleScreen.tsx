@@ -1,22 +1,28 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getGradingScale, replaceGradingScale } from '../../api/gradingScale';
+import type { GradingBand } from '../../api/types';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import {
+  describeGradingBands,
+  gradingBandErrorMessage,
+  gradingBandRowsToRequest,
+  MAX_GRADE_LABEL_LENGTH,
+  validateGradingBands,
+  type GradingBandRow,
+} from '../../utils/gradingScale';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'GradingScale'>;
 
-interface BandRow {
+interface BandRow extends GradingBandRow {
   key: string;
-  minPercentage: string;
-  maxPercentage: string;
-  label: string;
 }
 
 let nextKey = 0;
@@ -59,25 +65,49 @@ export function GradingScaleScreen({ navigation }: Props) {
     setRows((prev) => [...prev, { key: newRowKey(), minPercentage: '', maxPercentage: '', label: '' }]);
   };
 
-  const canSave =
-    rows.length > 0 &&
-    rows.every((r) => r.label.trim() && r.minPercentage.trim() && r.maxPercentage.trim() && !Number.isNaN(Number(r.minPercentage)) && !Number.isNaN(Number(r.maxPercentage)));
+  // Same checks as the server (0-100, min <= max, no gaps or overlaps, unique short labels), so the
+  // problem shows here rather than as a failed save.
+  const validationError = loading ? null : validateGradingBands(rows);
+  const canSave = !loading && validationError === null;
 
-  const handleSave = async () => {
+  // `saving` only disables Save after the next render, so a quick double tap could stack two
+  // confirmations and run two saves at once. This is set on the tap itself and held until the
+  // confirmation is cancelled or the save finishes.
+  const saveFlow = useRef(false);
+  const endSaveFlow = () => {
+    saveFlow.current = false;
+  };
+
+  const save = async (bands: Omit<GradingBand, 'id'>[]) => {
     setSaving(true);
     setError(null);
     setSuccess(false);
     try {
-      const bands = rows
-        .map((r) => ({ minPercentage: Number(r.minPercentage), maxPercentage: Number(r.maxPercentage), label: r.label.trim() }))
-        .sort((a, b) => b.minPercentage - a.minPercentage);
       await replaceGradingScale(schoolId, bands);
       setSuccess(true);
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
       setSaving(false);
+      endSaveFlow();
     }
+  };
+
+  // Grades are worked out live from this scale, so saving regrades every report card - including
+  // published ones families have already seen. Confirm first.
+  const handleSave = () => {
+    if (saveFlow.current) return;
+    saveFlow.current = true;
+    const bands = gradingBandRowsToRequest(rows);
+    Alert.alert(
+      'Save grading scale?',
+      `${describeGradingBands(bands)}\n\nEvery report card is graded with this scale, including report cards already published, so their grades may change.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: endSaveFlow },
+        { text: 'Save', onPress: () => save(bands) },
+      ],
+      { onDismiss: endSaveFlow }
+    );
   };
 
   return (
@@ -86,8 +116,8 @@ export function GradingScaleScreen({ navigation }: Props) {
       <View style={styles.body}>
         <Text style={styles.description}>
           Marks-percentage bands used to compute a letter grade on every grade card and report
-          card. Bands should cover 0-100% without gaps; whichever band a percentage falls into
-          (by its minimum) wins.
+          card. Bands must cover 0-100% with no gaps or overlaps. A percentage on the boundary
+          between two bands gets the higher one.
         </Text>
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
@@ -119,6 +149,7 @@ export function GradingScaleScreen({ navigation }: Props) {
                 value={row.label}
                 onChangeText={(text) => updateRow(row.key, { label: text })}
                 placeholder="Grade"
+                maxLength={MAX_GRADE_LABEL_LENGTH}
                 placeholderTextColor={colors.textMuted}
               />
               <Pressable style={styles.removeButton} onPress={() => removeRow(row.key)}>
@@ -131,6 +162,10 @@ export function GradingScaleScreen({ navigation }: Props) {
           <Pressable style={styles.addButton} onPress={addRow}>
             <Text style={styles.addButtonText}>+ Add band</Text>
           </Pressable>
+        )}
+
+        {validationError && (rows.length > 0 || !error) && (
+          <Text style={styles.validation}>{gradingBandErrorMessage(validationError)}</Text>
         )}
 
         {!loading && (
@@ -154,6 +189,7 @@ const styles = StyleSheet.create({
   loading: { marginTop: spacing.xl },
   error: { color: colors.error, marginBottom: spacing.md },
   success: { color: colors.success, marginBottom: spacing.md, fontWeight: '600' },
+  validation: { color: colors.warning, marginBottom: spacing.md, fontSize: 13, lineHeight: 18 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

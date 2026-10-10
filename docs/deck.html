@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Gurukul Pitch Deck</title>
+<meta name="description" content="The Smart Gurukul pitch deck: one app for principals, teachers, students and parents.">
+<meta name="robots" content="noindex, follow">
+<meta property="og:title" content="Smart Gurukul Pitch Deck">
+<meta property="og:description" content="One app to run an Indian school.">
+<meta property="og:image" content="https://smartgurukul.org/assets/og-image.png">
+<link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Domine:wght@400..700&family=Nunito+Sans:wght@400;700&display=swap">
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #2A2250; font-family: 'Nunito Sans', Arial, sans-serif; }
+.bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 16px; background: #1B1535; color: #F8F6F1; font-size: 15px; }
+.bar a { color: #1B1535; background: #F5A70A; font-weight: 700; text-decoration: none; padding: 9px 14px; border-radius: 10px; white-space: nowrap; }
+.bar a.ghost { background: transparent; color: #C4B5FD; padding: 9px 4px; }
+.deck { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+.slide { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.canvas { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+.canvas section { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+/* Slides paint in source order: flow children must stack above an earlier pinned backdrop. */
+.canvas section > * { position: relative; }
+.canvas h1, .canvas h2, .canvas h3, .canvas p, .canvas ul, .canvas ol { margin: 0; }
+.canvas table { border-collapse: collapse; width: 100%; }
+.canvas th, .canvas td { padding: 18px 24px; text-align: left; }
+@page { size: 1920px 1080px; margin: 0; }
+@media print {
+  body { background: none; }
+  .bar { display: none; }
+  .deck { max-width: none; padding: 0; gap: 0; display: block; }
+  .slide { width: 1920px; height: 1080px; aspect-ratio: auto; border-radius: 0; box-shadow: none; break-after: page; }
+  .canvas { transform: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="bar"><span>Smart Gurukul · Pitch deck</span><span><a class="ghost" href="./">smartgurukul.org</a> <a href="assets/deck/Smart-Gurukul-Pitch-Deck.pdf" download>Download PDF</a></span></div>
+<main class="deck">
+<div class="slide"><div class="canvas"><section id="cover" data-transition="fade" style="background:#1B1535; color:#F8F6F1; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; justify-content:center; gap:40px">
+  <div style="position:absolute; left:1060px; top:0px; width:860px; height:1080px; background:radial-gradient(circle at 60% 45%, #6D28D9 0%, #3B2A78 35%, #1B1535 75%)"></div>
+  <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#C4B5FD">Smart Gurukul</p>
+  <h1 style="font-family:'Domine', Georgia, serif; font-size:120px; font-weight:700; line-height:1.1; color:#F8F6F1; width:1300px">One app to run an Indian school</h1>
+  <p style="font-size:36px; line-height:1.4; color:#D6D0EA; width:1100px">Attendance, fees, payroll, exams and parent communication, for the principal, teachers, students and parents.</p>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#B7AED6">Manoj · founders@smartgurukul.org · smartgurukul.org</p>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="team" data-transition="fade" style="background:#F8F6F1; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">Team</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; line-height:1.15; color:#1B1535">Two IIT BHU engineers</h2>
+  </div>
+  <div style="display:flex; gap:32px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:48px">
+      <img src="assets/deck/manoj.jpg" alt="Manoj Patidar" data-crop="2.2 50% 30%" style="width:160px; height:160px; object-fit:cover; border-radius:50%">
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Manoj Patidar</h3>
+      <p style="font-size:28px; font-weight:700; color:#6D28D9">Co-founder</p>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">IIT BHU, class of 2025. Deutsche Bank, Pune.</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:48px">
+      <img src="assets/deck/yash.jpg" alt="Yash Meena" data-crop="6 52% 40%" style="width:160px; height:160px; object-fit:cover; border-radius:50%">
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Yash Meena</h3>
+      <p style="font-size:28px; font-weight:700; color:#6D28D9">Co-founder</p>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">IIT BHU, class of 2024. Uber, Bangalore.</p>
+    </div>
+  </div>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="problem" data-transition="fade" style="background:#F8F6F1; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">Problem</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:64px; font-weight:700; line-height:1.15; color:#1B1535; width:1500px">Most schools still run on paper registers, spreadsheets and WhatsApp</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">No single source of truth</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Attendance and fee dues are scattered across registers and spreadsheets.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">Report cards made by hand</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Assembled every term from marksheets kept by each teacher.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">Payroll is manual</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Salaries worked out by hand every month, with errors that are hard to trace.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">Parent communication leaves no trail</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Phone calls and unofficial WhatsApp groups, with nothing on record.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B6680">Existing school ERPs cover records and fees, but are weak on real-time communication and need purchased hardware for attendance.</p>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="solution" data-transition="fade" style="background:#F8F6F1; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">Solution</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:64px; font-weight:700; line-height:1.15; color:#1B1535; width:1500px">One app and one login for everyone in the school</h2>
+  </div>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Principal</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Students and staff, fees, payroll, report cards, approvals and a full activity log.</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Teacher</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">GPS check-in, class attendance, marks entry and messages to parents.</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/><path d="M22 10v6"/></svg>
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Student</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Attendance, marks and report card, plus quizzes, XP and House Wars.</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Parent</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Their child's attendance, fees and report card, and a direct line to teachers.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B6680">English and Hindi · Android and iOS · every school's data kept separate</p>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="features" data-transition="fade" style="background:#F8F6F1; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">Features</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; line-height:1.15; color:#1B1535">Everything your school runs on, in one app</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px">
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Academics</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Classes, timetables, assessments, marks entry, grading scale, report cards</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Attendance</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Daily class attendance, GPS staff check-in, RFID/biometric device API, Excel export</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Fees and finance</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Fee structures and dues, payment recording, fund and dues reports, expenses</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Staff and payroll</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Staff records, digital ID cards, salary structures, payroll, payslips</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Communication</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">1:1 chat with parents and staff, announcements, push notifications</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">AI and engagement</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">AI helpdesk in English and Hindi, AI quiz generator, XP and House Wars</p>
+    </div>
+  </div>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="simple" data-transition="fade" style="background:#F8F6F1; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:48px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">New this month</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:64px; font-weight:700; line-height:1.15; color:#1B1535; width:1664px">Simple for every role, private by design</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px">
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">A cleaner home screen</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">The principal sees 10 tiles, teachers and students 8. Everything else is grouped inside them.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Digital ID cards</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Every student and staff member gets a professional ID card in the app, ready to download.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Any photo works</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Upload straight from the phone's camera or gallery; the app resizes it for you.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:40px">
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#6D28D9">Each role sees only its own data</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Bank details, fees and marks are locked to the right people, and published report cards can't be changed.</p>
+    </div>
+  </div>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="gamification" data-transition="fade" style="background:#EFEAF7; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:48px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">Learn with fun</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; line-height:1.15; color:#1B1535">Students come back because learning feels like a game</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:24px">
+    <div style="display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">XP and streaks</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Points for attending and practising, and a streak to keep alive</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">Leagues</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Climb from league to league with classmates each week</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">House Wars</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Every student's effort earns points for their school house</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border-radius:24px; padding:40px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#6D28D9; width:56px; height:56px;flex:none" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/><path d="M22 10v6"/></svg>
+      <h3 style="font-size:36px; font-weight:700; line-height:1.2; color:#1B1535">Quiz battles</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">One-on-one challenges and live buzzer rounds on class subjects</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#4A4560">Questions come from the school's own teachers, so the fun follows the syllabus.</p>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="demo" data-transition="fade" style="background:#1B1535; color:#F8F6F1; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:56px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#C4B5FD">Demo</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; line-height:1.15; color:#F8F6F1">A school day in five steps</h2>
+  </div>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#2A2250; border-radius:24px; padding:40px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#C4B5FD">1</p>
+      <p style="font-size:28px; line-height:1.4; color:#E8E4F3">A teacher checks in by GPS at the school gate</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#2A2250; border-radius:24px; padding:40px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#C4B5FD">2</p>
+      <p style="font-size:28px; line-height:1.4; color:#E8E4F3">The class teacher marks attendance in seconds</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#2A2250; border-radius:24px; padding:40px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#C4B5FD">3</p>
+      <p style="font-size:28px; line-height:1.4; color:#E8E4F3">A subject teacher enters marks; the report card publishes</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#2A2250; border-radius:24px; padding:40px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#C4B5FD">4</p>
+      <p style="font-size:28px; line-height:1.4; color:#E8E4F3">A parent sees it and messages the teacher</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#2A2250; border-radius:24px; padding:40px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#C4B5FD">5</p>
+      <p style="font-size:28px; line-height:1.4; color:#E8E4F3">The principal exports the month's attendance to Excel</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#B7AED6">Now let's see it in the app.</p>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="traction" data-transition="fade" style="background:#F8F6F1; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:56px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">Getting started</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; line-height:1.15; color:#1B1535">Three simple steps for your school</h2>
+  </div>
+  <div style="display:flex; align-items:center; gap:24px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:48px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#6D28D9">1</p>
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Book a demo</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">A walkthrough of the app for your principal and staff</p>
+    </div>
+    <svg viewBox="0 0 64 32" style=" width:64px; height:32px;flex:none" aria-hidden="true"><path d="M0 11h44V0l20 16-20 16V21H0z" fill="#C4B5FD"/></svg>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#FFFDF9; border:1px solid #E4DFEE; border-radius:24px; padding:48px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#6D28D9">2</p>
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#1B1535">Run a pilot</h3>
+      <p style="font-size:28px; line-height:1.4; color:#4A4560">Try it with your own classes, students and staff</p>
+    </div>
+    <svg viewBox="0 0 64 32" style=" width:64px; height:32px;flex:none" aria-hidden="true"><path d="M0 11h44V0l20 16-20 16V21H0z" fill="#C4B5FD"/></svg>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px; background:#1B1535; border-radius:24px; padding:48px">
+      <p style="font-family:'Domine', Georgia, serif; font-size:72px; font-weight:700; color:#C4B5FD">3</p>
+      <h3 style="font-size:40px; font-weight:700; line-height:1.2; color:#F8F6F1">Starter plan</h3>
+      <p style="font-size:28px; line-height:1.4; color:#E8E4F3">Pricing that fits your school's size, agreed together</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B6680">We set up your classes, students and staff for you during onboarding.</p>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="competition" data-transition="fade" style="background:#F8F6F1; color:#1B1535; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:40px">
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#6D28D9">Why Smart Gurukul</p>
+    <h2 style="font-family:'Domine', Georgia, serif; font-size:64px; font-weight:700; line-height:1.15; color:#1B1535">What sets us apart from a typical school ERP</h2>
+  </div>
+  <table style="font-family:'Nunito Sans', Arial, sans-serif; font-size:28px; color:#1B1535">
+    <tr style="background:#1B1535">
+      <th style="width:50%; text-align:left; color:#F8F6F1">Capability</th>
+      <th style="width:25%; text-align:center; color:#C4B5FD">Smart Gurukul</th>
+      <th style="width:25%; text-align:center; color:#F8F6F1">Typical school ERP</th>
+    </tr>
+    <tr><td>GPS check-in, no hardware to buy</td><td style="text-align:center; color:#6D28D9">Yes</td><td style="text-align:center">Needs biometric hardware</td></tr>
+    <tr style="background:#F1EDF8"><td>In-app chat with parents</td><td style="text-align:center; color:#6D28D9">Yes</td><td style="text-align:center">Usually SMS or WhatsApp</td></tr>
+    <tr><td>AI helpdesk and teacher resources</td><td style="text-align:center; color:#6D28D9">Yes</td><td style="text-align:center">Rarely</td></tr>
+    <tr style="background:#F1EDF8"><td>Gamification for students</td><td style="text-align:center; color:#6D28D9">Yes</td><td style="text-align:center">Rarely</td></tr>
+    <tr><td>English and Hindi</td><td style="text-align:center; color:#6D28D9">Yes</td><td style="text-align:center">Often English only</td></tr>
+    <tr style="background:#F1EDF8"><td>Exams, fees, payroll, parent app</td><td style="text-align:center; color:#6D28D9">Yes</td><td style="text-align:center">Yes</td></tr>
+  </table>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#6B6680">Comparison based on publicly available information about commonly used school ERPs.</p>
+  
+</section></div></div>
+<div class="slide"><div class="canvas"><section id="close" data-transition="fade" style="background:#1B1535; color:#F8F6F1; font-family:'Nunito Sans', Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; justify-content:center; gap:40px">
+  <div style="position:absolute; left:1060px; top:0px; width:860px; height:1080px; background:radial-gradient(circle at 60% 55%, #6D28D9 0%, #3B2A78 35%, #1B1535 75%)"></div>
+  <p style="font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; color:#C4B5FD">Next step</p>
+  <h2 style="font-family:'Domine', Georgia, serif; font-size:96px; font-weight:700; line-height:1.1; color:#F8F6F1; width:1300px">Let's set up a pilot for your school</h2>
+  <p style="font-size:36px; line-height:1.4; color:#D6D0EA; width:1100px">Manoj · +91 70242 74770 · founders@smartgurukul.org</p>
+  <p style="position:absolute; left:128px; bottom:64px; width:1664px; font-size:24px; color:#B7AED6">smartgurukul.org</p>
+  
+</section></div></div>
+</main>
+<script>
+function fit() {
+  document.querySelectorAll('.slide').forEach(function (s) {
+    s.firstElementChild.style.transform = 'scale(' + (s.clientWidth / 1920) + ')';
+  });
+}
+if (!matchMedia('print').matches) { fit(); addEventListener('resize', fit); }
+addEventListener('beforeprint', function () { document.querySelectorAll('.canvas').forEach(function (c) { c.style.transform = 'none'; }); });
+addEventListener('afterprint', fit);
+</script>
+</body>
+</html>
