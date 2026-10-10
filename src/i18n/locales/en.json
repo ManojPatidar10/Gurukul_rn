@@ -1506,8 +1506,32 @@
     }
   },
   "assessmentResults": {
-    "invalidMarks": "Check the marks for {{names}} - they must be a number from 0 to {{max}}.",
-    "nothingToSave": "Enter marks or mark a student absent before saving."
+    "invalidMarks": "Check the marks for {{names}} - they must be a number from 0 to {{max}}, with up to 2 decimal places.",
+    "nothingToSave": "Enter marks or mark a student absent before saving.",
+    "subtitle": "Results · Max {{max}}",
+    "lockedNotice": "Report cards for {{term}} are published, so marks are locked.",
+    "lockedNoticeNoTerm": "Report cards for this term are published, so marks are locked.",
+    "noStudents": "0 students in this section.",
+    "enteredCount": "{{entered}} / {{total}} entered",
+    "noMarksYet": "No marks entered yet.",
+    "average": "Average",
+    "highest": "Highest",
+    "lowest": "Lowest",
+    "pass": "Pass (≥{{passMark}}%)",
+    "fail": "Fail",
+    "studentLine": "{{name}} · Roll {{roll}}",
+    "outOf": "/ {{max}}",
+    "absent": "Absent",
+    "remarkPlaceholder": "Remark (optional)",
+    "marksLabel": "Marks for {{name}}, roll {{roll}}, out of {{max}}",
+    "absentLabel": "Absent: {{name}}",
+    "remarkLabel": "Remark for {{name}}",
+    "save": "Save results",
+    "saved": "Results saved.",
+    "discardTitle": "Discard unsaved marks?",
+    "discardMessage": "The marks you typed on this screen haven't been saved.",
+    "keepEditing": "Keep editing",
+    "discard": "Discard"
   },
   "transport": {
     "direction": {

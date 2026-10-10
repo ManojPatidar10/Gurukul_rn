@@ -1,43 +1,71 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { createAssessment, listSectionTerms, updateAssessment } from '../../api/assessments';
-import type { AssessmentType, Employee, Subject, TermSummary } from '../../api/types';
+import type { AssessmentType, TermSummary } from '../../api/types';
 import { DatePickerField } from '../../components/DatePickerField';
-import EmployeePicker from '../../components/EmployeePicker';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import SubjectPicker from '../../components/SubjectPicker';
+import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useSectionAssignments } from '../../hooks/useSectionAssignments';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import {
+  assessmentPermissions,
+  soleSubjectTeacher,
+  type SubjectChoice,
+  type TeacherChoice,
+} from '../../utils/assessmentPermissions';
+import { parseMarks } from '../../utils/assessmentResults';
 import { canonicalTerm, findExistingTerm } from '../../utils/assessmentTerms';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentForm'>;
 
-const TYPES: AssessmentType[] = ['ASSIGNMENT', 'QUIZ', 'TEST', 'EXAM'];
+const TYPES: { value: AssessmentType; label: string }[] = [
+  { value: 'ASSIGNMENT', label: 'Assignment' },
+  { value: 'QUIZ', label: 'Quiz' },
+  { value: 'TEST', label: 'Test' },
+  { value: 'EXAM', label: 'Exam' },
+];
+
+// The server's limits (AssessmentRequest).
+const MAX_TITLE_LENGTH = 255;
+const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_TERM_LENGTH = 50;
 
 export function AssessmentFormScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
+  const { session } = useAuth();
   const { classSection, assessment } = route.params;
   const isEdit = !!assessment;
+  const isAdmin = session.role === 'ADMIN';
+  const isStaff = isAdmin || session.role === 'TEACHER';
 
-  const [type, setType] = useState<AssessmentType>(assessment?.type ?? 'ASSIGNMENT');
+  const {
+    assignments,
+    loading: assignmentsLoading,
+    error: assignmentsError,
+    reload: reloadAssignments,
+  } = useSectionAssignments(schoolId, isStaff ? classSection.id : null);
+  const permissions = assessmentPermissions(session, classSection, assignments);
+
+  // No type is preselected on create, so a quiz isn't saved as an assignment by accident.
+  const [type, setType] = useState<AssessmentType | null>(assessment?.type ?? null);
   const [title, setTitle] = useState(assessment?.title ?? '');
   const [subjectId, setSubjectId] = useState<string | null>(assessment?.subjectId ?? null);
-  const [subjectLabel, setSubjectLabel] = useState(
-    assessment ? `${assessment.subjectName} (${assessment.subjectCode})` : ''
-  );
   const [assessmentDate, setAssessmentDate] = useState(assessment?.assessmentDate ?? '');
   const [maxMarks, setMaxMarks] = useState(assessment ? String(assessment.maxMarks) : '');
   const [description, setDescription] = useState(assessment?.description ?? '');
   const [term, setTerm] = useState(assessment?.term ?? '');
-  const [teacherId, setTeacherId] = useState<string | null>(assessment?.createdByTeacherId ?? null);
-  const [teacherLabel, setTeacherLabel] = useState(assessment?.createdByTeacherName ?? '');
+  // Admins only: the server records a teacher's own assessments as theirs and ignores teacherId.
+  const [teacherId, setTeacherId] = useState<string | null>(isAdmin ? (assessment?.createdByTeacherId ?? null) : null);
+  // Once the admin picks a teacher, changing the subject stops picking one for them.
+  const [teacherTouched, setTeacherTouched] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Terms this section's assessments already use, offered as chips so "Term 1" isn't retyped as
@@ -58,6 +86,64 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
     loadTerms();
   };
 
+  // Back from "Assign subjects": the class may have subjects now.
+  const reloadAssignmentsOnFocus = useRef(false);
+  useEffect(
+    () =>
+      navigation.addListener('focus', () => {
+        if (!reloadAssignmentsOnFocus.current) return;
+        reloadAssignmentsOnFocus.current = false;
+        reloadAssignments();
+      }),
+    [navigation, reloadAssignments]
+  );
+
+  // On edit the current subject and creator stay offered, even if the section no longer lists them.
+  const subjectOptions: SubjectChoice[] =
+    assessment?.subjectId && !permissions.subjectChoices.some((s) => s.subjectId === assessment.subjectId)
+      ? [
+          {
+            subjectId: assessment.subjectId,
+            subjectName: assessment.subjectName ?? 'Current subject',
+            subjectCode: assessment.subjectCode ?? '',
+          },
+          ...permissions.subjectChoices,
+        ]
+      : permissions.subjectChoices;
+  const teacherOptions: TeacherChoice[] =
+    isAdmin &&
+    assessment?.createdByTeacherId &&
+    !permissions.teacherChoices.some((c) => c.teacherId === assessment.createdByTeacherId)
+      ? [
+          {
+            teacherId: assessment.createdByTeacherId,
+            teacherName: assessment.createdByTeacherName ?? 'Current teacher',
+            isClassTeacher: false,
+          },
+          ...permissions.teacherChoices,
+        ]
+      : permissions.teacherChoices;
+
+  const pickSubject = (id: string) => {
+    setSubjectId(id);
+    if (isAdmin && !teacherTouched) setTeacherId(soleSubjectTeacher(assignments, id));
+  };
+
+  const pickTeacher = (id: string) => {
+    setTeacherTouched(true);
+    // On create the admin may clear it, and the server then records the admin. On edit, leaving
+    // teacherId out keeps the current creator, so clearing would do nothing.
+    setTeacherId(!isEdit && teacherId === id ? null : id);
+  };
+
+  const openAssignSubjects = () => {
+    reloadAssignmentsOnFocus.current = true;
+    navigation.navigate('SectionSubjectsList', { classSection });
+  };
+
+  const parsedMaxMarks = parseMarks(maxMarks);
+  const maxMarksValid = parsedMaxMarks !== null && parsedMaxMarks > 0;
+
   const termNames = (sectionTerms ?? []).map((t) => t.term);
   const savedTerm = canonicalTerm(term, termNames);
   const termMatch = findExistingTerm(term, termNames);
@@ -70,32 +156,33 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
   // A term is required: an assessment without one never reaches any report card.
   const canSubmit =
     !editLocked &&
-    !!title &&
+    !!title.trim() &&
+    !!type &&
     !!subjectId &&
     !!assessmentDate &&
-    Number(maxMarks) > 0 &&
-    !!teacherId &&
+    maxMarksValid &&
     !!savedTerm &&
     !termLocked;
 
   const handleSubmit = async () => {
-    if (!subjectId || !teacherId) return;
+    if (!type || !subjectId || parsedMaxMarks === null) return;
     setSubmitting(true);
     setError(null);
-    const req = {
-      title,
+    const fields = {
+      title: title.trim(),
       type,
       subjectId,
       assessmentDate,
-      maxMarks: Number(maxMarks),
-      description: description || undefined,
-      teacherId,
+      maxMarks: parsedMaxMarks,
       term: savedTerm,
+      // Only sent when an admin chose one: the server ignores it from a teacher.
+      ...(isAdmin && teacherId ? { teacherId } : {}),
     };
     try {
       const result = isEdit
-        ? await updateAssessment(schoolId, assessment!.id, req)
-        : await createAssessment(schoolId, classSection.id, req);
+        ? // A PUT keeps any field left out, so an emptied description is sent as "" to clear it.
+          await updateAssessment(schoolId, assessment!.id, { ...fields, description: description.trim() })
+        : await createAssessment(schoolId, classSection.id, { ...fields, description: description.trim() || undefined });
       navigation.replace('AssessmentDetail', { assessment: result, classSection });
     } catch (e) {
       setError(getErrorMessage(e));
@@ -117,35 +204,74 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         <View style={styles.typeRow}>
           {TYPES.map((t) => (
             <Pressable
-              key={t}
-              style={[styles.typeChip, type === t && styles.typeChipSelected]}
-              onPress={() => setType(t)}
+              key={t.value}
+              style={[styles.typeChip, type === t.value && styles.typeChipSelected]}
+              onPress={() => setType(t.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: type === t.value }}
             >
-              <Text style={[styles.typeChipText, type === t && styles.typeChipTextSelected]}>{t}</Text>
+              <Text style={[styles.typeChipText, type === t.value && styles.typeChipTextSelected]}>{t.label}</Text>
             </Pressable>
           ))}
         </View>
+        {!type && <Text style={styles.fieldHint}>Pick a type</Text>}
 
-        <LabeledInput label="Title" value={title} onChangeText={setTitle} />
+        <LabeledInput label="Title" value={title} onChangeText={setTitle} maxLength={MAX_TITLE_LENGTH} />
 
         <Text style={styles.label}>Subject</Text>
-        <SubjectPicker
-          schoolId={schoolId}
-          selectedId={subjectId}
-          onSelect={(s: Subject) => {
-            setSubjectId(s.id);
-            setSubjectLabel(`${s.name} (${s.code})`);
-          }}
-        />
-        {subjectLabel ? <Text style={styles.selectedHint}>Selected: {subjectLabel}</Text> : null}
+        {subjectOptions.length > 0 && (
+          <View style={styles.typeRow}>
+            {subjectOptions.map((s) => {
+              const selected = subjectId === s.subjectId;
+              return (
+                <Pressable
+                  key={s.subjectId}
+                  style={[styles.typeChip, selected && styles.typeChipSelected]}
+                  onPress={() => pickSubject(s.subjectId)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
+                >
+                  <Text style={[styles.typeChipText, selected && styles.typeChipTextSelected]}>{s.subjectName}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+        {assignmentsLoading ? (
+          <ActivityIndicator style={styles.termsLoading} color={colors.primary} />
+        ) : assignmentsError ? (
+          <View style={styles.noticeRow}>
+            <Text style={styles.noticeText}>
+              {isAdmin ? "Couldn't load this class's subjects." : "Couldn't check which subjects you teach here."}
+            </Text>
+            <Pressable onPress={reloadAssignments}>
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : subjectOptions.length === 0 ? (
+          <View style={styles.noticeRow}>
+            <Text style={styles.noticeText}>No subjects are set up for this class yet.</Text>
+            {permissions.canAssignSubjectTeachers && (
+              <Pressable onPress={openAssignSubjects}>
+                <Text style={styles.retryText}>Assign subjects</Text>
+              </Pressable>
+            )}
+          </View>
+        ) : null}
 
         <DatePickerField label="Assessment date" value={assessmentDate} onChange={setAssessmentDate} />
-        <LabeledInput label="Max marks" value={maxMarks} onChangeText={setMaxMarks} keyboardType="numeric" />
+        <LabeledInput label="Max marks" value={maxMarks} onChangeText={setMaxMarks} keyboardType="decimal-pad" />
+        {maxMarks.trim() !== '' && !maxMarksValid ? (
+          <Text style={styles.termWarning}>Max marks must be from 0.01 to 999.99, with up to 2 decimal places.</Text>
+        ) : isEdit ? (
+          <Text style={styles.termHint}>Can&apos;t go below a mark already entered.</Text>
+        ) : null}
         <LabeledInput
           label="Term (for report cards)"
           required
           value={term}
           onChangeText={setTerm}
+          maxLength={MAX_TERM_LENGTH}
           placeholder={
             sectionTerms && sectionTerms.length > 0 ? 'Pick one below or type a new term, e.g. Term 1' : 'Type a term, e.g. Term 1'
           }
@@ -195,18 +321,50 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
             Pick or type a term - an assessment without one is left off every report card.
           </Text>
         ) : null}
-        <LabeledInput label="Description (optional)" value={description} onChangeText={setDescription} />
+        <LabeledInput
+          label="Description (optional)"
+          value={description}
+          onChangeText={setDescription}
+          maxLength={MAX_DESCRIPTION_LENGTH}
+        />
 
         <Text style={[styles.label, { marginTop: spacing.md }]}>Teacher</Text>
-        <EmployeePicker
-          schoolId={schoolId}
-          selectedId={teacherId}
-          onSelect={(e: Employee) => {
-            setTeacherId(e.id);
-            setTeacherLabel(`${e.name} (${e.designation})`);
-          }}
-        />
-        {teacherLabel ? <Text style={styles.selectedHint}>Selected: {teacherLabel}</Text> : null}
+        {isAdmin ? (
+          <>
+            {teacherOptions.length > 0 && (
+              <View style={styles.typeRow}>
+                {teacherOptions.map((c) => {
+                  const selected = teacherId === c.teacherId;
+                  return (
+                    <Pressable
+                      key={c.teacherId}
+                      style={[styles.typeChip, selected && styles.typeChipSelected]}
+                      onPress={() => pickTeacher(c.teacherId)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: selected }}
+                    >
+                      <Text style={[styles.typeChipText, selected && styles.typeChipTextSelected]}>
+                        {c.teacherName}
+                        {c.isClassTeacher ? ' (class teacher)' : ''}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+            {!isEdit && (
+              <Text style={styles.termHint}>
+                {teacherOptions.length > 0
+                  ? 'Optional. Leave it empty to record yourself as the teacher.'
+                  : 'No teachers are assigned to this class yet, so you will be recorded as the teacher.'}
+              </Text>
+            )}
+          </>
+        ) : (
+          <Text style={styles.teacherText}>
+            {isEdit ? `Created by: ${assessment?.createdByTeacherName ?? '—'}` : 'Teacher: You'}
+          </Text>
+        )}
 
         {error && <ErrorNotice message={error} />}
 
@@ -225,7 +383,16 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   label: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, marginBottom: spacing.sm },
-  selectedHint: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, marginBottom: spacing.sm },
+  fieldHint: { fontSize: 12, color: colors.warning, marginTop: -spacing.xs, marginBottom: spacing.md },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  noticeText: { flex: 1, fontSize: 12, color: colors.textMuted },
+  teacherText: { fontSize: 15, color: colors.textPrimary, marginBottom: spacing.md },
   typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   typeChip: {
     borderWidth: 1.5,

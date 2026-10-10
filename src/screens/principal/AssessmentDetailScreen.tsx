@@ -3,15 +3,18 @@ import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { deleteAssessment } from '../../api/assessments';
+import { ApiError } from '../../api/client';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useSectionAssignments } from '../../hooks/useSectionAssignments';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { assessmentPermissions } from '../../utils/assessmentPermissions';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentDetail'>;
 
@@ -27,10 +30,18 @@ function Field({ label, value }: { label: string; value: string }) {
 export function AssessmentDetailScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { session } = useAuth();
-  const canManage = session.ownerType === 'EMPLOYEE';
   const { assessment, classSection } = route.params;
+  const isStaff = session.role === 'ADMIN' || session.role === 'TEACHER';
+  const sectionAssignments = useSectionAssignments(schoolId, isStaff ? classSection.id : null);
+  const permissions = assessmentPermissions(session, classSection, sectionAssignments.assignments);
+  const canManage = permissions.canManageAssessment(assessment);
+  const canView = permissions.canViewResults(assessment);
+  // Only a subject teacher's rights depend on the assignments - admins and the class teacher have them all.
+  const assignmentsMatter = session.role === 'TEACHER' && classSection.classTeacherId !== session.ownerId;
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const openResults = () => navigation.navigate('AssessmentResults', { assessment });
 
   const handleDelete = () => {
     Alert.alert('Delete assessment', `Remove "${assessment.title}"? This cannot be undone.`, [
@@ -45,39 +56,61 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
             await deleteAssessment(schoolId, assessment.id);
             navigation.goBack();
           } catch (e) {
-            setError(getErrorMessage(e));
             setDeleting(false);
+            // The server refuses while any student has marks, Absent or a remark saved, and says how many.
+            if (e instanceof ApiError && e.status === 409 && e.errorCode === 'ASSESSMENT_HAS_MARKS') {
+              Alert.alert("Can't delete this assessment", e.message, [
+                { text: 'Close', style: 'cancel' },
+                { text: 'Enter results', onPress: openResults },
+              ]);
+              return;
+            }
+            setError(getErrorMessage(e));
           }
         },
       },
     ]);
   };
 
+  const subject = assessment.subjectName
+    ? `${assessment.subjectName}${assessment.subjectCode ? ` (${assessment.subjectCode})` : ''}`
+    : '';
+
   return (
     <View style={styles.root}>
-      <ScreenHeader title={assessment.title} subtitle={assessment.subjectName} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={assessment.title}
+        subtitle={assessment.subjectName ?? undefined}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         <View style={styles.statusRow}>
           <StatusChip label={assessment.type} variant="neutral" />
         </View>
 
         <View style={styles.card}>
-          <Field label="Subject" value={`${assessment.subjectName} (${assessment.subjectCode})`} />
+          <Field label="Subject" value={subject} />
           <Field label="Date" value={assessment.assessmentDate} />
           <Field label="Max marks" value={String(assessment.maxMarks)} />
           <Field label="Term" value={assessment.term ?? ''} />
           <Field label="Description" value={assessment.description} />
-          <Field label="Created by" value={assessment.createdByTeacherName} />
+          <Field label="Created by" value={assessment.createdByTeacherName ?? ''} />
         </View>
 
         {error && <ErrorNotice message={error} />}
 
-        {canManage && (
+        {assignmentsMatter && sectionAssignments.error && (
+          <View style={styles.assignmentsNotice}>
+            <Text style={styles.assignmentsNoticeText}>Couldn&apos;t check which subjects you teach here.</Text>
+            <Pressable onPress={sectionAssignments.reload} disabled={sectionAssignments.loading}>
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {canManage ? (
           <View style={styles.actions}>
-            <Pressable
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('AssessmentResults', { assessment })}
-            >
+            <Pressable style={styles.actionButton} onPress={openResults}>
               <Text style={styles.actionText}>Enter results</Text>
             </Pressable>
             <Pressable
@@ -90,6 +123,17 @@ export function AssessmentDetailScreen({ route, navigation }: Props) {
               <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete'}</Text>
             </Pressable>
           </View>
+        ) : (
+          canView && (
+            <View style={styles.actions}>
+              <Pressable
+                style={styles.actionButton}
+                onPress={() => navigation.navigate('AssessmentResults', { assessment, readOnly: true })}
+              >
+                <Text style={styles.actionText}>View results</Text>
+              </Pressable>
+            </View>
+          )
         )}
       </ScreenContainer>
     </View>
@@ -110,6 +154,15 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   fieldValue: { fontSize: 16, color: colors.textPrimary, marginTop: 2 },
   error: { color: colors.error, marginBottom: spacing.md },
+  assignmentsNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  assignmentsNoticeText: { flex: 1, fontSize: 12, color: colors.textMuted },
+  retryText: { color: colors.primary, fontWeight: '700' },
   actions: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   actionButton: {
     backgroundColor: colors.primaryLight,

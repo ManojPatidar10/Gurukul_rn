@@ -1,10 +1,12 @@
+import { usePreventRemove } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getAssessmentResults, submitAssessmentResults } from '../../api/assessments';
-import type { StudentResult } from '../../api/types';
+import { getGradingScale } from '../../api/gradingScale';
+import type { AssessmentResults, StudentResult } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -12,7 +14,15 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { buildResultsPayload, type ResultRowState } from '../../utils/assessmentResults';
+import {
+  buildResultsPayload,
+  isResultsDirty,
+  MAX_REMARK_LENGTH,
+  rowFromResult,
+  summarizeResults,
+  type ResultRowState,
+} from '../../utils/assessmentResults';
+import { passMarkFromScale } from '../../utils/gradingScale';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentResults'>;
 
@@ -21,85 +31,115 @@ type RowState = ResultRowState;
 export function AssessmentResultsScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
-  const assessment = route.params.assessment;
+  const { assessment, readOnly = false } = route.params;
   const [roster, setRoster] = useState<StudentResult[]>([]);
   const [rows, setRows] = useState<Record<string, RowState>>({});
+  // Max marks, term and lock come from the results response: the route's copy of the assessment
+  // is whatever the list loaded, and max marks may have changed since.
+  const [maxMarks, setMaxMarks] = useState(assessment.maxMarks);
+  const [term, setTerm] = useState<string | null>(assessment.term);
+  const [locked, setLocked] = useState(false);
+  const [passMark, setPassMark] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set());
 
-  const load = () => {
-    setLoading(true);
-    setError(null);
-    getAssessmentResults(schoolId, assessment.id)
-      .then((data) => {
-        setRoster(data.results);
-        const nextRows: Record<string, RowState> = {};
-        data.results.forEach((r) => {
-          nextRows[r.studentId] = { marksText: r.marksObtained != null ? String(r.marksObtained) : '', absent: r.absent };
-        });
-        setRows(nextRows);
+  const applyResults = useCallback(
+    (data: AssessmentResults) => {
+      setRoster(data.results);
+      const nextRows: Record<string, RowState> = {};
+      data.results.forEach((r) => {
+        nextRows[r.studentId] = rowFromResult(r);
+      });
+      setRows(nextRows);
+      setMaxMarks(data.maxMarks);
+      // An older server sends neither: keep the route's term, and treat it as unlocked (the server
+      // still refuses the save).
+      setTerm(data.term !== undefined ? data.term : assessment.term);
+      setLocked(data.locked === true);
+      setInvalidIds(new Set());
+    },
+    [assessment.term]
+  );
+
+  const fetchResults = useCallback(() => {
+    Promise.all([
+      getAssessmentResults(schoolId, assessment.id),
+      // Pass/Fail needs the school's own pass mark. Without the scale they're hidden; never a guessed 33%.
+      getGradingScale(schoolId)
+        .then(passMarkFromScale)
+        .catch(() => null),
+    ])
+      .then(([data, mark]) => {
+        applyResults(data);
+        setPassMark(mark);
       })
-      .catch((e) => setError(getErrorMessage(e)))
+      .catch((e) => setLoadError(getErrorMessage(e)))
       .finally(() => setLoading(false));
+  }, [schoolId, assessment.id, applyResults]);
+
+  useEffect(fetchResults, [fetchResults]);
+
+  const retryLoad = () => {
+    setLoading(true);
+    setLoadError(null);
+    fetchResults();
   };
 
-  useEffect(load, [schoolId, assessment.id]);
+  const editable = !locked && !readOnly;
+  const dirty = useMemo(() => isResultsDirty(roster, rows), [roster, rows]);
 
-  // Quick sanity-check stats for the teacher before publishing goes to the principal - "pass"
-  // uses the same 33% floor as the default grading scale's D/F boundary (GradingScaleService).
-  const summary = useMemo(() => {
-    const entered = roster.filter((r) => r.absent || r.marksObtained != null);
-    const scored = roster.filter(
-      (r): r is StudentResult & { marksObtained: number } => !r.absent && r.marksObtained != null
-    );
-    if (scored.length === 0) {
-      return { entered: entered.length, total: roster.length, average: null, highest: null, lowest: null, passCount: 0, failCount: 0 };
-    }
-    const marks = scored.map((r) => r.marksObtained);
-    const passThreshold = assessment.maxMarks * 0.33;
-    const passCount = scored.filter((r) => r.marksObtained >= passThreshold).length;
-    return {
-      entered: entered.length,
-      total: roster.length,
-      average: marks.reduce((a, b) => a + b, 0) / marks.length,
-      highest: Math.max(...marks),
-      lowest: Math.min(...marks),
-      passCount,
-      failCount: scored.length - passCount,
-    };
-  }, [roster, assessment.maxMarks]);
+  // Covers the header Back, Android Back and the iOS swipe.
+  usePreventRemove(dirty && !saving, ({ data }) => {
+    Alert.alert(t('assessmentResults.discardTitle'), t('assessmentResults.discardMessage'), [
+      { text: t('assessmentResults.keepEditing'), style: 'cancel' },
+      { text: t('assessmentResults.discard'), style: 'destructive', onPress: () => navigation.dispatch(data.action) },
+    ]);
+  });
+
+  const summary = useMemo(() => summarizeResults(roster, maxMarks, passMark), [roster, maxMarks, passMark]);
 
   const setRow = (studentId: string, patch: Partial<RowState>) => {
     setRows((prev) => ({ ...prev, [studentId]: { ...prev[studentId], ...patch } }));
+    setSuccess(false);
+    if (invalidIds.has(studentId)) {
+      setInvalidIds((prev) => {
+        const next = new Set(prev);
+        next.delete(studentId);
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async () => {
-    setError(null);
+    setSaveError(null);
     setSuccess(false);
-    const { results, invalid } = buildResultsPayload(roster, rows, assessment.maxMarks);
+    const { results, invalid } = buildResultsPayload(roster, rows, maxMarks);
+    setInvalidIds(new Set(invalid.map((s) => s.studentId)));
     if (invalid.length > 0) {
-      setError(
+      setSaveError(
         t('assessmentResults.invalidMarks', {
           names: invalid.map((s) => s.studentName).join(', '),
-          max: assessment.maxMarks,
+          max: maxMarks,
         })
       );
       return;
     }
     // Every row blank and nothing saved before - the backend rejects an empty list anyway.
     if (results.length === 0) {
-      setError(t('assessmentResults.nothingToSave'));
+      setSaveError(t('assessmentResults.nothingToSave'));
       return;
     }
     setSaving(true);
     try {
-      await submitAssessmentResults(schoolId, assessment.id, results);
+      // The response is the fresh marks list, so applying it clears the unsaved-changes flag.
+      applyResults(await submitAssessmentResults(schoolId, assessment.id, results));
       setSuccess(true);
-      load();
     } catch (e) {
-      setError(getErrorMessage(e));
+      setSaveError(getErrorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -109,82 +149,129 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={assessment.title}
-        subtitle={`Results · Max ${assessment.maxMarks}`}
+        subtitle={t('assessmentResults.subtitle', { max: maxMarks })}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
+        {locked && (
+          <View style={styles.lockNotice}>
+            <Text style={styles.lockNoticeText}>
+              {term ? t('assessmentResults.lockedNotice', { term }) : t('assessmentResults.lockedNoticeNoTerm')}
+            </Text>
+          </View>
+        )}
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {error && <ErrorNotice message={error} />}
-        {success && <Text style={styles.success}>Results saved.</Text>}
+        {loadError && (
+          <>
+            <ErrorNotice message={loadError} />
+            <Pressable onPress={retryLoad} style={styles.retry} disabled={loading}>
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </>
+        )}
 
-        {!loading && roster.length === 0 && <Text style={styles.empty}>0 students in this section.</Text>}
+        {!loading && !loadError && roster.length === 0 && (
+          <Text style={styles.empty}>{t('assessmentResults.noStudents')}</Text>
+        )}
 
-        {!loading && roster.length > 0 && (
+        {!loadError && roster.length > 0 && (
           <View style={styles.summaryCard}>
             <Text style={styles.summaryTitle}>
-              {summary.entered} / {summary.total} entered
+              {t('assessmentResults.enteredCount', { entered: summary.entered, total: summary.total })}
             </Text>
             {summary.average != null ? (
               <View style={styles.summaryStatRow}>
                 <View style={styles.summaryStat}>
                   <Text style={styles.summaryStatValue}>{summary.average.toFixed(1)}</Text>
-                  <Text style={styles.summaryStatLabel}>Average</Text>
+                  <Text style={styles.summaryStatLabel}>{t('assessmentResults.average')}</Text>
                 </View>
                 <View style={styles.summaryStat}>
                   <Text style={styles.summaryStatValue}>{summary.highest}</Text>
-                  <Text style={styles.summaryStatLabel}>Highest</Text>
+                  <Text style={styles.summaryStatLabel}>{t('assessmentResults.highest')}</Text>
                 </View>
                 <View style={styles.summaryStat}>
                   <Text style={styles.summaryStatValue}>{summary.lowest}</Text>
-                  <Text style={styles.summaryStatLabel}>Lowest</Text>
+                  <Text style={styles.summaryStatLabel}>{t('assessmentResults.lowest')}</Text>
                 </View>
-                <View style={styles.summaryStat}>
-                  <Text style={[styles.summaryStatValue, { color: colors.success }]}>{summary.passCount}</Text>
-                  <Text style={styles.summaryStatLabel}>Pass</Text>
-                </View>
-                <View style={styles.summaryStat}>
-                  <Text style={[styles.summaryStatValue, { color: colors.error }]}>{summary.failCount}</Text>
-                  <Text style={styles.summaryStatLabel}>Fail</Text>
-                </View>
+                {summary.passCount != null && passMark != null && (
+                  <>
+                    <View style={styles.summaryStat}>
+                      <Text style={[styles.summaryStatValue, { color: colors.success }]}>{summary.passCount}</Text>
+                      <Text style={styles.summaryStatLabel}>{t('assessmentResults.pass', { passMark })}</Text>
+                    </View>
+                    <View style={styles.summaryStat}>
+                      <Text style={[styles.summaryStatValue, { color: colors.error }]}>{summary.failCount}</Text>
+                      <Text style={styles.summaryStatLabel}>{t('assessmentResults.fail')}</Text>
+                    </View>
+                  </>
+                )}
               </View>
             ) : (
-              <Text style={styles.summaryEmpty}>No marks entered yet.</Text>
+              <Text style={styles.summaryEmpty}>{t('assessmentResults.noMarksYet')}</Text>
             )}
           </View>
         )}
 
-        {roster.map((student) => {
-          const row = rows[student.studentId] ?? { marksText: '', absent: false };
-          return (
-            <View key={student.studentId} style={styles.card}>
-              <Text style={styles.studentName}>
-                {student.studentName} · Roll {student.rollNumber}
-              </Text>
-              <View style={styles.rowInputs}>
-                <TextInput
-                  style={[styles.marksInput, row.absent && styles.marksInputDisabled]}
-                  value={row.marksText}
-                  onChangeText={(text) => setRow(student.studentId, { marksText: text })}
-                  keyboardType="numeric"
-                  placeholder={`/ ${assessment.maxMarks}`}
-                  placeholderTextColor={colors.textMuted}
-                  editable={!row.absent}
-                />
-                <Pressable
-                  style={[styles.absentToggle, row.absent && styles.absentToggleActive]}
-                  onPress={() => setRow(student.studentId, { absent: !row.absent })}
-                >
-                  <Text style={[styles.absentToggleText, row.absent && styles.absentToggleTextActive]}>Absent</Text>
-                </Pressable>
+        {!loadError &&
+          roster.map((student) => {
+            const row = rows[student.studentId] ?? rowFromResult(student);
+            const invalid = invalidIds.has(student.studentId);
+            const name = student.studentName;
+            return (
+              <View key={student.studentId} style={styles.card}>
+                <Text style={styles.studentName}>
+                  {t('assessmentResults.studentLine', { name, roll: student.rollNumber })}
+                </Text>
+                <View style={styles.rowInputs}>
+                  <TextInput
+                    style={[styles.marksInput, row.absent && styles.marksInputDisabled, invalid && styles.inputInvalid]}
+                    value={row.marksText}
+                    onChangeText={(text) => setRow(student.studentId, { marksText: text })}
+                    keyboardType="decimal-pad"
+                    placeholder={t('assessmentResults.outOf', { max: maxMarks })}
+                    placeholderTextColor={colors.textMuted}
+                    editable={editable && !row.absent}
+                    accessibilityLabel={t('assessmentResults.marksLabel', { name, roll: student.rollNumber, max: maxMarks })}
+                  />
+                  <Pressable
+                    style={[styles.absentToggle, row.absent && styles.absentToggleActive, !editable && styles.readOnlyToggle]}
+                    onPress={() => setRow(student.studentId, { absent: !row.absent })}
+                    disabled={!editable}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: row.absent, disabled: !editable }}
+                    accessibilityLabel={t('assessmentResults.absentLabel', { name })}
+                  >
+                    <Text style={[styles.absentToggleText, row.absent && styles.absentToggleTextActive]}>
+                      {t('assessmentResults.absent')}
+                    </Text>
+                  </Pressable>
+                </View>
+                {/* Stays editable when Absent is ticked - "Absent: medical leave" is a useful remark. */}
+                {(editable || row.remarksText.trim() !== '') && (
+                  <TextInput
+                    style={styles.remarkInput}
+                    value={row.remarksText}
+                    onChangeText={(text) => setRow(student.studentId, { remarksText: text })}
+                    placeholder={t('assessmentResults.remarkPlaceholder')}
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={MAX_REMARK_LENGTH}
+                    editable={editable}
+                    multiline
+                    accessibilityLabel={t('assessmentResults.remarkLabel', { name })}
+                  />
+                )}
               </View>
-            </View>
-          );
-        })}
+            );
+          })}
 
-        {roster.length > 0 && (
-          <Pressable style={[styles.submit, saving && styles.disabled]} onPress={handleSubmit} disabled={saving}>
-            <Text style={styles.submitText}>{saving ? 'Saving…' : 'Save results'}</Text>
-          </Pressable>
+        {editable && !loadError && roster.length > 0 && (
+          <View style={styles.saveArea}>
+            {saveError && <ErrorNotice message={saveError} />}
+            {success && <Text style={styles.success}>{t('assessmentResults.saved')}</Text>}
+            <Pressable style={[styles.submit, saving && styles.disabled]} onPress={handleSubmit} disabled={saving}>
+              <Text style={styles.submitText}>{saving ? t('common.saving') : t('assessmentResults.save')}</Text>
+            </Pressable>
+          </View>
         )}
       </ScreenContainer>
     </View>
@@ -194,8 +281,17 @@ export function AssessmentResultsScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: spacing.xl },
-  error: { color: colors.error, marginBottom: spacing.md },
-  success: { color: colors.success, marginBottom: spacing.md, fontWeight: '600' },
+  lockNotice: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    marginBottom: spacing.md,
+  },
+  lockNoticeText: { fontSize: 13, fontWeight: '600', color: colors.warning, lineHeight: 19 },
+  retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm, marginBottom: spacing.sm },
+  retryText: { color: colors.primary, fontWeight: '700' },
+  success: { color: colors.success, marginTop: spacing.sm, fontWeight: '600' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
   summaryCard: {
     backgroundColor: colors.surfaceMuted,
@@ -222,12 +318,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surfaceMuted,
     borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     fontSize: 15,
     color: colors.textPrimary,
   },
   marksInputDisabled: { opacity: 0.4 },
+  inputInvalid: { borderColor: colors.error },
+  remarkInput: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
   absentToggle: {
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -236,15 +344,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   absentToggleActive: { backgroundColor: colors.error, borderColor: colors.error },
+  readOnlyToggle: { opacity: 0.6 },
   absentToggleText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
   absentToggleTextActive: { color: colors.white },
+  saveArea: { marginTop: spacing.md, marginBottom: spacing.xl },
   submit: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
     paddingVertical: spacing.md,
     alignItems: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.xl,
+    marginTop: spacing.sm,
     ...softShadow,
   },
   disabled: { opacity: 0.5 },

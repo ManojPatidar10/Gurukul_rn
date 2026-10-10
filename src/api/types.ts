@@ -501,27 +501,38 @@ export interface Assessment {
   academicYear: string;
   type: AssessmentType;
   title: string;
-  subjectId: string;
-  subjectName: string;
-  subjectCode: string;
+  /** The subject and creator are null on old assessments saved without them. */
+  subjectId: string | null;
+  subjectName: string | null;
+  subjectCode: string | null;
   assessmentDate: string;
   maxMarks: number;
   description: string;
-  createdByTeacherId: string;
-  createdByTeacherName: string;
+  createdByTeacherId: string | null;
+  createdByTeacherName: string | null;
   term: string | null;
+  /**
+   * ACTIVE students in the section with a mark or Absent saved, and ACTIVE students in the section.
+   * Only sent to ADMIN and TEACHER callers (null for STUDENT and PARENT), and missing from older servers.
+   */
+  marksEnteredCount?: number | null;
+  marksExpectedCount?: number | null;
 }
 
-export interface AssessmentRequest {
+export interface CreateAssessmentRequest {
   title: string;
   type: AssessmentType;
   subjectId: string;
   assessmentDate: string;
   maxMarks: number;
   description?: string;
-  teacherId: string;
+  /** ADMIN only: who is recorded as the creator. The server ignores it from a TEACHER (the creator is them). */
+  teacherId?: string;
   term?: string;
 }
+
+/** PUT /assessments/{id}: a field left out keeps its current value. `description: ""` clears it. */
+export type UpdateAssessmentRequest = Partial<CreateAssessmentRequest>;
 
 export interface AssessmentResultEntry {
   studentId: string;
@@ -544,6 +555,10 @@ export interface AssessmentResults {
   assessmentTitle: string;
   maxMarks: number;
   results: StudentResult[];
+  /** Missing from older servers. */
+  term?: string | null;
+  /** True when the term's report cards are published, so marks can't be saved. Missing from older servers. */
+  locked?: boolean;
 }
 
 export interface GradingBand {

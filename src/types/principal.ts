@@ -120,7 +120,8 @@ export type PrincipalStackParamList = {
   SectionAssessmentsList: { classSection: ClassSection };
   AssessmentForm: { classSection: ClassSection; assessment?: Assessment };
   AssessmentDetail: { assessment: Assessment; classSection: ClassSection };
-  AssessmentResults: { assessment: Assessment };
+  /** `readOnly`: a teacher who may read this assessment's marks but not change them. */
+  AssessmentResults: { assessment: Assessment; readOnly?: boolean };
   AttendanceTake: { classSection: ClassSection };
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
   RegistrationInbox: undefined;

@@ -4,32 +4,34 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 
 import { listSectionAssessments } from '../../api/assessments';
 import type { Assessment } from '../../api/types';
+import { toIsoDate } from '../../components/DatePickerField';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
+import { useSectionAssignments } from '../../hooks/useSectionAssignments';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { assessmentPermissions } from '../../utils/assessmentPermissions';
+import { assessmentStatus } from '../../utils/assessmentStatus';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionAssessmentsList'>;
-
-// Whether the assessment date has passed yet - a full "awaiting results / published" tri-state
-// would need a per-term publication check against the backend; this stays a simple two-state
-// signal computed purely from the date, no extra network calls.
-function examStatus(assessmentDate: string): { label: string; variant: 'info' | 'success' } {
-  const today = new Date().toISOString().slice(0, 10);
-  return assessmentDate > today ? { label: 'Upcoming', variant: 'info' } : { label: 'Completed', variant: 'success' };
-}
 
 export function SectionAssessmentsListScreen({ route, navigation }: Props) {
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
-  const canManage = session.ownerType === 'EMPLOYEE';
   const classSection = route.params.classSection;
+  const isStaff = session.role === 'ADMIN' || session.role === 'TEACHER';
+  const sectionAssignments = useSectionAssignments(schoolId, isStaff ? classSection.id : null);
+  const canCreate = assessmentPermissions(session, classSection, sectionAssignments.assignments).canCreateAssessment;
+  // Only a subject teacher's rights depend on the assignments - admins and the class teacher have them all.
+  const assignmentsMatter = session.role === 'TEACHER' && classSection.classTeacherId !== session.ownerId;
+  // The phone's local date - toISOString() would be the UTC one, still yesterday before 05:30 IST.
+  const today = toIsoDate(new Date());
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -75,7 +77,7 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
       <View style={styles.body}>
-        {canManage && (
+        {canCreate && (
           <Pressable
             style={styles.addButton}
             onPress={() => navigation.navigate('AssessmentForm', { classSection })}
@@ -85,6 +87,15 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
         )}
 
         {error && <ErrorNotice message={error} />}
+
+        {assignmentsMatter && sectionAssignments.error && (
+          <View style={styles.assignmentsNotice}>
+            <Text style={styles.assignmentsNoticeText}>Couldn&apos;t check which subjects you teach here.</Text>
+            <Pressable onPress={sectionAssignments.reload} disabled={sectionAssignments.loading}>
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
 
         {subjects.length > 1 && (
           <View style={styles.subjectFilterRow}>
@@ -122,12 +133,19 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
                   ? 'Could not load assessments.'
                   : subjectFilter
                     ? `No ${subjectFilter} assessments yet.`
-                    : '0 assessments yet — create the first one.'}
+                    : canCreate
+                      ? '0 assessments yet — create the first one.'
+                      : '0 assessments yet.'}
               </Text>
             )
           }
           renderItem={({ item }) => {
-            const status = examStatus(item.assessmentDate);
+            const status = assessmentStatus(
+              item.assessmentDate,
+              today,
+              { entered: item.marksEnteredCount, expected: item.marksExpectedCount },
+              isStaff
+            );
             return (
               <Pressable
                 style={styles.row}
@@ -136,7 +154,7 @@ export function SectionAssessmentsListScreen({ route, navigation }: Props) {
                 <View style={styles.rowMain}>
                   <Text style={styles.rowName}>{item.title}</Text>
                   <Text style={styles.rowMeta}>
-                    {item.subjectName} · {item.assessmentDate} · Max {item.maxMarks}
+                    {[item.subjectName, item.assessmentDate, `Max ${item.maxMarks}`].filter(Boolean).join(' · ')}
                   </Text>
                 </View>
                 <View style={styles.chipStack}>
@@ -178,6 +196,15 @@ const styles = StyleSheet.create({
   subjectChipText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
   subjectChipTextSelected: { color: colors.white },
   error: { color: colors.error, marginBottom: spacing.md },
+  assignmentsNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  assignmentsNoticeText: { flex: 1, fontSize: 12, color: colors.textMuted },
+  retryText: { color: colors.primary, fontWeight: '700' },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   loader: { marginTop: 40 },
   row: {
