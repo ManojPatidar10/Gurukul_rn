@@ -789,6 +789,7 @@
       "correctOption": "Correct option",
       "numericAnswer": "Answer (number)",
       "shortWordAnswer": "Answer (one or two words)",
+      "explanation": "Explanation (shown to students after they answer)",
       "types": {
         "MCQ": "Multiple choice",
         "NUMERIC": "Number",
@@ -813,7 +814,8 @@
         "correctOption": "Choose the correct option.",
         "numericAnswer": "Enter a plain number, with no units.",
         "shortWordAnswer": "Enter a one- or two-word answer.",
-        "answerTooLong": "The answer is too long."
+        "answerTooLong": "The answer is too long.",
+        "explanationTooLong": "The explanation is too long (max 1000 characters)."
       }
     }
   },

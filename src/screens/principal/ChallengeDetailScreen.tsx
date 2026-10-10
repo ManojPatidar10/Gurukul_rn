@@ -3,12 +3,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getChallenge, submitAnswer } from '../../api/arena';
+import { serverNow } from '../../api/client';
 import type { ChallengeDetailResponse, PublicQuizQuestionResponse, QuizOption } from '../../api/types';
+import { QuizReviewList } from '../../components/QuizReviewList';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { challengeEndsIn, challengeXpLine, isChallengeClosedError } from '../../utils/arenaLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -28,9 +31,10 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [answered, setAnswered] = useState<
-    { questionId: string; selected: QuizOption; correct: boolean; correctOption: QuizOption } | null
-  >(null);
+  // Right or wrong only - the correct options are revealed in the review once the challenge is
+  // over for both players, so the first to finish can't pass the answers on.
+  const [answered, setAnswered] = useState<{ questionId: string; selected: QuizOption; correct: boolean } | null>(null);
+  const [now, setNow] = useState(() => serverNow());
 
   const load = useCallback(() => {
     setError(null);
@@ -44,15 +48,31 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
     load().finally(() => setLoading(false));
   }, [load]);
 
+  // Keeps the "Ends in" line current while the challenge is still being played.
+  const isActive = detail?.summary.status === 'ACTIVE';
+  useEffect(() => {
+    if (!isActive) return;
+    const interval = setInterval(() => setNow(serverNow()), 60_000);
+    return () => clearInterval(interval);
+  }, [isActive]);
+
   const handleAnswer = async (questionId: string, selected: QuizOption) => {
     if (answered || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
       const result = await submitAnswer(schoolId, challengeId, { questionId, selectedOption: selected });
-      setAnswered({ questionId, selected, correct: result.correct, correctOption: result.correctOption });
+      setAnswered({ questionId, selected, correct: result.correct });
+      // Both players are done: reload straight into the result and the review.
+      if (result.challengeCompleted) await load();
     } catch (e) {
-      setError(getErrorMessage(e));
+      if (isChallengeClosedError(e)) {
+        // It ran out of time (or closed) while this question was open - reload to show that.
+        setAnswered(null);
+        await load();
+      } else {
+        setError(getErrorMessage(e));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -87,18 +107,37 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
 
   const { summary, questions, myAnsweredQuestionIds } = detail;
   const currentQuestion = questions.find((q) => !myAnsweredQuestionIds.includes(q.id));
+  const endsIn = challengeEndsIn(summary, now);
+  const xpLine = challengeXpLine(summary);
 
   return (
     <View style={styles.root}>
       <ScreenHeader title={`vs ${summary.opponentName}`} subtitle={summary.subjectName} onBack={() => navigation.goBack()} />
-      <ScreenContainer>
+      {/* The review's report box has a text field: taps on Send/Cancel go through while the keyboard
+          is up, and on iOS the list scrolls clear of the keyboard. */}
+      <ScreenContainer keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {error && <ErrorNotice message={error} />}
+
+        {endsIn && <Text style={styles.endsIn}>{endsIn}</Text>}
 
         {summary.status === 'COMPLETED' && (
           <View style={styles.resultBanner}>
             <Text style={styles.resultTitle}>
               {summary.draw ? "It's a draw!" : summary.youWon ? 'You won! 🎉' : 'You lost this one'}
             </Text>
+            <Text style={styles.resultMeta}>
+              {summary.myAnsweredCount}/{summary.totalQuestions} answered by you · {summary.opponentAnsweredCount}/
+              {summary.totalQuestions} by {summary.opponentName}
+            </Text>
+            {xpLine && (
+              <Text style={[styles.xpLine, (summary.xpAwarded ?? 0) > 0 ? styles.xpWon : styles.xpNone]}>{xpLine}</Text>
+            )}
+          </View>
+        )}
+
+        {summary.status === 'EXPIRED' && (
+          <View style={styles.resultBanner}>
+            <Text style={styles.resultTitle}>This challenge expired. Nobody gets XP.</Text>
             <Text style={styles.resultMeta}>
               {summary.myAnsweredCount}/{summary.totalQuestions} answered by you · {summary.opponentAnsweredCount}/
               {summary.totalQuestions} by {summary.opponentName}
@@ -129,15 +168,10 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
             {OPTIONS.map(({ key, field }) => {
               const isThisAnswered = answered && answered.questionId === currentQuestion.id;
               const isSelected = isThisAnswered && answered.selected === key;
-              const isCorrectOption = isThisAnswered && answered.correctOption === key;
               return (
                 <Pressable
                   key={key}
-                  style={[
-                    styles.optionButton,
-                    isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong),
-                    !isSelected && isCorrectOption && styles.optionCorrect,
-                  ]}
+                  style={[styles.optionButton, isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong)]}
                   disabled={submitting || !!isThisAnswered}
                   onPress={() => handleAnswer(currentQuestion.id, key)}
                 >
@@ -158,6 +192,8 @@ export function ChallengeDetailScreen({ route, navigation }: Props) {
             )}
           </View>
         )}
+
+        <QuizReviewList items={detail.review} />
       </ScreenContainer>
     </View>
   );
@@ -176,6 +212,10 @@ const styles = StyleSheet.create({
   },
   resultTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
   resultMeta: { fontSize: 12.5, color: colors.textMuted, textAlign: 'center' },
+  xpLine: { fontSize: 13, fontWeight: '700', textAlign: 'center', marginTop: spacing.sm },
+  xpWon: { color: colors.success },
+  xpNone: { color: colors.textSecondary },
+  endsIn: { fontSize: 12, fontWeight: '600', color: colors.warning, marginBottom: spacing.sm },
   questionCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

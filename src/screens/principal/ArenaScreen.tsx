@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { listMyChallenges } from '../../api/arena';
+import { serverNow } from '../../api/client';
 import type { ChallengeSummaryResponse } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -12,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { challengeEndsIn, challengeStatusLabel, challengeStatusVariant } from '../../utils/arenaLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -77,33 +79,24 @@ export function ArenaScreen({ navigation }: Props) {
         {error && <ErrorNotice message={error} />}
         {!loading && challenges.length === 0 && <Text style={styles.empty}>No challenges yet — start one above.</Text>}
 
-        {challenges.map((c) => (
-          <Pressable key={c.id} style={styles.card} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: c.id })}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>vs {c.opponentName}</Text>
-              <StatusChip label={resultLabel(c)} variant={resultVariant(c)} />
-            </View>
-            <Text style={styles.cardMeta}>
-              {c.subjectName} · {c.myAnsweredCount}/{c.totalQuestions} answered
-            </Text>
-          </Pressable>
-        ))}
+        {challenges.map((c) => {
+          const endsIn = challengeEndsIn(c, serverNow());
+          return (
+            <Pressable key={c.id} style={styles.card} onPress={() => navigation.navigate('ChallengeDetail', { challengeId: c.id })}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>vs {c.opponentName}</Text>
+                <StatusChip label={challengeStatusLabel(c)} variant={challengeStatusVariant(c)} />
+              </View>
+              <Text style={styles.cardMeta}>
+                {c.subjectName} · {c.myAnsweredCount}/{c.totalQuestions} answered
+                {endsIn ? ` · ${endsIn}` : ''}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScreenContainer>
     </View>
   );
-}
-
-function resultLabel(c: ChallengeSummaryResponse): string {
-  if (c.status !== 'COMPLETED') return c.status;
-  if (c.draw) return 'Draw';
-  return c.youWon ? 'You won' : 'You lost';
-}
-
-function resultVariant(c: ChallengeSummaryResponse): 'success' | 'warning' | 'error' | 'neutral' | 'info' {
-  if (c.status === 'ACTIVE') return 'info';
-  if (c.status === 'EXPIRED') return 'neutral';
-  if (c.draw) return 'neutral';
-  return c.youWon ? 'success' : 'warning';
 }
 
 const styles = StyleSheet.create({

@@ -161,7 +161,8 @@ export type PrincipalStackParamList = {
   Arena: undefined;
   NewChallenge: undefined;
   ChallengeDetail: { challengeId: string };
-  QuestionAuthor: undefined;
+  // Undefined = add a new question; questionId = edit that saved question.
+  QuestionAuthor: { questionId?: string } | undefined;
   MyQuestions: undefined;
   BattleRoomMatch: undefined;
   BattleRoom: { roomId: string };
