@@ -148,6 +148,8 @@ export interface Employee {
   name: string;
   designation: string;
   joinDate: string;
+  /** Optional - for the staff birthday wish. */
+  dob: string | null;
   bankAccount: string;
   contactPhone: string;
   contactEmail: string | null;
@@ -164,6 +166,8 @@ export interface EmployeeRequest {
   name: string;
   designation: string;
   joinDate: string;
+  /** Left out keeps the saved date of birth. */
+  dob?: string;
   bankAccount?: string;
   contactPhone?: string;
   /** '' clears a saved email; left out keeps it. */
@@ -1993,4 +1997,57 @@ export interface LocationFix {
   speed?: number | null;
   accuracy?: number | null;
   at: string;
+}
+
+// ---------------------------------------------------------------- greetings
+
+export type GreetingKind = 'FESTIVAL' | 'EVENT' | 'CUSTOM';
+export type GreetingAudience = 'EVERYONE' | 'FAMILIES' | 'STAFF' | 'GRADE' | 'SECTION';
+export type GreetingStatus = 'SCHEDULED' | 'SENT' | 'CANCELLED' | 'MISSED';
+
+export interface GreetingRequest {
+  kind: GreetingKind;
+  title: string;
+  message: string;
+  sendDate: string;
+  audience: GreetingAudience;
+  className?: string | null;
+  sectionId?: string | null;
+  eventId?: string | null;
+  festivalKey?: string | null;
+}
+
+export interface Greeting extends GreetingRequest {
+  id: string;
+  sectionLabel: string | null;
+  status: GreetingStatus;
+  sentAt: string | null;
+  recipientCount: number | null;
+}
+
+export interface GreetingSuggestion {
+  kind: GreetingKind;
+  key: string;
+  title: string;
+  message: string;
+  suggestedDate: string | null;
+  audience: GreetingAudience;
+  className: string | null;
+  sectionId: string | null;
+  eventId: string | null;
+  alreadyScheduled: boolean;
+}
+
+export interface GreetingSettings {
+  birthdaysEnabled: boolean;
+  birthdayWhatsApp: boolean;
+}
+
+export interface UpcomingBirthday {
+  date: string;
+  ownerType: OwnerType;
+  id: string;
+  name: string;
+  detail: string | null;
+  hasPhone: boolean;
 }

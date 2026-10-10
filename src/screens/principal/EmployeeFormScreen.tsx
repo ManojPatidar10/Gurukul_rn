@@ -38,6 +38,7 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
     name: employee?.name ?? '',
     designation: employee?.designation ?? '',
     joinDate: employee?.joinDate ?? '',
+    dob: employee?.dob ?? '',
     bankAccount: employee?.bankAccount ?? '',
     contactPhone: employee?.contactPhone ?? '',
     contactEmail: employee?.contactEmail ?? '',
@@ -69,7 +70,8 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
       return;
     }
     // Email is always sent so clearing the field clears it ('' clears, a missing field is kept).
-    const request: EmployeeRequest = { ...form, contactEmail };
+    // An empty date of birth is left out (keeps whatever is saved).
+    const request: EmployeeRequest = { ...form, contactEmail, dob: form.dob || undefined };
     setSubmitting(true);
     try {
       const result = isEdit
@@ -93,6 +95,7 @@ export function EmployeeFormScreen({ route, navigation }: Props) {
         <LabeledInput label={t('employees.form.name')} required value={form.name} onChangeText={set('name')} />
         <LabeledInput label={t('employees.form.designation')} required value={form.designation} onChangeText={set('designation')} />
         <DatePickerField label={t('employees.form.joinDate')} value={form.joinDate} onChange={set('joinDate')} maximumDate={new Date()} />
+        <DatePickerField label={t('employees.form.dob')} value={form.dob ?? ''} onChange={set('dob')} maximumDate={new Date()} />
         <LabeledInput
           label={t('employees.form.bankAccount')}
           value={form.bankAccount}
