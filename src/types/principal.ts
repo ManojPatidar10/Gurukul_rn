@@ -178,7 +178,7 @@ export type PrincipalStackParamList = {
   // Undefined = a teacher generating for themselves (from their dashboard tile); set = a principal
   // acting for a teacher from the Teacher Tools hub.
   ResourceGenerator: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string } | undefined;
-  QuizBankReview: { subjectId: string; subjectName: string; className: string; questions: GeneratedQuizQuestion[] };
+  QuizBankReview: { subjectId: string; subjectName: string; className: string; questions: GeneratedQuizQuestion[]; draftKey?: string };
   NewAdmission: { admission?: Admission } | undefined;
   AdmissionsList: undefined;
   AdmissionDetail: { admissionId: string };

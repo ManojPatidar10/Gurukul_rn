@@ -708,7 +708,7 @@
       "marksLabel": "{{marks}} marks",
       "answerLabel": "Answer",
       "explanationLabel": "Explanation",
-      "reviewNote": "AI-generated draft. Check every question, answer and mark before using it - nothing is saved until you review it.",
+      "reviewNote": "AI-generated draft. Check every question, answer and mark before using it. Nothing reaches students or the question bank unless you share or save it.",
       "assessmentTypes": {
         "QUIZ": "Quiz",
         "TEST": "Test",
@@ -735,11 +735,41 @@
         "syllabus": "Enter the syllabus or topics.",
         "questionCount": "Enter a number of questions between 1 and {{max}}.",
         "maxMarks": "Enter whole-number total marks, at least 1 per question.",
-        "assignment": "Choose a class and subject."
+        "assignment": "Choose a class and subject.",
+        "rateLimited": "You've used this hour's AI requests. Try again in about {{minutes}} min."
       },
       "classAndSubject": "Class and subject",
       "noAssignments": "You are not assigned to any class subject yet. Ask your principal to assign you under Classes.",
-      "noSectionSubjects": "No subjects are assigned to this class yet, so questions from this draft cannot be saved to the question bank."
+      "noSectionSubjects": "No subjects are assigned to this class yet, so questions from this draft cannot be saved to the question bank.",
+      "questionTypesHint": "Every type goes into the PDF. Only multiple-choice questions can be saved to the question bank for Arena games.",
+      "paperOnly": "Paper only: not for the question bank (games use multiple-choice questions)",
+      "generatingHint": "Long papers can take a few minutes. Keep this screen open.",
+      "sharePdf": "Share as PDF (with answer key)",
+      "sharePaperOnly": "Share question paper only",
+      "sharing": "Preparing PDF…",
+      "shareUnavailable": "Sharing isn't available on this device.",
+      "shareFailed": "Couldn't create the PDF: {{message}}",
+      "discardDraft": "Discard draft",
+      "discardConfirmTitle": "Discard this draft?",
+      "discardConfirmBody": "The questions will be removed from this phone. This can't be undone.",
+      "discard": "Discard",
+      "replaceConfirmTitle": "Replace your current draft?",
+      "replaceConfirmBody": "Generating again replaces the draft below.",
+      "replace": "Replace",
+      "draftRestored": "Your last draft, generated {{date}}, is kept on this phone until you discard it or generate a new one.",
+      "savedToBank": "Saved to question bank ✓",
+      "loadAssignmentsFailed": "Couldn't load your classes and subjects.",
+      "loadSubjectsFailed": "Couldn't load this class's subjects."
+    },
+    "paper": {
+      "totalMarks": "Total marks: {{marks}}",
+      "questions": "Questions: {{count}}",
+      "name": "Name",
+      "rollNo": "Roll no.",
+      "date": "Date",
+      "answerKey": "Answer key",
+      "marks": "({{marks}} marks)",
+      "aiNote": "AI-generated draft: check every answer before use."
     },
     "upload": {
       "title": "Upload Resource",
@@ -778,7 +808,6 @@
       "title": "Review & save to question bank",
       "intro": "Check and correct each question before saving. Saved questions go into the Arena question bank for this subject and class; only multiple-choice ones appear in Arena games.",
       "include": "Save to question bank",
-      "notEligible": "Not auto-markable - for printing/sharing only",
       "needsSubject": "Choose a subject assigned to this class to save questions to the question bank.",
       "reviewAndSave": "Review & save to question bank ({{count}})",
       "remove": "Remove",
@@ -1448,7 +1477,9 @@
     "offline": "You're offline. Check your internet connection and try again.",
     "timeout": "The server is taking too long to respond. Please try again.",
     "forbidden": "You don't have permission to do that.",
-    "codes": {}
+    "codes": {
+      "AI_RATE_LIMITED": "You've reached this hour's limit for the AI assistant. Please try again later."
+    }
   },
   "sectionHub": {
     "students": {

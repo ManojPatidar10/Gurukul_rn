@@ -47,10 +47,11 @@ describe('suggestBankType', () => {
     expect(suggestBankType(q({ options: ['3', '4'], answer: '4' }))).toBeNull();
   });
 
-  it('turns short answers into NUMERIC or SHORT_WORD when they fit', () => {
-    expect(suggestBankType(q({ questionType: 'SHORT_ANSWER', answer: '12.5' }))).toBe('NUMERIC');
-    expect(suggestBankType(q({ questionType: 'SHORT_ANSWER', answer: 'Mitochondria' }))).toBe('SHORT_WORD');
-    expect(suggestBankType(q({ questionType: 'SHORT_ANSWER', answer: 'It releases energy from food' }))).toBeNull();
+  it('keeps number, short-word and short-answer questions on the paper (games serve MCQ only)', () => {
+    expect(suggestBankType(q({ questionType: 'NUMERIC', answer: '8' }))).toBeNull();
+    expect(suggestBankType(q({ questionType: 'SHORT_WORD', answer: 'Oxygen' }))).toBeNull();
+    expect(suggestBankType(q({ questionType: 'SHORT_ANSWER', answer: '12.5' }))).toBeNull();
+    expect(suggestBankType(q({ questionType: 'SHORT_ANSWER', answer: 'Mitochondria' }))).toBeNull();
   });
 
   it('never offers long answers or true/false', () => {
@@ -58,6 +59,10 @@ describe('suggestBankType', () => {
     expect(suggestBankType(q({ questionType: 'TRUE_FALSE', options: ['True', 'False'], answer: 'True' }))).toBeNull();
   });
 });
+
+function typedDraft(questionType: 'NUMERIC' | 'SHORT_WORD', answerText: string): BankDraft {
+  return { number: 1, questionType, questionText: 'What is 2 + 2?', options: ['', '', '', ''], correctOption: null, answerText };
+}
 
 describe('toBankDraft / validateBankDraft / toBankInput', () => {
   it('maps the MCQ answer text to its option letter', () => {
@@ -87,16 +92,16 @@ describe('toBankDraft / validateBankDraft / toBankInput', () => {
     expect(validateBankDraft({ ...draft, options: ['3', '4', '4 ', '6'] })).toBe('optionsDuplicate');
     expect(validateBankDraft({ ...draft, correctOption: null })).toBe('correctOption');
 
-    const numeric = toBankDraft(q({ questionType: 'NUMERIC', answer: '8' })) as BankDraft;
+    const numeric = typedDraft('NUMERIC', '8');
     expect(validateBankDraft(numeric)).toBeNull();
     expect(validateBankDraft({ ...numeric, answerText: 'eight' })).toBe('numericAnswer');
 
-    const word = toBankDraft(q({ questionType: 'SHORT_WORD', answer: 'Oxygen' })) as BankDraft;
+    const word = typedDraft('SHORT_WORD', 'Oxygen');
     expect(validateBankDraft({ ...word, answerText: 'a lot of oxygen' })).toBe('shortWordAnswer');
   });
 
   it('sends only the answer for typed-answer questions, with spaces collapsed', () => {
-    const word = toBankDraft(q({ questionType: 'SHORT_WORD', answer: ' New   Delhi ' })) as BankDraft;
+    const word = typedDraft('SHORT_WORD', ' New   Delhi ');
     expect(toBankInput(word)).toEqual({ questionType: 'SHORT_WORD', questionText: 'What is 2 + 2?', answerText: 'New Delhi' });
   });
 

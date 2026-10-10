@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { bulkCreateQuizQuestions } from '../../api/arena';
 import { ApiError } from '../../api/client';
+import { markQuizDraftSaved } from '../../api/quizDraftStore';
 import type { QuizQuestionType } from '../../api/types';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -19,7 +20,7 @@ import { getErrorMessage } from '../../api/errorMessage';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'QuizBankReview'>;
 
 const accent = accents.teacherTools;
-const BANK_TYPES: QuizQuestionType[] = ['MCQ', 'NUMERIC', 'SHORT_WORD'];
+const BANK_TYPES: QuizQuestionType[] = ['MCQ'];
 
 /**
  * The mandatory review step between an AI draft and the question bank. Every selected question is
@@ -69,6 +70,7 @@ export function QuizBankReviewScreen({ route, navigation }: Props) {
         questions: drafts.map(toBankInput),
       });
       showToast(t('teacherTools.bank.saved', { count: saved.length }), 'success');
+      if (route.params.draftKey) await markQuizDraftSaved(route.params.draftKey, drafts.map((d) => d.number)).catch(() => {});
       navigation.goBack();
     } catch (e) {
       showToast(e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e), 'error');
@@ -96,19 +98,21 @@ export function QuizBankReviewScreen({ route, navigation }: Props) {
               </Pressable>
             </View>
 
-            <View style={styles.chips}>
-              {BANK_TYPES.map((type) => (
-                <Pressable
-                  key={type}
-                  onPress={() => update(index, { questionType: type })}
-                  style={[styles.chip, d.questionType === type && styles.chipSelected]}
-                >
-                  <Text style={[styles.chipText, d.questionType === type && styles.chipTextSelected]}>
-                    {t(`teacherTools.bank.types.${type}`)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            {BANK_TYPES.length > 1 && (
+              <View style={styles.chips}>
+                {BANK_TYPES.map((type) => (
+                  <Pressable
+                    key={type}
+                    onPress={() => update(index, { questionType: type })}
+                    style={[styles.chip, d.questionType === type && styles.chipSelected]}
+                  >
+                    <Text style={[styles.chipText, d.questionType === type && styles.chipTextSelected]}>
+                      {t(`teacherTools.bank.types.${type}`)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
 
             <LabeledInput
               label={t('teacherTools.bank.questionText')}

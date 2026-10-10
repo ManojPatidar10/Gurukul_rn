@@ -1,28 +1,39 @@
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { getClassSection } from '../../api/classSections';
+import { discardQuizDraft, loadQuizDraft, quizDraftKey, saveQuizDraft, type StoredQuizDraft } from '../../api/quizDraftStore';
+import { shareQuizPaper, ShareUnavailableError } from '../../api/quizPaperPdf';
 import { listSectionSubjects, listTeacherAssignments } from '../../api/sectionSubjects';
 import { generateQuiz } from '../../api/teacherAi';
 import type {
+  AiQuizGenerationRequest,
   AiQuizGenerationResponse,
   QuestionType,
   SubjectAssignment,
   TeacherSubjectAssignment,
 } from '../../api/types';
 import Dropdown from '../../components/Dropdown';
+import { ErrorNotice } from '../../components/ErrorNotice';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
-import { ApiError } from '../../api/client';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { isBankEligible } from '../../utils/quizBank';
+import {
+  assignmentKeyOf,
+  bankSelectableNumbers,
+  effectiveAssignmentKey,
+  questionsForBank,
+  quizGenErrorMessage,
+  shouldRestoreDraft,
+} from '../../utils/quizGenerator';
 import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ResourceGenerator'>;
@@ -38,8 +49,12 @@ const MAX_QUESTIONS = 30;
 /**
  * Two ways in: a principal/admin arrives from the Teacher Tools hub with a teacher + class-section
  * already chosen (route params); a teacher arrives from their own dashboard tile with no params and
- * generates for themselves, picking one of the class + subject pairs they are assigned to. Either
- * way the result is a draft - nothing is saved until the teacher reviews it on QuizBankReview.
+ * generates for themselves, picking one of the class + subject pairs they are assigned to.
+ *
+ * The result is a draft that goes where the teacher sends it: the whole paper as a PDF (with or
+ * without the answer key), and its multiple-choice questions to the question bank via
+ * QuizBankReview. The last draft is kept on this phone (quizDraftStore) until it is discarded or
+ * replaced by a new one, so Back doesn't lose it.
  */
 export function ResourceGeneratorScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
@@ -49,14 +64,20 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
   const params = route.params;
   const selfMode = !params;
   const teacherId = params?.teacherId ?? session.ownerId;
+  // Principal mode: the section fixed by the hub. Null in teacher self-mode.
+  const openSectionId = params?.classSectionId ?? null;
+  const draftKey = quizDraftKey(schoolId, session.ownerId, teacherId);
 
   // Principal mode: the section is fixed by the hub; its subjects come from the section's assignments.
   const [sectionSubjects, setSectionSubjects] = useState<SubjectAssignment[]>([]);
-  const [sectionClassName, setSectionClassName] = useState<string | null>(null);
   // Teacher self-mode: every section + subject this teacher is assigned to.
   const [myAssignments, setMyAssignments] = useState<TeacherSubjectAssignment[]>([]);
   const [loadingSetup, setLoadingSetup] = useState(true);
+  // A failed load shows an error with Retry - never the "not assigned" / "no subjects" empty states.
+  const [setupError, setSetupError] = useState<string | null>(null);
   const [assignmentKey, setAssignmentKey] = useState('');
+  // The restored draft's class + subject, which the picker shows until the teacher picks another.
+  const [restoredAssignmentKey, setRestoredAssignmentKey] = useState('');
 
   const [subjectId, setSubjectId] = useState('');
   const [subjectName, setSubjectName] = useState('');
@@ -69,28 +90,89 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
   const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>([]);
   const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
   const [result, setResult] = useState<AiQuizGenerationResponse | null>(null);
+  // savedAt of the stored draft the result on screen is (null if it couldn't be stored).
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  // Set while the result on screen is a draft restored from this phone rather than just generated.
+  const [restoredAt, setRestoredAt] = useState<string | null>(null);
+  // Question numbers already saved to the question bank from this draft.
+  const [savedToBank, setSavedToBank] = useState<number[]>([]);
   const [selectedForBank, setSelectedForBank] = useState<number[]>([]);
+  const [sharing, setSharing] = useState(false);
 
+  // Fetch only: the Retry handler resets the loading / error state before calling it again.
+  const loadSetup = useCallback(() => {
+    const request =
+      openSectionId === null
+        ? listTeacherAssignments(schoolId, session.ownerId).then(setMyAssignments)
+        : listSectionSubjects(schoolId, openSectionId).then(setSectionSubjects);
+    request.catch((e) => setSetupError(getErrorMessage(e))).finally(() => setLoadingSetup(false));
+  }, [schoolId, session.ownerId, openSectionId]);
+
+  useEffect(loadSetup, [loadSetup]);
+
+  const retrySetup = () => {
+    setLoadingSetup(true);
+    setSetupError(null);
+    loadSetup();
+  };
+
+  const restoreDraft = useCallback((draft: StoredQuizDraft) => {
+    const req = draft.request;
+    setSubjectId(req.subjectId ?? '');
+    setSubjectName(req.subjectName);
+    setAssessmentType(req.assessmentType);
+    setTitle(req.title);
+    setSyllabus(req.syllabus);
+    setDifficulty(req.difficulty);
+    setQuestionCount(String(req.questionCount));
+    setMaxMarks(String(req.maxMarks));
+    setSelectedTypes(req.questionTypes ?? []);
+    setAdditionalInstructions(req.additionalInstructions ?? '');
+    const { classSectionId: sectionId, subjectId: restoredSubjectId } = draft.response;
+    setRestoredAssignmentKey(restoredSubjectId ? assignmentKeyOf({ sectionId, subjectId: restoredSubjectId }) : '');
+    setResult(draft.response);
+    setDraftSavedAt(draft.savedAt);
+    setRestoredAt(draft.savedAt);
+    setSavedToBank(draft.savedToBank);
+    setSelectedForBank(bankSelectableNumbers(draft.response.questions, draft.savedToBank));
+  }, []);
+
+  // The last draft comes back alongside the setup load - in principal mode only if it was made for
+  // this section (one for another section stays stored, unshown).
   useEffect(() => {
-    if (selfMode) {
-      listTeacherAssignments(schoolId, session.ownerId)
-        .then(setMyAssignments)
-        .catch(() => setMyAssignments([]))
-        .finally(() => setLoadingSetup(false));
-      return;
-    }
-    Promise.allSettled([
-      listSectionSubjects(schoolId, params.classSectionId).then(setSectionSubjects),
-      getClassSection(schoolId, params.classSectionId).then((cs) => setSectionClassName(cs.className)),
-    ]).finally(() => setLoadingSetup(false));
-  }, [schoolId, selfMode, session.ownerId, params?.classSectionId]);
+    let active = true;
+    loadQuizDraft(draftKey).then((stored) => {
+      if (active && stored && shouldRestoreDraft(stored, openSectionId)) restoreDraft(stored);
+    });
+    return () => {
+      active = false;
+    };
+  }, [draftKey, openSectionId, restoreDraft]);
 
-  const selectedAssignment = useMemo(
-    () => myAssignments.find((a) => `${a.sectionId}|${a.subjectId}` === assignmentKey) ?? null,
-    [myAssignments, assignmentKey]
+  // Questions saved on QuizBankReview are recorded in the stored draft; pick that up on coming back.
+  useFocusEffect(
+    useCallback(() => {
+      if (!draftSavedAt) return;
+      let active = true;
+      loadQuizDraft(draftKey).then((stored) => {
+        if (!active || !stored || stored.savedAt !== draftSavedAt) return;
+        setSavedToBank(stored.savedToBank);
+        setSelectedForBank((prev) => prev.filter((n) => !stored.savedToBank.includes(n)));
+      });
+      return () => {
+        active = false;
+      };
+    }, [draftKey, draftSavedAt])
   );
-  const classSectionId = selfMode ? selectedAssignment?.sectionId ?? '' : params.classSectionId;
+
+  const pickerKey = effectiveAssignmentKey(assignmentKey, restoredAssignmentKey, myAssignments);
+  const selectedAssignment = useMemo(
+    () => myAssignments.find((a) => assignmentKeyOf(a) === pickerKey) ?? null,
+    [myAssignments, pickerKey]
+  );
+  const classSectionId = openSectionId ?? selectedAssignment?.sectionId ?? '';
   const classSectionLabel = selfMode
     ? selectedAssignment
       ? `${selectedAssignment.className} - ${selectedAssignment.section} (${selectedAssignment.academicYear})`
@@ -105,7 +187,7 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
 
   const selectAssignment = (key: string) => {
     setAssignmentKey(key);
-    const a = myAssignments.find((x) => `${x.sectionId}|${x.subjectId}` === key);
+    const a = myAssignments.find((x) => assignmentKeyOf(x) === key);
     setSubjectId(a?.subjectId ?? '');
     setSubjectName(a?.subjectName ?? '');
   };
@@ -118,7 +200,37 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
     setSelectedForBank((prev) => (prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num]));
   };
 
-  const handleGenerate = async () => {
+  // The draft on screen (if any) stays until this succeeds; a failure shows under the button instead.
+  const runGenerate = async (req: AiQuizGenerationRequest) => {
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const response = await generateQuiz(schoolId, teacherId, req);
+      const savedAt = new Date().toISOString();
+      setResult(response);
+      setDraftSavedAt(null);
+      setRestoredAt(null);
+      setSavedToBank([]);
+      setSelectedForBank(bankSelectableNumbers(response.questions, []));
+      setGenerateError(null);
+      const stored = await saveQuizDraft(draftKey, {
+        v: 1,
+        savedAt,
+        teacherId,
+        classSectionId: req.classSectionId,
+        request: req,
+        response,
+        savedToBank: [],
+      });
+      setDraftSavedAt(stored ? savedAt : null);
+    } catch (e) {
+      setGenerateError(quizGenErrorMessage(e));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerate = () => {
     if (selfMode && !selectedAssignment) return showToast(t('teacherTools.generator.errors.assignment'), 'error');
     if (!subjectName.trim()) return showToast(t('teacherTools.generator.errors.subjectName'), 'error');
     if (!title.trim()) return showToast(t('teacherTools.generator.errors.title'), 'error');
@@ -132,50 +244,86 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
       return showToast(t('teacherTools.generator.errors.maxMarks'), 'error');
     }
 
-    setGenerating(true);
-    setResult(null);
-    setSelectedForBank([]);
+    const req: AiQuizGenerationRequest = {
+      classSectionId,
+      subjectId: subjectId || undefined,
+      subjectName: subjectName.trim(),
+      assessmentType,
+      title: title.trim(),
+      syllabus: syllabus.trim(),
+      difficulty,
+      questionCount: count,
+      maxMarks: marks,
+      questionTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
+      additionalInstructions: additionalInstructions.trim() || undefined,
+    };
+    if (!result) {
+      runGenerate(req);
+      return;
+    }
+    Alert.alert(t('teacherTools.generator.replaceConfirmTitle'), t('teacherTools.generator.replaceConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('teacherTools.generator.replace'), onPress: () => runGenerate(req) },
+    ]);
+  };
+
+  const handleShare = async (withAnswerKey: boolean) => {
+    if (!result) return;
+    setSharing(true);
     try {
-      const response = await generateQuiz(schoolId, teacherId, {
-        classSectionId,
-        subjectId: subjectId || undefined,
-        subjectName: subjectName.trim(),
-        assessmentType,
-        title: title.trim(),
-        syllabus: syllabus.trim(),
-        difficulty,
-        questionCount: count,
-        maxMarks: marks,
-        questionTypes: selectedTypes.length > 0 ? selectedTypes : undefined,
-        additionalInstructions: additionalInstructions.trim() || undefined,
-      });
-      setResult(response);
-      setSelectedForBank(response.questions.filter(isBankEligible).map((q) => q.number));
+      await shareQuizPaper(result, withAnswerKey, t);
     } catch (e) {
-      const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
-      showToast(message, 'error');
+      showToast(
+        e instanceof ShareUnavailableError
+          ? t('teacherTools.generator.shareUnavailable')
+          : t('teacherTools.generator.shareFailed', { message: getErrorMessage(e) }),
+        'error'
+      );
     } finally {
-      setGenerating(false);
+      setSharing(false);
     }
   };
 
-  const bankClassName = result?.className ?? (selfMode ? selectedAssignment?.className : sectionClassName) ?? null;
+  // Removes the draft from the phone; the form keeps what was typed.
+  const confirmDiscard = () => {
+    Alert.alert(t('teacherTools.generator.discardConfirmTitle'), t('teacherTools.generator.discardConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('teacherTools.generator.discard'),
+        style: 'destructive',
+        onPress: async () => {
+          await discardQuizDraft(draftKey);
+          setResult(null);
+          setDraftSavedAt(null);
+          setRestoredAt(null);
+          setSavedToBank([]);
+          setSelectedForBank([]);
+          setGenerateError(null);
+        },
+      },
+    ]);
+  };
+
+  const bankClassName = result?.className ?? null;
   const bankSubjectId = result?.subjectId ?? null;
   const canSaveToBank = !!bankClassName && !!bankSubjectId;
+  const bankQuestions = result ? questionsForBank(result.questions, selectedForBank, savedToBank) : [];
 
   const openReview = () => {
     if (!result || !bankClassName || !bankSubjectId) return;
-    const questions = result.questions.filter((q) => selectedForBank.includes(q.number) && isBankEligible(q));
-    if (questions.length === 0) return showToast(t('teacherTools.bank.errors.noneSelected'), 'error');
+    if (bankQuestions.length === 0) return showToast(t('teacherTools.bank.errors.noneSelected'), 'error');
     navigation.navigate('QuizBankReview', {
       subjectId: bankSubjectId,
       subjectName: result.subjectName,
       className: bankClassName,
-      questions,
+      questions: bankQuestions,
+      // Only when the draft on screen is the stored one, so its saved flags are recorded on the right draft.
+      draftKey: draftSavedAt ? draftKey : undefined,
     });
   };
 
   const subtitle = selfMode ? classSectionLabel || undefined : `${params.teacherName} · ${params.classSectionLabel}`;
+  const generateDisabled = generating || !!setupError;
 
   return (
     <View style={styles.root}>
@@ -183,6 +331,15 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
       <ScreenContainer>
         {loadingSetup ? (
           <ActivityIndicator color={accent.base} style={styles.setupLoading} />
+        ) : setupError ? (
+          <>
+            <ErrorNotice
+              message={`${t(selfMode ? 'teacherTools.generator.loadAssignmentsFailed' : 'teacherTools.generator.loadSubjectsFailed')} ${setupError}`}
+            />
+            <Pressable onPress={retrySetup} style={styles.retry} accessibilityRole="button">
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </>
         ) : selfMode ? (
           myAssignments.length === 0 ? (
             <Text style={styles.hint}>{t('teacherTools.generator.noAssignments')}</Text>
@@ -190,10 +347,10 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
             <Dropdown
               label={t('teacherTools.generator.classAndSubject')}
               required
-              value={assignmentKey}
+              value={pickerKey}
               onSelect={selectAssignment}
               options={myAssignments.map((a) => ({
-                value: `${a.sectionId}|${a.subjectId}`,
+                value: assignmentKeyOf(a),
                 label: `${a.className} - ${a.section} · ${a.subjectName}`,
               }))}
             />
@@ -267,6 +424,7 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
             </Pressable>
           ))}
         </View>
+        <Text style={styles.hint}>{t('teacherTools.generator.questionTypesHint')}</Text>
 
         <LabeledInput
           label={t('teacherTools.generator.additionalInstructions')}
@@ -277,9 +435,9 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
         />
 
         <Pressable
-          style={[styles.generateButton, generating && styles.generateButtonDisabled]}
+          style={[styles.generateButton, generateDisabled && styles.generateButtonDisabled]}
           onPress={handleGenerate}
-          disabled={generating}
+          disabled={generateDisabled}
         >
           {generating ? (
             <View style={styles.generatingRow}>
@@ -290,13 +448,50 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
             <Text style={styles.generateButtonText}>{t('teacherTools.generator.generateButton')}</Text>
           )}
         </Pressable>
+        {generating && <Text style={styles.hint}>{t('teacherTools.generator.generatingHint')}</Text>}
+        {generateError && <ErrorNotice message={generateError} />}
 
         {result && (
           <View style={styles.results}>
             <Text style={styles.resultsTitle}>{t('teacherTools.generator.resultsTitle')}</Text>
+            {restoredAt && (
+              <Text style={styles.restoredNote}>
+                {t('teacherTools.generator.draftRestored', { date: new Date(restoredAt).toLocaleString() })}
+              </Text>
+            )}
             <Text style={styles.reviewNote}>{t('teacherTools.generator.reviewNote')}</Text>
+
+            <View style={styles.actions}>
+              <Pressable
+                style={[styles.actionButton, sharing && styles.generateButtonDisabled]}
+                onPress={() => handleShare(true)}
+                disabled={sharing}
+                accessibilityRole="button"
+              >
+                <Text style={styles.actionButtonText}>{t('teacherTools.generator.sharePdf')}</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.actionButton, sharing && styles.generateButtonDisabled]}
+                onPress={() => handleShare(false)}
+                disabled={sharing}
+                accessibilityRole="button"
+              >
+                <Text style={styles.actionButtonText}>{t('teacherTools.generator.sharePaperOnly')}</Text>
+              </Pressable>
+              {sharing && (
+                <View style={styles.generatingRow}>
+                  <ActivityIndicator color={accent.base} />
+                  <Text style={styles.sharingText}>{t('teacherTools.generator.sharing')}</Text>
+                </View>
+              )}
+              <Pressable onPress={confirmDiscard} hitSlop={8} style={styles.discard} accessibilityRole="button">
+                <Text style={styles.discardText}>{t('teacherTools.generator.discardDraft')}</Text>
+              </Pressable>
+            </View>
+
             {result.questions.map((q) => {
               const eligible = isBankEligible(q);
+              const saved = savedToBank.includes(q.number);
               const checked = selectedForBank.includes(q.number);
               return (
                 <View key={q.number} style={styles.questionCard}>
@@ -321,8 +516,12 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
                     {t('teacherTools.generator.answerLabel')}: <Text style={styles.answerText}>{q.answer}</Text>
                   </Text>
                   {!!q.explanation && <Text style={styles.explanationText}>{q.explanation}</Text>}
-                  {canSaveToBank &&
-                    (eligible ? (
+                  {!eligible ? (
+                    <Text style={styles.paperOnly}>{t('teacherTools.generator.paperOnly')}</Text>
+                  ) : saved ? (
+                    <Text style={styles.savedText}>{t('teacherTools.generator.savedToBank')}</Text>
+                  ) : (
+                    canSaveToBank && (
                       <Pressable
                         style={styles.bankToggle}
                         onPress={() => toggleBank(q.number)}
@@ -334,20 +533,19 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
                         </View>
                         <Text style={styles.bankToggleText}>{t('teacherTools.bank.include')}</Text>
                       </Pressable>
-                    ) : (
-                      <Text style={styles.notEligible}>{t('teacherTools.bank.notEligible')}</Text>
-                    ))}
+                    )
+                  )}
                 </View>
               );
             })}
             {canSaveToBank ? (
               <Pressable
-                style={[styles.generateButton, selectedForBank.length === 0 && styles.generateButtonDisabled]}
+                style={[styles.generateButton, bankQuestions.length === 0 && styles.generateButtonDisabled]}
                 onPress={openReview}
-                disabled={selectedForBank.length === 0}
+                disabled={bankQuestions.length === 0}
               >
                 <Text style={styles.generateButtonText}>
-                  {t('teacherTools.bank.reviewAndSave', { count: selectedForBank.length })}
+                  {t('teacherTools.bank.reviewAndSave', { count: bankQuestions.length })}
                 </Text>
               </Pressable>
             ) : (
@@ -363,6 +561,8 @@ export function ResourceGeneratorScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   setupLoading: { marginVertical: spacing.lg },
+  retry: { alignSelf: 'flex-start', paddingVertical: spacing.sm, marginBottom: spacing.sm },
+  retryText: { color: accent.base, fontWeight: '700' },
   hint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.md },
   sectionLabel: {
     fontSize: 12,
@@ -372,7 +572,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -398,7 +598,22 @@ const styles = StyleSheet.create({
   generatingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   results: { marginTop: spacing.sm },
   resultsTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.xs },
+  restoredNote: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.xs },
   reviewNote: { fontSize: 12, color: colors.textMuted, marginBottom: spacing.md, fontStyle: 'italic' },
+  actions: { gap: spacing.sm, marginBottom: spacing.lg },
+  actionButton: {
+    borderWidth: 1.5,
+    borderColor: accent.base,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  actionButtonText: { color: accent.base, fontWeight: '700', fontSize: 14, textAlign: 'center' },
+  sharingText: { fontSize: 13, color: colors.textSecondary },
+  discard: { alignSelf: 'flex-start', paddingVertical: spacing.xs },
+  discardText: { fontSize: 13, fontWeight: '600', color: colors.error },
   questionCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -429,5 +644,6 @@ const styles = StyleSheet.create({
   checkboxChecked: { backgroundColor: accent.base, borderColor: accent.base },
   checkmark: { color: colors.white, fontWeight: '800', fontSize: 13 },
   bankToggleText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
-  notEligible: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, fontStyle: 'italic' },
+  savedText: { fontSize: 13, fontWeight: '600', color: colors.success, marginTop: spacing.sm },
+  paperOnly: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm, fontStyle: 'italic' },
 });
