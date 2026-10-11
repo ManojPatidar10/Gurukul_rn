@@ -2,6 +2,7 @@ import type { LedgerTransaction } from '../api/types';
 import en from '../i18n/locales/en.json';
 import hi from '../i18n/locales/hi.json';
 import { tEn, tHi } from '../testUtils/i18nFixture';
+import { shiftIsoDate } from '../utils/feeBills';
 import {
   ALL_OPTION,
   LEDGER_DIRECTIONS,
@@ -25,8 +26,9 @@ import {
   entryLabel,
   financialYearOf,
   formatLedgerDate,
+  formatLedgerInstant,
   formatLedgerRupees,
-  formatSignedRupees,
+  formatSignedLedgerRupees,
   isValidReversalReason,
   isZeroBucket,
   linkedDocumentText,
@@ -40,7 +42,6 @@ import {
   reversalTypeLabel,
   reverseConfirmText,
   reverseHint,
-  shiftIsoDate,
   signedAmount,
   summaryFilterOf,
 } from '../utils/ledger';
@@ -138,10 +139,12 @@ describe('enum lists', () => {
       'ledger.detail.linkedValue',
       'ledger.detail.reversalType',
       'ledger.reverse.body',
+      'ledger.reverse.bodyOnDate',
+      'ledger.reverse.alreadyReversed',
       'ledger.reverse.receiptCancelled',
       'ledger.reverse.voucherCancelled',
       'ledger.reverse.cannotUndo',
-      ...Array.from({ length: 12 }, (_, i) => `ledger.monthsShort.${i + 1}`),
+      ...Array.from({ length: 12 }, (_, i) => `fees.bill.monthsShort.${i + 1}`),
     ];
     // One per value of each of the six enums, the six plural filter labels and the three fee reversal types.
     expect(LEDGER_LABEL_KEYS).toHaveLength(6 + 7 + 7 + 4 + 2 + 3 + 6 + 3);
@@ -332,9 +335,9 @@ describe('amounts and numbers', () => {
     expect(formatLedgerRupees(-2000)).toBe('−₹2,000.00');
     expect(formatLedgerRupees(-0.001)).toBe('₹0.00');
     expect(formatLedgerRupees(Number.NaN)).toBe('₹0.00');
-    expect(formatSignedRupees(5000)).toBe('+₹5,000.00');
-    expect(formatSignedRupees(-2000)).toBe('−₹2,000.00');
-    expect(formatSignedRupees(0)).toBe('₹0.00');
+    expect(formatSignedLedgerRupees(5000)).toBe('+₹5,000.00');
+    expect(formatSignedLedgerRupees(-2000)).toBe('−₹2,000.00');
+    expect(formatSignedLedgerRupees(0)).toBe('₹0.00');
   });
 
   it('shows totals and rows only once they were loaded for the filter on screen', () => {
@@ -362,12 +365,12 @@ describe('amounts and numbers', () => {
 });
 
 describe('dates', () => {
-  it('moves a day across month, year and leap-day ends', () => {
-    expect(shiftIsoDate('2026-10-11', -1)).toBe('2026-10-10');
-    expect(shiftIsoDate('2026-10-31', 1)).toBe('2026-11-01');
-    expect(shiftIsoDate('2027-01-01', -1)).toBe('2026-12-31');
-    expect(shiftIsoDate('2028-02-28', 1)).toBe('2028-02-29');
-    expect(shiftIsoDate('2026-03-01', -1)).toBe('2026-02-28');
+  it("steps the day book a day across month, year and leap-day ends (feeBills' shiftIsoDate)", () => {
+    expect(shiftIsoDate('2026-10-11', { days: -1 })).toBe('2026-10-10');
+    expect(shiftIsoDate('2026-10-31', { days: 1 })).toBe('2026-11-01');
+    expect(shiftIsoDate('2027-01-01', { days: -1 })).toBe('2026-12-31');
+    expect(shiftIsoDate('2028-02-28', { days: 1 })).toBe('2028-02-29');
+    expect(shiftIsoDate('2026-03-01', { days: -1 })).toBe('2026-02-28');
   });
 
   it('formats a date as "d MMM", with the year when asked, the month in the app language', () => {
@@ -375,12 +378,24 @@ describe('dates', () => {
     expect(formatLedgerDate('2026-04-01', tEn, true)).toBe('1 Apr 2026');
     expect(formatLedgerDate('2026-01-05', tEn)).toBe('5 Jan');
     expect(formatLedgerDate('2026-12-31', tEn)).toBe('31 Dec');
-    expect(formatLedgerDate('2026-10-11', tHi, true)).toBe(`11 ${hi.ledger.monthsShort['10']} 2026`);
+    // The fee bills' month names, so a date reads the same here as on a bill or a receipt.
+    expect(formatLedgerDate('2026-10-11', tHi, true)).toBe(`11 ${hi.fees.bill.monthsShort['10']} 2026`);
     expect(formatLedgerDate('2026-10-11', tHi)).not.toMatch(/Oct/);
     expect(formatLedgerDate('', tEn)).toBe('');
     expect(formatLedgerDate(null, tEn)).toBe('');
     expect(formatLedgerDate('2026-13-01', tEn)).toBe('');
     expect(formatLedgerDate('2026-00-01', tEn)).toBe('');
+  });
+
+  it('shows an instant as its date and time in India, the month in the app language', () => {
+    expect(formatLedgerInstant('2026-10-11T05:00:00Z', tEn)).toBe('11 Oct 2026, 10:30');
+    // 20:10 UTC is already the next day in India.
+    expect(formatLedgerInstant('2026-10-11T20:10:00Z', tEn)).toBe('12 Oct 2026, 01:40');
+    expect(formatLedgerInstant('2026-10-11T18:29:59.123Z', tEn)).toBe('11 Oct 2026, 23:59');
+    expect(formatLedgerInstant('2026-10-11T20:10:00Z', tHi)).toBe(`12 ${hi.fees.bill.monthsShort['10']} 2026, 01:40`);
+    expect(formatLedgerInstant(null, tEn)).toBe('');
+    expect(formatLedgerInstant(undefined, tEn)).toBe('');
+    expect(formatLedgerInstant('not a time', tEn)).toBe('not a time');
   });
 
   it('treats an all-zero bucket as empty', () => {
@@ -448,17 +463,47 @@ describe('receipts and reversal', () => {
   });
 
   it('warns what a reversal does before it happens', () => {
-    expect(reverseConfirmText(tx({ amount: 5000 }), tEn)).toBe(
+    const today = '2026-10-11';
+    expect(reverseConfirmText(tx({ amount: 5000 }), tEn, today)).toBe(
       "This adds a reversal entry of ₹5,000.00 dated today. Receipt GUR/2026-27/RCPT/000012 will show as cancelled. This can't be undone."
     );
     expect(
-      reverseConfirmText(tx({ amount: 250.5, receiptNumber: null, voucherNumber: 'GUR/2026-27/PV/000003' }), tEn)
+      reverseConfirmText(tx({ amount: 250.5, receiptNumber: null, voucherNumber: 'GUR/2026-27/PV/000003' }), tEn, today)
     ).toBe(
       "This adds a reversal entry of ₹250.50 dated today. Voucher GUR/2026-27/PV/000003 will show as cancelled. This can't be undone."
     );
-    expect(reverseConfirmText(tx({ amount: 100, receiptNumber: null, voucherNumber: null }), tEn)).toBe(
+    expect(reverseConfirmText(tx({ amount: 100, receiptNumber: null, voucherNumber: null }), tEn, today)).toBe(
       "This adds a reversal entry of ₹100.00 dated today. This can't be undone."
     );
+    // An entry dated before today is reversed today.
+    expect(reverseConfirmText(tx({ amount: 100, transactionDate: '2026-04-01', receiptNumber: null }), tEn, today)).toBe(
+      "This adds a reversal entry of ₹100.00 dated today. This can't be undone."
+    );
+  });
+
+  it("names the entry's own date when it is after today, as the server dates the reversal then", () => {
+    // A manual entry recorded post-dated before future dates were refused: the reversal entry takes
+    // the later of today and the entry's date (LedgerService.reverse).
+    const postDated = tx({
+      amount: 1200,
+      transactionDate: '2026-11-05',
+      receiptNumber: null,
+      voucherNumber: 'GUR/2026-27/PV/000009',
+    });
+    expect(reverseConfirmText(postDated, tEn, '2026-10-11')).toBe(
+      "This adds a reversal entry of ₹1,200.00 dated 5 Nov 2026, the entry's own date. Voucher GUR/2026-27/PV/000009 will show as cancelled. This can't be undone."
+    );
+    expect(reverseConfirmText(postDated, tHi, '2026-10-11')).toContain(`5 ${hi.fees.bill.monthsShort['11']} 2026`);
+    // On the entry's own day it is today either way.
+    expect(reverseConfirmText(postDated, tEn, '2026-11-05')).toMatch(/^This adds a reversal entry of ₹1,200\.00 dated today\./);
+  });
+
+  it("says a second reversal was refused in the entry's words, not the fee payment's", () => {
+    // 409 ALREADY_REVERSED on the ledger's reverse route: the server words it for an entry
+    // (AlreadyReversedException), while errors.codes.ALREADY_REVERSED is the fee payment screens' text.
+    expect(en.ledger.reverse.alreadyReversed).toBe('This entry has already been reversed.');
+    expect(en.ledger.reverse.alreadyReversed).not.toBe(en.errors.codes.ALREADY_REVERSED);
+    expect(hi.ledger.reverse.alreadyReversed).not.toBe(hi.errors.codes.ALREADY_REVERSED);
   });
 });
 
@@ -514,12 +559,22 @@ describe('a fee payment reversed from its bill (finance fix 3), in the ledger', 
     // The compensating entry takes no receipt or voucher number; it's money out, so a voucher label.
     expect(displayNumber(contra)).toBeNull();
     expect(numberLabelKey(contra)).toBe('ledger.detail.voucherNumber');
-    expect(formatSignedRupees(signedAmount(original))).toBe('+₹5,000.00');
-    expect(formatSignedRupees(signedAmount(contra))).toBe('−₹5,000.00');
-    // Together they net to nothing, and each stays on its own day: the payment day's entries are as before.
+    expect(formatSignedLedgerRupees(signedAmount(original))).toBe('+₹5,000.00');
+    expect(formatSignedLedgerRupees(signedAmount(contra))).toBe('−₹5,000.00');
+    // Together they net to nothing. That the payment day's closing balance doesn't move is the
+    // server's sum, tested in Gurukul_bk's LedgerReversalIntegrationTest
+    // (aFeePaymentReversedFromTheBillShowsInTheLedgerLikeAnyReversal).
     expect(signedAmount(original) + signedAmount(contra)).toBe(0);
-    expect(original.transactionDate).toBe('2026-10-05');
-    expect(contra.transactionDate).toBe('2026-10-11');
+  });
+
+  it('shows the reversal on the same day as the compensating entry, in India time', () => {
+    // Reversed at 11:40 IST on 11 Oct: the payment's "Reversed on" falls on the compensating entry's
+    // date, as on the fee receipt (feeBills.formatInstantDate).
+    expect(formatLedgerInstant(original.reversedAt, tEn)).toBe('11 Oct 2026, 11:40');
+    expect(formatLedgerInstant(original.reversedAt, tEn)).toMatch(
+      new RegExp(`^${formatLedgerDate(contra.transactionDate, tEn, true)},`)
+    );
+    expect(formatLedgerDate(original.transactionDate, tEn, true)).toBe('5 Oct 2026');
   });
 
   it('shows how it was reversed on the entry, and links both entries to the fee payment', () => {

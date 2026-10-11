@@ -22,7 +22,8 @@ import {
   entryChips,
   entryLabel,
   formatLedgerDate,
-  formatSignedRupees,
+  formatLedgerInstant,
+  formatSignedLedgerRupees,
   isValidReversalReason,
   linkedDocumentText,
   numberLabelKey,
@@ -33,6 +34,7 @@ import {
   reverseHint,
   signedAmount,
 } from '../../utils/ledger';
+import { istToday } from '../../utils/quizInsights';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'LedgerEntryDetail'>;
 
@@ -45,12 +47,6 @@ function Field({ label, value, children }: { label: string; value?: string | nul
       {children ?? <Text style={styles.fieldValue}>{value || '—'}</Text>}
     </View>
   );
-}
-
-function formatInstant(instant: string | null | undefined): string {
-  if (!instant) return '';
-  const ms = Date.parse(instant);
-  return Number.isNaN(ms) ? instant : new Date(ms).toLocaleString();
 }
 
 export function LedgerEntryDetailScreen({ route, navigation }: Props) {
@@ -89,9 +85,11 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
       showToast(t('ledger.reverse.done'), 'success');
     } catch (e) {
       if (e instanceof ApiError && e.errorCode === 'ALREADY_REVERSED') {
-        // Reversed meanwhile (another admin, or a double tap): show it as it is now.
+        // Reversed meanwhile (another admin, or a double tap): show it as it is now. Only manual
+        // entries, event collections and sponsorships are reversed here, so it's the entry wording,
+        // not errors.codes.ALREADY_REVERSED's fee payment one.
         setConfirmOpen(false);
-        showToast(getErrorMessage(e), 'error');
+        showToast(t('ledger.reverse.alreadyReversed'), 'error');
         try {
           navigation.setParams({ transaction: await getLedgerTransaction(schoolId, tx.id) });
         } catch {
@@ -129,7 +127,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
       <ScreenContainer>
         <View style={styles.amountCard}>
           <Text style={[styles.amount, { color: inflow ? colors.success : colors.error }]}>
-            {formatSignedRupees(signedAmount(tx))}
+            {formatSignedLedgerRupees(signedAmount(tx))}
           </Text>
           <Text style={styles.direction}>{directionLabel(tx.direction, t)}</Text>
           <View style={styles.chips}>
@@ -153,7 +151,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
             </View>
           </Field>
           <Field label={t('ledger.detail.notes')} value={tx.notes} />
-          <Field label={t('ledger.detail.recordedAt')} value={formatInstant(tx.createdAt)} />
+          <Field label={t('ledger.detail.recordedAt')} value={formatLedgerInstant(tx.createdAt, t)} />
           <Field label={t('ledger.detail.linkedTo')} value={linkedDocumentText(tx, t)} />
         </View>
 
@@ -163,7 +161,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
             {tx.reversalOfId ? <Text style={styles.reversalNote}>{t('ledger.detail.isReversal')}</Text> : null}
             {tx.reversed ? (
               <>
-                <Field label={t('ledger.detail.reversedAt')} value={formatInstant(tx.reversedAt)} />
+                <Field label={t('ledger.detail.reversedAt')} value={formatLedgerInstant(tx.reversedAt, t)} />
                 <Field label={t('ledger.detail.reversedBy')} value={tx.reversedBy} />
                 {reversalType ? <Field label={t('ledger.detail.reversalType')} value={reversalType} /> : null}
               </>
@@ -222,7 +220,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t('ledger.reverse.title')}</Text>
-            <Text style={styles.modalBody}>{reverseConfirmText(tx, t)}</Text>
+            <Text style={styles.modalBody}>{reverseConfirmText(tx, t, istToday(new Date()))}</Text>
             <LabeledInput
               label={t('ledger.reverse.reasonLabel')}
               required

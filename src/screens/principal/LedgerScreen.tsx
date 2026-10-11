@@ -29,6 +29,7 @@ import { useToast } from '../../context/ToastContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { shiftIsoDate } from '../../utils/feeBills';
 import {
   ALL_OPTION,
   appendPage,
@@ -42,13 +43,12 @@ import {
   entryLabel,
   formatLedgerDate,
   formatLedgerRupees,
-  formatSignedRupees,
+  formatSignedLedgerRupees,
   isZeroBucket,
   methodOptions,
   normalizeReceiptQuery,
   paymentMethodLabel,
   periodRange,
-  shiftIsoDate,
   signedAmount,
   type LedgerPeriodChoice,
 } from '../../utils/ledger';
@@ -91,7 +91,7 @@ function LedgerRow({ tx, t, onPress }: { tx: LedgerTransaction; t: TFunction; on
       </View>
       <View style={styles.rowSide}>
         <Text style={[styles.rowAmount, { color: inflow ? colors.success : colors.error }]}>
-          {formatSignedRupees(signedAmount(tx))}
+          {formatSignedLedgerRupees(signedAmount(tx))}
         </Text>
         <View style={styles.methodChip}>
           <Text style={styles.methodChipText}>{paymentMethodLabel(tx.paymentMethod, t)}</Text>
@@ -316,7 +316,7 @@ export function LedgerScreen({ navigation }: Props) {
       <View style={styles.dateRow}>
         <Pressable
           style={styles.dayButton}
-          onPress={() => changeDate(shiftIsoDate(date, -1))}
+          onPress={() => changeDate(shiftIsoDate(date, { days: -1 }))}
           accessibilityRole="button"
           accessibilityLabel={t('ledger.dayBook.previousDay')}
         >
@@ -332,7 +332,7 @@ export function LedgerScreen({ navigation }: Props) {
         </View>
         <Pressable
           style={[styles.dayButton, date >= today && styles.disabled]}
-          onPress={() => changeDate(shiftIsoDate(date, 1))}
+          onPress={() => changeDate(shiftIsoDate(date, { days: 1 }))}
           disabled={date >= today}
           accessibilityRole="button"
           accessibilityLabel={t('ledger.dayBook.nextDay')}

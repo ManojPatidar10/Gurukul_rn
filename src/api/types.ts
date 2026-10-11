@@ -2612,7 +2612,11 @@ export interface LedgerTransaction {
   reversedAt: string | null;
   reversedBy: string | null;
   reversalReason: string | null;
-  /** On a reversed fee payment: how it was reversed. Missing or null on other entries and older servers. */
+  /**
+   * Set on every reversed entry. Fee payments carry the type the admin chose; the generic reverse
+   * route always books CORRECTION, so show it only for FEE_PAYMENT (see `reversalTypeLabel`). Null on
+   * unreversed and compensating entries; missing from older servers.
+   */
   reversalType?: ReversalType | null;
   /** On a reversed entry: the entry that reversed it. */
   reversalTransactionId: string | null;

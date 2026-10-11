@@ -340,33 +340,45 @@ export function formatLedgerRupees(n: number): string {
   return text.startsWith('-') ? `${MINUS}${text.slice(1)}` : text;
 }
 
-/** "+₹5,000.00" or "−₹2,000.00"; zero has no sign. */
-export function formatSignedRupees(n: number): string {
+/**
+ * "+₹5,000.00" or "−₹2,000.00"; zero has no sign. Not feeBills' formatSignedRupees, which drops
+ * the paise and uses a hyphen.
+ */
+export function formatSignedLedgerRupees(n: number): string {
   const text = formatLedgerRupees(n);
   return n > 0 && text !== '₹0.00' ? `+${text}` : text;
 }
 
 // ---------------------------------------------------------------- dates
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** A YYYY-MM-DD date moved by `days` (negative goes back). */
-export function shiftIsoDate(isoDate: string, days: number): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  const d = new Date(Date.UTC(year, month - 1, day) + days * DAY_MS);
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
-}
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 
 /**
  * "11 Oct", or "11 Oct 2026" with the year, the month in the app's language; "" for anything that
- * isn't a YYYY-MM-DD date.
+ * isn't a YYYY-MM-DD date. The month names are the fee bills' (`fees.bill.monthsShort`), so a date
+ * reads the same here as on a bill or a receipt.
  */
 export function formatLedgerDate(isoDate: string | null | undefined, t: TFunction, withYear = false): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate ?? '');
   const month = match ? Number(match[2]) : 0;
   if (!match || month < 1 || month > 12) return '';
-  const label = `${Number(match[3])} ${t(`ledger.monthsShort.${month}`)}`;
+  const label = `${Number(match[3])} ${t(`fees.bill.monthsShort.${month}`)}`;
   return withYear ? `${label} ${match[1]}` : label;
+}
+
+/**
+ * When something happened (an instant such as "2026-10-11T20:10:00Z") as its date and time in
+ * India: "12 Oct 2026, 01:40", the month in the app's language, whatever the phone's zone and
+ * locale. So a reversal falls on the same day here as on the fee receipt. "" when there is none; the
+ * text as sent when it isn't a time.
+ */
+export function formatLedgerInstant(instant: string | null | undefined, t: TFunction): string {
+  if (!instant) return '';
+  const ms = Date.parse(instant);
+  if (Number.isNaN(ms)) return instant;
+  // The instant moved to India's wall clock, read back in UTC: "2026-10-12T01:40:00.000Z".
+  const ist = new Date(ms + IST_OFFSET_MS).toISOString();
+  return `${formatLedgerDate(ist.slice(0, 10), t, true)}, ${ist.slice(11, 16)}`;
 }
 
 /** Whether a day book bucket is all zeros (the "Not recorded" row is hidden then). */
@@ -400,7 +412,8 @@ export function canReverseEntry(tx: Pick<LedgerTransaction, 'reversible' | 'reve
 /**
  * How a fee payment was reversed ("Entered by mistake", "Cheque or transfer bounced", "Refunded"),
  * or '' when there's nothing to say: not a fee payment, no type sent, or a type this app doesn't know.
- * Other entries are reversed with a reason only, so a type on them isn't shown.
+ * Other entries are reversed with a reason only (the server books CORRECTION for them), so their
+ * type isn't shown.
  */
 export function reversalTypeLabel(
   tx: Pick<LedgerTransaction, 'sourceType' | 'reversalType'>,
@@ -462,12 +475,22 @@ export function linkedDocumentText(
 /**
  * The reverse dialog's warning: "This adds a reversal entry of ₹X dated today. Receipt N will show
  * as cancelled. This can't be undone." The middle sentence is left out when the entry has no number.
+ *
+ * The server dates the reversal entry the later of today (IST) and the entry's own date, so an entry
+ * dated after `today` (an old manual entry, recorded before future dates were refused) says that
+ * date instead of "today".
  */
 export function reverseConfirmText(
-  tx: Pick<LedgerTransaction, 'amount' | 'receiptNumber' | 'voucherNumber'>,
-  t: TFunction
+  tx: Pick<LedgerTransaction, 'amount' | 'receiptNumber' | 'voucherNumber' | 'transactionDate'>,
+  t: TFunction,
+  today: string
 ): string {
-  const parts = [t('ledger.reverse.body', { amount: formatLedgerRupees(tx.amount) })];
+  const amount = formatLedgerRupees(tx.amount);
+  const parts = [
+    tx.transactionDate > today
+      ? t('ledger.reverse.bodyOnDate', { amount, date: formatLedgerDate(tx.transactionDate, t, true) })
+      : t('ledger.reverse.body', { amount }),
+  ];
   if (tx.receiptNumber) parts.push(t('ledger.reverse.receiptCancelled', { number: tx.receiptNumber }));
   else if (tx.voucherNumber) parts.push(t('ledger.reverse.voucherCancelled', { number: tx.voucherNumber }));
   parts.push(t('ledger.reverse.cannotUndo'));
