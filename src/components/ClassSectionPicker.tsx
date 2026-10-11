@@ -1,6 +1,7 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { createClassSection, listClassSections } from '../api/classSections';
 import type { ClassSection } from '../api/types';
 import { useBottomInset } from '../hooks/useBottomInset';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
   const sheetBottom = useBottomInset(spacing.lg);
   const [sections, setSections] = useState<ClassSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
           <ActivityIndicator color={colors.primary} size="small" />
         ) : (
           <Text style={[styles.fieldText, !selected && styles.fieldPlaceholder]}>
-            {selected ? selected.displayLabel : 'Select class-section'}
+            {selected ? selected.displayLabel : t('classSection.picker.title')}
           </Text>
         )}
         <FontAwesome5 name="chevron-down" size={13} color={colors.textMuted} />
@@ -78,7 +80,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
           <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Select class-section</Text>
+            <Text style={styles.sheetTitle}>{t('classSection.picker.title')}</Text>
 
             {error && <ErrorNotice message={error} />}
 
@@ -86,7 +88,7 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
               data={sections}
               keyExtractor={(item) => item.id}
               style={styles.list}
-              ListEmptyComponent={!loading ? <Text style={styles.empty}>No class-sections yet.</Text> : null}
+              ListEmptyComponent={!loading ? <Text style={styles.empty}>{t('classSection.picker.empty')}</Text> : null}
               renderItem={({ item }) => (
                 <Pressable
                   style={[styles.option, selectedId === item.id && styles.optionSelected]}
@@ -105,24 +107,34 @@ export default function ClassSectionPicker({ schoolId, selectedId, onSelect }: P
 
             {showCreate ? (
               <View style={styles.createForm}>
-                <LabeledInput label="Class name" value={className} onChangeText={setClassName} placeholder="e.g. Grade 5" />
-                <LabeledInput label="Section" value={section} onChangeText={setSection} placeholder="e.g. A" />
                 <LabeledInput
-                  label="Academic year"
+                  label={t('classSection.picker.className')}
+                  value={className}
+                  onChangeText={setClassName}
+                  placeholder={t('classSection.picker.classNamePlaceholder')}
+                />
+                <LabeledInput
+                  label={t('classSection.picker.section')}
+                  value={section}
+                  onChangeText={setSection}
+                  placeholder={t('classSection.picker.sectionPlaceholder')}
+                />
+                <LabeledInput
+                  label={t('classSection.picker.academicYear')}
                   value={academicYear}
                   onChangeText={setAcademicYear}
-                  placeholder="e.g. 2026-2027"
+                  placeholder={t('classSection.picker.academicYearPlaceholder')}
                 />
                 <Pressable style={styles.createButton} onPress={handleCreate} disabled={creating}>
-                  <Text style={styles.createButtonText}>{creating ? 'Creating…' : 'Create & select'}</Text>
+                  <Text style={styles.createButtonText}>{creating ? t('common.creating') : t('common.createAndSelect')}</Text>
                 </Pressable>
                 <Pressable onPress={() => setShowCreate(false)}>
-                  <Text style={styles.cancel}>Cancel</Text>
+                  <Text style={styles.cancel}>{t('common.cancel')}</Text>
                 </Pressable>
               </View>
             ) : (
               <Pressable onPress={() => setShowCreate(true)}>
-                <Text style={styles.addNew}>+ New class-section</Text>
+                <Text style={styles.addNew}>{t('classSection.picker.addNew')}</Text>
               </Pressable>
             )}
           </Pressable>

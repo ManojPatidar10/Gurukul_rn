@@ -5,6 +5,7 @@ import { AnnouncementsScreen } from '../screens/principal/AnnouncementsScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
 import { ChildDashboardScreen } from '../screens/principal/ChildDashboardScreen';
 import { ChildFeesScreen } from '../screens/principal/ChildFeesScreen';
+import { FeeAssessmentDetailScreen } from '../screens/principal/FeeAssessmentDetailScreen';
 import { IdCardScreen } from '../screens/principal/IdCardScreen';
 import { ConversationsListScreen } from '../screens/principal/ConversationsListScreen';
 import { ConversationThreadScreen } from '../screens/principal/ConversationThreadScreen';
@@ -32,6 +33,7 @@ export function ParentNavigator() {
       <Stack.Screen name="ChildDashboard" component={ChildDashboardScreen} />
       <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
       <Stack.Screen name="ChildFees" component={ChildFeesScreen} />
+      <Stack.Screen name="FeeAssessmentDetail" component={FeeAssessmentDetailScreen} />
       <Stack.Screen name="ReportCard" component={ReportCardScreen} />
       <Stack.Screen name="IdCard" component={IdCardScreen} />
       <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />

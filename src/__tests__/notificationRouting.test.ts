@@ -19,8 +19,18 @@ describe('notificationTarget', () => {
     });
   });
 
+  it("opens a student's own fees for a fee-due alert sent to their login", () => {
+    expect(notificationTarget({ type: 'FEE_DUE', studentId: 's1', assessmentId: 'a1' }, 'STUDENT')).toEqual({
+      screen: 'MyFees',
+    });
+    // The student's own login needs no child id to find the screen.
+    expect(notificationTarget({ type: 'FEE_DUE' }, 'STUDENT')).toEqual({ screen: 'MyFees' });
+  });
+
   it('ignores child alerts without a studentId or for non-parents', () => {
     expect(notificationTarget({ type: 'FEE_DUE' }, 'PARENT')).toBeNull();
+    expect(notificationTarget({ type: 'FEE_DUE', studentId: 's1' }, 'TEACHER')).toBeNull();
+    expect(notificationTarget({ type: 'FEE_DUE', studentId: 's1' }, 'ADMIN')).toBeNull();
     expect(notificationTarget({ type: 'ABSENCE_ALERT', studentId: 's1' }, 'TEACHER')).toBeNull();
   });
 
@@ -156,6 +166,13 @@ describe('openNotificationTarget', () => {
     const navigate = jest.fn();
     await openNotificationTarget('school1', { screen: 'Announcements' }, navigate);
     expect(navigate).toHaveBeenCalledWith('Announcements');
+    expect(mockedGetMyChildren).not.toHaveBeenCalled();
+  });
+
+  it("opens a student's own fees without looking up children", async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'MyFees' }, navigate);
+    expect(navigate).toHaveBeenCalledWith('MyFees');
     expect(mockedGetMyChildren).not.toHaveBeenCalled();
   });
 });

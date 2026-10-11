@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getClassSectionFeeStatus } from '../../api/feeAssessments';
@@ -13,36 +13,48 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { billDueNote, feeStatusLabel, feeStatusVariant, formatAmount } from '../../utils/feeBills';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyClassFees'>;
 
-function statusVariant(status: string): 'success' | 'error' | 'warning' | 'neutral' {
-  if (status === 'PAID') return 'success';
-  if (status === 'OVERDUE') return 'error';
-  if (status === 'PARTIAL') return 'warning';
-  return 'neutral';
-}
-
+/**
+ * A class teacher's view of their section's fees: the server sends only active students' bills for
+ * the section's own academic year, never cancelled ones.
+ */
 export function MyClassFeesScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const classSection = route.params.classSection;
   const [assessments, setAssessments] = useState<FeeAssessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    getClassSectionFeeStatus(schoolId, classSection.id)
+  const load = useCallback(() => {
+    setError(null);
+    return getClassSectionFeeStatus(schoolId, classSection.id)
       .then(setAssessments)
-      .catch((e) => setError(getErrorMessage(e)))
-      .finally(() => setLoading(false));
+      .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, classSection.id]);
 
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+  }, [load]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    load().finally(() => setRefreshing(false));
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    load().finally(() => setLoading(false));
+  };
+
   const summary = useMemo(() => {
-    const totalDue = assessments.reduce((sum, a) => sum + a.totalDue, 0);
     const totalRemaining = assessments.reduce((sum, a) => sum + a.remainingDue, 0);
     const paidCount = assessments.filter((a) => a.status === 'PAID').length;
-    return { totalDue, totalRemaining, paidCount, total: assessments.length };
+    return { totalRemaining, paidCount, total: assessments.length };
   }, [assessments]);
 
   return (
@@ -52,9 +64,16 @@ export function MyClassFeesScreen({ route, navigation }: Props) {
         subtitle={`${classSection.className} - ${classSection.section}`}
         onBack={() => navigation.goBack()}
       />
-      <ScreenContainer>
+      <ScreenContainer refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
-        {error && <ErrorNotice message={error} />}
+        {error && !loading && (
+          <>
+            <ErrorNotice message={error} />
+            <Pressable style={styles.retry} onPress={handleRetry} accessibilityRole="button">
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </>
+        )}
 
         {!loading && assessments.length > 0 && (
           <View style={styles.summaryCard}>
@@ -65,7 +84,7 @@ export function MyClassFeesScreen({ route, navigation }: Props) {
               <Text style={styles.summaryLabel}>{t('fees.myClassFees.fullyPaid')}</Text>
             </View>
             <View style={styles.summaryStat}>
-              <Text style={styles.summaryValue}>₹{summary.totalRemaining.toLocaleString('en-IN')}</Text>
+              <Text style={styles.summaryValue}>₹{formatAmount(summary.totalRemaining)}</Text>
               <Text style={styles.summaryLabel}>{t('fees.myClassFees.remaining')}</Text>
             </View>
           </View>
@@ -75,21 +94,25 @@ export function MyClassFeesScreen({ route, navigation }: Props) {
           <Text style={styles.empty}>{t('fees.myClassFees.empty')}</Text>
         )}
 
-        {assessments.map((assessment) => (
-          <View key={assessment.id} style={styles.row}>
-            <View style={styles.rowMain}>
-              <Text style={styles.rowName}>{assessment.studentName}</Text>
-              <Text style={styles.rowMeta}>
-                {t('fees.myClassFees.rowSubtitle', {
-                  roll: assessment.rollNumber,
-                  due: assessment.remainingDue.toLocaleString('en-IN'),
-                  total: assessment.totalDue.toLocaleString('en-IN'),
-                })}
-              </Text>
+        {assessments.map((assessment) => {
+          const dueNote = billDueNote(assessment, t);
+          return (
+            <View key={assessment.id} style={styles.row}>
+              <View style={styles.rowMain}>
+                <Text style={styles.rowName}>{assessment.studentName}</Text>
+                <Text style={styles.rowMeta}>
+                  {t('fees.myClassFees.rowSubtitle', {
+                    roll: assessment.rollNumber,
+                    due: formatAmount(assessment.remainingDue),
+                    total: formatAmount(assessment.totalDue),
+                  })}
+                </Text>
+                {dueNote?.tone === 'error' && <Text style={[styles.rowMeta, styles.overdue]}>{dueNote.text}</Text>}
+              </View>
+              <StatusChip label={feeStatusLabel(assessment.status, t)} variant={feeStatusVariant(assessment.status)} />
             </View>
-            <StatusChip label={assessment.status} variant={statusVariant(assessment.status)} />
-          </View>
-        ))}
+          );
+        })}
       </ScreenContainer>
     </View>
   );
@@ -98,8 +121,17 @@ export function MyClassFeesScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginTop: spacing.xl },
-  error: { color: colors.error, marginBottom: spacing.md },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.xl },
+  retry: {
+    alignSelf: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  retryText: { color: colors.primary, fontWeight: '700' },
   summaryCard: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
@@ -124,4 +156,5 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, marginRight: spacing.sm },
   rowName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  overdue: { color: colors.error, fontWeight: '600' },
 });

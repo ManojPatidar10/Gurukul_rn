@@ -12,6 +12,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { paymentMethodLabel } from '../../utils/payroll';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PaymentReceipt'>;
 
@@ -24,7 +25,7 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function buildReceiptHtml(payment: FeePayment, t: (key: string) => string): string {
+function buildReceiptHtml(payment: FeePayment, t: (key: string) => string, methodLabel: string): string {
   const referenceRow = payment.paymentReference
     ? `<p><strong>${t('fees.receipt.paymentReference')}:</strong> ${escapeHtml(payment.paymentReference)}</p>`
     : '';
@@ -40,7 +41,7 @@ function buildReceiptHtml(payment: FeePayment, t: (key: string) => string): stri
         <p><strong>${t('fees.receipt.rollNumber')}:</strong> ${escapeHtml(payment.rollNumber)}</p>
         <p><strong>${t('fees.receipt.classSection')}:</strong> ${escapeHtml(payment.classSectionLabel)}</p>
         <p><strong>${t('fees.receipt.academicYear')}:</strong> ${escapeHtml(payment.academicYear)}</p>
-        <p><strong>${t('fees.receipt.paymentMethod')}:</strong> ${escapeHtml(payment.paymentMethod)}</p>
+        <p><strong>${t('fees.receipt.paymentMethod')}:</strong> ${escapeHtml(methodLabel)}</p>
         ${referenceRow}
         <h2 style="margin-top: 24px;">${t('fees.receipt.amountPaid')}: &#8377;${payment.amount.toLocaleString('en-IN')}</h2>
       </body>
@@ -63,6 +64,8 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
   const { session } = useAuth();
   const payment = route.params.payment;
   const [sharing, setSharing] = useState(false);
+  // "Bank transfer", not BANK_TRANSFER: the same words as payroll's payment methods.
+  const methodLabel = paymentMethodLabel(payment.paymentMethod, t);
 
   const handleDone = () =>
     navigation.navigate(session.ownerType === 'STUDENT' ? 'MyFees' : 'FeeAssessmentsList');
@@ -70,7 +73,7 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
   const handleShare = async () => {
     setSharing(true);
     try {
-      const html = buildReceiptHtml(payment, t);
+      const html = buildReceiptHtml(payment, t, methodLabel);
       const { uri } = await Print.printToFileAsync({ html });
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
@@ -99,7 +102,7 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
           <Row label={t('fees.receipt.rollNumber')} value={payment.rollNumber} />
           <Row label={t('fees.receipt.classSection')} value={payment.classSectionLabel} />
           <Row label={t('fees.receipt.academicYear')} value={payment.academicYear} />
-          <Row label={t('fees.receipt.paymentMethod')} value={payment.paymentMethod} />
+          <Row label={t('fees.receipt.paymentMethod')} value={methodLabel} />
           {payment.paymentReference && (
             <Row label={t('fees.receipt.paymentReference')} value={payment.paymentReference} />
           )}

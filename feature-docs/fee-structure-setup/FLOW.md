@@ -1,101 +1,109 @@
-# Fee Structure Setup & Assessment Generation — Flow
+# Fee Structure Setup & Bill Generation — Flow
 
 ## Overview
-This feature lets a school configure a catalog of fee categories (e.g. "TUITION", "TRANSPORT"), attach per-category amounts to a fee structure scoped to one class-section and academic year, and then generate a `StudentFeeAssessment` (a per-student bill) for every active student in that class-section. Assessment generation is idempotent per student/academic-year and is also triggered automatically when a new student is enrolled into a class-section that already has a structure. This is the setup stage that upstream feeds the payment/collection flow (a separate feature).
+A school keeps a catalog of fee categories (e.g. `TUITION`, `TRANSPORT`), sets per-category amounts on a fee structure for one class-section (for that section's own academic year), and then generates a `StudentFeeAssessment` (a per-student bill) for every active student in the section, due on a date the admin picks. A structure's lines can be edited later, optionally re-pricing the bills nobody has paid or adjusted yet. Categories can be renamed or taken out of use. Generation is idempotent per student and academic year, and a student who joins later — a new admission, or a promotion into a section of a new academic year — is billed automatically when their section has a structure. Correcting one bill (concessions, due dates, cancelling) is in [fees-overview](../fees-overview/FLOW.md).
+
+Source: `specs/fee-bills-and-dues` (finance fix 4). Statements about the server follow that spec's API contract.
 
 ## Actors / roles
-- **ADMIN**: In practice the only role exercised by the frontend for this feature (screens live under `src/screens/principal/`, wired into `PrincipalNavigator`). Nothing in the backend code restricts these endpoints to ADMIN specifically — see Backend endpoints below.
-- **TEACHER**: Not given any screen for this feature and not mentioned in any authorization rule for these endpoints. A teacher's JWT would still satisfy the URL matcher because there isn't a role-specific matcher at all (see below).
-- **STUDENT**: No screen; not referenced by any check in `FeeCategoryService`/`FeeStructureService`.
-- **PARENT**: No screen; not referenced by any check in `FeeCategoryService`/`FeeStructureService`.
+- **ADMIN**: The only role that creates or edits categories and structures and generates bills (`SecurityConfig` `hasRole("ADMIN")` on every write, plus the ADMIN catch-all for unlisted fee paths). Screens live under `src/screens/principal/`, reached from the dashboard's "Fees" tile → `FeesHubScreen`.
+- **TEACHER**: May **read** fee categories and structures (`GET` is `hasAnyRole("TEACHER", "ADMIN")`) but has no UI entry point (the "Fees" tile is hidden from teachers). Every write is 403.
+- **STUDENT / PARENT**: No screen; every endpoint here is 403.
+- No token: 401.
 
 ## Flow diagram
 
 ```mermaid
 flowchart TD
-  A[Admin opens Fees Hub] --> B[Fee Categories screen]
-  A --> C[Fee Structures screen]
-  B --> B1[Create Fee Category\nPOST /api/v1/fee-categories]
-  B1 --> B2{code already exists\nfor this school?}
-  B2 -- yes --> B3[400 IllegalArgumentException]
-  B2 -- no --> B4[Category saved]
+  A[Admin opens Fees Hub] --> B[Fee Categories]
+  A --> C[Fee Structures]
+  B --> B1["Add category: code ' tuition fee ' is stored TUITION_FEE\nPOST /api/v1/fee-categories"]
+  B1 --> B2{same code ignoring case?}
+  B2 -- yes --> B3[409 FEE_CATEGORY_CODE_EXISTS]
+  B2 -- no --> B4[Saved, in use]
+  B --> B5["Tap a row: rename / In use switch\nPUT /api/v1/fee-categories/{id}"]
 
-  C --> C1[Tap Add Structure]
-  C1 --> D[Fee Structure Form:\npick class-section, academic year,\nadd one or more category+amount lines]
-  D --> D1[POST /api/v1/fee-structures]
-  D1 --> D2{structure already exists\nfor class-section + academic year?}
-  D2 -- yes --> D3[400 IllegalArgumentException]
-  D2 -- no --> D4[FeeStructure + FeeStructureLine rows saved]
-  D4 --> E[Fee Structure Detail screen]
+  C --> D["New structure: pick class-section,\nyear shown read-only from the section,\nlines may be 0\nPOST /api/v1/fee-structures (no academicYear)"]
+  D --> D1{section already has a structure\nfor its year?}
+  D1 -- yes --> D2[409 FEE_STRUCTURE_EXISTS]
+  D1 -- no --> E[Fee Structure Detail]
 
-  E --> F[Tap Generate Assessments]
-  F --> G[POST /api/v1/fee-structures/{id}/generate-assessments]
-  G --> G1[Sum all FeeStructureLine amounts = totalDue]
-  G1 --> G2[Load all students in structure's class-section]
-  G2 --> G3{student.status == ACTIVE?}
-  G3 -- no --> G4[Skipped - no assessment created]
-  G3 -- yes --> G5{assessment already exists\nfor school+student+academicYear?}
-  G5 -- yes --> G6[Existing assessment returned unchanged\nno duplicate, no amount update]
-  G5 -- no --> G7[New StudentFeeAssessment created:\nstatus=UNPAID, totalPaid=0,\ndueDate=today+1 month]
-  G6 --> H[Response: list of assessments\nfor every active student]
-  G7 --> H
+  E --> F["Edit fee lines\nPUT /api/v1/fee-structures/{id}\nrepriceBills on by default"]
+  F --> F1[Alert: N bills re-priced, M kept their amount and why]
+  E --> G["Generate bills → GenerateBillsDialog\nGET /fee-structures/{id}/generate-preview"]
+  G --> G1{toCreateCount > 0?}
+  G1 -- no --> G2["'Everyone already has a bill' — no confirm button"]
+  G1 -- yes --> G3["Pick due date (default suggestedDueDate, never before today)\n'Create N new bills of ₹X each, due <date>?'"]
+  G3 --> G4["POST /fee-structures/{id}/generate-bills {dueDate}"]
+  G4 --> G5["'Created N new bills. M already had one.'\nstructure.dueDate = that date"]
 
-  I[Separately: a new student is enrolled\ninto a class-section] --> I1[StudentService.createEntity]
-  I1 --> I2{FeeStructure exists for\nthat class-section + academic year?}
-  I2 -- no --> I3[No assessment created]
-  I2 -- yes --> G5
+  H[New admission, or promotion into\na section of another academic year] --> H1{section has a structure for\nits canonical year, student ACTIVE,\nno bill for that year?}
+  H1 -- yes --> H2["Bill created, due max(structure.dueDate, today + 30)"]
+  H1 -- no --> H3[Nothing billed]
 ```
 
 ## Step-by-step
-1. An admin opens the Fees Hub (`FeesHubScreen`) and navigates to Fee Categories to define the catalog (`FeeCategoriesListScreen` → `createFeeCategory` → `POST /api/v1/fee-categories`). Each category has a `code` (unique per school) and a `name`. Duplicate codes are rejected with `IllegalArgumentException("Fee category code already exists")`.
-2. The admin navigates to Fee Structures (`FeeStructuresListScreen`) and taps "Add Structure", landing on `FeeStructureFormScreen`. They pick a class-section (`ClassSectionPicker`), an academic year, and one or more `{feeCategoryId, amount}` lines (`FeeCategoryPicker` for category selection; amount must be `> 0`, enforced client-side by `isPositiveNumber` and server-side by `@DecimalMin("0.01")`).
-3. Submitting calls `createFeeStructure` → `POST /api/v1/fee-structures`. The server resolves the class-section (schema-scoped via `ClassSectionService.getScopedClassSection`), rejects if a structure already exists for that `(schoolId, classSectionId, academicYear)` tuple (`IllegalArgumentException("Fee structure already exists for this class-section and academic year")`), otherwise persists the `FeeStructure` and one `FeeStructureLine` row per line item, each resolving its `FeeCategory` via `FeeCategoryService.getScopedEntity` (school-scoped lookup, 404 if not found/not owned by this school).
-4. On success the app navigates to `FeeStructureDetailScreen`, which lists the fee lines, shows a computed total-per-student (client-side sum of `line.amount`), and exposes a "Generate Assessments" button.
-5. Tapping "Generate Assessments" calls `generateAssessments` → `POST /api/v1/fee-structures/{id}/generate-assessments`. The server:
-   - Loads the structure's lines and sums their amounts into `totalDue`.
-   - Loads every `Student` row for `(schoolId, classSectionId)` — **not** filtered by academic year at the query level.
-   - Filters to `student.getStatus() == StudentStatus.ACTIVE` in Java (in-memory), silently skipping `ALUMNI`/`WITHDRAWN` students.
-   - For each active student, calls `createOrSkipAssessment`: looks up an existing `StudentFeeAssessment` by `(schoolId, studentId, academicYear)`; if found, returns it as-is (no update to `totalDue`, status, or due date even if the structure's lines changed since); if not found, creates a new one with `totalDue` = the freshly computed sum, `totalPaid = 0`, `status = UNPAID`, `dueDate = LocalDate.now().plusMonths(1)`.
-   - Returns the full set of assessments (existing + newly created) for every active student in the section, mapped through `FeeAssessmentResponse` (which also derives `remainingDue = totalDue - totalPaid`).
-6. Independently of the "Generate Assessments" button, when a brand-new student is admitted (`StudentService.createEntity`), `FeeStructureService.createAssessmentForStudentIfStructureExists(student)` runs automatically: it looks up a `FeeStructure` for that student's `(schoolId, classSectionId, classSection.academicYear)`; if one exists, it computes `totalDue` from that structure's current lines and calls the same `createOrSkipAssessment` logic, so the new student gets billed without anyone re-running the bulk generator.
+
+### Categories
+1. `FeeCategoriesListScreen` lists every category (`GET /api/v1/fee-categories`, ordered by code, active and inactive). A category not in use is greyed with a "Not in use" tag.
+2. "+ Add category" opens an inline form shared with the picker on the structure form (`useCreateFeeCategory`). Under the code field the app shows what will be stored (`normaliseCategoryCode`: trimmed, upper-cased, runs of spaces/hyphens → `_`, must be 2-30 of `A-Z 0-9 _`). The server applies the same rule and refuses a code equal to an existing one ignoring case with **409 `FEE_CATEGORY_CODE_EXISTS`** (shown through `errors.codes`). Existing codes are not rewritten.
+3. Tapping a row opens an inline edit: the name (1-100 characters) and an "In use" switch → `PUT /api/v1/fee-categories/{id}` `{name, active}`. The code never changes. A category not in use can't be put on a **new** structure line (400 "Fee category X is no longer in use"); lines that already have it keep working.
+4. `FeeCategoryPicker` (on the structure form) offers only categories in use, plus the one already on that line (`pickableCategories`).
+
+### Creating a structure
+5. `FeeStructureFormScreen` (no route params): pick a class-section; the section's academic year shows read-only in its canonical form (`2026-27`). The app does not send `academicYear`: the server stores `canonicalOrTrimmed(section.academicYear)`. An old build that still sends a year gets 400 "This class-section is for academic year 2026-27" if it differs from the section's.
+6. Lines: 1-50, one per category (400 "Each fee category can appear only once"), amount ≥ 0 with at most 2 decimals. 0 is allowed (a fee this class doesn't charge, e.g. RTE students). The app parses amounts with `parseAmountInput` (commas/spaces ignored), checks the same rules (`feeLinesError`) and shows the running total.
+7. A second structure for the same section and year → **409 `FEE_STRUCTURE_EXISTS`** ("Edit that one instead").
+
+### Editing a structure
+8. On `FeeStructureDetailScreen`, "Edit fee lines" opens `FeeStructureFormScreen` with `{ feeStructure }`: the section is fixed, the lines are prefilled, and a switch "Also update bills that have no payments or adjustments yet" defaults on.
+9. Save → `PUT /api/v1/fee-structures/{id}` `{lines, repriceBills}`. The server locks the structure row, replaces the lines (changed amounts updated, removed lines deleted, new ones inserted), and — when `repriceBills` — re-prices each bill of this structure (non-cancelled bills for its academic year of students whose **current** section is the structure's section) that has `totalPaid == 0` and no adjustments: `baseAmount = totalDue = new total`, status recomputed. Each bill is row-locked and saved as an entity, so the audit log records it.
+10. The result (`FeeStructureUpdateResult`) gives `repricedCount`, `leftAloneCount` and up to 100 `leftAlone` bills with a reason (`HAS_PAYMENTS`, `HAS_ADJUSTMENTS`, `NOT_REQUESTED`). The app shows it in an alert (`structureUpdateMessage`; the per-reason breakdown only when the list is complete) and goes back; the detail screen re-fetches the structure on focus.
+
+### Generating bills
+11. "Generate bills for this class" opens `GenerateBillsDialog`, which fetches `GET /api/v1/fee-structures/{id}/generate-preview`: `activeStudentCount`, `toCreateCount`, `alreadyBilledCount`, `alreadyBilledDifferentTotal` (names and amounts), `inactiveStudentCount`, `structureDueDate`, `suggestedDueDate`.
+12. With bills to create, it shows a date picker (default `suggestedDueDate`, kept between today and two years ahead) and the confirmation from `generateConfirmation`: "Create 40 new bills of ₹20,000 each, due 10 Nov 2026?", "2 students already have a bill (1 for a different amount: Asha).", "3 withdrawn students won't be billed.". With nobody to bill it says "Everyone already has a bill" (or "There are no active students in this class yet") and offers no confirm button.
+13. Confirm → `POST /api/v1/fee-structures/{id}/generate-bills` `{dueDate}` (required, today to today + 2 years, IST; slow timeout). The server locks the structure row, sets `structure.dueDate`, and bills only ACTIVE students without a bill for that year: `baseAmount = totalDue = totalPerStudent`, the chosen due date, status by the shared rule. The result (`GenerateBillsResult`) is shown as "Created 40 new bills. 2 already had one." and the structure is re-fetched (its due date now shows).
+14. The legacy `POST /api/v1/fee-structures/{id}/generate-assessments` stays for installed builds: `dueDate` optional (default today + 30, IST) and its `data` is now **only the bills this call created**, so an old build's "Generated N assessments" is truthful (0 on a re-run). This app no longer calls it.
+
+### Students joining later
+15. `StudentService.createEntity` (new student, bulk import, admission conversion) calls `FeeStructureService.createAssessmentForStudentIfStructureExists`, which finds the structure by section id and the section's **canonical** year — so a `2026-2027` section finds its `2026-27` structure.
+16. Moving a student (`PATCH /students/{id}/class-section`, or `PUT /students/{id}` with a new section): same canonical year → nothing changes, the student keeps their bill. A different year and the student ACTIVE → the same hook bills them for the new year if that section has a structure and they have no bill for it.
+17. A later bill's due date is the later of `structure.dueDate` and today + 30 days (IST); today + 30 when the structure has none.
 
 ## Backend endpoints involved
-- `GET /api/v1/fee-categories` (controller: `FeeCategoryController.list`) — lists categories for the caller's school (`X-School-Id`). **Authorization**: no role-specific matcher exists for this path in `SecurityConfig`; it falls through to the catch-all `.anyRequest().permitAll()`. No `@PreAuthorize` or manual role check exists in `FeeCategoryService`. Effectively open to any caller that supplies a valid `X-School-Id` header — authentication is not enforced by Spring Security for this path.
-- `POST /api/v1/fee-categories` (controller: `FeeCategoryController.create`) — same as above: no matcher, falls to `permitAll()`, no service-layer check.
-- `GET /api/v1/fee-structures` (controller: `FeeStructureController.list`) — same: no matcher for `/api/v1/fee-structures/**` anywhere in `SecurityConfig`; falls to `permitAll()`.
-- `GET /api/v1/fee-structures/{id}` (controller: `FeeStructureController.getById`) — same, `permitAll()`.
-- `POST /api/v1/fee-structures` (controller: `FeeStructureController.create`) — same, `permitAll()`.
-- `POST /api/v1/fee-structures/{id}/generate-assessments` (controller: `FeeStructureController.generateAssessments`) — same, `permitAll()`. This bulk-bills every active student in the class-section, and there is no role or ownership check anywhere in the call chain (`FeeStructureController` → `FeeStructureService.generateAssessments`).
-- Confirmed by reading `SecurityConfig.java` in full: it lists explicit `requestMatchers(...)` rules for attendance, staff-attendance, assessments, exam results, grading scale, report cards, class-section fee-status, credentials, chat, and announcements — but **none** for `/api/v1/fee-categories/**` or `/api/v1/fee-structures/**`. The existing backend integration tests (`FeePaymentIntegrationTest`, `PaymentAttemptIntegrationTest`) call these three endpoints with only an `X-School-Id` header and **no `Authorization: Bearer` header at all**, and the calls succeed — corroborating that these endpoints require no authentication today.
+| Endpoint | Roles | Notes |
+|---|---|---|
+| `GET /api/v1/fee-categories` | TEACHER, ADMIN | all categories, `active` flag, ordered by code |
+| `POST /api/v1/fee-categories` | ADMIN | code normalised; 409 `FEE_CATEGORY_CODE_EXISTS` |
+| `PUT /api/v1/fee-categories/{id}` | ADMIN | `{name, active?}`; code ignored |
+| `GET /api/v1/fee-structures`, `GET /api/v1/fee-structures/{id}` | TEACHER, ADMIN | `dueDate`, `totalPerStudent`, canonical `academicYear` |
+| `POST /api/v1/fee-structures` | ADMIN | `academicYear` optional; 409 `FEE_STRUCTURE_EXISTS` |
+| `PUT /api/v1/fee-structures/{id}` | ADMIN | `{lines, repriceBills}` → `FeeStructureUpdateResult` |
+| `GET /api/v1/fee-structures/{id}/generate-preview` | ADMIN | `GeneratePreview` |
+| `POST /api/v1/fee-structures/{id}/generate-bills` | ADMIN | `{dueDate}` required → `GenerateBillsResult` |
+| `POST /api/v1/fee-structures/{id}/generate-assessments` | ADMIN | legacy; only newly created bills returned |
 
 ## Frontend screens involved
-- `FeesHubScreen.tsx` — landing menu linking to Fee Categories, Fee Structures, Fee Assessments, and Fee Payment Settings.
-- `FeeCategoriesListScreen.tsx` — lists categories (`listFeeCategories`) and creates new ones (`createFeeCategory`) via an inline form (code + name).
-- `FeeStructuresListScreen.tsx` — lists structures (`listFeeStructures`), shows class/section/academic-year and a computed total per row, links to the create form and to structure detail.
-- `FeeStructureFormScreen.tsx` — create form: class-section picker, academic-year dropdown, dynamic list of `{feeCategoryId, amount}` lines; calls `createFeeStructure`; validates non-empty lines, chosen category per line, and positive numeric amount before enabling submit.
-- `FeeStructureDetailScreen.tsx` — confirmed to be where assessment generation is triggered: shows fee lines and total, and a "Generate Assessments" button that calls `generateAssessments(schoolId, feeStructure.id)`, displaying the resulting count on success or a toast on error.
-
-Frontend API client functions (in `src/api/feeCategories.ts` and `src/api/feeStructures.ts`):
-- `listFeeCategories(schoolId)` → `GET /api/v1/fee-categories`
-- `createFeeCategory(schoolId, req)` → `POST /api/v1/fee-categories`
-- `listFeeStructures(schoolId)` → `GET /api/v1/fee-structures`
-- `getFeeStructure(schoolId, id)` → `GET /api/v1/fee-structures/{id}`
-- `createFeeStructure(schoolId, req)` → `POST /api/v1/fee-structures`
-- `generateAssessments(schoolId, id)` → `POST /api/v1/fee-structures/{id}/generate-assessments`
+- `FeesHubScreen.tsx` — menu to categories, structures, bills and payment settings.
+- `FeeCategoriesListScreen.tsx` — list, create (`useCreateFeeCategory`), inline rename / in-use switch (`updateFeeCategory`).
+- `FeeStructuresListScreen.tsx` — lists structures, links to the form and detail.
+- `FeeStructureFormScreen.tsx` — create (`createFeeStructure`, no year sent) or edit (`updateFeeStructure`); year read-only; 0 amounts allowed.
+- `FeeStructureDetailScreen.tsx` — re-fetches on focus; lines, total and due date from the server; "Edit fee lines"; "Generate bills" → `src/components/fees/GenerateBillsDialog.tsx`.
+- `src/components/FeeCategoryPicker.tsx` — categories in use plus the selected one; quick create.
+- Helpers in `src/utils/feeBills.ts` (unit-tested in `src/__tests__/feeBills.test.ts`): `normaliseCategoryCode`, `pickableCategories`, `feeLinesError`/`feeLinesRequest`/`feeLinesTotal`, `canonicalAcademicYear`, `generateConfirmation`, `generateResultText`, `structureUpdateMessage`, `generateDueDateBounds`, `formatAmount`/`parseAmountInput`.
+- API wrappers: `src/api/feeCategories.ts` (`listFeeCategories`, `createFeeCategory`, `updateFeeCategory`), `src/api/feeStructures.ts` (`listFeeStructures`, `getFeeStructure`, `createFeeStructure`, `updateFeeStructure`, `getGeneratePreview`, `generateBills`).
 
 ## Data model
-- **FeeCategory**: `code` (unique per `school_id`), `name`.
-- **FeeStructure**: `classSection` (many-to-one), `academicYear`; unique on `(school_id, class_section_id, academic_year)`.
-- **FeeStructureLine**: belongs to a `FeeStructure`, references a `FeeCategory`, has `amount` (`BigDecimal`, precision 12 scale 2); unique on `(fee_structure_id, fee_category_id)` — a category can only appear once per structure.
-- **StudentFeeAssessment**: belongs to a `Student`, `academicYear`, `totalDue`, `totalPaid` (defaults to 0), `status` (`FeeAssessmentStatus`: `UNPAID`, `PARTIAL`, `PAID`, `OVERDUE`), `dueDate`; unique on `(school_id, student_id, academic_year)` — one assessment per student per academic year, regardless of how many fee categories/lines feed into it.
-- `FeeAssessmentResponse.remainingDue` is derived (`totalDue - totalPaid`), not stored.
+- **FeeCategory**: `code` (unique per school; new codes also unique ignoring case, checked in the service), `name`, `active` (default true).
+- **FeeStructure**: `classSection`, `academicYear` (canonical `YYYY-YY`), `dueDate` (nullable; the date chosen at the last Generate). Unique on `(school_id, class_section_id, academic_year)`.
+- **FeeStructureLine**: `feeCategory`, `amount` (≥ 0, 12/2). One per category per structure.
+- **StudentFeeAssessment**: `baseAmount` (the structure's total when billed), `totalDue` (= base + adjustments), `totalPaid`, `status`, `dueDate`, `academicYear` (canonical), cancel fields. Unique on `(school_id, student_id, academic_year)`. There is no `fee_structure_id`: a structure's bills are found by section and year.
+- The migration normalises existing fee rows' `YYYY-YYYY` years to `YYYY-YY`, skipping any row that would collide with an existing canonical row. `class_section.academic_year` is not rewritten (exams, timetable and battle rooms compare it as text).
 
 ## Known limitations / edge cases
-- **No authorization on any of these endpoints.** `SecurityConfig` has zero role-based `requestMatchers` for `/api/v1/fee-categories/**` or `/api/v1/fee-structures/**`; they all fall to the trailing `.anyRequest().permitAll()`. Combined with the absence of any manual role check in `FeeCategoryService`/`FeeStructureService`, any caller who can reach the API with a valid `X-School-Id` header — teacher, student, parent, or an unauthenticated client — can create fee categories, create fee structures, and trigger bulk assessment generation for an entire class-section. This is a real, currently-unmitigated gap in a money-affecting feature.
-- **Structures and lines are immutable once created.** There is no `PUT`/`PATCH`/`DELETE` endpoint for `FeeStructure`, `FeeStructureLine`, or `FeeCategory`. If a fee amount was entered wrong, the only stated path is creating a new structure — but the `(school, class-section, academic-year)` uniqueness constraint blocks that until the erroneous one is removed at the database level (no such removal path exists via the API).
-- **Regenerating assessments does not re-sync amounts.** `createOrSkipAssessment` only sets `totalDue` when creating a brand-new assessment; if an assessment already exists for a student/year and the admin somehow changes the underlying fee lines (not possible via API today, but relevant if done via direct DB edit or future edit endpoint), re-running "Generate Assessments" will not update `totalDue` on existing rows.
-- **Assessment is keyed by academic year only, not by class-section.** If a student changes class-section mid-year within the same academic year, `(school_id, student_id, academic_year)` uniqueness means only one assessment can ever exist for them that year — a second `generateAssessments` run for their new section's structure will just return their existing (old) assessment unchanged, silently not billing the new section's fee lines.
-- **`generateAssessments` loads all students in the class-section, not scoped to academic year.** `studentRepository.findAllBySchoolIdAndClassSectionId` has no academic-year filter, so it relies entirely on the `ACTIVE` status filter and the class-section's own current roster; a class-section reused across years (if that occurs) could pull in students who don't belong to the structure's stated `academicYear`.
-- **Due date is always "today + 1 month."** `dueDate = LocalDate.now().plusMonths(1)` — there is no way to set a custom due date per structure, per category, or per generation run; it also means running "Generate Assessments" on different days for different (new) students in the same structure gives them different due dates.
-- **Students who join after generation are still covered**, but only through the separate auto-creation hook in `StudentService.createEntity` → `FeeStructureService.createAssessmentForStudentIfStructureExists`, not through the "Generate Assessments" button itself. If a student's class-section is changed later via `updateClassSection`, this code path shows no equivalent call to (re-)create an assessment for the new section (not verified beyond the excerpt read, but no such call was found near `createEntity`).
-- **Idempotent by design at the per-student level**: re-clicking "Generate Assessments" multiple times is safe — it will not create duplicate `StudentFeeAssessment` rows for the same student/year, matching the DB unique constraint.
+- **One due date per bill**: no instalments (follow-up). Moving the due date of all of a structure's bills at once isn't possible; each bill's date can be changed on its own.
+- **Re-pricing follows the student's current section.** A bill whose student has since moved section isn't in the structure's scope and isn't re-priced.
+- **Categories can't be deleted**, only taken out of use.
+- **Academic years are April-March by IST date** for every school (no per-school start month).
+- An old app build's academic-year dropdown can pick a year other than the section's; the server now refuses that with 400.

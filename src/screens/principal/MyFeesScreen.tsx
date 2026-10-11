@@ -14,6 +14,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { billDueNote, feeStatusLabel, feeStatusVariant, formatAmount } from '../../utils/feeBills';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyFees'>;
 
@@ -64,23 +65,29 @@ export function MyFeesScreen({ navigation }: Props) {
               <Text style={styles.empty}>{error ? t('myFees.loadError') : t('myFees.empty')}</Text>
             ) : null
           }
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.row}
-              onPress={() => navigation.navigate('FeeAssessmentDetail', { assessment: item })}
-            >
-              <View style={styles.rowMain}>
-                <Text style={styles.rowName}>{item.academicYear}</Text>
-                <Text style={styles.rowMeta}>
-                  {t('myFees.due', {
-                    remaining: item.remainingDue.toLocaleString('en-IN'),
-                    total: item.totalDue.toLocaleString('en-IN'),
-                  })}
-                </Text>
-              </View>
-              <StatusChip label={item.status} variant={item.remainingDue <= 0 ? 'success' : 'warning'} />
-            </Pressable>
-          )}
+          renderItem={({ item }) => {
+            const dueNote = billDueNote(item, t);
+            return (
+              <Pressable
+                style={styles.row}
+                onPress={() => navigation.navigate('FeeAssessmentDetail', { assessment: item })}
+              >
+                <View style={styles.rowMain}>
+                  <Text style={styles.rowName}>{item.academicYear}</Text>
+                  <Text style={styles.rowMeta}>
+                    {t('myFees.due', {
+                      remaining: formatAmount(item.remainingDue),
+                      total: formatAmount(item.totalDue),
+                    })}
+                  </Text>
+                  {dueNote && (
+                    <Text style={[styles.rowMeta, dueNote.tone === 'error' && styles.overdue]}>{dueNote.text}</Text>
+                  )}
+                </View>
+                <StatusChip label={feeStatusLabel(item.status, t)} variant={feeStatusVariant(item.status)} />
+              </Pressable>
+            );
+          }}
         />
       </View>
     </View>
@@ -106,4 +113,5 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, marginRight: spacing.sm },
   rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  overdue: { color: colors.error, fontWeight: '600' },
 });
