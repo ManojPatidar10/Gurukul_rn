@@ -406,6 +406,10 @@
       "paymentSettings": {
         "title": "Payment Settings",
         "description": "Set the bank account fee payments are received into"
+      },
+      "ledger": {
+        "title": "Ledger & day book",
+        "description": "Money in and out, day book, cash vs bank"
       }
     },
     "categories": {
@@ -565,6 +569,161 @@
       "resultFailedMessage": "Payment failed.",
       "resultCancelledMessage": "Payment was cancelled.",
       "resultUnknownMessage": "We could not confirm the payment result. Check My Fees later before paying again."
+    }
+  },
+  "ledger": {
+    "title": "Ledger",
+    "subtitle": "Money in and out",
+    "find": {
+      "placeholder": "Find a receipt or voucher number",
+      "button": "Find",
+      "notFound": "No receipt or voucher with that number."
+    },
+    "tabs": {
+      "dayBook": "Day book",
+      "entries": "Entries"
+    },
+    "dayBook": {
+      "date": "Date",
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "opening": "Opening",
+      "in": "In",
+      "out": "Out",
+      "closing": "Closing",
+      "bucket": {
+        "cash": "Cash",
+        "bank": "Bank",
+        "unspecified": "Not recorded"
+      },
+      "empty": "No entries on {{date}}",
+      "truncated": "Showing the first 1000 entries"
+    },
+    "entries": {
+      "period": {
+        "thisMonth": "This month",
+        "thisYear": "This year ({{year}})",
+        "lastYear": "Last year ({{year}})",
+        "custom": "Custom"
+      },
+      "from": "From",
+      "to": "To",
+      "rangeOrder": "The start date is after the end date.",
+      "category": "Category",
+      "method": "Method",
+      "all": "All",
+      "totals": {
+        "in": "In",
+        "out": "Out",
+        "net": "Net",
+        "cashNet": "Cash net",
+        "bankNet": "Bank net",
+        "unspecifiedNet": "Method not recorded",
+        "opening": "Opening",
+        "closing": "Closing"
+      },
+      "count": "{{shown}} of {{total}} entries",
+      "loadMore": "Load more",
+      "empty": "No entries match these filters."
+    },
+    "filter": {
+      "category": {
+        "FEE_PAYMENT": "Fees",
+        "EVENT_COLLECTION": "Event collections",
+        "SPONSORSHIP": "Sponsorships",
+        "SALARY": "Salary",
+        "VENDOR_PAYMENT": "Vendor payments",
+        "MANUAL": "Manual entries (any)"
+      }
+    },
+    "entry": {
+      "manualWithCategory": "Manual entry · {{category}}",
+      "reversed": "Reversed",
+      "reversal": "Reversal"
+    },
+    "sourceType": {
+      "FEE_PAYMENT": "Fee payment",
+      "EVENT_COLLECTION": "Event collection",
+      "SPONSORSHIP": "Sponsorship",
+      "SALARY": "Salary",
+      "VENDOR_PAYMENT": "Vendor payment",
+      "MANUAL": "Manual entry"
+    },
+    "manualCategory": {
+      "OPENING_BALANCE": "Opening balance",
+      "DONATION": "Donation",
+      "OTHER_INCOME": "Other income",
+      "BANK_INTEREST": "Bank interest",
+      "PETTY_EXPENSE": "Petty expense",
+      "BANK_CHARGES": "Bank charges",
+      "OTHER_EXPENSE": "Other expense"
+    },
+    "documentType": {
+      "FEE_PAYMENT": "Fee payment",
+      "PAYROLL_LINE": "Payroll line",
+      "INFRA_EXPENSE_REQUEST": "Infrastructure expense request",
+      "EVENT_EXPENSE_REQUEST": "Event expense request",
+      "SPONSORSHIP_PAYMENT": "Sponsorship payment",
+      "EVENT_COLLECTION_PAYMENT": "Event collection",
+      "MANUAL_ENTRY": "Manual entry"
+    },
+    "method": {
+      "CASH": "Cash",
+      "UPI": "UPI",
+      "BANK_TRANSFER": "Bank transfer",
+      "CHEQUE": "Cheque",
+      "none": "Not recorded"
+    },
+    "direction": {
+      "INFLOW": "Money in",
+      "OUTFLOW": "Money out"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "COMPLETED": "Completed",
+      "REVERSED": "Reversed"
+    },
+    "detail": {
+      "title": "Ledger entry",
+      "amount": "Amount",
+      "direction": "Direction",
+      "date": "Date",
+      "category": "Category",
+      "method": "Method",
+      "reference": "Reference",
+      "receiptNumber": "Receipt no.",
+      "voucherNumber": "Voucher no.",
+      "noNumber": "No number",
+      "cancelled": "Cancelled",
+      "notes": "Notes",
+      "recordedAt": "Recorded",
+      "linkedTo": "Linked to",
+      "notLinked": "Not linked (recorded before this update)",
+      "linkedValue": "{{type}} · {{id}}",
+      "reversalTitle": "Reversal",
+      "reversedAt": "Reversed on",
+      "reversedBy": "Reversed by",
+      "reversalReason": "Reason",
+      "isReversal": "This entry reverses another entry.",
+      "viewReversal": "View reversal entry",
+      "viewOriginal": "View original entry",
+      "reverseButton": "Reverse entry",
+      "hint": {
+        "feePayment": "Fee payments are reversed from the student's fee bill.",
+        "salaryVendor": "Salary and vendor payments can't be reversed yet."
+      }
+    },
+    "reverse": {
+      "title": "Reverse this entry?",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Why is this entry being reversed?",
+      "reasonHint": "3 to 500 characters",
+      "body": "This adds a reversal entry of {{amount}} dated today.",
+      "receiptCancelled": "Receipt {{number}} will show as cancelled.",
+      "voucherCancelled": "Voucher {{number}} will show as cancelled.",
+      "cannotUndo": "This can't be undone.",
+      "confirm": "Reverse",
+      "done": "Entry reversed"
     }
   },
   "payroll": {

@@ -406,6 +406,10 @@
       "paymentSettings": {
         "title": "भुगतान सेटिंग्स",
         "description": "वह बैंक खाता सेट करें जिसमें फीस भुगतान प्राप्त होंगे"
+      },
+      "ledger": {
+        "title": "खाता बही और रोज़नामचा",
+        "description": "आय और व्यय, रोज़नामचा, नकद बनाम बैंक"
       }
     },
     "categories": {
@@ -565,6 +569,161 @@
       "resultFailedMessage": "भुगतान विफल हो गया।",
       "resultCancelledMessage": "भुगतान रद्द कर दिया गया।",
       "resultUnknownMessage": "हम भुगतान का परिणाम पुष्ट नहीं कर सके। दोबारा भुगतान करने से पहले बाद में 'मेरी फीस' देखें।"
+    }
+  },
+  "ledger": {
+    "title": "खाता बही",
+    "subtitle": "आय और व्यय",
+    "find": {
+      "placeholder": "रसीद या वाउचर नंबर खोजें",
+      "button": "खोजें",
+      "notFound": "इस नंबर की कोई रसीद या वाउचर नहीं मिला।"
+    },
+    "tabs": {
+      "dayBook": "रोज़नामचा",
+      "entries": "प्रविष्टियाँ"
+    },
+    "dayBook": {
+      "date": "तारीख",
+      "previousDay": "पिछला दिन",
+      "nextDay": "अगला दिन",
+      "opening": "प्रारंभिक शेष",
+      "in": "आय",
+      "out": "व्यय",
+      "closing": "अंतिम शेष",
+      "bucket": {
+        "cash": "नकद",
+        "bank": "बैंक",
+        "unspecified": "दर्ज नहीं"
+      },
+      "empty": "{{date}} को कोई प्रविष्टि नहीं",
+      "truncated": "पहली 1000 प्रविष्टियाँ दिखाई जा रही हैं"
+    },
+    "entries": {
+      "period": {
+        "thisMonth": "इस महीने",
+        "thisYear": "इस वर्ष ({{year}})",
+        "lastYear": "पिछले वर्ष ({{year}})",
+        "custom": "कस्टम"
+      },
+      "from": "से",
+      "to": "तक",
+      "rangeOrder": "शुरू की तारीख अंतिम तारीख के बाद है।",
+      "category": "श्रेणी",
+      "method": "माध्यम",
+      "all": "सभी",
+      "totals": {
+        "in": "आय",
+        "out": "व्यय",
+        "net": "शुद्ध",
+        "cashNet": "नकद शुद्ध",
+        "bankNet": "बैंक शुद्ध",
+        "unspecifiedNet": "माध्यम दर्ज नहीं",
+        "opening": "प्रारंभिक शेष",
+        "closing": "अंतिम शेष"
+      },
+      "count": "{{total}} में से {{shown}} प्रविष्टियाँ",
+      "loadMore": "और दिखाएँ",
+      "empty": "इन फ़िल्टर से कोई प्रविष्टि मेल नहीं खाती।"
+    },
+    "filter": {
+      "category": {
+        "FEE_PAYMENT": "फीस",
+        "EVENT_COLLECTION": "कार्यक्रम संग्रह",
+        "SPONSORSHIP": "प्रायोजन",
+        "SALARY": "वेतन",
+        "VENDOR_PAYMENT": "विक्रेता भुगतान",
+        "MANUAL": "मैन्युअल प्रविष्टियाँ (सभी)"
+      }
+    },
+    "entry": {
+      "manualWithCategory": "मैन्युअल प्रविष्टि · {{category}}",
+      "reversed": "उलटी गई",
+      "reversal": "उलट प्रविष्टि"
+    },
+    "sourceType": {
+      "FEE_PAYMENT": "फीस भुगतान",
+      "EVENT_COLLECTION": "कार्यक्रम संग्रह",
+      "SPONSORSHIP": "प्रायोजन",
+      "SALARY": "वेतन",
+      "VENDOR_PAYMENT": "विक्रेता भुगतान",
+      "MANUAL": "मैन्युअल प्रविष्टि"
+    },
+    "manualCategory": {
+      "OPENING_BALANCE": "प्रारंभिक शेष",
+      "DONATION": "दान",
+      "OTHER_INCOME": "अन्य आय",
+      "BANK_INTEREST": "बैंक ब्याज",
+      "PETTY_EXPENSE": "छोटे खर्च",
+      "BANK_CHARGES": "बैंक शुल्क",
+      "OTHER_EXPENSE": "अन्य खर्च"
+    },
+    "documentType": {
+      "FEE_PAYMENT": "फीस भुगतान",
+      "PAYROLL_LINE": "वेतन पंक्ति",
+      "INFRA_EXPENSE_REQUEST": "बुनियादी ढांचा खर्च अनुरोध",
+      "EVENT_EXPENSE_REQUEST": "कार्यक्रम खर्च अनुरोध",
+      "SPONSORSHIP_PAYMENT": "प्रायोजन भुगतान",
+      "EVENT_COLLECTION_PAYMENT": "कार्यक्रम संग्रह",
+      "MANUAL_ENTRY": "मैन्युअल प्रविष्टि"
+    },
+    "method": {
+      "CASH": "नकद",
+      "UPI": "यूपीआई",
+      "BANK_TRANSFER": "बैंक ट्रांसफर",
+      "CHEQUE": "चेक",
+      "none": "दर्ज नहीं"
+    },
+    "direction": {
+      "INFLOW": "आय",
+      "OUTFLOW": "व्यय"
+    },
+    "status": {
+      "PENDING": "लंबित",
+      "COMPLETED": "पूर्ण",
+      "REVERSED": "उलटी गई"
+    },
+    "detail": {
+      "title": "खाता प्रविष्टि",
+      "amount": "राशि",
+      "direction": "दिशा",
+      "date": "तारीख",
+      "category": "श्रेणी",
+      "method": "माध्यम",
+      "reference": "संदर्भ",
+      "receiptNumber": "रसीद नं.",
+      "voucherNumber": "वाउचर नं.",
+      "noNumber": "कोई नंबर नहीं",
+      "cancelled": "रद्द",
+      "notes": "टिप्पणी",
+      "recordedAt": "दर्ज किया गया",
+      "linkedTo": "किससे जुड़ी है",
+      "notLinked": "जुड़ी नहीं (इस अपडेट से पहले दर्ज)",
+      "linkedValue": "{{type}} · {{id}}",
+      "reversalTitle": "उलट",
+      "reversedAt": "उलटने की तारीख",
+      "reversedBy": "किसने उलटा",
+      "reversalReason": "कारण",
+      "isReversal": "यह प्रविष्टि किसी दूसरी प्रविष्टि को उलटती है।",
+      "viewReversal": "उलट प्रविष्टि देखें",
+      "viewOriginal": "मूल प्रविष्टि देखें",
+      "reverseButton": "प्रविष्टि उलटें",
+      "hint": {
+        "feePayment": "फीस भुगतान विद्यार्थी के फीस बिल से उलटे जाते हैं।",
+        "salaryVendor": "वेतन और विक्रेता भुगतान अभी उलटे नहीं जा सकते।"
+      }
+    },
+    "reverse": {
+      "title": "यह प्रविष्टि उलटें?",
+      "reasonLabel": "कारण",
+      "reasonPlaceholder": "यह प्रविष्टि क्यों उलटी जा रही है?",
+      "reasonHint": "3 से 500 अक्षर",
+      "body": "इससे आज की तारीख में {{amount}} की एक उलट प्रविष्टि जुड़ेगी।",
+      "receiptCancelled": "रसीद {{number}} रद्द दिखेगी।",
+      "voucherCancelled": "वाउचर {{number}} रद्द दिखेगा।",
+      "cannotUndo": "इसे वापस नहीं किया जा सकता।",
+      "confirm": "उलटें",
+      "done": "प्रविष्टि उलट दी गई"
     }
   },
   "payroll": {

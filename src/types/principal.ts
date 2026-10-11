@@ -9,6 +9,7 @@ import type {
   FeeStructure,
   GeneratedQuizQuestion,
   InfraExpenseRequest,
+  LedgerTransaction,
   PayrollLine,
   Student,
   Vendor,
@@ -102,6 +103,9 @@ export type PrincipalStackParamList = {
   PayFees: { assessment: FeeAssessment };
   FeePaymentSettings: undefined;
   PaymentReceipt: { payment: FeePayment };
+  /** The school ledger: day book, filtered entries and the receipt lookup (admin, from the Fees hub). */
+  Ledger: undefined;
+  LedgerEntryDetail: { transaction: LedgerTransaction };
   PayrollHub: undefined;
   SalaryStructuresList: undefined;
   SalaryStructureForm: undefined;

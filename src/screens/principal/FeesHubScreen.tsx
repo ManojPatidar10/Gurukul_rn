@@ -35,6 +35,11 @@ export function FeesHubScreen({ navigation }: Props) {
       title: t('fees.hub.paymentSettings.title'),
       description: t('fees.hub.paymentSettings.description'),
     },
+    {
+      route: 'Ledger',
+      title: t('fees.hub.ledger.title'),
+      description: t('fees.hub.ledger.description'),
+    },
   ];
 
   return (

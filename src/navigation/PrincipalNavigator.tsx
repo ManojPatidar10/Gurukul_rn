@@ -75,6 +75,8 @@ import { FeesHubScreen } from '../screens/principal/FeesHubScreen';
 import { InfraExpenseDetailScreen } from '../screens/principal/InfraExpenseDetailScreen';
 import { InfraExpenseFormScreen } from '../screens/principal/InfraExpenseFormScreen';
 import { InfraExpensesListScreen } from '../screens/principal/InfraExpensesListScreen';
+import { LedgerEntryDetailScreen } from '../screens/principal/LedgerEntryDetailScreen';
+import { LedgerScreen } from '../screens/principal/LedgerScreen';
 import { PayrollHubScreen } from '../screens/principal/PayrollHubScreen';
 import { PayrollRunScreen } from '../screens/principal/PayrollRunScreen';
 import { PayrollOverviewScreen } from '../screens/principal/PayrollOverviewScreen';
@@ -154,6 +156,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="PayFees" component={PayFeesScreen} />
         <Stack.Screen name="FeePaymentSettings" component={FeePaymentSettingsScreen} />
         <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} />
+        <Stack.Screen name="Ledger" component={LedgerScreen} />
+        <Stack.Screen name="LedgerEntryDetail" component={LedgerEntryDetailScreen} />
         <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />
         <Stack.Screen name="SalaryStructuresList" component={SalaryStructuresListScreen} />
         <Stack.Screen name="SalaryStructureForm" component={SalaryStructureFormScreen} />

@@ -21,6 +21,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { istToday } from '../../utils/quizInsights';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'InfraExpenseDetail'>;
 
@@ -52,7 +53,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
 
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
-  const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
+  const [transactionDate, setTransactionDate] = useState(istToday(new Date()));
 
   const closePanel = () => {
     setPanel(null);
