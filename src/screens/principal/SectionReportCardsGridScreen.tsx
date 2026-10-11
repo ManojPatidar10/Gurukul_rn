@@ -50,13 +50,13 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
   const [downloading, setDownloading] = useState(false);
 
   const load = useCallback(
-    (t: string) => {
+    (term: string) => {
       setLoading(true);
       setError(null);
       setHasLoaded(true);
       setSubjectFilter(null);
-      setLoadedTerm(t);
-      getSectionReportCards(schoolId, classSection.id, t)
+      setLoadedTerm(term);
+      getSectionReportCards(schoolId, classSection.id, term)
         .then(setRows)
         .catch((e) => {
           setRows(null);
@@ -125,7 +125,7 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Class marks grid"
+        subtitle={t('reportCardGrid.subtitle')}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
@@ -160,7 +160,7 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {!loading && error && <ErrorNotice message={error} />}
         {!loading && !error && hasLoaded && rows != null && rows.length === 0 && (
-          <Text style={styles.empty}>0 students in this section.</Text>
+          <Text style={styles.empty}>{t('reportCardGrid.noStudents')}</Text>
         )}
 
         {!loading && !error && rows != null && rows.length > 0 && (
@@ -186,7 +186,9 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
               style={[styles.chip, subjectFilter === null && styles.chipSelected]}
               onPress={() => setSubjectFilter(null)}
             >
-              <Text style={[styles.chipText, subjectFilter === null && styles.chipTextSelected]}>All subjects</Text>
+              <Text style={[styles.chipText, subjectFilter === null && styles.chipTextSelected]}>
+                {t('reportCardGrid.allSubjects')}
+              </Text>
             </Pressable>
             {subjectColumns.map((s) => (
               <Pressable
@@ -206,16 +208,16 @@ export function SectionReportCardsGridScreen({ route, navigation }: Props) {
           <ScrollView horizontal showsHorizontalScrollIndicator style={styles.gridScroll}>
             <View>
               <View style={[styles.row, styles.headerRow]}>
-                <Text style={[styles.headerCell, { width: ROLL_WIDTH }]}>Roll</Text>
-                <Text style={[styles.headerCell, { width: NAME_WIDTH }]}>Name</Text>
+                <Text style={[styles.headerCell, { width: ROLL_WIDTH }]}>{t('reportCardGrid.roll')}</Text>
+                <Text style={[styles.headerCell, { width: NAME_WIDTH }]}>{t('reportCardGrid.name')}</Text>
                 {visibleSubjectColumns.map((s) => (
                   <Text key={s.subjectId} style={[styles.headerCell, { width: SUBJECT_WIDTH }]} numberOfLines={2}>
                     {s.subjectName}
                   </Text>
                 ))}
-                <Text style={[styles.headerCell, { width: SUMMARY_WIDTH }]}>Total</Text>
+                <Text style={[styles.headerCell, { width: SUMMARY_WIDTH }]}>{t('reportCardGrid.total')}</Text>
                 <Text style={[styles.headerCell, { width: SUMMARY_WIDTH }]}>%</Text>
-                <Text style={[styles.headerCell, { width: SUMMARY_WIDTH }]}>Grade</Text>
+                <Text style={[styles.headerCell, { width: SUMMARY_WIDTH }]}>{t('reportCardGrid.grade')}</Text>
               </View>
 
               {rows.map((r, index) => (

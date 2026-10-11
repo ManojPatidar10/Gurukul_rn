@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import type { Assessment, ClassSection, OwnerType, SubjectAssignment, UserRole } from '../api/types';
 
 export interface PermissionSession {
@@ -103,7 +105,8 @@ function sectionTeachers(
   if (!classSection.classTeacherId) return sorted;
   const classTeacher: TeacherChoice = {
     teacherId: classSection.classTeacherId,
-    teacherName: classSection.classTeacherName ?? 'Class teacher',
+    // '' when the class teacher has no name on file: the form labels the chip itself.
+    teacherName: classSection.classTeacherName ?? '',
     isClassTeacher: true,
   };
   return [classTeacher, ...sorted];
@@ -165,17 +168,22 @@ export function creatorTeacherId(
  * "no teachers" isn't known yet. An admin who isn't an employee is recorded as nobody, so they
  * aren't promised otherwise.
  */
-export function adminTeacherHint(opts: {
-  assignmentsLoading: boolean;
-  assignmentsFailed: boolean;
-  hasChoices: boolean;
-  adminIsEmployee: boolean;
-}): string | null {
+export function adminTeacherHint(
+  opts: {
+    assignmentsLoading: boolean;
+    assignmentsFailed: boolean;
+    hasChoices: boolean;
+    adminIsEmployee: boolean;
+  },
+  t: TFunction
+): string | null {
   if (opts.assignmentsLoading || opts.assignmentsFailed) return null;
   if (opts.hasChoices) {
-    return opts.adminIsEmployee ? 'Optional. Leave it empty to record yourself as the teacher.' : 'Optional.';
+    return opts.adminIsEmployee
+      ? t('assessments.form.teacherHint.optionalSelf')
+      : t('assessments.form.teacherHint.optional');
   }
   return opts.adminIsEmployee
-    ? 'No teachers are assigned to this class yet, so you will be recorded as the teacher.'
-    : 'No teachers are assigned to this class yet.';
+    ? t('assessments.form.teacherHint.noTeachersSelf')
+    : t('assessments.form.teacherHint.noTeachers');
 }

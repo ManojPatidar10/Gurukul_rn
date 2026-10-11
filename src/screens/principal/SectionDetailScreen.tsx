@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listTeacherAssignments } from '../../api/sectionSubjects';
 import type { TeacherSubjectAssignment } from '../../api/types';
@@ -17,6 +18,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionDetail'>;
 const accent = accents.classes;
 
 export function SectionDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const { session } = useAuth();
   const schoolId = useSchoolId();
   const classSection = route.params.classSection;
@@ -50,33 +52,39 @@ export function SectionDetailScreen({ route, navigation }: Props) {
   }, [needsAssignments, schoolId, session.ownerId]);
   const canSeeQuiz = canSeeQuizResults(session, classSection, assignments);
 
-  const items: { title: string; description: string; onPress: () => void }[] = [
+  // `key` is stable across languages (a route name, or the tile's own name), so it isn't the title.
+  const items: { key: string; title: string; description: string; onPress: () => void }[] = [
     // A student's classmates live here rather than as their own dashboard tile, on the student-safe
     // Classmates screen instead of the staff roster.
     isStudent
       ? {
-          title: 'My classmates',
-          description: 'Students in your class',
+          key: 'classmates',
+          title: t('sectionDetail.classmates.title'),
+          description: t('sectionDetail.classmates.description'),
           onPress: () => navigation.navigate('Classmates'),
         }
       : {
-          title: 'Students',
-          description: 'View students enrolled in this section',
+          key: 'students',
+          title: t('sectionDetail.students.title'),
+          description: t('sectionDetail.students.description'),
           onPress: () => navigation.navigate('SectionStudentsList', { classSection }),
         },
     {
-      title: isStudent ? 'Subjects & teachers' : 'Subjects',
-      description: 'Subjects taught in this section, with assigned teacher',
+      key: 'SectionSubjectsList',
+      title: isStudent ? t('sectionDetail.subjects.titleStudent') : t('sectionDetail.subjects.title'),
+      description: t('sectionDetail.subjects.description'),
       onPress: () => navigation.navigate('SectionSubjectsList', { classSection }),
     },
     {
-      title: 'Assessments',
-      description: 'Tests, quizzes and exams for this class',
+      key: 'SectionAssessmentsList',
+      title: t('sectionDetail.assessments.title'),
+      description: t('sectionDetail.assessments.description'),
       onPress: () => navigation.navigate('SectionAssessmentsList', { classSection }),
     },
     {
-      title: 'Timetable',
-      description: isAdmin ? 'Build or change the weekly timetable' : 'Weekly timetable for this section',
+      key: isAdmin ? 'TimetableEditor' : 'MyTimetable',
+      title: t('sectionDetail.timetable.title'),
+      description: isAdmin ? t('sectionDetail.timetable.descriptionAdmin') : t('sectionDetail.timetable.description'),
       onPress: () =>
         isAdmin
           ? navigation.navigate('TimetableEditor', { classSection })
@@ -85,8 +93,9 @@ export function SectionDetailScreen({ route, navigation }: Props) {
     ...(canTakeAttendance
       ? [
           {
-            title: 'Attendance',
-            description: 'Take attendance for a date, or view history',
+            key: 'AttendanceTake',
+            title: t('sectionDetail.attendance.title'),
+            description: t('sectionDetail.attendance.description'),
             onPress: () => navigation.navigate('AttendanceTake', { classSection }),
           },
         ]
@@ -96,20 +105,23 @@ export function SectionDetailScreen({ route, navigation }: Props) {
           ...(isClassTeacherOfSection
             ? [
                 {
-                  title: 'Class fees',
-                  description: 'Fee payment status for students in your class',
+                  key: 'MyClassFees',
+                  title: t('sectionDetail.classFees.title'),
+                  description: t('sectionDetail.classFees.description'),
                   onPress: () => navigation.navigate('MyClassFees', { classSection }),
                 },
               ]
             : []),
           {
-            title: 'Class marks grid',
-            description: 'Every student x subject marks for a term, side by side',
+            key: 'SectionReportCardsGrid',
+            title: t('sectionDetail.marksGrid.title'),
+            description: t('sectionDetail.marksGrid.description'),
             onPress: () => navigation.navigate('SectionReportCardsGrid', { classSection }),
           },
           {
-            title: 'Publish report cards',
-            description: "Release a term's report cards to every student in this section",
+            key: 'PublishReportCards',
+            title: t('sectionDetail.publish.title'),
+            description: t('sectionDetail.publish.description'),
             onPress: () => navigation.navigate('PublishReportCards', { classSection }),
           },
         ]
@@ -118,8 +130,9 @@ export function SectionDetailScreen({ route, navigation }: Props) {
     ...(canSeeQuiz
       ? [
           {
-            title: 'Quiz results',
-            description: 'How students did in Practice, Arena and Battle',
+            key: 'QuizResults',
+            title: t('sectionDetail.quizResults.title'),
+            description: t('sectionDetail.quizResults.description'),
             onPress: () => navigation.navigate('QuizResults', { classSection }),
           },
         ]
@@ -135,7 +148,7 @@ export function SectionDetailScreen({ route, navigation }: Props) {
       />
       <ScreenContainer>
         {items.map((item) => (
-          <Pressable key={item.title} style={styles.row} onPress={item.onPress}>
+          <Pressable key={item.key} style={styles.row} onPress={item.onPress}>
             <View style={styles.accentBar} />
             <View style={styles.rowText}>
               <Text style={styles.rowTitle}>{item.title}</Text>

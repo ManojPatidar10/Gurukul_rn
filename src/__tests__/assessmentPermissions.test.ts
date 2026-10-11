@@ -1,4 +1,6 @@
 import type { SubjectAssignment, UserRole } from '../api/types';
+import hi from '../i18n/locales/hi.json';
+import { tEn, tHi } from '../testUtils/i18nFixture';
 import {
   actionAccess,
   adminTeacherHint,
@@ -150,6 +152,16 @@ describe('teacherChoices', () => {
     expect(assessmentPermissions({ role: 'TEACHER', ownerId: CLASS_TEACHER }, section, withDuplicate).teacherChoices).toEqual([]);
   });
 
+  it('leaves the name empty for a class teacher with none on file, so the form can label the chip', () => {
+    expect(
+      assessmentPermissions({ role: 'ADMIN', ownerId: 'x' }, { classTeacherId: CLASS_TEACHER, classTeacherName: null }, [MATHS])
+        .teacherChoices
+    ).toEqual([
+      { teacherId: CLASS_TEACHER, teacherName: '', isClassTeacher: true },
+      { teacherId: MATHS_TEACHER, teacherName: 'Arun Mehta', isClassTeacher: false },
+    ]);
+  });
+
   it('works for a section with no class teacher', () => {
     expect(
       assessmentPermissions({ role: 'ADMIN', ownerId: 'x' }, { classTeacherId: null, classTeacherName: null }, [MATHS]).teacherChoices
@@ -237,22 +249,27 @@ describe('adminTeacherHint', () => {
   const loaded = { assignmentsLoading: false, assignmentsFailed: false, hasChoices: true, adminIsEmployee: true };
 
   it("says nothing until the section's teachers are known", () => {
-    expect(adminTeacherHint({ ...loaded, assignmentsLoading: true, hasChoices: false })).toBeNull();
-    expect(adminTeacherHint({ ...loaded, assignmentsFailed: true, hasChoices: false })).toBeNull();
-    expect(adminTeacherHint({ ...loaded, assignmentsLoading: true })).toBeNull();
+    expect(adminTeacherHint({ ...loaded, assignmentsLoading: true, hasChoices: false }, tEn)).toBeNull();
+    expect(adminTeacherHint({ ...loaded, assignmentsFailed: true, hasChoices: false }, tEn)).toBeNull();
+    expect(adminTeacherHint({ ...loaded, assignmentsLoading: true }, tEn)).toBeNull();
   });
 
   it('tells an employee admin they are recorded when they pick nobody', () => {
-    expect(adminTeacherHint(loaded)).toBe('Optional. Leave it empty to record yourself as the teacher.');
-    expect(adminTeacherHint({ ...loaded, hasChoices: false })).toBe(
+    expect(adminTeacherHint(loaded, tEn)).toBe('Optional. Leave it empty to record yourself as the teacher.');
+    expect(adminTeacherHint({ ...loaded, hasChoices: false }, tEn)).toBe(
       'No teachers are assigned to this class yet, so you will be recorded as the teacher.'
     );
   });
 
   it('does not promise an admin who is not an employee that they will be recorded', () => {
-    expect(adminTeacherHint({ ...loaded, adminIsEmployee: false })).toBe('Optional.');
-    expect(adminTeacherHint({ ...loaded, adminIsEmployee: false, hasChoices: false })).toBe(
+    expect(adminTeacherHint({ ...loaded, adminIsEmployee: false }, tEn)).toBe('Optional.');
+    expect(adminTeacherHint({ ...loaded, adminIsEmployee: false, hasChoices: false }, tEn)).toBe(
       'No teachers are assigned to this class yet.'
     );
+  });
+
+  it('speaks Hindi in Hindi', () => {
+    expect(adminTeacherHint({ ...loaded, hasChoices: false }, tHi)).toBe(hi.assessments.form.teacherHint.noTeachersSelf);
+    expect(adminTeacherHint({ ...loaded, assignmentsLoading: true }, tHi)).toBeNull();
   });
 });
