@@ -14,6 +14,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useHoldWhileSaving } from '../../hooks/useHoldWhileSaving';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { localToday } from '../../utils/assessmentStatus';
@@ -57,6 +58,7 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
   // Same rule as recording: one key per unchanged form, so a retried submit reverses only once.
   const keyRef = useRef<string | null>(null);
   const savingRef = useRef(false);
+  useHoldWhileSaving(saving, savingRef, () => showToast(t('fees.reversePayment.stillReversing'), 'info'));
 
   const edit = <T,>(setter: (value: T) => void) => (value: T) => {
     keyRef.current = null;
@@ -86,12 +88,14 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
     try {
       const reversed = await reverseFeePayment(schoolId, payment.id, request, key);
       showToast(t('fees.reversePayment.done'), 'success');
+      savingRef.current = false; // so the hold lets this navigation through
       // `pop`: go back to the receipt this was opened from (React Navigation 7's navigate would
       // otherwise push a second receipt and leave this form behind it).
       navigation.navigate({ name: 'PaymentReceipt', params: { payment: reversed }, merge: true, pop: true });
     } catch (e) {
       if (e instanceof ApiError && e.errorCode === 'ALREADY_REVERSED') {
         showToast(getErrorMessage(e), 'info');
+        savingRef.current = false;
         navigation.goBack();
         return;
       }
@@ -147,8 +151,9 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
               key={option}
               style={[styles.option, selected && styles.optionSelected]}
               onPress={() => edit(setType)(option)}
+              disabled={saving}
               accessibilityRole="radio"
-              accessibilityState={{ selected }}
+              accessibilityState={{ checked: selected, disabled: saving }}
             >
               <View style={[styles.radio, selected && styles.radioSelected]}>
                 {selected && <View style={styles.radioDot} />}

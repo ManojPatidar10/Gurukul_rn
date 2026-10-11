@@ -14,6 +14,7 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useHoldWhileSaving } from '../../hooks/useHoldWhileSaving';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { localToday } from '../../utils/assessmentStatus';
@@ -53,6 +54,8 @@ export function RecordPaymentScreen({ route, navigation }: Props) {
   // field makes it a different submission.
   const keyRef = useRef<string | null>(null);
   const savingRef = useRef(false);
+  // Leaving mid-save would lose the receipt, and a new form would send a new key.
+  useHoldWhileSaving(saving, savingRef, () => showToast(t('fees.recordPayment.stillSaving'), 'info'));
 
   const edit = <T,>(setter: (value: T) => void) => (value: T) => {
     keyRef.current = null;
@@ -87,6 +90,7 @@ export function RecordPaymentScreen({ route, navigation }: Props) {
         },
         key
       );
+      savingRef.current = false; // so the hold lets this replace through
       navigation.replace('PaymentReceipt', { payment });
     } catch (e) {
       const duplicate = duplicateReferenceInfo(e);

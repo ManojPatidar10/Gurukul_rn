@@ -181,6 +181,18 @@ export function duplicateReferenceInfo(error: unknown): DuplicateReferenceData |
   };
 }
 
+/**
+ * The bill detail's refetch on focus: the fresh copy of the bill from the student's bills, or null
+ * when the request failed or the list came back without it. The screen then keeps the bill it
+ * shows and says the amounts may be out of date.
+ */
+export function refreshedBill<T extends { id: string }>(
+  bills: readonly T[] | null | undefined,
+  billId: string
+): T | null {
+  return bills?.find((bill) => bill.id === billId) ?? null;
+}
+
 /** The server's PDF file name: fee-receipt-<receipt number slug>.pdf, or the id's first 8 characters. */
 export function feeReceiptFileName(payment: Pick<FeePayment, 'id' | 'receiptNumber'>): string {
   return `fee-receipt-${fileSlug(payment.receiptNumber, '') || payment.id.slice(0, 8)}.pdf`;

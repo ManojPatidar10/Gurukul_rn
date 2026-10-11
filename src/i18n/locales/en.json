@@ -585,6 +585,7 @@
       "date": "Payment date",
       "save": "Save payment",
       "saving": "Saving…",
+      "stillSaving": "Please wait while the payment is saved.",
       "errors": {
         "amountInvalid": "Enter an amount like 15000 or 15,000.50 (at most 2 decimals).",
         "amountTooSmall": "Enter an amount of at least ₹0.01.",
@@ -627,6 +628,7 @@
       "confirm": "Cancel receipt",
       "submit": "Reverse payment",
       "submitting": "Reversing…",
+      "stillReversing": "Please wait while the payment is reversed.",
       "done": "Payment reversed.",
       "errors": {
         "typeRequired": "Choose what happened.",
@@ -642,6 +644,7 @@
       "childTitle": "{{name}}'s payments",
       "empty": "No payments recorded yet.",
       "loadError": "Could not load payments.",
+      "billRefreshError": "Could not refresh this bill, so the amounts shown may be out of date.",
       "cancelled": "Cancelled",
       "allPayments": "All payments for this student",
       "recordedBy": "by {{name}}"

@@ -8,6 +8,7 @@ import {
   paymentDateBounds,
   paymentMethodLabelKey,
   referenceRequired,
+  refreshedBill,
   reversalTypesFor,
   validateRecordPayment,
   validateReversal,
@@ -200,6 +201,30 @@ describe('duplicateReferenceInfo', () => {
     expect(duplicateReferenceInfo(new NetworkError('timeout'))).toBeNull();
     expect(duplicateReferenceInfo(undefined)).toBeNull();
     expect(duplicateReferenceInfo(new ApiError('x', 409, 'DUPLICATE_REFERENCE'))).toBeNull();
+  });
+});
+
+describe('refreshedBill', () => {
+  const bills = [
+    { id: 'bill-2025', remainingDue: 0 },
+    { id: 'bill-2026', remainingDue: 2500 },
+  ];
+
+  it('picks the fresh copy of the bill shown', () => {
+    expect(refreshedBill(bills, 'bill-2026')).toBe(bills[1]);
+  });
+
+  it('is null when the bill is missing or nothing came back, so the screen keeps its copy and says so', () => {
+    expect(refreshedBill(bills, 'bill-other')).toBeNull();
+    expect(refreshedBill([], 'bill-2026')).toBeNull();
+    expect(refreshedBill(null, 'bill-2026')).toBeNull();
+    expect(refreshedBill(undefined, 'bill-2026')).toBeNull();
+  });
+
+  it('has its notice, and the in-flight hold messages, in en.json', () => {
+    expect(hasKey('fees.paymentHistory.billRefreshError')).toBe(true);
+    expect(hasKey('fees.recordPayment.stillSaving')).toBe(true);
+    expect(hasKey('fees.reversePayment.stillReversing')).toBe(true);
   });
 });
 

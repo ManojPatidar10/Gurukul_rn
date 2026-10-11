@@ -13,6 +13,7 @@
 - [ ] Reference ` utr 1234 5 ` is saved as `UTR12345`.
 - [ ] Tap Save twice quickly → one payment (the button is disabled while saving).
 - [ ] Airplane mode, Save (fails), airplane mode off, Save again without editing → still one receipt.
+- [ ] Slow network: Save, then press Back (header, Android Back, iOS swipe) before the reply → "Please wait while the payment is saved." and the screen stays; the receipt opens when the reply arrives. The same on Reverse payment.
 - [ ] Record UPI with the same UTR on a sibling's bill → "Reference already used" alert naming the existing receipt, student, date and amount → **Record anyway** → recorded. Cancel → nothing recorded.
 - [ ] The same number with a different method → recorded without a warning. Cash references are never checked.
 
@@ -27,6 +28,7 @@
 - [ ] Parent: Child → Fees → a row opens the bill (new) → payments → receipt. **Payment history** lists every year.
 - [ ] Admin: bill → "All payments for this student".
 - [ ] Empty: "No payments recorded yet."; offline: the error with Retry.
+- [ ] Bill detail offline (go back to it from a receipt with the network off) → "Could not refresh this bill…" with Retry above the totals; network on → Retry → the notice goes and the totals are current.
 - [ ] Teacher: no route reaches payments; a forged `GET /fee-assessments/{id}/payments` → 403.
 
 ### Reversing (admin)
@@ -50,7 +52,7 @@
 ### Online UPI flow (backend/screen functional but unreachable from UI)
 - [ ] As STUDENT, an unpaid bill's "Pay Fees" button only shows "Online fee payment is coming soon." and doesn't navigate.
 - [ ] (Driving `PayFeesScreen` directly) Double-tap Pay Now → one payment request. With the pending-attempt check failing (offline) → the error stage, no request made. Once a request exists, the amount shown is the server's.
-- [ ] Payment request with no school UPI ID → 409 `UPI_NOT_CONFIGURED`, no attempt saved; with a UPI ID → `upiUri` contains `pa=<UPI ID>`.
+- [ ] **(fix 1, finance-access-and-privacy)** Payment request with no school UPI ID → 409 `UPI_NOT_CONFIGURED`, no attempt saved; with a UPI ID → `upiUri` contains `pa=<UPI ID>`; as a teacher → 403. Until fix 1 merges: no bank account or IFSC → 400, and with no UPI ID the link pays a guessed `<account>@<bank handle>`.
 - [ ] A payer's `RESPONSE_SUCCESS` report leaves the bill unpaid; an admin confirms it by recording with the attempt's `transactionRef`; recording it again → 400; after that payment is reversed, it can be confirmed again.
 
 ### Old builds
@@ -59,7 +61,7 @@
 ## Existing automated test coverage
 - App (`npm test`):
   - `src/__tests__/money.test.ts` — `parseRupees` (grouped, ₹/Rs prefixes, refuses >2 decimals, `1e5`, `0x10`, signs, `.`, `5.`), paise maths (`sumRupees([0.1, 0.2]) === 0.3`), `formatRupees` (Indian grouping, `'always'` decimals, no symbol, negatives, rounding, missing values), `rupeesInputValue`.
-  - `src/__tests__/feePayments.test.ts` — methods and labels, reference rule and normalisation, 400-day date bounds, `validateRecordPayment`, `reversalTypesFor('CASH')` without BOUNCED, `validateReversal` (reason, refund fields, refund date range), `duplicateReferenceInfo`, the PDF file name.
+  - `src/__tests__/feePayments.test.ts` — methods and labels, reference rule and normalisation, 400-day date bounds, `validateRecordPayment`, `reversalTypesFor('CASH')` without BOUNCED, `validateReversal` (reason, refund fields, refund date range), `duplicateReferenceInfo`, `refreshedBill`, the PDF file name.
   - `src/__tests__/idempotencyKey.test.ts` — UUID v4 in the server's key format, distinct per call, with and without `crypto.randomUUID`.
   - `src/__tests__/feeStructureLines.test.ts` — fee-structure line validation (shared amount parser, duplicate category).
   - `src/__tests__/apiClientHeaders.test.ts` — `Idempotency-Key` is sent, and re-sent unchanged on the 401 refresh retry.

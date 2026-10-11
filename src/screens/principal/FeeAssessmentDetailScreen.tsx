@@ -4,8 +4,10 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { getErrorMessage } from '../../api/errorMessage';
 import { listStudentFeeAssessments } from '../../api/feeAssessments';
 import type { FeeAssessment } from '../../api/types';
+import { ErrorNotice } from '../../components/ErrorNotice';
 import { FeePaymentHistory } from '../../components/FeePaymentHistory';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -15,6 +17,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { refreshedBill } from '../../utils/feePayments';
 import { formatRupees } from '../../utils/money';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeAssessmentDetail'>;
@@ -34,26 +37,31 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const { showToast } = useToast();
   const schoolId = useSchoolId();
   // The bill from the list is the first render; each time the screen is focused (e.g. back from
-  // recording or reversing a payment) it's fetched again so the totals are current.
+  // recording or reversing a payment) it's fetched again so the totals are current. If that fails,
+  // the bill we have stays on screen with a notice that its amounts may be out of date.
   const [assessment, setAssessment] = useState<FeeAssessment>(route.params.assessment);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const billId = route.params.assessment.id;
   const studentId = route.params.assessment.studentId;
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      listStudentFeeAssessments(schoolId, studentId)
-        .then((bills) => {
-          const fresh = bills.find((bill) => bill.id === billId);
-          if (active && fresh) setAssessment(fresh);
-        })
-        // Keep showing the bill we have; the payment history below reports its own load errors.
-        .catch(() => {});
-      return () => {
-        active = false;
-      };
-    }, [schoolId, studentId, billId])
-  );
+  const refresh = useCallback(() => {
+    let active = true;
+    listStudentFeeAssessments(schoolId, studentId)
+      .then((bills) => {
+        if (!active) return;
+        const fresh = refreshedBill(bills, billId);
+        if (fresh) setAssessment(fresh);
+        setRefreshError(fresh ? null : t('fees.paymentHistory.billRefreshError'));
+      })
+      .catch((e) => {
+        if (active) setRefreshError(`${t('fees.paymentHistory.billRefreshError')} ${getErrorMessage(e)}`);
+      });
+    return () => {
+      active = false;
+    };
+  }, [schoolId, studentId, billId, t]);
+
+  useFocusEffect(refresh);
 
   const fullyPaid = assessment.remainingDue <= 0;
   const paidPercent = assessment.totalDue > 0
@@ -76,6 +84,21 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
         <View style={styles.statusRow}>
           <StatusChip label={assessment.status} variant={fullyPaid ? 'success' : 'warning'} />
         </View>
+
+        {refreshError && (
+          <View style={styles.refreshError}>
+            <ErrorNotice message={refreshError} />
+            <Pressable
+              style={styles.retry}
+              onPress={() => {
+                refresh();
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        )}
 
         <View style={styles.card}>
           <View style={styles.progressHeader}>
@@ -140,6 +163,9 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   statusRow: { marginBottom: spacing.lg },
+  refreshError: { marginBottom: spacing.md },
+  retry: { alignSelf: 'center', paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+  retryText: { color: colors.primary, fontWeight: '700' },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
