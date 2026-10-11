@@ -142,22 +142,28 @@ export interface StudentClassSectionUpdateRequest {
   classSectionId: string;
 }
 
+/**
+ * A staff record. The backend shapes it per viewer and sends hidden fields as null: an admin or the
+ * employee themself gets every field; a teacher viewing a colleague gets name, designation, phone
+ * and email, with `role` set only when the colleague is an ADMIN; a student or parent gets only
+ * id, name, designation and status.
+ */
 export interface Employee {
   id: string;
   schoolId: string;
   name: string;
   designation: string;
-  joinDate: string;
+  joinDate: string | null;
   /** Optional - for the staff birthday wish. */
   dob: string | null;
-  bankAccount: string;
-  contactPhone: string;
+  bankAccount: string | null;
+  contactPhone: string | null;
   contactEmail: string | null;
   status: string;
   employeeType: EmployeeType | null;
   role: UserRole | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export type EmployeeType = 'TEACHING' | 'NON_TEACHING';
@@ -316,8 +322,11 @@ export interface FeePaymentRequestResponse {
   studentName: string;
   amount: number;
   payeeName: string;
-  accountNumber: string;
-  ifsc: string;
+  /** Admin only; null for a student or parent. The UPI link doesn't use it. */
+  accountNumber: string | null;
+  /** Admin only; null for a student or parent. */
+  ifsc: string | null;
+  /** The school's configured UPI ID (never guessed). */
   payeeVpa: string;
   upiUri: string;
   referenceId: string;
@@ -347,8 +356,14 @@ export interface PaymentAttempt {
   updatedAt: string;
 }
 
+/**
+ * The outcomes a payer may report for a payment attempt. VERIFIED is set only when an admin records
+ * the payment, and INITIATED is the starting state, so the backend refuses both with a 400.
+ */
+export type PayerReportableStatus = 'RESPONSE_SUCCESS' | 'PENDING' | 'FAILED' | 'CANCELLED' | 'UNKNOWN';
+
 export interface PaymentAttemptResultRequest {
-  status: PaymentAttemptStatus;
+  status: PayerReportableStatus;
   upiTransactionId?: string;
   approvalRefNo?: string;
   responseCode?: string;

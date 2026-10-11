@@ -6,12 +6,13 @@ import { useTranslation } from 'react-i18next';
 import { ApiError } from '../../api/client';
 import { createFeePaymentRequest } from '../../api/feePaymentRequest';
 import { findPendingPaymentAttempt, recordPaymentAttemptResult } from '../../api/paymentAttempts';
-import type { FeePaymentRequestResponse, PaymentAttempt, PaymentAttemptStatus } from '../../api/types';
+import type { FeePaymentRequestResponse, PayerReportableStatus, PaymentAttempt } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { canRetryFeePayment } from '../../utils/feePaymentErrors';
 import { resolvePaymentAppUrl } from '../../utils/upiPaymentLinks';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
@@ -31,6 +32,8 @@ export function PayFeesScreen({ route, navigation }: Props) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentRequest, setPaymentRequest] = useState<FeePaymentRequestResponse | null>(null);
   const [resultAttempt, setResultAttempt] = useState<PaymentAttempt | null>(null);
+  // False when the failure needs the school to act first (no UPI ID set): the error then offers Back, not Try again.
+  const [canRetry, setCanRetry] = useState(true);
   const returnHandled = useRef(false);
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
     );
   };
 
-  const reportOutcome = async (request: FeePaymentRequestResponse, status: PaymentAttemptStatus) => {
+  const reportOutcome = async (request: FeePaymentRequestResponse, status: PayerReportableStatus) => {
     setStage('reporting');
     try {
       const attempt = await recordPaymentAttemptResult(schoolId, request.referenceId, {
@@ -79,12 +82,14 @@ export function PayFeesScreen({ route, navigation }: Props) {
     } catch (e) {
       const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
       setErrorMessage(message);
+      setCanRetry(canRetryFeePayment(e instanceof ApiError ? e.errorCode : undefined));
       setStage('error');
     }
   };
 
   const startPayment = async () => {
     setErrorMessage(null);
+    setCanRetry(true);
     setStage('creating');
     returnHandled.current = false;
     try {
@@ -102,6 +107,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
     } catch (e) {
       const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
       setErrorMessage(message);
+      setCanRetry(canRetryFeePayment(e instanceof ApiError ? e.errorCode : undefined));
       setStage('error');
     }
   };
@@ -125,6 +131,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
 
   const handleRetry = () => {
     setErrorMessage(null);
+    setCanRetry(true);
     setPaymentRequest(null);
     setResultAttempt(null);
     returnHandled.current = false;
@@ -151,9 +158,12 @@ export function PayFeesScreen({ route, navigation }: Props) {
         {(stage === 'idle' || stage === 'error') && (
           <>
             {stage === 'error' && errorMessage && <ErrorNotice message={errorMessage} />}
-            <Pressable style={styles.payButton} onPress={stage === 'error' ? handleRetry : handlePay}>
+            <Pressable
+              style={styles.payButton}
+              onPress={stage !== 'error' ? handlePay : canRetry ? handleRetry : () => navigation.goBack()}
+            >
               <Text style={styles.payButtonText}>
-                {stage === 'error' ? t('fees.payFees.tryAgain') : t('fees.payFees.payNow')}
+                {stage !== 'error' ? t('fees.payFees.payNow') : canRetry ? t('fees.payFees.tryAgain') : t('common.back')}
               </Text>
             </Pressable>
 

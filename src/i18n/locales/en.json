@@ -511,9 +511,9 @@
       "bankAccountNumber": "Bank account number",
       "bankIfsc": "IFSC code",
       "bankAccountHolderName": "Account holder name shown to students",
-      "upiVpaOverride": "Your real UPI ID (needed for payments to work)",
-      "upiVpaOverrideHint": "Without this, the app guesses a UPI ID from your account number and IFSC (e.g. 123456789012@sbi) — this is rarely a real, working payee, so student payments will fail with an error inside their UPI app. Enter the same UPI ID you'd give someone to pay you directly (the one behind your bank's UPI QR code, e.g. name@oksbi, name@ybl, name@paytm) to fix this.",
-      "upiVpaOverrideWarning": "No real UPI ID set yet — payments will likely fail until you add one below."
+      "upiVpaOverride": "Your school's UPI ID (needed for UPI payments)",
+      "upiVpaOverrideHint": "Families can pay fees by UPI only once this is set. Enter the same UPI ID you'd give someone to pay you directly (the one behind your bank's UPI QR code, e.g. name@oksbi, name@ybl, name@paytm). The app never guesses a UPI ID from your account number.",
+      "upiVpaOverrideWarning": "No UPI ID set yet — families can't pay by UPI until you add one below."
     },
     "receipt": {
       "title": "Payment Receipt",
@@ -1892,7 +1892,9 @@
     "timeout": "The server is taking too long to respond. Please try again.",
     "forbidden": "You don't have permission to do that.",
     "codes": {
-      "AI_RATE_LIMITED": "You've reached this hour's limit for the AI assistant. Please try again later."
+      "AI_RATE_LIMITED": "You've reached this hour's limit for the AI assistant. Please try again later.",
+      "UPI_NOT_CONFIGURED": "This school has not set up UPI payments yet.",
+      "PAYMENT_ATTEMPT_ALREADY_REPORTED": "This payment's result was already recorded and can't be changed."
     }
   },
   "sectionHub": {
