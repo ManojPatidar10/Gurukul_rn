@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { listInfraExpenseCategories } from '../api/infraExpenseCategories';
-import type { InfraExpenseCategory } from '../api/types';
+import type { InfraExpenseCategory } from '../api/expenseTypes';
 import { colors, radius, spacing } from '../theme/colors';
+import type { PrincipalStackParamList } from '../types/principal';
+import { categoryLabel } from '../utils/expenses';
 import { getErrorMessage } from '../api/errorMessage';
 import { ErrorNotice } from './ErrorNotice';
 
@@ -12,19 +17,24 @@ interface Props {
   onSelect: (category: InfraExpenseCategory) => void;
 }
 
+/** The active categories, for a new request. Reloads on focus, so one added under Categories shows up. */
 export default function InfraCategoryPicker({ schoolId, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<PrincipalStackParamList>>();
   const [categories, setCategories] = useState<InfraExpenseCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    listInfraExpenseCategories(schoolId)
-      .then(setCategories)
-      .catch((e) => setError(getErrorMessage(e)))
-      .finally(() => setLoading(false));
-  }, [schoolId]);
+  useFocusEffect(
+    useCallback(() => {
+      setError(null);
+      listInfraExpenseCategories(schoolId)
+        // The server lists active ones only; an older one may not send `active` at all.
+        .then((rows) => setCategories(rows.filter((c) => c.active !== false)))
+        .catch((e) => setError(getErrorMessage(e)))
+        .finally(() => setLoading(false));
+    }, [schoolId])
+  );
 
   if (loading) return <ActivityIndicator style={styles.loading} />;
 
@@ -32,10 +42,12 @@ export default function InfraCategoryPicker({ schoolId, selectedId, onSelect }: 
     <View>
       {error && <ErrorNotice message={error} />}
       {categories.length === 0 && !error && (
-        <Text style={styles.empty}>
-          No infrastructure expense categories exist on this school yet — these can only be seeded on the
-          backend (there&apos;s no create endpoint for them).
-        </Text>
+        <View style={styles.emptyRow}>
+          <Text style={styles.empty}>{t('expenseCategories.picker.empty')}</Text>
+          <Pressable onPress={() => navigation.navigate('InfraCategories')} accessibilityRole="link">
+            <Text style={styles.addLink}>{t('expenseCategories.picker.addLink')}</Text>
+          </Pressable>
+        </View>
       )}
       <View style={styles.chips}>
         {categories.map((cat) => (
@@ -43,10 +55,10 @@ export default function InfraCategoryPicker({ schoolId, selectedId, onSelect }: 
             key={cat.id}
             onPress={() => onSelect(cat)}
             style={[styles.chip, selectedId === cat.id && styles.chipSelected]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: selectedId === cat.id }}
           >
-            <Text style={[styles.chipText, selectedId === cat.id && styles.chipTextSelected]}>
-              {cat.name} ({cat.code})
-            </Text>
+            <Text style={[styles.chipText, selectedId === cat.id && styles.chipTextSelected]}>{categoryLabel(cat, t)}</Text>
           </Pressable>
         ))}
       </View>
@@ -56,8 +68,9 @@ export default function InfraCategoryPicker({ schoolId, selectedId, onSelect }: 
 
 const styles = StyleSheet.create({
   loading: { marginVertical: spacing.md },
-  error: { color: colors.error, marginBottom: spacing.sm },
-  empty: { color: colors.textMuted, marginBottom: spacing.sm },
+  emptyRow: { marginBottom: spacing.sm },
+  empty: { color: colors.textMuted, marginBottom: spacing.xs },
+  addLink: { color: colors.primary, fontWeight: '700' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
     borderWidth: 1.5,
