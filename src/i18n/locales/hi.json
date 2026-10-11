@@ -463,7 +463,8 @@
       "errors": {
         "noLines": "कम से कम एक फीस पंक्ति जोड़ें।",
         "missingCategory": "हर फीस पंक्ति के लिए एक श्रेणी चुनें।",
-        "invalidAmount": "हर फीस पंक्ति के लिए 0 से अधिक राशि दर्ज करें।"
+        "invalidAmount": "हर फीस पंक्ति के लिए 15000 या 15,000.50 जैसी राशि दर्ज करें।",
+        "duplicateCategory": "फीस संरचना में हर फीस श्रेणी केवल एक बार आ सकती है।"
       }
     },
     "assessmentsList": {
@@ -527,10 +528,16 @@
       "paymentMethod": "भुगतान का तरीका",
       "paymentReference": "संदर्भ",
       "amountPaid": "भुगतान की गई राशि",
-      "shareOrPrint": "रसीद साझा करें / प्रिंट करें",
       "sharing": "तैयार किया जा रहा है…",
       "shareTitle": "फीस भुगतान रसीद साझा करें",
-      "shareUnavailable": "इस डिवाइस पर साझा करना उपलब्ध नहीं है।"
+      "cancelled": "रद्द (CANCELLED)",
+      "cancelledBy": "{{date}} को {{name}} द्वारा रद्द किया गया",
+      "reason": "कारण: {{reason}}",
+      "refundDetails": "{{method}} से लौटाया गया, संदर्भ {{reference}}, {{date}} को",
+      "receivedBy": "प्राप्तकर्ता",
+      "balanceAfter": "इस भुगतान के बाद शेष बकाया",
+      "sharePdf": "रसीद साझा करें (PDF)",
+      "loadError": "यह रसीद लोड नहीं की जा सकी।"
     },
     "payFees": {
       "title": "फीस भरें",
@@ -565,6 +572,79 @@
       "resultFailedMessage": "भुगतान विफल हो गया।",
       "resultCancelledMessage": "भुगतान रद्द कर दिया गया।",
       "resultUnknownMessage": "हम भुगतान का परिणाम पुष्ट नहीं कर सके। दोबारा भुगतान करने से पहले बाद में 'मेरी फीस' देखें।"
+    },
+    "recordPayment": {
+      "title": "भुगतान दर्ज करें",
+      "button": "भुगतान दर्ज करें",
+      "remaining": "शेष {{amount}}",
+      "amount": "राशि (₹)",
+      "method": "भुगतान का तरीका",
+      "reference": "संदर्भ",
+      "referenceHint": "UTR, चेक नंबर या ट्रांज़ैक्शन ID",
+      "referenceOptional": "नकद के लिए वैकल्पिक",
+      "date": "भुगतान की तारीख",
+      "save": "भुगतान सहेजें",
+      "saving": "सहेजा जा रहा है…",
+      "errors": {
+        "amountInvalid": "15000 या 15,000.50 जैसी राशि दर्ज करें (अधिकतम 2 दशमलव)।",
+        "amountTooSmall": "कम से कम ₹0.01 की राशि दर्ज करें।",
+        "amountTooLarge": "राशि शेष बकाया ({{max}}) से अधिक नहीं हो सकती।",
+        "referenceRequired": "इस भुगतान का UTR, चेक या ट्रांज़ैक्शन नंबर दर्ज करें।",
+        "dateFuture": "भुगतान की तारीख भविष्य की नहीं हो सकती।",
+        "dateTooOld": "भुगतान की तारीख 400 दिन से अधिक पुरानी नहीं हो सकती।"
+      },
+      "duplicateTitle": "संदर्भ पहले से इस्तेमाल हुआ है",
+      "duplicateMessage": "{{reference}} पहले से रसीद {{receipt}} पर है ({{student}}, {{date}}, {{amount}})। फिर भी यह भुगतान दर्ज करें?",
+      "duplicateConfirm": "फिर भी दर्ज करें"
+    },
+    "reversePayment": {
+      "title": "भुगतान रद्द करें",
+      "button": "भुगतान रद्द करें",
+      "typeLabel": "क्या हुआ?",
+      "types": {
+        "CORRECTION": {
+          "label": "गलती से दर्ज हुआ",
+          "description": "भुगतान गलती से या गलत विवरण के साथ दर्ज हुआ। इसके बाद सही भुगतान दर्ज करें।"
+        },
+        "BOUNCED": {
+          "label": "चेक या ट्रांसफर बाउंस हुआ",
+          "description": "चेक या ट्रांसफर क्लियर नहीं हुआ, इसलिए पैसा कभी नहीं आया।"
+        },
+        "REFUND": {
+          "label": "पैसा लौटाया गया",
+          "description": "पैसा परिवार को वापस दिया गया।"
+        }
+      },
+      "reason": "कारण",
+      "reasonPlaceholder": "यह भुगतान क्यों रद्द किया जा रहा है?",
+      "reasonCount": "{{length}}/{{max}}",
+      "refundMethod": "वापसी का तरीका",
+      "refundReference": "वापसी का संदर्भ",
+      "refundReferenceHint": "UTR, चेक नंबर, या नकद के लिए वाउचर या पर्ची नंबर",
+      "refundDate": "वापसी की तारीख",
+      "confirmTitle": "यह रसीद रद्द करें?",
+      "confirmMessage": "रसीद {{receipt}} रद्द करें? {{student}} की कुल भुगतान राशि से {{amount}} घटा दिए जाएंगे। इसे वापस नहीं बदला जा सकता।",
+      "confirm": "रसीद रद्द करें",
+      "submit": "भुगतान रद्द करें",
+      "submitting": "रद्द किया जा रहा है…",
+      "done": "भुगतान रद्द किया गया।",
+      "errors": {
+        "typeRequired": "चुनें कि क्या हुआ।",
+        "reasonTooShort": "कम से कम {{min}} अक्षरों का कारण दें।",
+        "refundMethodRequired": "चुनें कि पैसा कैसे लौटाया गया।",
+        "refundReferenceRequired": "वापसी का UTR, चेक, वाउचर या पर्ची नंबर दर्ज करें।",
+        "refundDateFuture": "वापसी की तारीख भविष्य की नहीं हो सकती।",
+        "refundDateBeforePayment": "वापसी की तारीख भुगतान की तारीख से पहले नहीं हो सकती।"
+      }
+    },
+    "paymentHistory": {
+      "title": "भुगतान इतिहास",
+      "childTitle": "{{name}} के भुगतान",
+      "empty": "अभी तक कोई भुगतान दर्ज नहीं।",
+      "loadError": "भुगतान लोड नहीं किए जा सके।",
+      "cancelled": "रद्द",
+      "allPayments": "इस विद्यार्थी के सभी भुगतान",
+      "recordedBy": "{{name}} द्वारा"
     }
   },
   "payroll": {
@@ -1892,7 +1972,10 @@
     "timeout": "सर्वर जवाब देने में बहुत समय ले रहा है। कृपया फिर से प्रयास करें।",
     "forbidden": "आपको ऐसा करने की अनुमति नहीं है।",
     "codes": {
-      "AI_RATE_LIMITED": "आप इस घंटे के लिए AI सहायक की सीमा तक पहुंच गए हैं। कृपया बाद में फिर कोशिश करें।"
+      "AI_RATE_LIMITED": "आप इस घंटे के लिए AI सहायक की सीमा तक पहुंच गए हैं। कृपया बाद में फिर कोशिश करें।",
+      "DUPLICATE_REFERENCE": "यह संदर्भ पहले से किसी दूसरे भुगतान पर है।",
+      "ALREADY_REVERSED": "यह भुगतान पहले ही रद्द किया जा चुका है।",
+      "IDEMPOTENCY_KEY_REUSED": "यह पहले अलग विवरण के साथ भेजा जा चुका है। दोबारा सहेजने से पहले भुगतान इतिहास देखें।"
     }
   },
   "sectionHub": {

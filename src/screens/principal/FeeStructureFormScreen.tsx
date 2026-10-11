@@ -16,7 +16,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { isPositiveNumber } from '../../utils/validators';
+import { validateFeeStructureLines } from '../../utils/feeStructureLines';
 import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructureForm'>;
@@ -67,24 +67,15 @@ export function FeeStructureFormScreen({ navigation }: Props) {
     setLines((prev) => prev.map((line, i) => (i === index ? { ...line, amount } : line)));
   };
 
-  const canSubmit =
-    !!classSectionId &&
-    !!academicYear &&
-    lines.length > 0 &&
-    lines.every((line) => line.feeCategoryId && Number(line.amount) > 0);
+  // Line problems (a missing category, an amount like "100.555", a category twice) are left to
+  // handleSubmit, so the admin gets a toast saying which one rather than a dead button.
+  const canSubmit = !!classSectionId && !!academicYear && lines.length > 0;
 
   const handleSubmit = async () => {
     if (!classSectionId) return;
-    if (lines.length === 0) {
-      showToast(t('fees.structureForm.errors.noLines'), 'error');
-      return;
-    }
-    if (lines.some((line) => !line.feeCategoryId)) {
-      showToast(t('fees.structureForm.errors.missingCategory'), 'error');
-      return;
-    }
-    if (lines.some((line) => !isPositiveNumber(line.amount))) {
-      showToast(t('fees.structureForm.errors.invalidAmount'), 'error');
+    const { error, amounts } = validateFeeStructureLines(lines);
+    if (error) {
+      showToast(t(error), 'error');
       return;
     }
     setSubmitting(true);
@@ -92,7 +83,7 @@ export function FeeStructureFormScreen({ navigation }: Props) {
       const created = await createFeeStructure(schoolId, {
         classSectionId,
         academicYear,
-        lines: lines.map((line) => ({ feeCategoryId: line.feeCategoryId, amount: Number(line.amount) })),
+        lines: lines.map((line, index) => ({ feeCategoryId: line.feeCategoryId, amount: amounts[index] })),
       });
       navigation.replace('FeeStructureDetail', { feeStructure: created });
     } catch (e) {
