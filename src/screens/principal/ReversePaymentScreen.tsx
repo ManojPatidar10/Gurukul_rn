@@ -7,7 +7,6 @@ import { ApiError } from '../../api/client';
 import { getErrorMessage } from '../../api/errorMessage';
 import { reverseFeePayment } from '../../api/feePayments';
 import type { FeePaymentReversalRequest, PaymentMethod, ReversalType } from '../../api/types';
-import { DatePickerField, parseIsoDate } from '../../components/DatePickerField';
 import Dropdown from '../../components/Dropdown';
 import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -17,7 +16,6 @@ import { useToast } from '../../context/ToastContext';
 import { useHoldWhileSaving } from '../../hooks/useHoldWhileSaving';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { localToday } from '../../utils/assessmentStatus';
 import {
   FEE_PAYMENT_METHODS,
   formatPaymentDate,
@@ -45,14 +43,12 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
   const schoolId = useSchoolId();
   const { showToast } = useToast();
   const { payment } = route.params;
-  const today = localToday();
   const types = reversalTypesFor(payment.paymentMethod);
 
   const [type, setType] = useState<ReversalType | null>(null);
   const [reason, setReason] = useState('');
   const [refundMethod, setRefundMethod] = useState<PaymentMethod | null>(null);
   const [refundReference, setRefundReference] = useState('');
-  const [refundDate, setRefundDate] = useState(today);
   const [errors, setErrors] = useState<ReversalErrors>({});
   const [saving, setSaving] = useState(false);
   // Same rule as recording: one key per unchanged form, so a retried submit reverses only once.
@@ -83,7 +79,6 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
     if (type === 'REFUND') {
       request.refundMethod = refundMethod ?? undefined;
       request.refundReference = normalizeReference(refundReference) ?? undefined;
-      request.refundDate = refundDate || undefined;
     }
     try {
       const reversed = await reverseFeePayment(schoolId, payment.id, request, key);
@@ -108,11 +103,7 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
   };
 
   const handleSubmit = () => {
-    const result = validateReversal(
-      { type, reason, refundMethod, refundReference, refundDate },
-      payment.transactionDate,
-      today
-    );
+    const result = validateReversal({ type, reason, refundMethod, refundReference });
     setErrors(result.errors);
     if (!result.valid) return;
     Alert.alert(
@@ -203,14 +194,7 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
             />
             <Text style={styles.hint}>{t('fees.reversePayment.refundReferenceHint')}</Text>
             {errorText(errors.refundReference)}
-            <DatePickerField
-              label={t('fees.reversePayment.refundDate')}
-              value={refundDate}
-              onChange={edit(setRefundDate)}
-              minimumDate={parseIsoDate(payment.transactionDate)}
-              maximumDate={parseIsoDate(today)}
-            />
-            {errorText(errors.refundDate)}
+            <Text style={styles.note}>{t('fees.reversePayment.refundEnteredToday')}</Text>
           </>
         )}
 
@@ -279,6 +263,7 @@ const styles = StyleSheet.create({
   reasonInput: { minHeight: 90, textAlignVertical: 'top' },
   counter: { fontSize: 12, color: colors.textMuted, textAlign: 'right', marginTop: -spacing.sm, marginBottom: spacing.md },
   hint: { fontSize: 12, color: colors.textMuted, marginTop: -spacing.sm, marginBottom: spacing.md },
+  note: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.md },
   error: { fontSize: 12, color: colors.error, marginTop: -spacing.sm, marginBottom: spacing.md },
   submit: {
     backgroundColor: colors.error,

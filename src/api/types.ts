@@ -285,7 +285,11 @@ export interface FeePaymentRequest {
 
 export type ReversalType = 'CORRECTION' | 'BOUNCED' | 'REFUND';
 
-/** How and why a payment was reversed. The refund fields are null unless `type` is REFUND. */
+/**
+ * How and why a payment was reversed. The refund fields are null unless `type` is REFUND. The payment's
+ * own ledger entry is never changed (it stays completed); a compensating entry is posted against it on
+ * the day of the reversal - `reversalTransactionId`, for every type.
+ */
 export interface FeePaymentReversal {
   type: ReversalType;
   reason: string;
@@ -293,8 +297,11 @@ export interface FeePaymentReversal {
   reversedByName: string | null;
   refundMethod: PaymentMethod | null;
   refundReference: string | null;
+  /** The day the refund was entered in the books (the day it was reversed, IST). */
   refundDate: string | null;
   refundTransactionId: string | null;
+  /** The compensating ledger entry; may be missing from a server older than this field. */
+  reversalTransactionId?: string | null;
 }
 
 /**
@@ -337,8 +344,7 @@ export interface FeePaymentReversalRequest {
   reason: string;
   refundMethod?: PaymentMethod;
   refundReference?: string;
-  /** YYYY-MM-DD; defaults to today in IST. Not in the future, not before the payment date. */
-  refundDate?: string;
+  // No refund date: a refund is entered in the books on the day it's reversed, like every reversal.
 }
 
 /** The `data` of a 409 DUPLICATE_REFERENCE: the most recent live payment that has the same reference. */

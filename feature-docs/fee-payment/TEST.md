@@ -34,13 +34,13 @@
 ### Reversing (admin)
 - [ ] Receipt → **Reverse payment**: Cash offers Entered by mistake and Refunded only; Cheque/UPI/Bank also offer Cheque or transfer bounced.
 - [ ] Reason under 10 characters → inline error; the counter counts trimmed characters.
-- [ ] Refund without a method or reference → inline errors; refund date limited to payment date…today.
+- [ ] Refund without a method or reference → inline errors. There's no refund date field, only the note that the refund is entered in the books today; the receipt then says "Refunded by …, on <today>".
 - [ ] Confirm alert names the receipt, amount and student → Reverse → toast "Payment reversed.", the receipt shows **CANCELLED** with type, date, who and reason (and refund method, reference, date for a refund); Reverse is gone.
 - [ ] Back → the bill's paid total dropped by the amount and the status was recomputed; the history row is struck through with **Cancelled**.
 - [ ] The shared PDF of a reversed payment has the CANCELLED watermark and the red cancellation box.
 - [ ] Reverse the same payment from a second phone → toast "This payment was already reversed." and back to the refreshed receipt.
 - [ ] Record → reverse (CORRECTION) → record again: the new receipt number is the next one; the cancelled number is never reissued. The same UTR can now be recorded without a warning.
-- [ ] Finance summary: after a CORRECTION/BOUNCED, inflow is back to the value before the payment; after a REFUND, inflow is unchanged and outflow rose by the amount.
+- [ ] Finance summary after any reversal (CORRECTION, BOUNCED or REFUND): inflow is unchanged (the payment's ledger row stays completed), outflow rose by the amount (the compensating entry, dated today), so the net is back to the value before the payment.
 
 ### API checks (backend)
 - [ ] `POST /fee-payments` with `amount: 99.999` → 400, nothing written; `100.100` → stored 100.10.
@@ -79,7 +79,7 @@
 ## Existing automated test coverage
 - App (`npm test`):
   - `src/__tests__/money.test.ts` — `parseRupees` (grouped, ₹/Rs prefixes, refuses >2 decimals, `1e5`, `0x10`, signs, `.`, `5.`), paise maths (`sumRupees([0.1, 0.2]) === 0.3`), `formatRupees` (Indian grouping, `'always'` decimals, no symbol, negatives, rounding, missing values), `rupeesInputValue`.
-  - `src/__tests__/feePayments.test.ts` — methods and labels, reference rule and normalisation, 400-day date bounds, `validateRecordPayment`, `reversalTypesFor('CASH')` without BOUNCED, `validateReversal` (reason, refund fields, refund date range), `duplicateReferenceInfo`, `refreshedBill`, the PDF file name.
+  - `src/__tests__/feePayments.test.ts` — methods and labels, reference rule and normalisation, 400-day date bounds, `validateRecordPayment`, `reversalTypesFor('CASH')` without BOUNCED, `validateReversal` (reason, refund method and reference, no refund date), `duplicateReferenceInfo`, `refreshedBill`, the PDF file name.
   - `src/__tests__/idempotencyKey.test.ts` — UUID v4 in the server's key format, distinct per call, with and without `crypto.randomUUID`.
   - `src/__tests__/feeStructureLines.test.ts` — fee-structure line validation (shared amount parser, duplicate category).
   - `src/__tests__/apiClientHeaders.test.ts` — `Idempotency-Key` is sent, and re-sent unchanged on the 401 refresh retry.

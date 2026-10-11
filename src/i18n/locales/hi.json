@@ -625,7 +625,7 @@
       "refundMethod": "वापसी का तरीका",
       "refundReference": "वापसी का संदर्भ",
       "refundReferenceHint": "UTR, चेक नंबर, या नकद के लिए वाउचर या पर्ची नंबर",
-      "refundDate": "वापसी की तारीख",
+      "refundEnteredToday": "वापसी आज की तारीख में, यानी जिस दिन आप इसे सहेजते हैं, खाते में दर्ज होगी।",
       "confirmTitle": "यह रसीद रद्द करें?",
       "confirmMessage": "रसीद {{receipt}} रद्द करें? {{student}} की कुल भुगतान राशि से {{amount}} घटा दिए जाएंगे। इसे वापस नहीं बदला जा सकता।",
       "confirm": "रसीद रद्द करें",
@@ -637,9 +637,7 @@
         "typeRequired": "चुनें कि क्या हुआ।",
         "reasonTooShort": "कम से कम {{min}} अक्षरों का कारण दें।",
         "refundMethodRequired": "चुनें कि पैसा कैसे लौटाया गया।",
-        "refundReferenceRequired": "वापसी का UTR, चेक, वाउचर या पर्ची नंबर दर्ज करें।",
-        "refundDateFuture": "वापसी की तारीख भविष्य की नहीं हो सकती।",
-        "refundDateBeforePayment": "वापसी की तारीख भुगतान की तारीख से पहले नहीं हो सकती।"
+        "refundReferenceRequired": "वापसी का UTR, चेक, वाउचर या पर्ची नंबर दर्ज करें।"
       }
     },
     "paymentHistory": {

@@ -124,8 +124,6 @@ export interface ReversalForm {
   reason: string;
   refundMethod: PaymentMethod | null;
   refundReference: string;
-  /** YYYY-MM-DD, or '' to let the server use today. */
-  refundDate: string;
 }
 
 export interface ReversalErrors {
@@ -133,18 +131,13 @@ export interface ReversalErrors {
   reason?: string;
   refundMethod?: string;
   refundReference?: string;
-  refundDate?: string;
 }
 
 /**
  * Checks the Reverse payment form. A refund needs its method and reference (a voucher or slip
- * number for cash), and its date can't be in the future or before the payment's own date.
+ * number for cash). There is no refund date: the server enters every reversal on the day it's made.
  */
-export function validateReversal(
-  form: ReversalForm,
-  paymentDate: string,
-  today: string
-): { errors: ReversalErrors; valid: boolean } {
+export function validateReversal(form: ReversalForm): { errors: ReversalErrors; valid: boolean } {
   const errors: ReversalErrors = {};
   if (!form.type) errors.type = 'fees.reversePayment.errors.typeRequired';
   if (form.reason.trim().length < MIN_REVERSAL_REASON) errors.reason = 'fees.reversePayment.errors.reasonTooShort';
@@ -153,10 +146,6 @@ export function validateReversal(
     if (!form.refundMethod) errors.refundMethod = 'fees.reversePayment.errors.refundMethodRequired';
     if (!normalizeReference(form.refundReference)) {
       errors.refundReference = 'fees.reversePayment.errors.refundReferenceRequired';
-    }
-    if (form.refundDate && form.refundDate > today) errors.refundDate = 'fees.reversePayment.errors.refundDateFuture';
-    else if (form.refundDate && form.refundDate < paymentDate) {
-      errors.refundDate = 'fees.reversePayment.errors.refundDateBeforePayment';
     }
   }
 

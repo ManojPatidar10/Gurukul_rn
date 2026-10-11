@@ -38,8 +38,8 @@ flowchart TD
   K --> K1{already reversed?}
   K1 -- yes --> X3[409 ALREADY_REVERSED]
   K1 -- no --> L{type}
-  L -- CORRECTION / BOUNCED --> M[ledger row -> REVERSED\ndrops out of every total]
-  L -- REFUND --> N[ledger row stays COMPLETED\n+ contra OUTFLOW on the refund date]
+  L -- CORRECTION / BOUNCED --> M[ledger row stays COMPLETED, stamped reversed\n+ compensating OUTFLOW today]
+  L -- REFUND --> N[ledger row stays COMPLETED, stamped reversed\n+ compensating OUTFLOW today\nwith the refund's method and reference]
   M --> O[totalPaid -= amount, status recomputed\nreceipt shows CANCELLED]
   N --> O
 
@@ -86,7 +86,7 @@ flowchart TD
 
 ### Receipts
 7. `PaymentReceiptScreen` takes `{ payment }` or `{ paymentId }` and fetches `GET /api/v1/fee-payments/{id}` on every focus (loading and error-with-retry when it only has an id). It shows the school logo (when `schoolLogoUrl` is set) and name, receipt number, date, student, roll, class (the student's **current** class), fee bill (academic year), method, reference, received by (when known), amount (`₹15,000.00`) and balance due after this payment (when known).
-8. A reversed payment shows a red **CANCELLED** banner: the type ("Entered by mistake" / "Cheque or transfer bounced" / "Refunded"), "Cancelled on <date> by <name>", for a refund "Refunded by <method>, ref <ref>, on <date>", and the reason.
+8. A reversed payment shows a red **CANCELLED** banner: the type ("Entered by mistake" / "Cheque or transfer bounced" / "Refunded"), "Cancelled on <date> by <name>", for a refund "Refunded by <method>, ref <ref>, on <date>" (the day the refund was entered), and the reason.
 9. **Share receipt (PDF)** downloads `GET /api/v1/fee-payments/{id}/receipt.pdf` into the cache (`downloadFeeReceiptPdf`, with the bearer token) and opens the share sheet (`usePdfDownload`). The PDF is A5, Noto Sans (+ Devanagari), with the logo or school name, the same rows, an "Amount received" box with the balance after, a diagonal CANCELLED watermark and a red cancellation box once reversed, and a "Generated on <IST date>" footer. File name `fee-receipt-<receipt-number-slug>.pdf` (or the id's first 8 characters).
 10. An admin sees **Reverse payment** while the payment isn't reversed. **Done** and the header back arrow go back to wherever the receipt was opened from.
 11. Receipt access (JSON and PDF): 404 "Fee payment not found" when not in the school, then ADMIN, the payment's own student or a linked parent; anyone else 403. Checked inside the service transaction; the PDF renders only from the checked DTO.
@@ -101,22 +101,22 @@ flowchart TD
 16. Receipt → **Reverse payment** → `ReversePaymentScreen` (receipt number, amount, method, date):
     - **What happened?** — radio options from `reversalTypesFor(method)`: Entered by mistake (CORRECTION), Cheque or transfer bounced (BOUNCED — not offered for cash), Refunded (REFUND), each with a one-line explanation.
     - **Reason** — at least 10 characters (counter shown), at most 500.
-    - **Refund only** — refund method, refund reference (required for every method; for cash a voucher or slip number), refund date (default today; between the payment date and today).
+    - **Refund only** — refund method and refund reference (required for every method; for cash a voucher or slip number). There is no refund date: a note says the refund is entered in the books today, the day it's saved.
     Submit asks "Cancel receipt <no>? <amount> will be taken off <student>'s paid total. This can't be undone.", is disabled while saving, holds the screen until the reply like recording does ("Please wait while the payment is reversed."), and uses the same idempotency-key rule as recording.
-17. `POST /api/v1/fee-payments/{id}/reverse` (ADMIN), body `{type, reason, refundMethod?, refundReference?, refundDate?}` (refund fields ignored unless REFUND). In order: 400 validation / bad key, 403 not admin; 400 reason under 10 characters after trimming; 400 "A refund needs the refund method and reference."; 404 "Fee payment not found"; lock the bill, then the ledger row; repeat check (same key + same type → 200 with the current payment; same key, other type, or the key on another row → 409 `IDEMPOTENCY_KEY_REUSED`); **409 `ALREADY_REVERSED`** "This payment was already reversed." with `data {receiptNumber, reversedAt, reversalType}`; 400 "A cash payment can't bounce."; refund date in the future or before the payment date → 400; bill paid total below the payment → 400.
-18. Effects, one transaction (`LedgerService.reverse`):
-    - **CORRECTION / BOUNCED** — the money never arrived: the original ledger row becomes `REVERSED` and drops out of every COMPLETED total.
-    - **REFUND** — the money arrived and later left: the original stays `COMPLETED` and a linked contra OUTFLOW (`reversal_of_id` = original, refund method/reference/date, no receipt number, notes "Refund of receipt <no>: <reason>") is posted on the refund date.
-    - Either way who, when, why, the type and the key are written on the original row; the bill's `totalPaid -= amount` and its status is recomputed. The `FeePayment` row, its receipt number and any attempt status are left as they are; the receipt sequence never goes back, so the number is never reused.
+17. `POST /api/v1/fee-payments/{id}/reverse` (ADMIN), body `{type, reason, refundMethod?, refundReference?}` (refund fields ignored unless REFUND; a `refundDate` an older client sends is ignored). In order: 400 validation / bad key, 403 not admin; 400 reason under 10 characters after trimming; 400 "A refund needs the refund method and reference."; 404 "Fee payment not found"; lock the bill, then the ledger row; repeat check (same key + same type → 200 with the current payment; same key, other type, or the key on another row → 409 `IDEMPOTENCY_KEY_REUSED`); **409 `ALREADY_REVERSED`** "This payment was already reversed." with `data {receiptNumber, reversedAt, reversalType}`; 400 "A cash payment can't bounce."; bill paid total below the payment → 400.
+18. Effects, one transaction (`LedgerService.reverse`), the accounting-safe way (`specs/ledger-and-receipts` P2) for every type:
+    - The payment's own ledger row is never changed: it stays a `COMPLETED` inflow with its amount, and is stamped reversed (`reversed_at`, `reversed_by_id`, `reversed_by_name`, `reversal_type`, `reversal_reason`, `reversal_request_id`).
+    - One compensating OUTFLOW is posted against it: the same amount and source, `reversal_of_id` = the original, no receipt number, dated IST today (the original's date if that were later), `status = COMPLETED`. For CORRECTION / BOUNCED it has the payment's method and no reference, notes "Reversal of receipt <no>: <reason>"; for a REFUND, the refund's method and reference, notes "Refund of receipt <no>: <reason>". Its id is `reversal.reversalTransactionId` (and `refundTransactionId` for a refund).
+    - The bill's `totalPaid -= amount` and its status is recomputed. The `FeePayment` row, its receipt number and any attempt status are left as they are; the receipt sequence never goes back, so the number is never reused.
 19. The app: success → toast "Payment reversed." and back to the receipt with the reversed payment (`navigate(..., merge: true)`), now CANCELLED. `ALREADY_REVERSED` → toast and back (the receipt refetches).
 
 | Action | Original ledger row | New ledger row | `GET /finance/summary` | Bill and dues |
 |---|---|---|---|---|
 | Record | INFLOW, COMPLETED, receipt number | — | inflow +A | `totalPaid` +A |
-| CORRECTION / BOUNCED | `REVERSED`, reversal fields set | — | inflow −A | `totalPaid` −A, status recomputed |
-| REFUND | stays COMPLETED, reversal fields set | OUTFLOW, COMPLETED, refund date | outflow +A, net −A | same |
+| CORRECTION / BOUNCED | stays COMPLETED, reversal fields stamped | OUTFLOW, COMPLETED, today, the payment's method | inflow unchanged, outflow +A, net back to before the payment | `totalPaid` −A, status recomputed |
+| REFUND | same | OUTFLOW, COMPLETED, today, the refund's method and reference | same | same |
 
-A ledger row is **cancelled** when `reversed_at` is set, and **counts in totals** only when `status = COMPLETED`.
+A ledger row is **cancelled** when `reversed_at` is set; a row with `reversal_of_id` is the **compensating** row of that original. Both stay `COMPLETED` and count in totals, so they net to zero and no earlier day's balance changes. `TransactionStatus.REVERSED` is unused.
 
 ### Online UPI flow (backend works; UI entry point disabled)
 20. A student reaches the bill detail from My Fees. "Pay Fees" only shows "Online fee payment is coming soon.". `PayFeesScreen` is still registered as `'PayFees'`, but nothing navigates to it. If it were reached, "Pay Now" sets a busy flag at once and shows "Preparing…" (a double tap can't start two attempts), then lists the bill's attempts (`listPaymentAttempts` → `GET /api/v1/fee-assessments/{id}/payment-attempts`) and warns before starting another payment (`earlierAttemptWarning`, `src/utils/feePaymentAttempts.ts`): "Payment already reported" if an attempt is `RESPONSE_SUCCESS` (a reported success the school hasn't confirmed, which doesn't mark the fee paid, so the fee still shows its full due), otherwise "Payment already in progress" if one is `INITIATED`/`PENDING`. The payer can cancel or pay again. If the list call fails, the error is shown instead of starting a payment anyway. It then calls `createFeePaymentRequest` → `POST /api/v1/fee-assessments/{id}/payment-request`. The Pay button is disabled except when idle or after an error, and the amount shown switches to the server's `paymentRequest.amount` once a request exists.
@@ -177,7 +177,7 @@ Error codes: `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED`
 ## Data model
 - `StudentFeeAssessment`: `student`, `academicYear`, `totalDue`, `totalPaid`, `status` (`UNPAID`, `PARTIAL`, `PAID`, `OVERDUE`; computed against IST today), `dueDate`.
 - `FeePayment`: `assessment`, `amount`, `transactionId` (the ledger row), and new `recordedById`, `recordedByName`, `balanceAfter` — snapshots taken when recorded; null for payments recorded before this change, so those receipts hide "Received by" and the balance row.
-- `FinancialTransaction` (ledger) gains `client_request_id` and `reversal_request_id` (unique per school; NULLs never collide), `reversed_at`, `reversed_by_id`, `reversed_by_name`, `reversal_type` (`CORRECTION`/`BOUNCED`/`REFUND`), `reversal_reason`, `reversal_of_id` (a refund's contra row → its original). `TransactionStatus.REVERSED` is now used. A payment's method, reference, date and receipt number live on its ledger row; references are stored without whitespace, upper-cased.
+- `FinancialTransaction` (ledger) gains `client_request_id` and `reversal_request_id` (unique per school; NULLs never collide), `reversed_at`, `reversed_by_id`, `reversed_by_name`, `reversal_type` (`CORRECTION`/`BOUNCED`/`REFUND`), `reversal_reason`, `reversal_of_id` (a compensating row → its original). A reversed row keeps `status = COMPLETED`; `TransactionStatus.REVERSED` is unused. Migration `V88__fee_payments_in_app.sql` (every column and index `IF NOT EXISTS`, the reversal ones shared with the ledger-and-receipts migration). A payment's method, reference, date and receipt number live on its ledger row; references are stored without whitespace, upper-cased.
 - `PaymentAttempt`: `assessment`, `transactionRef` (`FEE<12 hex>`), `amount`, `currency`, `status` (`INITIATED`; payer reports `RESPONSE_SUCCESS`/`PENDING`/`FAILED`/`CANCELLED`/`UNKNOWN`; `VERIFIED` only via an admin's recording), evidence fields (`upiTransactionId`, `approvalRefNo`, `responseCode`, `rawResponse` ≤ 2000 chars).
 - `School`: `upiVpaOverride` (the school's UPI ID, the only payee a payment request uses), `bankAccountNumber`, `bankIfsc`, `bankAccountHolderName` (or the school name: the payee name).
 

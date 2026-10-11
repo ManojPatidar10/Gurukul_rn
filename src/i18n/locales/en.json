@@ -625,7 +625,7 @@
       "refundMethod": "Refund method",
       "refundReference": "Refund reference",
       "refundReferenceHint": "UTR, cheque number, or a voucher or slip number for cash",
-      "refundDate": "Refund date",
+      "refundEnteredToday": "The refund is entered in the books today, the day you save it.",
       "confirmTitle": "Cancel this receipt?",
       "confirmMessage": "Cancel receipt {{receipt}}? {{amount}} will be taken off {{student}}'s paid total. This can't be undone.",
       "confirm": "Cancel receipt",
@@ -637,9 +637,7 @@
         "typeRequired": "Choose what happened.",
         "reasonTooShort": "Give a reason of at least {{min}} characters.",
         "refundMethodRequired": "Choose how the money was refunded.",
-        "refundReferenceRequired": "Enter the refund's UTR, cheque, voucher or slip number.",
-        "refundDateFuture": "The refund date can't be in the future.",
-        "refundDateBeforePayment": "The refund date can't be before the payment date."
+        "refundReferenceRequired": "Enter the refund's UTR, cheque, voucher or slip number."
       }
     },
     "paymentHistory": {

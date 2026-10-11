@@ -133,16 +133,15 @@ describe('reversals', () => {
     reason: 'Entered against the wrong student',
     refundMethod: null,
     refundReference: '',
-    refundDate: TODAY,
     ...overrides,
   });
 
   it('accepts a correction with a 10-character reason', () => {
-    expect(validateReversal(form({ reason: '  0123456789  ' }), '2026-10-05', TODAY)).toEqual({ errors: {}, valid: true });
+    expect(validateReversal(form({ reason: '  0123456789  ' }))).toEqual({ errors: {}, valid: true });
   });
 
   it('needs a type and a reason of at least 10 characters', () => {
-    const result = validateReversal(form({ type: null, reason: ' 123456789 ' }), '2026-10-05', TODAY);
+    const result = validateReversal(form({ type: null, reason: ' 123456789 ' }));
     expect(result.errors).toEqual({
       type: 'fees.reversePayment.errors.typeRequired',
       reason: 'fees.reversePayment.errors.reasonTooShort',
@@ -150,32 +149,24 @@ describe('reversals', () => {
   });
 
   it('needs the refund method and reference for a refund, but not for a bounce', () => {
-    expect(validateReversal(form({ type: 'REFUND' }), '2026-10-05', TODAY).errors).toEqual({
+    expect(validateReversal(form({ type: 'REFUND' })).errors).toEqual({
       refundMethod: 'fees.reversePayment.errors.refundMethodRequired',
       refundReference: 'fees.reversePayment.errors.refundReferenceRequired',
     });
-    expect(validateReversal(form({ type: 'BOUNCED' }), '2026-10-05', TODAY).valid).toBe(true);
-    expect(
-      validateReversal(form({ type: 'REFUND', refundMethod: 'CASH', refundReference: 'v-17' }), '2026-10-05', TODAY).valid
-    ).toBe(true);
+    expect(validateReversal(form({ type: 'BOUNCED' })).valid).toBe(true);
+    expect(validateReversal(form({ type: 'REFUND', refundMethod: 'CASH', refundReference: 'v-17' })).valid).toBe(true);
   });
 
-  it('keeps the refund date between the payment date and today', () => {
-    const refund = { type: 'REFUND' as const, refundMethod: 'BANK_TRANSFER' as const, refundReference: 'N28' };
-    expect(validateReversal(form({ ...refund, refundDate: '2026-10-12' }), '2026-10-05', TODAY).errors.refundDate).toBe(
-      'fees.reversePayment.errors.refundDateFuture'
-    );
-    expect(validateReversal(form({ ...refund, refundDate: '2026-10-04' }), '2026-10-05', TODAY).errors.refundDate).toBe(
-      'fees.reversePayment.errors.refundDateBeforePayment'
-    );
-    expect(validateReversal(form({ ...refund, refundDate: '2026-10-05' }), '2026-10-05', TODAY).valid).toBe(true);
+  it('asks for no refund date: the server enters a refund on the day it is reversed', () => {
+    const refund = form({ type: 'REFUND', refundMethod: 'BANK_TRANSFER', refundReference: 'N28' });
+    expect(refund).not.toHaveProperty('refundDate');
+    expect(validateReversal(refund)).toEqual({ errors: {}, valid: true });
   });
 
   it('only returns error keys that exist', () => {
     const results = [
-      validateReversal(form({ type: null, reason: '' }), '2026-10-05', TODAY),
-      validateReversal(form({ type: 'REFUND', refundDate: '2027-01-01' }), '2026-10-05', TODAY),
-      validateReversal(form({ type: 'REFUND', refundDate: '2026-01-01' }), '2026-10-05', TODAY),
+      validateReversal(form({ type: null, reason: '' })),
+      validateReversal(form({ type: 'REFUND', reason: 'short' })),
     ];
     for (const { errors } of results) for (const key of Object.values(errors)) expect(hasKey(key!)).toBe(true);
   });
