@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parent
 OUT = ROOT.parent / "docs"
 SITE = "https://smartgurukul.org"
 BRAND = "Smart Gurukul"
-EMAIL = "sales@smartgurukul.org"
-INSTAGRAM = "https://www.instagram.com/smart__gurukul"
+WHATSAPP = "https://wa.me/917024274770"
+INSTAGRAM = "https://www.instagram.com/smartgurukul.app"
 TODAY = datetime.date.today().isoformat()
 
 ORG = {
@@ -31,7 +31,7 @@ ORG = {
     "url": f"{SITE}/",
     "logo": f"{SITE}/assets/brand/icon-512.png",
     "slogan": "Your whole school, connected.",
-    "email": EMAIL,
+    "telephone": "+91-70242-74770",
     "sameAs": [INSTAGRAM],
     "areaServed": {"@type": "Country", "name": "India"},
     "description": "Smart Gurukul makes an AI-powered, gamified school app for Indian K-12 schools, built by an IIT-BHU team.",
@@ -172,8 +172,8 @@ def footer(meta):
       <div>
         <h4>{'संपर्क' if hi else 'Contact'}</h4>
         <ul>
-          <li><a href="mailto:{EMAIL}">{EMAIL}</a></li>
-          <li><a href="{INSTAGRAM}" rel="noopener" target="_blank">Instagram @smart__gurukul</a></li>
+          <li><a href="{WHATSAPP}" rel="noopener" target="_blank">WhatsApp +91 70242 74770</a></li>
+          <li><a href="{INSTAGRAM}" rel="noopener" target="_blank">Instagram @smartgurukul.app</a></li>
           <li><a href="{r('hi/index.html' if hi else 'index.html')}#demo">{'मुफ़्त डेमो बुक करें' if hi else 'Book a free demo'}</a></li>
           <li><a href="{r('privacy.html')}">Privacy policy</a></li>
         </ul>

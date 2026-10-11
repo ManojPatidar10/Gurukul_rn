@@ -31,8 +31,8 @@
         ? 'Thank you! Our team will call you within 1 working day to discuss your website.'
         : 'Thank you! Our team will call you within 1 working day to set up your demo.',
     fail: hi
-      ? 'अभी भेज नहीं पाए। कृपया sales@smartgurukul.org पर ईमेल करें।'
-      : "We couldn't send that right now. Please email sales@smartgurukul.org and we'll reply the same day.",
+      ? 'अभी भेज नहीं पाए। कृपया +91 70242 74770 पर WhatsApp करें।'
+      : "We couldn't send that right now. Please WhatsApp us on +91 70242 74770 and we'll reply the same day.",
     tooMany: hi
       ? 'बहुत सारे अनुरोध। कृपया थोड़ी देर बाद फिर कोशिश करें।'
       : 'Too many requests from this network. Please try again in a little while.'
