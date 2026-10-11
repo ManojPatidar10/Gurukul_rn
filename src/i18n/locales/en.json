@@ -2237,6 +2237,8 @@
       "PAYMENT_ATTEMPT_ALREADY_REPORTED": "This payment's result was already recorded and can't be changed.",
       "FEE_BILL_CANCELLED": "This bill was cancelled, so it can't be changed or paid.",
       "FEE_BILL_HAS_PAYMENTS": "This bill has payments. Reverse them first, then cancel the bill.",
+      "FEE_BILL_HAS_REPORTED_PAYMENT": "The family reported paying this bill by UPI, and that payment hasn't been recorded yet. Record it if the money arrived; if it didn't, waive the fee instead of cancelling.",
+      "FEE_ADJUSTMENT_DUPLICATE": "This adjustment was added to the bill a moment ago, so it wasn't added again.",
       "FEE_TOTAL_BELOW_PAID": "This would make the fee less than what has already been paid.",
       "FEE_CATEGORY_CODE_EXISTS": "A fee category with this code already exists.",
       "FEE_STRUCTURE_EXISTS": "This class already has a fee structure for this academic year. Edit that one instead."

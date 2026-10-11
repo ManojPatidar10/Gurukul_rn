@@ -51,6 +51,21 @@ describe('getErrorMessage', () => {
     );
   });
 
+  it('has words for every fee bill refusal code', () => {
+    const codes = [
+      'FEE_BILL_CANCELLED',
+      'FEE_BILL_HAS_PAYMENTS',
+      'FEE_BILL_HAS_REPORTED_PAYMENT',
+      'FEE_ADJUSTMENT_DUPLICATE',
+      'FEE_TOTAL_BELOW_PAID',
+      'FEE_CATEGORY_CODE_EXISTS',
+      'FEE_STRUCTURE_EXISTS',
+    ] as const;
+    for (const code of codes) {
+      expect(getErrorMessage(new ApiError('Server wording', 409, code))).toBe(en.errors.codes[code]);
+    }
+  });
+
   it('has words for every expense and vendor refusal code', () => {
     const codes = [
       'EXPENSE_CHANGED',
