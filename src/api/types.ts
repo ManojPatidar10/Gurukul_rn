@@ -2550,3 +2550,158 @@ export interface Holiday {
   greetingTitle: string;
   greetingMessage: string;
 }
+
+// ---------------------------------------------------------------- ledger & receipts (specs/ledger-and-receipts)
+// Payment methods are the fee payments' PaymentMethod above (the backend's one enum).
+
+export type LedgerDirection = 'INFLOW' | 'OUTFLOW';
+export type LedgerSourceType = 'FEE_PAYMENT' | 'EVENT_COLLECTION' | 'SPONSORSHIP' | 'SALARY' | 'VENDOR_PAYMENT' | 'MANUAL';
+/** REVERSED is never set: a reversed entry stays COMPLETED and gets a linked reversal entry. */
+export type LedgerStatus = 'PENDING' | 'COMPLETED' | 'REVERSED';
+/** The first four are money in, the last three money out. */
+export type ManualCategory =
+  | 'OPENING_BALANCE'
+  | 'DONATION'
+  | 'OTHER_INCOME'
+  | 'BANK_INTEREST'
+  | 'PETTY_EXPENSE'
+  | 'BANK_CHARGES'
+  | 'OTHER_EXPENSE';
+/** The exact record a ledger entry came from (`documentId` is that record's id; null for MANUAL_ENTRY). */
+export type LedgerDocumentType =
+  | 'FEE_PAYMENT'
+  | 'PAYROLL_LINE'
+  | 'INFRA_EXPENSE_REQUEST'
+  | 'EVENT_EXPENSE_REQUEST'
+  | 'SPONSORSHIP_PAYMENT'
+  | 'EVENT_COLLECTION_PAYMENT'
+  | 'MANUAL_ENTRY';
+export type SponsorshipStatus = 'PLEDGED' | 'PARTIAL' | 'RECEIVED' | 'CANCELLED';
+
+/** One row of the school ledger (money in or out). */
+export interface LedgerTransaction {
+  id: string;
+  schoolId: string;
+  direction: LedgerDirection;
+  sourceType: LedgerSourceType;
+  sourceId: string;
+  amount: number;
+  paymentMethod: PaymentMethod | null;
+  paymentReference: string | null;
+  transactionDate: string;
+  /** Receipt number, money in only. */
+  receiptNumber: string | null;
+  status: LedgerStatus;
+  /** Deprecated, never shown. */
+  fundAccountId: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Payment voucher number, money out recorded after this change. */
+  voucherNumber: string | null;
+  manualCategory: ManualCategory | null;
+  /** Null on entries recorded before documents were linked. */
+  documentType: LedgerDocumentType | null;
+  documentId: string | null;
+  /**
+   * Reversal works one way for every entry, fee payments reversed from their bill included: the
+   * original stays COMPLETED and is stamped reversed (these fields), and one compensating entry the
+   * opposite way, with `reversalOfId`, cancels it out.
+   */
+  reversed: boolean;
+  reversedAt: string | null;
+  reversedBy: string | null;
+  reversalReason: string | null;
+  /**
+   * Set on every reversed entry. Fee payments carry the type the admin chose; the generic reverse
+   * route always books CORRECTION, so show it only for FEE_PAYMENT (see `reversalTypeLabel`). Null on
+   * unreversed and compensating entries; missing from older servers.
+   */
+  reversalType?: ReversalType | null;
+  /** On a reversed entry: the entry that reversed it. */
+  reversalTransactionId: string | null;
+  /** On a reversal entry: the entry it reverses. */
+  reversalOfId: string | null;
+  /** Whether the server will accept POST .../reverse for this entry. */
+  reversible: boolean;
+}
+
+/** Query filters shared by the ledger list and the summary. Use an academic year or from/to, not both. */
+export interface LedgerFilter {
+  from?: string;
+  to?: string;
+  /** e.g. "2026-27" (April to March). */
+  academicYear?: string;
+  sourceType?: LedgerSourceType;
+  manualCategory?: ManualCategory;
+  paymentMethod?: PaymentMethod;
+  direction?: LedgerDirection;
+  documentType?: LedgerDocumentType;
+  documentId?: string;
+}
+
+export interface MethodTotals {
+  inflow: number;
+  outflow: number;
+  net: number;
+}
+
+export interface FundSummary {
+  totalInflow: number;
+  totalOutflow: number;
+  netBalance: number;
+  from: string | null;
+  to: string | null;
+  academicYear: string | null;
+  /** Net of matching entries dated before `from`; null when there is no `from`. */
+  openingBalance: number | null;
+  closingBalance: number;
+  entryCount: number;
+  cash: MethodTotals;
+  bank: MethodTotals;
+  unspecified: MethodTotals;
+  byPaymentMethod: { paymentMethod: PaymentMethod | null; inflow: number; outflow: number; net: number }[];
+  bySource: {
+    sourceType: LedgerSourceType;
+    manualCategory: ManualCategory | null;
+    inflow: number;
+    outflow: number;
+    net: number;
+  }[];
+}
+
+export interface DayBookBucket {
+  opening: number;
+  inflow: number;
+  outflow: number;
+  closing: number;
+}
+
+export interface DayBook {
+  date: string;
+  openingBalance: number;
+  totalInflow: number;
+  totalOutflow: number;
+  closingBalance: number;
+  cash: DayBookBucket;
+  bank: DayBookBucket;
+  unspecified: DayBookBucket;
+  /** Every entry dated `date`, oldest first, at most 1000. */
+  entries: LedgerTransaction[];
+  entriesTruncated: boolean;
+}
+
+export interface ReceiptView {
+  number: string;
+  kind: 'RECEIPT' | 'PAYMENT_VOUCHER';
+  /** CANCELLED once the entry is reversed. */
+  status: 'VALID' | 'CANCELLED';
+  label: string;
+  schoolName: string;
+  transaction: LedgerTransaction;
+}
+
+export interface ReversalResult {
+  original: LedgerTransaction;
+  reversal: LedgerTransaction;
+}

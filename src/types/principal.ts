@@ -8,6 +8,7 @@ import type {
   FeePayment,
   FeeStructure,
   GeneratedQuizQuestion,
+  LedgerTransaction,
   SalaryStructure,
   Student,
 } from '../api/types';
@@ -110,6 +111,9 @@ export type PrincipalStackParamList = {
   ReversePayment: { payment: FeePayment };
   /** Every payment on every bill of one student. */
   StudentFeePayments: { student: { id: string; name?: string } };
+  /** The school ledger: day book, filtered entries and the receipt lookup (admin, from the Fees hub). */
+  Ledger: undefined;
+  LedgerEntryDetail: { transaction: LedgerTransaction };
   PayrollHub: undefined;
   SalaryStructuresList: undefined;
   /** No params: add a structure. `structure`: edit it. `employee`: add one for that employee. */

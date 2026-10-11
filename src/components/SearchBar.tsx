@@ -5,9 +5,11 @@ interface Props {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  /** Called when the keyboard's search key is pressed; shows a search key when set. */
+  onSubmit?: () => void;
 }
 
-export function SearchBar({ value, onChangeText, placeholder = 'Search…' }: Props) {
+export function SearchBar({ value, onChangeText, placeholder = 'Search…', onSubmit }: Props) {
   return (
     <View style={styles.container}>
       <TextInput
@@ -19,6 +21,8 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search…' }: Pr
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="while-editing"
+        onSubmitEditing={onSubmit}
+        returnKeyType={onSubmit ? 'search' : undefined}
       />
     </View>
   );
