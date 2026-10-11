@@ -13,6 +13,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { formatInr } from '../../utils/money';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayrollOverview'>;
 
@@ -55,11 +56,11 @@ export function PayrollOverviewScreen({ navigation }: Props) {
             </View>
             <View style={styles.statRow}>
               <View style={styles.statCard}>
-                <Text style={styles.statValue}>₹{overview.paidAmount.toLocaleString('en-IN')}</Text>
+                <Text style={styles.statValue}>{formatInr(overview.paidAmount)}</Text>
                 <Text style={styles.statLabel}>{t('payroll.overview.paidAmount')}</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={styles.statValue}>₹{overview.pendingAmount.toLocaleString('en-IN')}</Text>
+                <Text style={styles.statValue}>{formatInr(overview.pendingAmount)}</Text>
                 <Text style={styles.statLabel}>{t('payroll.overview.pendingAmount')}</Text>
               </View>
             </View>

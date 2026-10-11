@@ -1,9 +1,11 @@
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listInfraExpenseRequests } from '../../api/infraExpenseRequests';
-import type { InfraExpenseRequest } from '../../api/types';
+import type { InfraExpenseRequest, InfraExpenseStatus } from '../../api/expenseTypes';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -12,31 +14,43 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { INFRA_STATUS_FILTERS, infraRowSubtitle, infraStatusLabel, infraStatusVariant } from '../../utils/expenses';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'InfraExpensesList'>;
 
 export function InfraExpensesListScreen({ navigation }: Props) {
   const listBottom = useBottomInset();
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [requests, setRequests] = useState<InfraExpenseRequest[]>([]);
+  const [status, setStatus] = useState<InfraExpenseStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    setError(null);
-    return listInfraExpenseRequests(schoolId)
-      .then(setRequests)
-      .catch((e) => setError(getErrorMessage(e)));
-  }, [schoolId]);
+  // Only the latest load may update the list, so a slow answer for the previous filter can't win.
+  const latestLoad = useRef(0);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
+  // The server filters and orders the list (newest first).
+  const load = useCallback(() => {
+    const id = ++latestLoad.current;
+    setError(null);
+    return listInfraExpenseRequests(schoolId, status)
+      .then((rows) => {
+        if (id === latestLoad.current) setRequests(rows);
+      })
+      .catch((e) => {
+        if (id === latestLoad.current) setError(getErrorMessage(e));
+      });
+  }, [schoolId, status]);
+
+  // On focus, and again whenever the filter changes.
+  useFocusEffect(
+    useCallback(() => {
       setLoading(true);
       load().finally(() => setLoading(false));
-    });
-    return unsubscribe;
-  }, [navigation, load]);
+    }, [load])
+  );
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -45,11 +59,38 @@ export function InfraExpensesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Infrastructure Expenses" onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('infraExpenses.list.title')}
+        onBack={() => navigation.goBack()}
+        rightAction={
+          <Pressable style={styles.headerButton} onPress={() => navigation.navigate('InfraCategories')} accessibilityRole="button">
+            <Text style={styles.headerButtonText}>{t('infraExpenses.list.categories')}</Text>
+          </Pressable>
+        }
+      />
       <View style={styles.body}>
         <Pressable style={styles.addButton} onPress={() => navigation.navigate('InfraExpenseForm')}>
-          <Text style={styles.addButtonText}>+ New request</Text>
+          <Text style={styles.addButtonText}>{t('infraExpenses.list.newRequest')}</Text>
         </Pressable>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters} contentContainerStyle={styles.filtersRow}>
+          {INFRA_STATUS_FILTERS.map((value) => {
+            const selected = value === status;
+            return (
+              <Pressable
+                key={value ?? 'ALL'}
+                onPress={() => setStatus(value)}
+                style={[styles.filterChip, selected && styles.filterChipSelected]}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+              >
+                <Text style={[styles.filterText, selected && styles.filterTextSelected]}>
+                  {value ? infraStatusLabel(value, t) : t('infraExpenses.list.filterAll')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         {error && <ErrorNotice message={error} />}
 
@@ -63,22 +104,26 @@ export function InfraExpensesListScreen({ navigation }: Props) {
               <ActivityIndicator style={styles.loader} color={colors.primary} />
             ) : (
               <Text style={styles.empty}>
-                {error ? 'Could not load requests.' : '0 requests yet — create the first one.'}
+                {error
+                  ? t('infraExpenses.list.loadError')
+                  : status
+                    ? t('infraExpenses.list.emptyFiltered')
+                    : t('infraExpenses.list.empty')}
               </Text>
             )
           }
           renderItem={({ item }) => (
             <Pressable
               style={styles.row}
-              onPress={() => navigation.navigate('InfraExpenseDetail', { request: item })}
+              onPress={() => navigation.navigate('InfraExpenseDetail', { requestId: item.id, request: item })}
             >
               <View style={styles.rowMain}>
-                <Text style={styles.rowName}>{item.description}</Text>
-                <Text style={styles.rowMeta}>
-                  {item.categoryCode} · ₹{item.estimatedAmount.toLocaleString('en-IN')}
+                <Text style={styles.rowName} numberOfLines={2}>
+                  {item.description}
                 </Text>
+                <Text style={styles.rowMeta}>{infraRowSubtitle(item, t)}</Text>
               </View>
-              <StatusChip label={item.status} variant="neutral" />
+              <StatusChip label={infraStatusLabel(item.status, t)} variant={infraStatusVariant(item.status)} />
             </Pressable>
           )}
         />
@@ -90,6 +135,13 @@ export function InfraExpensesListScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   body: { flex: 1, paddingHorizontal: spacing.lg },
+  headerButton: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  headerButtonText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   addButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
@@ -100,7 +152,19 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   addButtonText: { color: colors.white, fontWeight: '700' },
-  error: { color: colors.error, marginBottom: spacing.md },
+  filters: { flexGrow: 0, marginBottom: spacing.md },
+  filtersRow: { gap: spacing.sm },
+  filterChip: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    backgroundColor: colors.surface,
+  },
+  filterChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  filterText: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
+  filterTextSelected: { color: colors.white },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },
   loader: { marginTop: 40 },
   row: {

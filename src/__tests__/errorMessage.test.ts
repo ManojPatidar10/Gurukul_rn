@@ -51,6 +51,25 @@ describe('getErrorMessage', () => {
     );
   });
 
+  it('has words for every expense and vendor refusal code', () => {
+    const codes = [
+      'EXPENSE_CHANGED',
+      'EXPENSE_WRONG_STATUS',
+      'SELF_APPROVAL_NOT_ALLOWED',
+      'AMOUNT_ABOVE_APPROVED',
+      'DUPLICATE_INVOICE',
+      'PAYMENT_REFERENCE_REQUIRED',
+      'REVISED_AMOUNT_BELOW_BILL',
+      'CATEGORY_INACTIVE',
+      'CATEGORY_EXISTS',
+      'EVENT_OUTFLOW_DISABLED',
+      'CONCURRENT_UPDATE',
+    ] as const;
+    for (const code of codes) {
+      expect(getErrorMessage(new ApiError('Server wording', 409, code))).toBe(en.errors.codes[code]);
+    }
+  });
+
   it('explains a bare permission refusal', () => {
     expect(getErrorMessage(new ApiError('Forbidden', 403))).toBe(en.errors.forbidden);
   });

@@ -8,11 +8,10 @@ import type {
   FeePayment,
   FeeStructure,
   GeneratedQuizQuestion,
-  InfraExpenseRequest,
   PayrollLine,
   Student,
-  Vendor,
 } from '../api/types';
+import type { InfraExpenseRequest, Vendor } from '../api/expenseTypes';
 
 export type FeatureId =
   | 'students'
@@ -89,7 +88,8 @@ export type PrincipalStackParamList = {
   EmployeeForm: { employee?: Employee };
   SalaryHistory: { employee: Employee };
   VendorsList: undefined;
-  VendorDetail: { vendor: Vendor };
+  /** `vendor`: the copy to show while the latest is fetched. */
+  VendorDetail: { vendorId: string; vendor?: Vendor };
   VendorForm: { vendor?: Vendor };
   FeesHub: undefined;
   FeeCategoriesList: undefined;
@@ -110,8 +110,10 @@ export type PrincipalStackParamList = {
   PayrollOverview: undefined;
   MyClassFees: { classSection: ClassSection };
   InfraExpensesList: undefined;
-  InfraExpenseDetail: { request: InfraExpenseRequest };
+  /** `request`: the copy to show while the latest (with its history) is fetched. */
+  InfraExpenseDetail: { requestId: string; request?: InfraExpenseRequest };
   InfraExpenseForm: undefined;
+  InfraCategories: undefined;
   /** `homeroom`: a class teacher's own section, pinned above the class list. */
   ClassesList: { homeroom?: ClassSection } | undefined;
   SectionsList: { className: string };
