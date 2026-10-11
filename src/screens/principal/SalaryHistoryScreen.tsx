@@ -9,10 +9,10 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useSchoolId } from '../../context/SchoolContext';
-import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
+import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SalaryHistory'>;
 
@@ -23,23 +23,20 @@ export function SalaryHistoryScreen({ route, navigation }: Props) {
   const [history, setHistory] = useState<SalaryHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { showToast } = useToast();
 
   useEffect(() => {
     getSalaryHistory(schoolId, employee.id)
       .then(setHistory)
-      .catch((e) => {
-        setError(getErrorMessage(e));
-        showToast(getErrorMessage(e), 'error');
-      })
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoading(false));
-  }, [schoolId, employee.id, showToast]);
+  }, [schoolId, employee.id]);
 
   return (
     <View style={styles.root}>
       <ScreenHeader title={t('payroll.salaryHistory.title')} subtitle={employee.name} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {loading && <ActivityIndicator style={styles.loading} />}
+        {error && <ErrorNotice message={error} />}
         {!loading && !error && history.length === 0 && (
           <Text style={styles.empty}>{t('payroll.salaryHistory.empty')}</Text>
         )}

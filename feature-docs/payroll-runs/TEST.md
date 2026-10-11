@@ -16,6 +16,7 @@
 - [ ] Permission boundary: `salary-structures` and `payroll/runs/*` with a TEACHER, DRIVER, STUDENT or PARENT token → 403; with no token → 401.
 - [ ] Self-service: a TEACHER and a DRIVER each get 200 on their own `employees/{id}/salary-history`, and 403 on a colleague's. A STUDENT or PARENT gets 403.
 - [ ] Driver app: driver home → "My payslips" opens their own salary history.
+- [ ] Salary History load failure (no connection, or a 403 from a backend that does not yet allow DRIVER): the screen shows the error inline under the header, not a blank page.
 - [ ] Catch-all: a TEACHER calling an unlisted path such as `GET /api/v1/payroll/does-not-exist` gets 403; an ADMIN gets 404.
 - [ ] Edge case: an employee with two salary structures effective on the exact same date — confirm which one "wins" (ordering is by `effectiveFrom` descending only; ties are broken by whatever order the query returns, which is not explicitly deterministic).
 

@@ -405,7 +405,7 @@
       },
       "paymentSettings": {
         "title": "Payment Settings",
-        "description": "Set the bank account fee payments are received into"
+        "description": "Set the UPI ID families pay fees to"
       }
     },
     "categories": {
@@ -501,7 +501,7 @@
     },
     "paymentSettings": {
       "title": "Payment Settings",
-      "hint": "Students pay their fees directly into this bank account from the app. Set it once for your school.",
+      "hint": "Families pay fees by UPI to your school's UPI ID set below. Bank details are kept for your records.",
       "saved": "Payment settings saved.",
       "errors": {
         "bankAccountNumber": "Enter a valid bank account number (9-18 digits).",
@@ -558,9 +558,12 @@
       "pendingMessage": "You already started a payment for this fee that hasn't been confirmed yet. Pay again anyway?",
       "pendingCancel": "Cancel",
       "pendingContinue": "Pay Again",
+      "reportedTitle": "Payment already reported",
+      "reportedMessage": "You already reported that a payment for this fee succeeded. The school hasn't confirmed it yet, so the fee still shows as due. Pay again only if you're sure that payment didn't go through.",
       "resultSuccessTitle": "Payment response received",
       "resultTransactionId": "Transaction ID",
-      "resultUnverifiedCaveat": "This reflects what was reported, not an independently verified payment.",
+      "resultUnverifiedCaveat": "This reflects what was reported, not an independently verified payment. The fee shows as paid once the school confirms the money arrived.",
+      "resultConfirmedNote": "The school has confirmed this payment.",
       "resultPendingMessage": "Payment is being processed. Do not make another payment yet.",
       "resultFailedMessage": "Payment failed.",
       "resultCancelledMessage": "Payment was cancelled.",

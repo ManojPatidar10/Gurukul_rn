@@ -29,13 +29,17 @@
 - [ ] Then post `CANCELLED` for the same attempt → 409 `PAYMENT_ATTEMPT_ALREADY_REPORTED`, and the stored transaction id is unchanged. Post `RESPONSE_SUCCESS` again → 200, nothing changes.
 - [ ] Post `PENDING` with some evidence, then `RESPONSE_SUCCESS` with different evidence → 200, status `RESPONSE_SUCCESS`, the first evidence kept, only empty fields filled.
 - [ ] As a TEACHER, call payment-request, attempts, pending and result → 403 each. An unlinked PARENT → 403; a linked PARENT → 200.
+- [ ] (Driving `PayFees` by deep link) Report "Yes, it succeeded", tap Done, then Pay Now again: a "Payment already reported" warning appears (the fee still shows its full due until an admin records the payment). With only an `INITIATED`/`PENDING` attempt, the "Payment already in progress" warning appears instead. Both offer Cancel and Pay Again.
+- [ ] (`PayFees`) An admin records the payment for a reported attempt (it becomes `VERIFIED`), then the payer reports success again from the manual card: the result card shows the success title with "The school has confirmed this payment.", not an empty card.
+- [ ] (`PayFees`) Report "Yes, it succeeded" with the reply lost (e.g. airplane mode after the request leaves), then "No, cancelled" from the manual card: the 409 is replaced by the stored "Payment response received" result with Done, never Try again. With the attempts lookup also failing, the error shows Back only and no manual card.
 
 ### Payment Settings (ADMIN)
 - [ ] The UPI ID field and hint say families can pay by UPI only once it is set, and that the app never guesses a UPI ID. With the field empty, the warning shows.
+- [ ] The screen's hint and the Fees hub's "Payment Settings" description say families pay to the school's UPI ID and the bank details are for records, not that fees go into the bank account.
 
 ## Existing automated test coverage
 - Backend (`D:\Gurukul\Gurukul_bk\src\test\java\com\gurukul\fees\`): `FeePaymentIntegrationTest` (manual recording: partial, full, overpay 400), `PaymentAttemptIntegrationTest` (attempt lifecycle, the payer-report rules, roles, UPI ID requirement), `PaymentIntegrityIntegrationTest` (admin confirmation of an attempt, a later report on a `VERIFIED` attempt), `FeePaymentServiceOwnershipTest` (`assertCanPayOrRecord` per role).
-- App: `src/__tests__/errorMessage.test.ts` (both new error codes map to their translated messages), `src/__tests__/feePaymentErrors.test.ts` (`UPI_NOT_CONFIGURED` offers Back, everything else Try again), `src/__tests__/upiResponseParser.test.ts`, `src/__tests__/i18nParity.test.ts`.
+- App: `src/__tests__/errorMessage.test.ts` (both new error codes map to their translated messages), `src/__tests__/feePaymentErrors.test.ts` (`UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED` offer Back, everything else Try again), `src/__tests__/feePaymentAttempts.test.ts` (result card per status including `VERIFIED`, the Pay Now warning for a reported success or an attempt in progress, finding the attempt by reference), `src/__tests__/upiResponseParser.test.ts`, `src/__tests__/i18nParity.test.ts`.
 
 ## Suggested additional test coverage
 - No frontend test asserts that the "Pay Fees" button on `FeeAssessmentDetailScreen.tsx` only shows the "coming soon" toast and does not navigate — worth a regression test so a future change doesn't silently re-enable it without a decision.
