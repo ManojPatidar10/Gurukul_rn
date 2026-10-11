@@ -1551,6 +1551,17 @@
     "liveHint": "You're seeing the current marks. Families see this card as it was when it was published.",
     "draftChip": "{{term}} (draft)",
     "pickTermPreview": "No report card has been published for this student yet. Pick a term above to preview a draft.",
+    "title": "{{name}}'s report card",
+    "termPlaceholder": "Term (e.g. Term 1)",
+    "view": "View",
+    "typeTermPreview": "No report card has been published for this student yet. Type a term above and tap View to preview one.",
+    "nothingPublishedSelf": "No report card has been published for your class yet.",
+    "published": "Published",
+    "draft": "Draft",
+    "overall": "Overall",
+    "grade": "Grade",
+    "subjects": "Subjects",
+    "noResults": "No results recorded for this term yet.",
     "moved": "Moved"
   },
   "reportCardUnpublish": {
@@ -1990,6 +2001,44 @@
       "empty": "0 assessments yet.",
       "maxMarks": "Max {{max}}"
     },
+    "form": {
+      "newTitle": "New assessment",
+      "editTitle": "Edit assessment",
+      "editLocked": "Report cards for \"{{term}}\" are published, so this assessment can't be edited.",
+      "type": "Type",
+      "pickType": "Pick a type",
+      "title": "Title",
+      "subject": "Subject",
+      "subjectsLoadFailed": "Couldn't load this class's subjects.",
+      "noSubjects": "No subjects are set up for this class yet.",
+      "assignSubjects": "Assign subjects",
+      "date": "Assessment date",
+      "maxMarks": "Max marks",
+      "maxMarksInvalid": "Max marks must be from 0.01 to 999.99, with up to 2 decimal places.",
+      "maxMarksFloor": "Can't go below a mark already entered.",
+      "term": "Term (for report cards)",
+      "termLocked": "Report cards for \"{{term}}\" are already published, so assessments can't be added to it.",
+      "termPlaceholder": "Type a term, e.g. Term 1",
+      "termPlaceholderWithChoices": "Pick one below or type a new term, e.g. Term 1",
+      "sectionTerms": "Terms this section already uses (✓ = report cards published):",
+      "savedAs": "Will be saved as \"{{term}}\", the spelling this section already uses.",
+      "pickOrType": "Pick or type a term - an assessment without one is left off every report card.",
+      "description": "Description (optional)",
+      "teacher": "Teacher",
+      "classTeacherChip": "{{name}} (class teacher)",
+      "classTeacher": "Class teacher",
+      "currentSubject": "Current subject",
+      "currentTeacher": "Current teacher",
+      "createdBy": "Created by: {{name}}",
+      "teacherYou": "Teacher: You",
+      "create": "Create assessment",
+      "teacherHint": {
+        "optionalSelf": "Optional. Leave it empty to record yourself as the teacher.",
+        "optional": "Optional.",
+        "noTeachersSelf": "No teachers are assigned to this class yet, so you will be recorded as the teacher.",
+        "noTeachers": "No teachers are assigned to this class yet."
+      }
+    },
     "detail": {
       "subject": "Subject",
       "date": "Date",
@@ -2031,6 +2080,178 @@
       "minAboveMax": "Band {{band}}: the min can't be more than the max.",
       "overlap": "Bands \"{{otherLabel}}\" and \"{{label}}\" overlap.",
       "gap": "No band covers the percentages between {{from}}% and {{to}}%. Bands must cover 0-100% with no gaps."
+    }
+  },
+  "reportCardGrid": {
+    "subtitle": "Class marks grid",
+    "noStudents": "0 students in this section.",
+    "allSubjects": "All subjects",
+    "roll": "Roll",
+    "name": "Name",
+    "total": "Total",
+    "grade": "Grade"
+  },
+  "reportCardPublish": {
+    "subtitle": "Publish report cards",
+    "description": "Publishing shows this term's report card to every student and parent in this section and notifies them. It also locks marks entry for every assessment in the term. Check the class marks grid first.",
+    "term": "Term",
+    "noTerms": "No assessment in this section has a term yet, so there's nothing to publish. Give each assessment a term (edit it, or use the fix below), then come back.",
+    "pickTerm": "Pick the term to publish. ✓ means it's already published.",
+    "published": "Published \"{{term}}\" for this section — by {{name}}. Marks for this term are now locked.",
+    "publishButton": "Publish \"{{term}}\" report cards",
+    "pickTermButton": "Pick a term to publish",
+    "publish": "Publish",
+    "nothingTitle": "Nothing to publish",
+    "nothingMessage": "No assessment in this section has the term \"{{term}}\", so every report card would be empty.",
+    "untermedTitle": "Assessments with no term",
+    "untermedHint": "An assessment saved without a term never appears on any report card. Tag every assessment in this section that has no term with:",
+    "termPlaceholder": "Term, e.g. Term 1",
+    "termLocked": "Report cards for \"{{term}}\" are already published, so assessments can't be added to it.",
+    "savedAs": "Will be saved as \"{{term}}\", the spelling this section already uses.",
+    "fixButton": "Fix assessments missing a term",
+    "backfillDone_one": "Tagged {{count}} assessment that had no term with \"{{term}}\".",
+    "backfillDone_other": "Tagged {{count}} assessments that had no term with \"{{term}}\".",
+    "backfillNone": "Every assessment in this section already has a term set.",
+    "confirm": {
+      "title": "Publish \"{{term}}\" report cards?",
+      "counts": "{{students}} · {{assessments}} in \"{{term}}\".",
+      "students_one": "{{count}} student",
+      "students_other": "{{count}} students",
+      "assessments_one": "{{count}} assessment",
+      "assessments_other": "{{count}} assessments",
+      "marks_one": "{{count}} mark",
+      "marks_other": "{{count}} marks",
+      "noStudents": "This section has no students, so no report cards will be published.",
+      "missingMarks_one": "{{count}} student has marks missing ({{marks}} in all). Their report cards will say marks are missing.",
+      "missingMarks_other": "{{count}} students have marks missing ({{marks}} in all). Their report cards will say marks are missing.",
+      "untermed_one": "{{count}} assessment in this section has no term, so its marks won't be on any report card.",
+      "untermed_other": "{{count}} assessments in this section have no term, so their marks won't be on any report card.",
+      "untermedLocked_one": "\"{{term}}\" is already published, so it can't be added to it. Give it another term with \"{{fix}}\", or edit it.",
+      "untermedLocked_other": "\"{{term}}\" is already published, so they can't be added to it. Give them another term with \"{{fix}}\", or edit each one.",
+      "untermedFixFirst_one": "If it belongs to \"{{term}}\", use \"{{fix}}\" first: after publishing, nothing can be added to \"{{term}}\".",
+      "untermedFixFirst_other": "If they belong to \"{{term}}\", use \"{{fix}}\" first: after publishing, nothing can be added to \"{{term}}\".",
+      "alreadyPublished": "\"{{term}}\" was already published. Publishing again only updates the published date. Students and parents are not notified again.",
+      "alreadyPublishedOn": "\"{{term}}\" was already published on {{date}}. Publishing again only updates the published date. Students and parents are not notified again.",
+      "unpublished": "\"{{term}}\" was unpublished on {{date}}. Publishing it again notifies every family again.",
+      "unpublishedBy": "\"{{term}}\" was unpublished on {{date}} by {{name}}. Publishing it again notifies every family again.",
+      "unpublishedWhy": "\"{{term}}\" was unpublished on {{date}}: {{reason}}. Publishing it again notifies every family again.",
+      "unpublishedByWhy": "\"{{term}}\" was unpublished on {{date}} by {{name}}: {{reason}}. Publishing it again notifies every family again.",
+      "willNotify": "Every student and parent in this section will be notified.",
+      "willLock": "Marks for every assessment in \"{{term}}\" will be locked.",
+      "stayLocked": "Marks for every assessment in \"{{term}}\" stay locked.",
+      "unpublishLater": "An admin can unpublish these later with a reason. Families aren't told when that happens."
+    }
+  },
+  "sectionDetail": {
+    "classmates": {
+      "title": "My classmates",
+      "description": "Students in your class"
+    },
+    "students": {
+      "title": "Students",
+      "description": "View students enrolled in this section"
+    },
+    "subjects": {
+      "title": "Subjects",
+      "titleStudent": "Subjects & teachers",
+      "description": "Subjects taught in this section, with assigned teacher"
+    },
+    "assessments": {
+      "title": "Assessments",
+      "description": "Tests, quizzes and exams for this class"
+    },
+    "timetable": {
+      "title": "Timetable",
+      "descriptionAdmin": "Build or change the weekly timetable",
+      "description": "Weekly timetable for this section"
+    },
+    "attendance": {
+      "title": "Attendance",
+      "description": "Take attendance for a date, or view history"
+    },
+    "classFees": {
+      "title": "Class fees",
+      "description": "Fee payment status for students in your class"
+    },
+    "marksGrid": {
+      "title": "Class marks grid",
+      "description": "Every student x subject marks for a term, side by side"
+    },
+    "publish": {
+      "title": "Publish report cards",
+      "description": "Release a term's report cards to every student in this section"
+    },
+    "quizResults": {
+      "title": "Quiz results",
+      "description": "How students did in Practice, Arena and Battle"
+    }
+  },
+  "quizInsights": {
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "dayMonth": "{{day}} {{month}}",
+    "dayMonthYear": "{{day}} {{month}} {{year}}",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "period": "Period",
+    "subject": "Subject",
+    "correct": "{{percent}} correct",
+    "answers_one": "{{count}} answer",
+    "answers_other": "{{count}} answers",
+    "results": {
+      "title": "Quiz results",
+      "allSubjects": "All subjects",
+      "allMySubjects": "All my subjects",
+      "questionStats": "Question stats",
+      "sortBy": "Sort by",
+      "sort": {
+        "name": "Name",
+        "leastActive": "Least active",
+        "lowestAccuracy": "Lowest accuracy"
+      },
+      "roll": "Roll {{roll}}",
+      "answered": "{{answered}} answered",
+      "lastPlayed": "Last played {{date}}",
+      "played_one": "{{active}} of {{count}} student played",
+      "played_other": "{{active}} of {{count}} students played",
+      "noActivity": "No quiz activity in this period",
+      "practice": "Practice {{answered}}",
+      "arena": "Arena {{answered}}",
+      "arenaWon": "Arena {{answered}} (won {{won}} of {{played}})",
+      "battle": "Battle {{answered}}",
+      "battleWon": "Battle {{answered}} (won {{won}} of {{played}})",
+      "noSubjects": "No subjects are set up for this school yet.",
+      "noStudents": "No students in this class yet.",
+      "nobodyPlayed": "No one in this class played Practice, Arena or Battle in this period."
+    },
+    "stats": {
+      "title": "Question stats",
+      "onlyMine": "Only questions you wrote",
+      "showRetired": "Show retired",
+      "showRetiredLabel": "Show retired questions",
+      "retired": "Retired",
+      "scopeSection": "Answers from students in {{section}}",
+      "scopeClass": "Answers from all {{className}} students",
+      "noQuestionsMine": "You haven't added any multiple-choice questions for {{subject}} in {{className}} yet.",
+      "noQuestions": "No multiple-choice questions for {{subject}} in {{className}} yet.",
+      "notAnswered": "Not answered in this period",
+      "practice": "Practice {{answered}} ({{correct}} right)",
+      "arena": "Arena {{answered}} ({{correct}} right)",
+      "battle": "Battle {{answered}} ({{correct}} right)",
+      "moreChose": "More students chose {{option}} than the right answer",
+      "lowCorrect": "Only {{percent}}% got this right"
     }
   },
   "errors": {

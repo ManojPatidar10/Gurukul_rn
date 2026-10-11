@@ -2,6 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getErrorMessage } from '../../api/errorMessage';
 import { getQuestionStats, type QuestionStatsResponse } from '../../api/quizInsights';
@@ -57,6 +58,7 @@ function FilterChip({ label, selected, onPress }: { label: string; selected: boo
  * section's students' answers count.
  */
 export function QuestionStatsScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { subjectId, subjectName, className, classSection } = route.params;
   const sectionId = classSection?.id;
@@ -109,26 +111,34 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Question stats" subtitle={subtitle} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('quizInsights.stats.title')} subtitle={subtitle} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         <Text style={styles.scope}>
-          {questionScopeLine({ sectionLabel: data?.sectionLabel ?? sectionLabel, className: data?.className ?? className })}
+          {questionScopeLine(
+            { sectionLabel: data?.sectionLabel ?? sectionLabel, className: data?.className ?? className },
+            t
+          )}
         </Text>
-        {data?.onlyMine && <Text style={styles.scope}>Only questions you wrote</Text>}
+        {data?.onlyMine && <Text style={styles.scope}>{t('quizInsights.stats.onlyMine')}</Text>}
 
-        <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>Period</Text>
+        <Text style={[styles.fieldLabel, { marginTop: spacing.md }]}>{t('quizInsights.period')}</Text>
         <View style={styles.chips}>
           {RANGE_PRESETS.map((d) => (
-            <FilterChip key={d} label={`${d} days`} selected={days === d} onPress={() => setDays(d)} />
+            <FilterChip
+              key={d}
+              label={t('quizInsights.days', { count: d })}
+              selected={days === d}
+              onPress={() => setDays(d)}
+            />
           ))}
         </View>
 
         <View style={styles.switchRow}>
-          <Text style={styles.switchText}>Show retired</Text>
+          <Text style={styles.switchText}>{t('quizInsights.stats.showRetired')}</Text>
           <Switch
             value={includeRetired}
             onValueChange={setIncludeRetired}
-            accessibilityLabel="Show retired questions"
+            accessibilityLabel={t('quizInsights.stats.showRetiredLabel')}
             trackColor={{ true: colors.primary, false: colors.border }}
           />
         </View>
@@ -137,7 +147,7 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
           <>
             <ErrorNotice message={error} />
             <Pressable style={styles.retryButton} onPress={load} accessibilityRole="button">
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
             </Pressable>
           </>
         )}
@@ -145,21 +155,21 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
 
         {showList && data && (
           <>
-            <Text style={styles.range}>{formatRange(data.from, data.to)}</Text>
+            <Text style={styles.range}>{formatRange(data.from, data.to, t)}</Text>
             {data.questions.length === 0 && (
-              <Text style={styles.empty}>{noQuestionsMessage(data.onlyMine, data.subjectName, data.className)}</Text>
+              <Text style={styles.empty}>{noQuestionsMessage(data.onlyMine, data.subjectName, data.className, t)}</Text>
             )}
 
             {data.questions.map((item) => {
               const q = item.question;
-              const flags = questionFlags(item);
+              const flags = questionFlags(item, t);
               const comments = q.openReportComments ?? [];
-              const split = questionGameSplit(item);
+              const split = questionGameSplit(item, t);
               return (
                 <View key={q.id} style={[styles.card, q.retired && styles.cardRetired]}>
                   {q.retired && (
                     <View style={styles.badges}>
-                      <StatusChip label="Retired" variant="neutral" />
+                      <StatusChip label={t('quizInsights.stats.retired')} variant="neutral" />
                     </View>
                   )}
                   <View style={styles.cardTop}>
@@ -178,7 +188,7 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
                     </Text>
                   ))}
 
-                  <Text style={styles.answers}>{questionAnswersLine(item)}</Text>
+                  <Text style={styles.answers}>{questionAnswersLine(item, t)}</Text>
                   {item.answered > 0 && (
                     <>
                       <Text style={styles.meta}>{optionCountsLine(item)}</Text>
@@ -208,7 +218,7 @@ export function QuestionStatsScreen({ route, navigation }: Props) {
                         hitSlop={6}
                         accessibilityRole="button"
                       >
-                        <Text style={styles.action}>Edit</Text>
+                        <Text style={styles.action}>{t('common.edit')}</Text>
                       </Pressable>
                     </View>
                   )}

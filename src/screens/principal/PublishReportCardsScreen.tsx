@@ -29,7 +29,7 @@ import {
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PublishReportCards'>;
 
 export function PublishReportCardsScreen({ route, navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const { showToast } = useToast();
@@ -66,7 +66,7 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
       .then((loaded) => {
         setTermsError(null);
         setTerms(loaded);
-        setTerm((current) => (current && loaded.some((t) => t.term === current) ? current : null));
+        setTerm((current) => (current && loaded.some((summary) => summary.term === current) ? current : null));
       })
       .catch((e) => {
         // Don't leave stale chips beside the error - they'd look current.
@@ -106,6 +106,14 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
     }
   };
 
+  // The confirmation's dates: the device's own format in English (as before), Hindi month names in Hindi.
+  const formatPublishDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(i18n.language === 'hi' ? 'hi' : undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
   // Publishing is never one tap: check what it would do first, and make the admin confirm the
   // counts and warnings (missing marks, un-termed assessments, already published).
   const handlePublish = async () => {
@@ -118,16 +126,16 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
     try {
       const check = await getPublishCheck(schoolId, classSection.id, term);
       if (!canPublish(check)) {
-        Alert.alert('Nothing to publish', nothingToPublishMessage(check));
+        Alert.alert(t('reportCardPublish.nothingTitle'), nothingToPublishMessage(check, t));
         return;
       }
-      const { title, message } = publishConfirmation(check);
+      const { title, message } = publishConfirmation(check, formatPublishDate, t);
       Alert.alert(
         title,
         message,
         [
-          { text: 'Cancel', style: 'cancel', onPress: endPublishFlow },
-          { text: 'Publish', style: 'destructive', onPress: () => publish(check.term) },
+          { text: t('common.cancel'), style: 'cancel', onPress: endPublishFlow },
+          { text: t('reportCardPublish.publish'), style: 'destructive', onPress: () => publish(check.term) },
         ],
         { onDismiss: endPublishFlow }
       );
@@ -198,15 +206,15 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
 
   // With a term list: the listed terms in order, then old terms only this section uses.
   const choices = publishTermChoices(termListConfigured ? listedTerms : [], terms ?? []);
-  const selectedSummary = term ? ((terms ?? []).find((t) => t.term === term) ?? null) : null;
+  const selectedSummary = term ? ((terms ?? []).find((summary) => summary.term === term) ?? null) : null;
   // Unpublish needs a server that has it: it's the one that sends publishedAt on the section's terms.
   const canOfferUnpublish = !!selectedSummary?.published && selectedSummary.publishedAt !== undefined;
   const reasonError = unpublishTried ? unpublishReasonError(unpublishReason) : null;
 
-  const termNames = (terms ?? []).map((t) => t.term);
+  const termNames = (terms ?? []).map((summary) => summary.term);
   const backfillTarget = canonicalTerm(backfillTerm, termNames);
   const backfillMatch = findExistingTerm(backfillTerm, termNames);
-  const backfillTargetPublished = (terms ?? []).some((t) => t.published && t.term === backfillTarget);
+  const backfillTargetPublished = (terms ?? []).some((summary) => summary.published && summary.term === backfillTarget);
 
   const handleBackfill = async () => {
     if (!backfillTarget) return;
@@ -214,11 +222,11 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
     try {
       const { assessmentsUpdated } = await backfillSectionTerm(schoolId, classSection.id, backfillTarget);
       if (assessmentsUpdated > 0) {
-        showToast(`Tagged ${assessmentsUpdated} assessment(s) that had no term with "${backfillTarget}".`, 'success');
+        showToast(t('reportCardPublish.backfillDone', { count: assessmentsUpdated, term: backfillTarget }), 'success');
         setBackfillTerm('');
         loadTerms();
       } else {
-        showToast('Every assessment in this section already has a term set.', 'info');
+        showToast(t('reportCardPublish.backfillNone'), 'info');
       }
     } catch (e) {
       showToast(getErrorMessage(e), 'error');
@@ -233,17 +241,15 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Publish report cards"
+        subtitle={t('reportCardPublish.subtitle')}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
         <Text style={styles.description}>
-          Publishing shows this term&apos;s report card to every student and parent in this section and
-          notifies them. It also locks marks entry for every assessment in the term. Check the class marks
-          grid first. {t('reportCardUnpublish.canUnpublishLater')}
+          {t('reportCardPublish.description')} {t('reportCardUnpublish.canUnpublishLater')}
         </Text>
 
-        <Text style={styles.label}>Term</Text>
+        <Text style={styles.label}>{t('reportCardPublish.term')}</Text>
         {termListError && (
           <View style={styles.noticeRow}>
             <Text style={styles.noticeText}>{termListError}</Text>
@@ -257,19 +263,16 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
           <>
             <ErrorNotice message={termsError} />
             <Pressable onPress={retryTerms} style={styles.retry}>
-              <Text style={styles.retryText}>Retry</Text>
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
             </Pressable>
           </>
         )}
         {terms !== null && terms.length === 0 && (
-          <Text style={styles.hint}>
-            No assessment in this section has a term yet, so there&apos;s nothing to publish. Give each
-            assessment a term (edit it, or use the fix below), then come back.
-          </Text>
+          <Text style={styles.hint}>{t('reportCardPublish.noTerms')}</Text>
         )}
         {terms !== null && choices.length > 0 && (
           <>
-            <Text style={styles.hint}>Pick the term to publish. ✓ means it&apos;s already published.</Text>
+            <Text style={styles.hint}>{t('reportCardPublish.pickTerm')}</Text>
             <View style={styles.chips}>
               {choices.map((choice) => {
                 // A listed term no assessment here uses would publish empty report cards.
@@ -300,8 +303,7 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
         {error && <ErrorNotice message={error} />}
         {result && (
           <Text style={styles.success}>
-            Published &quot;{result.term}&quot; for this section — by {result.publishedByEmployeeName}. Marks
-            for this term are now locked.
+            {t('reportCardPublish.published', { term: result.term, name: result.publishedByEmployeeName })}
           </Text>
         )}
 
@@ -314,7 +316,7 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
             <ActivityIndicator color={colors.white} />
           ) : (
             <Text style={styles.publishButtonText}>
-              {term ? `Publish "${term}" report cards` : 'Pick a term to publish'}
+              {term ? t('reportCardPublish.publishButton', { term }) : t('reportCardPublish.pickTermButton')}
             </Text>
           )}
         </Pressable>
@@ -365,11 +367,8 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Assessments with no term</Text>
-        <Text style={styles.hint}>
-          An assessment saved without a term never appears on any report card. Tag every assessment in
-          this section that has no term with:
-        </Text>
+        <Text style={styles.sectionTitle}>{t('reportCardPublish.untermedTitle')}</Text>
+        <Text style={styles.hint}>{t('reportCardPublish.untermedHint')}</Text>
         {termListConfigured ? (
           // With a term list the server only accepts listed terms, so they're picked, not typed.
           <View style={styles.chips}>
@@ -394,17 +393,14 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
             style={styles.input}
             value={backfillTerm}
             onChangeText={setBackfillTerm}
-            placeholder="Term, e.g. Term 1"
+            placeholder={t('reportCardPublish.termPlaceholder')}
             placeholderTextColor={colors.textMuted}
           />
         )}
         {backfillTargetPublished ? (
-          <Text style={styles.warning}>
-            Report cards for &quot;{backfillTarget}&quot; are already published, so assessments can&apos;t be
-            added to it.
-          </Text>
+          <Text style={styles.warning}>{t('reportCardPublish.termLocked', { term: backfillTarget })}</Text>
         ) : backfillMatch && backfillMatch !== backfillTerm.trim() ? (
-          <Text style={styles.hint}>Will be saved as &quot;{backfillMatch}&quot;, the spelling this section already uses.</Text>
+          <Text style={styles.hint}>{t('reportCardPublish.savedAs', { term: backfillMatch })}</Text>
         ) : null}
         <Pressable
           style={[styles.backfillButton, (!backfillTarget || backfillTargetPublished || backfilling) && styles.disabled]}
@@ -414,7 +410,7 @@ export function PublishReportCardsScreen({ route, navigation }: Props) {
           {backfilling ? (
             <ActivityIndicator color={colors.primary} size="small" />
           ) : (
-            <Text style={styles.backfillButtonText}>Fix assessments missing a term</Text>
+            <Text style={styles.backfillButtonText}>{t('reportCardPublish.fixButton')}</Text>
           )}
         </Pressable>
       </ScreenContainer>
