@@ -4,7 +4,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 import { useTranslation } from 'react-i18next';
 
 import { listVendors } from '../../api/vendors';
-import type { Vendor } from '../../api/types';
+import type { Vendor } from '../../api/expenseTypes';
 import { AvatarBadge } from '../../components/AvatarBadge';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
@@ -74,7 +74,7 @@ export function VendorsListScreen({ navigation }: Props) {
           renderItem={({ item }) => (
             <Pressable
               style={styles.row}
-              onPress={() => navigation.navigate('VendorDetail', { vendor: item })}
+              onPress={() => navigation.navigate('VendorDetail', { vendorId: item.id, vendor: item })}
             >
               <AvatarBadge name={item.name} accentKey="vendors" />
               <View style={styles.rowMain}>

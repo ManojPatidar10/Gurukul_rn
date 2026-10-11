@@ -368,7 +368,22 @@
       "contactEmail": "Contact email",
       "bankAccount": "Bank account",
       "upiId": "UPI ID",
-      "address": "Address"
+      "address": "Address",
+      "accountHolderName": "Account holder",
+      "ifsc": "IFSC",
+      "gstin": "GSTIN",
+      "pan": "PAN",
+      "bankChanged": "Bank details last changed on {{date}} by {{name}}",
+      "bankChangedNoName": "Bank details last changed on {{date}}",
+      "bankChangedRecent": "Changed in the last 30 days — check them with the vendor before paying.",
+      "paymentsTitle": "Payments",
+      "totalPaid": "Total paid",
+      "paymentCount_one": "{{count}} payment",
+      "paymentCount_other": "{{count}} payments",
+      "paymentsEmpty": "Nothing paid to this vendor yet.",
+      "paymentsLoadError": "Could not load payments.",
+      "eventLabel": "Event: {{name}}",
+      "invoice": "Invoice {{number}}"
     },
     "form": {
       "titleEdit": "Edit vendor",
@@ -384,8 +399,34 @@
         "contactPhone": "Enter a valid 10-digit contact phone number.",
         "contactEmail": "Enter a valid contact email address.",
         "bankAccount": "Bank account number must be 9-18 digits.",
-        "upiId": "Enter a valid UPI ID, e.g. name@bank."
-      }
+        "upiId": "Enter a valid UPI ID, e.g. name@bank.",
+        "name": "Enter the vendor's name.",
+        "nameTooLong": "The name can be at most 255 characters.",
+        "ifsc": "Enter a valid IFSC, like SBIN0001234.",
+        "accountHolderName": "The account holder name can be at most 255 characters.",
+        "address": "The address can be at most 500 characters.",
+        "gstin": "Enter a 15-character GSTIN, like 08ABCDE1234F1Z5.",
+        "pan": "Enter a valid PAN, like ABCDE1234F.",
+        "gstinPanMismatch": "The PAN inside this GSTIN doesn't match the PAN entered."
+      },
+      "accountHolderName": "Account holder name",
+      "ifsc": "IFSC",
+      "gstin": "GSTIN",
+      "pan": "PAN"
+    },
+    "similar": {
+      "title": "Vendor already exists",
+      "body": "A vendor named {{name}} already exists. Save anyway?",
+      "saveAnyway": "Save anyway",
+      "pickerBody": "A vendor named {{name}} already exists. Use it, or create a new one anyway?",
+      "use": "Use it",
+      "createAnyway": "Create anyway"
+    },
+    "picker": {
+      "empty": "No vendors yet.",
+      "addNew": "+ New vendor",
+      "name": "Vendor name",
+      "selected": "Selected: {{name}}"
     }
   },
   "fees": {
@@ -664,13 +705,13 @@
       },
       "overview": {
         "title": "Payroll Overview",
-        "description": "How many employees are paid vs. still pending, across every run"
+        "description": "Salary paid and still to pay, across every month"
       }
     },
     "overview": {
       "title": "Payroll Overview",
-      "paidCount": "Employees paid",
-      "pendingCount": "Employees pending",
+      "paidCount": "Salary payments made",
+      "pendingCount": "Salary payments pending",
       "paidAmount": "Amount paid",
       "pendingAmount": "Amount pending",
       "runsTitle": "By run",
@@ -2085,6 +2126,17 @@
       "DUPLICATE_REFERENCE": "This reference is already on another payment.",
       "ALREADY_REVERSED": "This payment was already reversed.",
       "IDEMPOTENCY_KEY_REUSED": "This was already sent with different details. Check the payment history before saving again.",
+      "EXPENSE_CHANGED": "Someone else changed this request just now. Reload to see the latest before trying again.",
+      "EXPENSE_WRONG_STATUS": "This request has moved on, so this step isn't possible now. Reload to see what changed.",
+      "SELF_APPROVAL_NOT_ALLOWED": "You sent this request for approval, so another admin has to approve it.",
+      "AMOUNT_ABOVE_APPROVED": "The bill is more than the amount approved. Send the request back for approval at the new amount first.",
+      "DUPLICATE_INVOICE": "This invoice from this vendor is already recorded on another expense. If this is a different bill, add its date to the invoice number.",
+      "PAYMENT_REFERENCE_REQUIRED": "Enter the UTR, transaction ID or cheque number for a UPI, bank transfer or cheque payment.",
+      "REVISED_AMOUNT_BELOW_BILL": "The new amount must cover the bill.",
+      "CATEGORY_INACTIVE": "This category is turned off. Pick another one, or turn it back on under Categories.",
+      "CATEGORY_EXISTS": "A category with this name already exists.",
+      "EVENT_OUTFLOW_DISABLED": "Outflow is not enabled for this event.",
+      "CONCURRENT_UPDATE": "Someone else changed this at the same moment, so your change wasn't saved. Reload and try again.",
       "UPI_NOT_CONFIGURED": "This school has not set up UPI payments yet.",
       "PAYMENT_ATTEMPT_ALREADY_REPORTED": "This payment's result was already recorded and can't be changed."
     }
@@ -2348,5 +2400,178 @@
     "saved": "Saved",
     "empty": "Nothing in the next 12 months.",
     "dateCheck": "Festival dates follow the official government list - please check them for your area."
+  },
+  "money": {
+    "errors": {
+      "empty": "Enter an amount.",
+      "invalid": "Enter the amount in numbers, like 15000 or 15,000.50.",
+      "negative": "The amount can't be negative.",
+      "zero": "The amount must be more than ₹0.",
+      "decimals": "Use at most 2 decimal places (paise).",
+      "tooLarge": "That amount is too large."
+    }
+  },
+  "infraExpenses": {
+    "list": {
+      "title": "Infrastructure expenses",
+      "newRequest": "+ New request",
+      "categories": "Categories",
+      "loadError": "Could not load requests.",
+      "empty": "No requests yet — create the first one.",
+      "emptyFiltered": "No requests with this status.",
+      "filterAll": "All",
+      "requested": "Requested {{amount}}",
+      "bill": "Bill {{amount}}",
+      "paid": "Paid {{amount}}"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Waiting for approval",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "PURCHASED": "Bought, not paid",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    },
+    "timeline": {
+      "CREATED": "Created",
+      "SUBMITTED": "Sent for approval",
+      "SENT_BACK": "Sent back for approval",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CANCELLED": "Cancelled",
+      "PURCHASE_RECORDED": "Purchase recorded",
+      "PAID": "Paid"
+    },
+    "form": {
+      "title": "New expense request",
+      "category": "Category",
+      "description": "What is needed",
+      "descriptionPlaceholder": "e.g. 20 chairs for Class 5",
+      "descriptionCounter": "{{count}} / {{max}}",
+      "amount": "Estimated amount (₹)",
+      "submit": "Create request",
+      "submitting": "Creating…",
+      "errors": {
+        "category": "Pick a category.",
+        "description": "Describe what is needed."
+      }
+    },
+    "detail": {
+      "title": "Expense request",
+      "refreshFailed": "Couldn't load the latest for this request, so what you see may be out of date. {{error}}",
+      "category": "Category",
+      "description": "Description",
+      "amountsTitle": "Amounts",
+      "requested": "Requested",
+      "approved": "Approved",
+      "bill": "Bill",
+      "paid": "Paid",
+      "needsReapproval": "The bill of {{bill}} is more than the {{approved}} approved. Send it back for approval at the bill amount; another admin then approves it before it can be paid.",
+      "purchaseTitle": "Purchase",
+      "vendor": "Vendor",
+      "invoice": "Invoice number",
+      "recordedBy": "Recorded by",
+      "paymentTitle": "Payment",
+      "paidOn": "Paid on",
+      "method": "Method",
+      "reference": "Reference",
+      "paidBy": "Paid by",
+      "historyTitle": "History",
+      "onlyAdmin": "Approved as the only admin",
+      "selfApprovalBlocked": "Another admin has to approve this, because you sent it for approval.",
+      "noActions": "Nothing more to do on this request.",
+      "someone": "Someone"
+    },
+    "actions": {
+      "SUBMIT": "Submit for approval",
+      "APPROVE": "Approve",
+      "REJECT": "Reject",
+      "REVISE": "Change amount",
+      "RECORD_PURCHASE": "Record purchase",
+      "PAY": "Mark as paid",
+      "CANCEL": "Cancel request"
+    },
+    "panels": {
+      "comment": "Comment (optional)",
+      "rejectReason": "Reason for rejecting",
+      "rejectReasonTooShort": "Write a reason of at least 3 characters.",
+      "submitTitle": "Submit for approval",
+      "approveTitle": "Approve {{amount}}",
+      "rejectTitle": "Reject this request",
+      "cancelTitle": "Cancel this request",
+      "cancelConfirmTitle": "Cancel this request?",
+      "cancelConfirmBody": "It will be closed and can't be reopened.",
+      "keep": "Keep it",
+      "reviseTitle": "Send for approval at a new amount",
+      "reviseAmount": "New amount (₹)",
+      "reviseNote": "Another admin will have to approve the new amount.",
+      "purchaseTitle": "Record purchase",
+      "vendor": "Vendor",
+      "invoice": "Invoice number",
+      "bill": "Bill amount (₹)",
+      "approvedLimit": "Approved: {{amount}}",
+      "payTitle": "Mark as paid",
+      "payAmount": "Paying {{amount}} to {{vendor}}",
+      "method": "Payment method",
+      "reference": "UTR, transaction ID or cheque number",
+      "referenceOptional": "Reference (optional)",
+      "referenceRequired": "Enter the UTR, transaction ID or cheque number.",
+      "date": "Payment date",
+      "bankChangedWarning": "{{vendor}}'s bank details were changed on {{date}}. Check them with the vendor before paying.",
+      "pickVendor": "Pick a vendor.",
+      "enterInvoice": "Enter the invoice number.",
+      "pickMethod": "Pick how it was paid.",
+      "payConfirmTitle": "Mark as paid?",
+      "payConfirmBody": "Record {{amount}} paid to {{vendor}} by {{method}} on {{date}}? This can't be undone in the app.",
+      "confirm": "Confirm",
+      "working": "Saving…"
+    },
+    "aboveApproved": {
+      "title": "Bill is more than approved",
+      "body": "The bill of {{bill}} is more than the {{approved}} approved. Send the request back for approval at the bill amount? Another admin will have to approve it.",
+      "sendBack": "Send back for approval at {{amount}}",
+      "reviseComment": "Bill {{invoice}} from {{vendor}}: {{amount}}",
+      "sentBack": "Sent back for approval. Another admin has to approve the new amount."
+    },
+    "errors": {
+      "selfApproval": "You sent this request for approval, so another admin has to approve it.",
+      "selfApprovalNamed": "You sent this request for approval, so another admin has to approve it: {{names}}.",
+      "duplicateInvoice": "Invoice {{invoice}} from this vendor is already recorded on another expense ({{status}}). If this is a different bill, add its date to the invoice number.",
+      "duplicateInvoiceEvent": "Invoice {{invoice}} from this vendor is already paid through an event expense ({{status}}). If this is a different bill, add its date to the invoice number.",
+      "reviseBelowBill": "The new amount must cover the bill of {{amount}}."
+    }
+  },
+  "expenseCategories": {
+    "title": "Expense categories",
+    "add": "+ Add category",
+    "name": "Category name",
+    "create": "Add category",
+    "creating": "Adding…",
+    "loadError": "Could not load categories.",
+    "empty": "No categories yet.",
+    "turnedOff": "Turned off",
+    "inUse": "In use",
+    "inUseFor": "{{name}}: in use",
+    "activeHint": "Turned-off categories can't be picked for new requests. Old requests keep theirs.",
+    "nameRequired": "Enter a name.",
+    "existsTitle": "Category already exists",
+    "existsInactive": "A category named \"{{name}}\" already exists, but it's turned off.",
+    "turnBackOn": "Turn it back on",
+    "turnedBackOn": "\"{{name}}\" is turned on again.",
+    "saved": "Category saved.",
+    "defaultNames": {
+      "LIBRARY": "Library",
+      "LAB": "Laboratory",
+      "SPORTS": "Sports Equipment",
+      "FURNITURE": "Furniture",
+      "CLASSROOM": "Classroom Maintenance",
+      "IT": "IT Equipment",
+      "OTHER": "Other"
+    },
+    "picker": {
+      "empty": "No categories yet.",
+      "addLink": "Add a category"
+    }
   }
 }

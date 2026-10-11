@@ -72,6 +72,7 @@ import { FeeStructureDetailScreen } from '../screens/principal/FeeStructureDetai
 import { FeeStructureFormScreen } from '../screens/principal/FeeStructureFormScreen';
 import { FeeStructuresListScreen } from '../screens/principal/FeeStructuresListScreen';
 import { FeesHubScreen } from '../screens/principal/FeesHubScreen';
+import { InfraCategoriesScreen } from '../screens/principal/InfraCategoriesScreen';
 import { InfraExpenseDetailScreen } from '../screens/principal/InfraExpenseDetailScreen';
 import { InfraExpenseFormScreen } from '../screens/principal/InfraExpenseFormScreen';
 import { InfraExpensesListScreen } from '../screens/principal/InfraExpensesListScreen';
@@ -172,6 +173,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="InfraExpensesList" component={InfraExpensesListScreen} />
         <Stack.Screen name="InfraExpenseDetail" component={InfraExpenseDetailScreen} />
         <Stack.Screen name="InfraExpenseForm" component={InfraExpenseFormScreen} />
+        <Stack.Screen name="InfraCategories" component={InfraCategoriesScreen} />
         <Stack.Screen name="ClassesList" component={ClassesListScreen} />
         <Stack.Screen name="SectionsList" component={SectionsListScreen} />
         <Stack.Screen name="SectionDetail" component={SectionDetailScreen} />

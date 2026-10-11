@@ -13,6 +13,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { formatInr } from '../../utils/money';
 import { runStatusLabel } from '../../utils/payroll';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayrollOverview'>;
@@ -56,11 +57,11 @@ export function PayrollOverviewScreen({ navigation }: Props) {
             </View>
             <View style={styles.statRow}>
               <View style={styles.statCard}>
-                <Text style={styles.statValue}>₹{overview.paidAmount.toLocaleString('en-IN')}</Text>
+                <Text style={styles.statValue}>{formatInr(overview.paidAmount)}</Text>
                 <Text style={styles.statLabel}>{t('payroll.overview.paidAmount')}</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={styles.statValue}>₹{overview.pendingAmount.toLocaleString('en-IN')}</Text>
+                <Text style={styles.statValue}>{formatInr(overview.pendingAmount)}</Text>
                 <Text style={styles.statLabel}>{t('payroll.overview.pendingAmount')}</Text>
               </View>
             </View>
@@ -81,7 +82,7 @@ export function PayrollOverviewScreen({ navigation }: Props) {
                       {MONTH_NAMES[run.month - 1] ?? run.month} {run.year}
                     </Text>
                     <Text style={styles.rowMeta}>
-                      {t('payroll.overview.runSubtitle', { count: run.employeeCount })} · ₹{run.totalNet.toLocaleString('en-IN')}
+                      {t('payroll.overview.runSubtitle', { count: run.employeeCount })} · {formatInr(run.totalNet)}
                     </Text>
                   </View>
                   <StatusChip label={runStatusLabel(run.status, t)} variant={run.status === 'PAID' ? 'success' : 'warning'} />

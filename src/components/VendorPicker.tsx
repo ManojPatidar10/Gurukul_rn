@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { createVendor, listVendors } from '../api/vendors';
-import type { Vendor } from '../api/types';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { createVendor, findSimilarVendors, getVendor, listVendors } from '../api/vendors';
+import type { Vendor, VendorSimilar } from '../api/expenseTypes';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import LabeledInput from './LabeledInput';
 import { getErrorMessage } from '../api/errorMessage';
@@ -13,7 +14,17 @@ interface Props {
   onSelect: (vendor: Vendor) => void;
 }
 
+/** Same-named vendors, or none when the check itself fails (an older server) - it never blocks creating one. */
+async function similarVendors(schoolId: string, name: string): Promise<VendorSimilar[]> {
+  try {
+    return await findSimilarVendors(schoolId, name);
+  } catch {
+    return [];
+  }
+}
+
 export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,16 +43,19 @@ export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) 
 
   useEffect(load, [schoolId]);
 
-  const handleCreate = async () => {
-    if (!name) return;
+  const finishCreate = () => {
+    setShowCreate(false);
+    setName('');
+  };
+
+  const create = async (vendorName: string) => {
     setCreating(true);
     setError(null);
     try {
-      const created = await createVendor(schoolId, { name });
+      const created = await createVendor(schoolId, { name: vendorName });
       setVendors((prev) => [...prev, created]);
       onSelect(created);
-      setShowCreate(false);
-      setName('');
+      finishCreate();
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -49,18 +63,53 @@ export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) 
     }
   };
 
+  const pickExisting = async (match: VendorSimilar) => {
+    const known = vendors.find((v) => v.id === match.id);
+    if (known) {
+      onSelect(known);
+      finishCreate();
+      return;
+    }
+    try {
+      onSelect(await getVendor(schoolId, match.id));
+      finishCreate();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    }
+  };
+
+  const handleCreate = async () => {
+    const vendorName = name.trim();
+    if (!vendorName) return;
+    setCreating(true);
+    const matches = await similarVendors(schoolId, vendorName);
+    setCreating(false);
+    if (matches.length === 0) {
+      await create(vendorName);
+      return;
+    }
+    const match = matches[0];
+    Alert.alert(t('vendors.similar.title'), t('vendors.similar.pickerBody', { name: match.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('vendors.similar.createAnyway'), onPress: () => create(vendorName) },
+      { text: t('vendors.similar.use'), onPress: () => pickExisting(match) },
+    ]);
+  };
+
   if (loading) return <ActivityIndicator style={styles.loading} />;
 
   return (
     <View>
       {error && <ErrorNotice message={error} />}
-      {vendors.length === 0 && !showCreate && <Text style={styles.empty}>No vendors yet.</Text>}
+      {vendors.length === 0 && !showCreate && <Text style={styles.empty}>{t('vendors.picker.empty')}</Text>}
       <View style={styles.chips}>
         {vendors.map((v) => (
           <Pressable
             key={v.id}
             onPress={() => onSelect(v)}
             style={[styles.chip, selectedId === v.id && styles.chipSelected]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: selectedId === v.id }}
           >
             <Text style={[styles.chipText, selectedId === v.id && styles.chipTextSelected]}>{v.name}</Text>
           </Pressable>
@@ -69,17 +118,17 @@ export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) 
 
       {showCreate ? (
         <View style={styles.createForm}>
-          <LabeledInput label="Vendor name" value={name} onChangeText={setName} />
-          <Pressable style={styles.createButton} onPress={handleCreate} disabled={creating}>
-            <Text style={styles.createButtonText}>{creating ? 'Creating…' : 'Create & select'}</Text>
+          <LabeledInput label={t('vendors.picker.name')} value={name} onChangeText={setName} maxLength={255} />
+          <Pressable style={[styles.createButton, (creating || !name.trim()) && styles.disabled]} onPress={handleCreate} disabled={creating || !name.trim()}>
+            <Text style={styles.createButtonText}>{creating ? t('common.creating') : t('common.createAndSelect')}</Text>
           </Pressable>
           <Pressable onPress={() => setShowCreate(false)}>
-            <Text style={styles.cancel}>Cancel</Text>
+            <Text style={styles.cancel}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       ) : (
         <Pressable onPress={() => setShowCreate(true)}>
-          <Text style={styles.addNew}>+ New vendor</Text>
+          <Text style={styles.addNew}>{t('vendors.picker.addNew')}</Text>
         </Pressable>
       )}
     </View>
@@ -88,7 +137,6 @@ export default function VendorPicker({ schoolId, selectedId, onSelect }: Props) 
 
 const styles = StyleSheet.create({
   loading: { marginVertical: spacing.md },
-  error: { color: colors.error, marginBottom: spacing.sm },
   empty: { color: colors.textMuted, marginBottom: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {
@@ -112,6 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     ...softShadow,
   },
+  disabled: { opacity: 0.5 },
   createButtonText: { color: colors.white, fontWeight: '600' },
   cancel: { color: colors.textMuted, textAlign: 'center' },
 });

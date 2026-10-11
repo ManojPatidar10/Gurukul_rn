@@ -195,5 +195,5 @@ Error codes: `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED`
 - Payment Settings still asks for a bank account number and IFSC before it saves, even though a payment request only needs the UPI ID.
 
 ## Known gaps
-- Other money screens (payroll, infra expenses, collections) still format with `toLocaleString('en-IN')`; they should move to `src/utils/money.ts`.
+- `src/utils/money.ts` now holds both the fee helpers (`parseRupees`, `formatRupees`) and the expense/vendor/payroll ones (`parseInrAmount`, `formatInr`), sharing `toPaise`. Some fee screens outside this change (fee assessment and structure lists, fee structure detail, My Class Fees) still format with `toLocaleString('en-IN')` and should move to it.
 - Idempotency covers only recording and reversing fee payments; sponsorship, collection and manual-ledger POSTs don't use `client_request_id` yet.
