@@ -21,6 +21,11 @@ interface LocationIntegrityNativeModule {
   getDeviceChecks(): DeviceChecks;
   /** iOS only. */
   getCurrentFix?(): Promise<NativeFix>;
+  /**
+   * Android: a Play Integrity token bound to the server's nonce. Rejects with an `ERR_INTEGRITY_*`
+   * code (always `ERR_INTEGRITY_UNSUPPORTED` on iOS). Missing in app builds from before it.
+   */
+  requestIntegrityToken?(nonce: string, cloudProjectNumber: string): Promise<string>;
 }
 
 /** Null in Expo Go, on web and in tests, where the native module isn't built in. */

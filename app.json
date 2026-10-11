@@ -103,7 +103,8 @@
     "extra": {
       "eas": {
         "projectId": "f610c224-f96d-4706-a22c-38f27170b00c"
-      }
+      },
+      "playIntegrityCloudProjectNumber": "855182407063"
     },
     "owner": "yashcodes105"
   }
