@@ -2,42 +2,45 @@
 
 ## Manual test checklist
 
-### Manual recording flow (reachable in current UI, via whichever staff/admin form calls `recordFeePayment`)
+### Recording a payment (ADMIN)
 - [ ] Record a partial payment (amount < remaining due) and verify assessment status becomes `PARTIAL` and `totalPaid` increases by exactly the paid amount.
 - [ ] Record enough additional payments to fully cover `totalDue` and verify status flips to `PAID`.
-- [ ] Attempt to record a payment whose amount exceeds the current remaining due and verify the API returns 400 (`IllegalArgumentException` — "Payment amount exceeds remaining due").
-- [ ] Attempt to record a payment for an assessment with a `dueDate` in the past while some amount is already paid but not fully; verify status becomes `OVERDUE` rather than `PARTIAL`.
-- [ ] Verify each recorded payment produces a receipt number (via the linked `FinancialTransaction`) returned in `FeePaymentResponse.receiptNumber`.
-- [ ] Verify `GET /api/v1/fee-payments/{id}` returns the same receipt number for a previously recorded payment.
-- [ ] As a STUDENT principal, attempt to record a payment against another student's assessment and verify `AccessDeniedException`/403 ("You can only pay your own fees").
-- [ ] As a PARENT principal, attempt to record a payment for a child not linked to them and verify it is rejected (`parentService.requireLinkedChild`).
-- [ ] As a PARENT principal linked to the student, verify recording a payment for that child succeeds.
-- [ ] Confirm cross-school isolation: a payment/assessment created under one `X-School-Id` is not visible/actionable under a different school's header.
+- [ ] Attempt to record a payment whose amount exceeds the current remaining due and verify the API returns 400 ("Payment amount exceeds remaining due").
+- [ ] Record a partial payment for an assessment whose `dueDate` is in the past; verify status becomes `OVERDUE` rather than `PARTIAL`.
+- [ ] Verify each recorded payment returns a receipt number (`FeePaymentResponse.receiptNumber`), and `GET /api/v1/fee-payments/{id}` returns the same one.
+- [ ] As a TEACHER, STUDENT or PARENT, call `POST /api/v1/fee-payments` and verify 403.
+- [ ] Record a payment with `paymentReference` set to a reported attempt's `transactionRef`: the attempt becomes `VERIFIED`. Recording a second payment with the same reference returns 400 ("A payment has already been recorded for this payment attempt").
+- [ ] Confirm cross-school isolation: a payment/assessment created under one `X-School-Id` is not visible or actionable under another school's header.
 
-### Online UPI flow (backend/screen still functional but unreachable from normal UI navigation)
+### Receipts (`GET /api/v1/fee-payments/{id}`)
+- [ ] ADMIN → 200. The student who owns it → 200. A different student → 403. A linked parent → 200. An unlinked parent → 403. A TEACHER → 403. An id from another school → 404.
+
+### Online UPI flow (backend and screen work, but nothing in the UI opens the screen)
 - [ ] Confirm the "Pay Fees" button on `FeeAssessmentDetailScreen` only ever shows the "coming soon" toast and never navigates, for every role/fully-paid combination.
-- [ ] Confirm no in-app path (menus, deep links surfaced in the UI, notifications) currently routes to the `'PayFees'` screen.
-- [ ] (If manually driving the backend/screen directly) Create a payment request for an assessment with no `bankAccountNumber`/`bankIfsc` set on the school and verify `IllegalStateException` ("Your school has not set up a fee payment account yet...").
-- [ ] Create a payment request for an already fully-paid assessment and verify `IllegalStateException` ("This fee assessment is already fully paid").
+- [ ] Confirm no in-app path (menus, deep links surfaced in the UI, notifications) routes to the `'PayFees'` screen.
+- [ ] Create a payment request for a school with no UPI ID set and verify 409 `UPI_NOT_CONFIGURED` ("This school has not set up UPI payments yet."), no `PaymentAttempt` row, and (driving `PayFees` by deep link) the app shows that message with a **Back** button instead of **Try again**.
+- [ ] Set a UPI ID but no bank account or IFSC on the school: the payment request succeeds, `payeeVpa` equals the UPI ID, and `upiUri` contains `pa=<that id>`.
+- [ ] As a STUDENT, verify `accountNumber` and `ifsc` in the payment-request response are `null`; as an ADMIN, verify they are filled.
+- [ ] Create a payment request for an already fully-paid assessment and verify 400 ("This fee assessment is already fully paid").
 - [ ] Create a payment request and verify a `PaymentAttempt` is persisted with status `INITIATED` and a `transactionRef` starting with `FEE`, before any simulated UPI-app return.
-- [ ] Verify `GET /api/v1/fee-assessments/{id}/payment-attempts/pending` returns that attempt while `INITIATED`/`PENDING`, and returns nothing once resolved.
-- [ ] Report `RESPONSE_SUCCESS` for the attempt and verify the linked `StudentFeeAssessment` is marked `PAID` and a `FeePayment` row is created (only when `app.fees.unverified-upi-auto-mark-paid=true`).
-- [ ] Re-report `RESPONSE_SUCCESS` for the same `transactionRef` and verify no second `FeePayment`/ledger entry is created (idempotency).
-- [ ] Report `CANCELLED`/`FAILED`/`UNKNOWN` and verify the assessment is left unpaid and no `FeePayment` is created.
-- [ ] Set `app.fees.unverified-upi-auto-mark-paid=false` and verify a `RESPONSE_SUCCESS` report updates the `PaymentAttempt` status only, without auto-marking the fee paid.
-- [ ] Verify the UPI deep link uses `upiVpaOverride` when set on the school, and falls back to `<accountNumber>@<handle-from-IFSC>` (defaulting to `@upi` for an unmapped IFSC prefix) when not set.
+- [ ] Verify `GET /api/v1/fee-assessments/{id}/payment-attempts/pending` returns that attempt while `INITIATED`/`PENDING`, and nothing once it has a final result.
+- [ ] Post `VERIFIED` or `INITIATED` as a result → 400.
+- [ ] Post `RESPONSE_SUCCESS` with a UPI transaction id → 200. The assessment stays unpaid (`totalPaid` unchanged, no `FeePayment`, no ledger entry).
+- [ ] Then post `CANCELLED` for the same attempt → 409 `PAYMENT_ATTEMPT_ALREADY_REPORTED`, and the stored transaction id is unchanged. Post `RESPONSE_SUCCESS` again → 200, nothing changes.
+- [ ] Post `PENDING` with some evidence, then `RESPONSE_SUCCESS` with different evidence → 200, status `RESPONSE_SUCCESS`, the first evidence kept, only empty fields filled.
+- [ ] As a TEACHER, call payment-request, attempts, pending and result → 403 each. An unlinked PARENT → 403; a linked PARENT → 200.
+- [ ] (Driving `PayFees` by deep link) Report "Yes, it succeeded", tap Done, then Pay Now again: a "Payment already reported" warning appears (the fee still shows its full due until an admin records the payment). With only an `INITIATED`/`PENDING` attempt, the "Payment already in progress" warning appears instead. Both offer Cancel and Pay Again.
+- [ ] (`PayFees`) An admin records the payment for a reported attempt (it becomes `VERIFIED`), then the payer reports success again from the manual card: the result card shows the success title with "The school has confirmed this payment.", not an empty card.
+- [ ] (`PayFees`) Report "Yes, it succeeded" with the reply lost (e.g. airplane mode after the request leaves), then "No, cancelled" from the manual card: the 409 is replaced by the stored "Payment response received" result with Done, never Try again. With the attempts lookup also failing, the error shows Back only and no manual card.
+
+### Payment Settings (ADMIN)
+- [ ] The UPI ID field and hint say families can pay by UPI only once it is set, and that the app never guesses a UPI ID. With the field empty, the warning shows.
+- [ ] The screen's hint and the Fees hub's "Payment Settings" description say families pay to the school's UPI ID and the bank details are for records, not that fees go into the bank account.
 
 ## Existing automated test coverage
-- `D:\Gurukul\Gurukul_bk\src\test\java\com\gurukul\fees\FeePaymentIntegrationTest.java` — full MockMvc integration test of the manual recording flow: creates a class section, fee category, fee structure, generates assessments, enrolls a student, re-generates assessments (asserting `UNPAID` / `totalDue = 10000.00`), records a partial `CASH` payment of 4000.00 (asserts status becomes `PARTIAL`, `totalPaid = 4000.00`, receipt number present), records a further `UPI`-method payment of 6000.00 to fully cover the due (asserts status becomes `PAID`), then attempts to overpay by 1.00 and asserts a 400 Bad Request.
-- `D:\Gurukul\Gurukul_bk\src\test\java\com\gurukul\fees\PaymentAttemptIntegrationTest.java` — full MockMvc integration test of the online UPI attempt lifecycle: sets the school's bank account/IFSC, creates a class section/category/structure/student/assessment, confirms no pending attempt initially, calls `POST .../payment-request` (asserts amount = 9000.00, and an `INITIATED` `PaymentAttempt` is persisted with the returned `transactionRef` visible via the attempts-list endpoint), confirms the pending-attempt endpoint now surfaces that attempt, posts a `RESPONSE_SUCCESS` result with a UPI transaction ID and response code (asserts the attempt status updates and the assessment flips to `PAID`), confirms the pending-attempt endpoint clears afterward, then re-posts the same `RESPONSE_SUCCESS` result for the same `transactionRef` and asserts the assessment's `totalPaid` remains exactly 9000.00 (i.e., no double payment recorded).
-- `D:\Gurukul\Gurukul_bk\src\test\java\com\gurukul\fees\FeePaymentServiceOwnershipTest.java` — focused Mockito unit test (no MockMvc/JWT) of the ownership check added to `FeePaymentService.createPaymentRequest`/`recordPayment` via `assertCanPayOrRecord`: (1) a STUDENT principal can create a payment request for their own assessment (asserts amount, that the generated `upiUri` starts with the expected `pa=<accountNumber>%40sbi` VPA derived from the `SBIN` IFSC prefix, and that `referenceId` starts with `FEE`); (2) a STUDENT principal authenticated as a *different* student is rejected with `AccessDeniedException` when targeting someone else's assessment; (3) an unauthenticated caller (no `SecurityContext` set) is unaffected by the ownership check and the call succeeds — documented in the test as mirroring "this codebase's existing (pre-existing gap)" of calling fee endpoints without auth.
+- Backend (`D:\Gurukul\Gurukul_bk\src\test\java\com\gurukul\fees\`): `FeePaymentIntegrationTest` (manual recording: partial, full, overpay 400), `PaymentAttemptIntegrationTest` (attempt lifecycle, the payer-report rules, roles, UPI ID requirement), `PaymentIntegrityIntegrationTest` (admin confirmation of an attempt, a later report on a `VERIFIED` attempt), `FeePaymentServiceOwnershipTest` (`assertCanPayOrRecord` per role).
+- App: `src/__tests__/errorMessage.test.ts` (both new error codes map to their translated messages), `src/__tests__/feePaymentErrors.test.ts` (`UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED` offer Back, everything else Try again), `src/__tests__/feePaymentAttempts.test.ts` (result card per status including `VERIFIED`, the Pay Now warning for a reported success or an attempt in progress, finding the attempt by reference), `src/__tests__/upiResponseParser.test.ts`, `src/__tests__/i18nParity.test.ts`.
 
 ## Suggested additional test coverage
-- No integration test currently exercises the PARENT role's `requireLinkedChild` ownership path for `recordPayment`/`createPaymentRequest`/`recordAttemptResult` — only the STUDENT-vs-STUDENT ownership case is unit-tested (`FeePaymentServiceOwnershipTest`). A PARENT-linked-vs-PARENT-unlinked test is missing.
-- No test covers a TEACHER or other non-STUDENT/PARENT authenticated role calling the payment endpoints for a student unrelated to them — since `assertCanPayOrRecord` only branches on STUDENT/PARENT, this should be explicitly tested to confirm/track the documented "pre-existing gap" rather than leaving it implicit.
-- No test covers concurrent/racing calls to `recordAttemptResult` for the same `transactionRef` (e.g. two near-simultaneous `RESPONSE_SUCCESS` reports) to confirm whether double-payment can actually occur, given the idempotency check reads `previousStatus` without any observed row-level locking.
-- No test covers `createPaymentRequest`'s `IllegalStateException` paths (school missing bank details; assessment already fully paid) — neither integration test exercises these branches.
-- No test verifies the `unverifiedUpiAutoMarkPaid=false` configuration path (the property is read via `@Value` with a default of `true`; only the default-true behavior is covered).
-- No test verifies the `upiVpaOverride` branch of the UPI URI construction (only the IFSC-fallback branch is covered, in `FeePaymentServiceOwnershipTest`).
-- No frontend test (unit or e2e) exists asserting that the "Pay Fees" button on `FeeAssessmentDetailScreen.tsx` only shows the "coming soon" toast and does not navigate — worth adding a regression test/snapshot so a future change doesn't silently re-enable or further break this entry point without an explicit decision.
-- No test covers `GET /api/v1/fee-payments/{id}` for a payment belonging to a different school (cross-tenant isolation) or for a nonexistent ID (404/`EntityNotFoundException` path).
+- No frontend test asserts that the "Pay Fees" button on `FeeAssessmentDetailScreen.tsx` only shows the "coming soon" toast and does not navigate — worth a regression test so a future change doesn't silently re-enable it without a decision.
+- No test drives `PayFeesScreen` itself (rendering the error stage and its Back/Try again button).

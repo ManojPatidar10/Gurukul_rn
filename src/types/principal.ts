@@ -86,7 +86,8 @@ export type PrincipalStackParamList = {
   EmployeesList: undefined;
   EmployeeDetail: { employee: Employee };
   EmployeeForm: { employee?: Employee };
-  SalaryHistory: { employee: Employee };
+  /** Only id and name: a driver opens their own payslips without being able to read their employee record. */
+  SalaryHistory: { employee: Pick<Employee, 'id' | 'name'> };
   VendorsList: undefined;
   /** `vendor`: the copy to show while the latest is fetched. */
   VendorDetail: { vendorId: string; vendor?: Vendor };
