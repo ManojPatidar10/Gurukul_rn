@@ -214,7 +214,11 @@ export function FeeStructureFormScreen({ route, navigation }: Props) {
           <View style={styles.repriceCard}>
             <View style={styles.repriceRow}>
               <Text style={styles.repriceLabel}>{t('fees.structureForm.repriceBills')}</Text>
-              <Switch value={repriceBills} onValueChange={setRepriceBills} />
+              <Switch
+                value={repriceBills}
+                onValueChange={setRepriceBills}
+                accessibilityLabel={t('fees.structureForm.repriceBills')}
+              />
             </View>
             <Text style={styles.hint}>{t('fees.structureForm.repriceHint')}</Text>
           </View>

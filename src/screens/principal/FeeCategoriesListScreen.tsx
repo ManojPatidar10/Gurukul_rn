@@ -164,7 +164,7 @@ export function FeeCategoriesListScreen({ navigation }: Props) {
                 />
                 <View style={styles.switchRow}>
                   <Text style={styles.switchLabel}>{t('fees.categories.inUse')}</Text>
-                  <Switch value={editActive} onValueChange={setEditActive} />
+                  <Switch value={editActive} onValueChange={setEditActive} accessibilityLabel={t('fees.categories.inUse')} />
                 </View>
                 <Text style={styles.hint}>{t('fees.categories.inUseHint')}</Text>
                 <View style={styles.editButtons}>

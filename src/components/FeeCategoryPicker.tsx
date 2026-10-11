@@ -6,7 +6,7 @@ import type { FeeCategory } from '../api/types';
 import { useToast } from '../context/ToastContext';
 import { useCreateFeeCategory } from '../hooks/useCreateFeeCategory';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
-import { pickableCategories } from '../utils/feeBills';
+import { categoryPickerEmptyKey, pickableCategories } from '../utils/feeBills';
 import LabeledInput from './LabeledInput';
 import { getErrorMessage } from '../api/errorMessage';
 
@@ -46,12 +46,11 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
   if (loading) return <ActivityIndicator style={styles.loading} />;
 
   const shown = pickableCategories(categories, selectedId);
+  const emptyKey = categoryPickerEmptyKey(categories.length, shown.length);
 
   return (
     <View>
-      {shown.length === 0 && !showCreate && (
-        <Text style={styles.empty}>{t('fees.categoryPicker.empty')}</Text>
-      )}
+      {emptyKey && !showCreate && <Text style={styles.empty}>{t(emptyKey)}</Text>}
       <View style={styles.chips}>
         {shown.map((cat) => (
           <Pressable

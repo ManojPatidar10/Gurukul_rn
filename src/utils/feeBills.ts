@@ -19,9 +19,9 @@ import type {
 
 /**
  * Fee bill decisions the screens share (specs/fee-bills-and-dues): the status chip's colour and
- * words, adjustment signs and lines, due-date text, academic-year matching, the bill list's query,
- * category codes, structure lines, and the confirmations for Generate, structure edits and payment
- * settings. Pure, so it's unit-tested in src/__tests__/feeBills.test.ts.
+ * words, adjustment signs and lines, due-date text, academic-year matching, the bill list's query
+ * and empty text, category codes, structure lines, and the confirmations for adjustments, Generate,
+ * structure edits and payment settings. Pure, so it's unit-tested in src/__tests__/feeBills.test.ts.
  */
 
 // ---------------------------------------------------------------------------------------------
@@ -266,14 +266,35 @@ export function adjustmentDraft(
   return { amount, newTotal, error: newTotalPaise < toPaise(bill.totalPaid) ? 'belowPaid' : null };
 }
 
+/**
+ * What Save adjustment asks first: "Late fee of +₹5,000 on Asha's bill. The new total will be
+ * ₹25,000." and that the family sees it with its reason and it can't be deleted (only reversed
+ * with a correction).
+ */
+export function adjustmentConfirmText(
+  studentName: string,
+  type: FeeAdjustmentType,
+  amount: number,
+  newTotal: number,
+  t: TFunction
+): string {
+  return t('fees.adjustment.confirmMessage', {
+    type: adjustmentLabel(type, t),
+    amount: formatSignedRupees(amount),
+    name: studentName,
+    total: formatAmount(newTotal),
+  });
+}
+
 // ---------------------------------------------------------------------------------------------
 // Academic years and the bill list
 
-const ACADEMIC_YEAR = /^(\d{4})[-/–](\d{2}|\d{4})$/;
+// The server's pattern (AcademicYears.java): -, /, en or em dash, spaces allowed around it.
+const ACADEMIC_YEAR = /^(\d{4})\s*[-/–—]\s*(\d{2}|\d{4})$/;
 
 /**
- * "2026-2027", "2026/27" or "2026–27" -> "2026-27", the one form the server stores on fee rows.
- * Anything else (not a year and the next) comes back trimmed, like the server's lenient form.
+ * "2026-2027", "2026/27", "2026 – 27" or "2026—27" -> "2026-27", the one form the server stores on
+ * fee rows. Anything else (not a year and the next) comes back trimmed, like the server's lenient form.
  */
 export function canonicalAcademicYear(text: string | null | undefined): string {
   const trimmed = (text ?? '').trim();
@@ -295,6 +316,31 @@ export function academicYearOptions(
   const years = new Set(summary.availableAcademicYears);
   if (summary.academicYear !== ALL_ACADEMIC_YEARS) years.add(summary.academicYear);
   return [...years].sort().reverse();
+}
+
+export interface AssessmentsEmptyState {
+  /** The last page-0 load failed. */
+  loadFailed: boolean;
+  /** A status, search or class filter is on. */
+  filtered: boolean;
+  /** The year the list shows (ALL for every year), or null while it isn't known. */
+  shownYear: string | null;
+  /** The summary's years that have any bill, or null while there's no summary. */
+  availableYears: readonly string[] | null;
+}
+
+/**
+ * What the admin's bill list says when it has no rows. It defaults to the current year, so a
+ * school whose bills are all from other years (last year's unpaid dues) is told to pick another
+ * year, not that it has no bills. "Generate them first" only when the school has no bill at all.
+ */
+export function assessmentsEmptyText(state: AssessmentsEmptyState, t: TFunction): string {
+  if (state.loadFailed) return t('fees.assessmentsList.loadError');
+  if (state.availableYears?.length === 0) return t('fees.assessmentsList.empty');
+  if (!state.filtered && state.shownYear && state.shownYear !== ALL_ACADEMIC_YEARS) {
+    return t('fees.assessmentsList.noBillsForYear', { year: state.shownYear });
+  }
+  return t('fees.assessmentsList.noMatches');
 }
 
 /** The tag on a bill of a student who has left ("Alumni" or "Withdrawn"); null while they're ACTIVE. */
@@ -335,6 +381,12 @@ export function normaliseCategoryCode(text: string): string | null {
 /** A picker's choices: the categories in use, plus the one already chosen even if it was retired since. */
 export function pickableCategories<T extends Pick<FeeCategory, 'id' | 'active'>>(categories: T[], selectedId: string | null): T[] {
   return categories.filter((category) => category.active !== false || category.id === selectedId);
+}
+
+/** The picker's line when it shows no category: none made yet, or every one marked not in use. Null while it shows some. */
+export function categoryPickerEmptyKey(categoryCount: number, shownCount: number): string | null {
+  if (shownCount > 0) return null;
+  return categoryCount > 0 ? 'fees.categoryPicker.allNotInUse' : 'fees.categoryPicker.empty';
 }
 
 // ---------------------------------------------------------------------------------------------

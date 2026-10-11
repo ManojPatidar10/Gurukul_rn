@@ -7,6 +7,7 @@ import { listClassSections } from '../../api/classSections';
 import { getFeeAssessmentSummary, listFeeAssessments } from '../../api/feeAssessments';
 import type { ClassSection, FeeAssessment, FeeAssessmentFilters, FeeAssessmentSummary, FeeBillStatus } from '../../api/types';
 import Dropdown from '../../components/Dropdown';
+import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { SearchBar } from '../../components/SearchBar';
 import { StatusChip } from '../../components/StatusChip';
@@ -19,6 +20,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import {
   academicYearOptions,
   ALL_ACADEMIC_YEARS,
+  assessmentsEmptyText,
   billDueNote,
   FEE_BILL_STATUSES,
   feeStatusLabel,
@@ -62,10 +64,15 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
   const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [summaryFailed, setSummaryFailed] = useState(false);
   const { showToast } = useToast();
-  // Each request takes the next number; a reply to an older one (a filter changed meanwhile) is dropped.
+  // Each request takes the next number; a reply to an older one (a filter changed meanwhile) is
+  // dropped, and only the latest request clears the loading flags. So Load more stays off until a
+  // new filter's first page is in, and can't add that filter's next page to another filter's rows.
   const listRequest = useRef(0);
   const summaryRequest = useRef(0);
+  // The filters the rows on screen belong to; null while none are shown.
+  const rowsFilters = useRef<FeeAssessmentFilters | null>(null);
 
   const summaryFilters = useMemo<FeeAssessmentFilters>(
     () => ({ academicYear: yearFilter ?? undefined, classSectionId: classSectionId || undefined, includeInactive }),
@@ -80,21 +87,42 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
     [summaryFilters, statusFilter, debouncedQuery]
   );
 
+  /** Page 0 replaces the rows; a later page adds to them. */
   const load = useCallback(
-    (pageToLoad: number, append: boolean) => {
+    (pageToLoad: number) => {
       const id = ++listRequest.current;
+      const append = pageToLoad > 0;
       setError(null);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setLoadingMore(false);
+      }
       return listFeeAssessments(schoolId, filters, pageToLoad, PAGE_SIZE)
         .then((res) => {
           if (id !== listRequest.current) return;
           setAssessments((prev) => (append ? [...prev, ...res.content] : res.content));
           setHasNext(res.hasNext);
           setPage(pageToLoad);
+          rowsFilters.current = filters;
         })
         .catch((e) => {
           if (id !== listRequest.current) return;
           setError(getErrorMessage(e));
           showToast(getErrorMessage(e), 'error');
+          // Rows from other filters mustn't stay on screen under these ones (or be added to).
+          if (rowsFilters.current !== filters) {
+            setAssessments([]);
+            setHasNext(false);
+            setPage(0);
+            rowsFilters.current = null;
+          }
+        })
+        .finally(() => {
+          if (id !== listRequest.current) return;
+          setLoading(false);
+          setLoadingMore(false);
         });
     },
     [schoolId, filters, showToast]
@@ -104,16 +132,19 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
     const id = ++summaryRequest.current;
     return getFeeAssessmentSummary(schoolId, summaryFilters)
       .then((result) => {
-        if (id === summaryRequest.current) setSummary(result);
+        if (id !== summaryRequest.current) return;
+        setSummary(result);
+        setSummaryFailed(false);
       })
       .catch(() => {
-        // The list's own error says what went wrong; the card just keeps its last totals.
+        // The card's totals may be for other filters now, so a notice takes its place. The year
+        // picker keeps the last summary's years (every year with bills, whatever the filters).
+        if (id === summaryRequest.current) setSummaryFailed(true);
       });
   }, [schoolId, summaryFilters]);
 
   useEffect(() => {
-    setLoading(true);
-    load(0, false).finally(() => setLoading(false));
+    load(0);
   }, [load]);
 
   useEffect(() => {
@@ -134,8 +165,7 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
         return;
       }
       // Back from a bill (an adjustment, a new due date, a cancel): refresh the rows and the totals.
-      setLoading(true);
-      load(0, false).finally(() => setLoading(false));
+      load(0);
       loadSummary();
     });
     return unsubscribe;
@@ -143,13 +173,12 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    Promise.all([load(0, false), loadSummary()]).finally(() => setRefreshing(false));
+    Promise.all([load(0), loadSummary()]).finally(() => setRefreshing(false));
   };
 
   const handleLoadMore = () => {
     if (!hasNext || loadingMore || loading) return;
-    setLoadingMore(true);
-    load(page + 1, true).finally(() => setLoadingMore(false));
+    load(page + 1);
   };
 
   const shownYear = yearFilter ?? summary?.academicYear ?? null;
@@ -171,11 +200,26 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
     { label: t('fees.assessmentsList.allClasses'), value: '' },
     ...yearSections.map((section) => ({ label: section.displayLabel, value: section.id })),
   ];
-  const filtered = statusFilter !== 'ALL' || !!debouncedQuery || !!classSectionId;
+  const emptyText = assessmentsEmptyText(
+    {
+      loadFailed: !!error,
+      filtered: statusFilter !== 'ALL' || !!debouncedQuery || !!classSectionId,
+      shownYear,
+      availableYears: summary?.availableAcademicYears ?? null,
+    },
+    t
+  );
 
   const header = (
     <View>
-      {summary && (
+      {summaryFailed ? (
+        <View style={styles.summaryError}>
+          <ErrorNotice message={t('fees.assessmentsList.summaryError')} />
+          <Pressable style={styles.retry} onPress={loadSummary} accessibilityRole="button">
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
+          </Pressable>
+        </View>
+      ) : summary && (
         <View style={styles.summaryCard}>
           <View style={styles.summaryStat}>
             <Text style={styles.summaryValue}>{summary.billCount}</Text>
@@ -236,7 +280,11 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
 
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>{t('fees.assessmentsList.showWithdrawn')}</Text>
-        <Switch value={includeInactive} onValueChange={setIncludeInactive} />
+        <Switch
+          value={includeInactive}
+          onValueChange={setIncludeInactive}
+          accessibilityLabel={t('fees.assessmentsList.showWithdrawn')}
+        />
       </View>
     </View>
   );
@@ -256,16 +304,11 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
           onEndReachedThreshold={0.4}
           ListFooterComponent={loadingMore ? <ActivityIndicator style={styles.footerLoader} color={colors.primary} /> : null}
           ListEmptyComponent={
-            loading ? (
+            // While pulling to refresh, the refresh spinner is enough.
+            loading && !refreshing ? (
               <ActivityIndicator style={styles.loader} color={colors.primary} />
             ) : (
-              <Text style={styles.empty}>
-                {error
-                  ? t('fees.assessmentsList.loadError')
-                  : filtered
-                    ? t('fees.assessmentsList.noMatches')
-                    : t('fees.assessmentsList.empty')}
-              </Text>
+              <Text style={styles.empty}>{emptyText}</Text>
             )
           }
           renderItem={({ item }) => {
@@ -326,6 +369,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     ...softShadow,
   },
+  summaryError: { marginBottom: spacing.sm },
+  retry: { alignSelf: 'flex-start', paddingVertical: spacing.xs },
+  retryText: { color: colors.primary, fontWeight: '700' },
   summaryStat: { flex: 1, alignItems: 'center' },
   summaryValue: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
   summaryLabel: { fontSize: 10.5, color: colors.textMuted, marginTop: 2, textAlign: 'center' },

@@ -441,6 +441,7 @@
     },
     "categoryPicker": {
       "empty": "No fee categories yet.",
+      "allNotInUse": "Every fee category is marked not in use. Turn one back on in Fee Categories, or add a new one.",
       "code": "Code",
       "name": "Name",
       "addNew": "+ New fee category"
@@ -549,7 +550,9 @@
       "showWithdrawn": "Show withdrawn students",
       "withdrawnTag": "Withdrawn",
       "alumniTag": "Alumni",
-      "noMatches": "No bills match these filters."
+      "noMatches": "No bills match these filters.",
+      "noBillsForYear": "No bills to show for {{year}}. Choose \"All years\" to see bills from other years, such as last year's unpaid dues.",
+      "summaryError": "Couldn't load the totals for these filters."
     },
     "myClassFees": {
       "title": "My Class Fees",
@@ -683,10 +686,13 @@
       "waiveRemaining": "Waive all ₹{{amount}} still owed",
       "reason": "Reason",
       "reasonPlaceholder": "e.g. Sibling concession",
+      "reasonVisible": "The student and their parents see this reason on the bill.",
       "newTotal": "New total: ₹{{amount}}",
       "submit": "Save adjustment",
       "submitting": "Saving…",
       "added": "Adjustment saved.",
+      "confirmTitle": "Save this adjustment?",
+      "confirmMessage": "{{type}} of {{amount}} on {{name}}'s bill. The new total will be ₹{{total}}.\n\nThe family will see this and its reason on the bill. It can't be deleted later, only reversed with a correction.",
       "errors": {
         "amount": "Enter an amount above 0, with at most 2 decimals.",
         "reason": "Enter a reason.",
@@ -711,6 +717,7 @@
       "cancel": "Cancel bill",
       "cancelReason": "Why is this bill being cancelled?",
       "cancelReasonPlaceholder": "e.g. TC issued, or billed by mistake",
+      "cancelReasonVisible": "The student and their parents see this reason on the cancelled bill.",
       "cancelReasonRequired": "Enter why the bill is being cancelled.",
       "cancelConfirmTitle": "Cancel this bill?",
       "cancelConfirmMessage": "{{name}}'s bill of ₹{{amount}} will be cancelled and left out of dues and reminders. This can't be undone.",

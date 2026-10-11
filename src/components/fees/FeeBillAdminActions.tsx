@@ -8,6 +8,7 @@ import type { FeeAdjustmentType, FeeAssessment } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import {
+  adjustmentConfirmText,
   adjustmentDraft,
   adjustmentLabel,
   amountInputText,
@@ -80,19 +81,35 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
     }
   };
 
-  const submitAdjustment = async () => {
-    if (draft.error || draft.amount === null) return;
+  // An adjustment can't be deleted and the family sees it at once, so Save asks first.
+  const confirmAdjustment = () => {
+    if (draft.error || draft.amount === null || draft.newTotal === null) return;
     const trimmed = reason.trim();
     if (!trimmed) {
       setError(t('fees.adjustment.errors.reason'));
       return;
     }
     const signed = draft.amount;
-    const ok = await run(() => addFeeAdjustment(schoolId, bill.id, { type, amount: signed, reason: trimmed }), t('fees.adjustment.added'));
-    if (ok) {
-      setAmount('');
-      setReason('');
-    }
+    Alert.alert(
+      t('fees.adjustment.confirmTitle'),
+      adjustmentConfirmText(bill.studentName, type, signed, draft.newTotal, t),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('fees.adjustment.submit'),
+          onPress: () => {
+            run(() => addFeeAdjustment(schoolId, bill.id, { type, amount: signed, reason: trimmed }), t('fees.adjustment.added')).then(
+              (ok) => {
+                if (ok) {
+                  setAmount('');
+                  setReason('');
+                }
+              }
+            );
+          },
+        },
+      ]
+    );
   };
 
   const submitDueDate = () => {
@@ -161,7 +178,11 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
             placeholder="0"
           />
           {type === 'WAIVER' && bill.remainingDue > 0 && (
-            <Pressable onPress={() => setAmount(amountInputText(bill.remainingDue))} style={styles.linkButton}>
+            <Pressable
+              onPress={() => setAmount(amountInputText(bill.remainingDue))}
+              style={styles.linkButton}
+              accessibilityRole="button"
+            >
               <Text style={styles.link}>{t('fees.adjustment.waiveRemaining', { amount: formatAmount(bill.remainingDue) })}</Text>
             </Pressable>
           )}
@@ -183,11 +204,12 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
             maxLength={MAX_REASON}
             multiline
           />
+          <Text style={styles.reasonHint}>{t('fees.adjustment.reasonVisible')}</Text>
           {error && <ErrorNotice message={error} />}
           <SubmitButton
             label={busy ? t('fees.adjustment.submitting') : t('fees.adjustment.submit')}
             disabled={busy || draft.error !== null || !reason.trim()}
-            onPress={submitAdjustment}
+            onPress={confirmAdjustment}
           />
         </View>
       )}
@@ -222,6 +244,7 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
             maxLength={MAX_REASON}
             multiline
           />
+          <Text style={styles.reasonHint}>{t('fees.bill.cancelReasonVisible')}</Text>
           {error && <ErrorNotice message={error} />}
           <SubmitButton label={t('fees.bill.cancel')} disabled={busy || !cancelReason.trim()} onPress={confirmCancel} danger />
         </View>
@@ -317,6 +340,7 @@ const styles = StyleSheet.create({
   linkButton: { marginTop: -spacing.xs, marginBottom: spacing.sm },
   link: { color: colors.primary, fontWeight: '700', fontSize: 13 },
   fieldError: { color: colors.error, fontSize: 12.5, marginTop: -spacing.xs, marginBottom: spacing.sm },
+  reasonHint: { color: colors.textMuted, fontSize: 12.5, marginTop: -spacing.sm, marginBottom: spacing.sm },
   preview: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginTop: -spacing.xs, marginBottom: spacing.sm },
   submit: {
     backgroundColor: colors.primary,

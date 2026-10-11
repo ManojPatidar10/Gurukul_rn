@@ -4,12 +4,15 @@ import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 import {
   academicYearOptions,
   adjustmentByLine,
+  adjustmentConfirmText,
   adjustmentDraft,
   adjustmentLabelKey,
   amountInputText,
+  assessmentsEmptyText,
   billDueNote,
   canCancelBill,
   canonicalAcademicYear,
+  categoryPickerEmptyKey,
   clampIsoDate,
   dueDateChangeBounds,
   FEE_ADJUSTMENT_TYPES,
@@ -228,6 +231,24 @@ describe('adjustments', () => {
     }
   });
 
+  it('asks before saving, saying the family sees it and it stays', () => {
+    expect(adjustmentConfirmText('Asha Verma', 'LATE_FEE', 5000, 25000, tEn)).toBe(
+      "Late fee of +₹5,000 on Asha Verma's bill. The new total will be ₹25,000.\n\n" +
+        "The family will see this and its reason on the bill. It can't be deleted later, only reversed with a correction."
+    );
+    expect(adjustmentConfirmText('Asha Verma', 'CONCESSION', -2000, 18000, tEn)).toMatch(
+      /^Concession of -₹2,000 on Asha Verma's bill\. The new total will be ₹18,000\./
+    );
+    expect(adjustmentConfirmText('Asha Verma', 'WAIVER', -1500.5, 3500, tHi)).toBe(
+      fill(hi.fees.adjustment.confirmMessage, {
+        type: hi.fees.adjustment.types.WAIVER,
+        amount: '-₹1,500.50',
+        name: 'Asha Verma',
+        total: '3,500',
+      })
+    );
+  });
+
   it('lets a late fee go on a paid bill', () => {
     expect(adjustmentDraft({ totalDue: 20000, totalPaid: 20000 }, 'LATE_FEE', '500', 1)).toEqual({
       amount: 500,
@@ -240,6 +261,10 @@ describe('adjustments', () => {
 describe('academic years and the bill list', () => {
   it('writes every spelling of a year the one way the server stores fee rows', () => {
     for (const text of ['2026-27', '2026-2027', ' 2026-2027 ', '2026/27', '2026–27', '2026/2027']) {
+      expect(canonicalAcademicYear(text)).toBe('2026-27');
+    }
+    // Like the server: spaces around the separator, and an em dash.
+    for (const text of ['2026 - 27', '2026 – 2027', '2026—27', '2026 / 27', '2026 —2027']) {
       expect(canonicalAcademicYear(text)).toBe('2026-27');
     }
     expect(canonicalAcademicYear('2099-2100')).toBe('2099-00');
@@ -267,10 +292,11 @@ describe('academic years and the bill list', () => {
       { id: 'a', academicYear: '2026-2027' },
       { id: 'b', academicYear: '2026-27' },
       { id: 'c', academicYear: '2025-2026' },
+      { id: 'd', academicYear: '2026 - 27' },
     ];
-    expect(sectionsForYear(sections, '2026-27').map((s) => s.id)).toEqual(['a', 'b']);
-    expect(sectionsForYear(sections, 'ALL')).toHaveLength(3);
-    expect(sectionsForYear(sections, null)).toHaveLength(3);
+    expect(sectionsForYear(sections, '2026-27').map((s) => s.id)).toEqual(['a', 'b', 'd']);
+    expect(sectionsForYear(sections, 'ALL')).toHaveLength(4);
+    expect(sectionsForYear(sections, null)).toHaveLength(4);
   });
 
   it('builds the list query, leaving out filters at their default', () => {
@@ -294,6 +320,30 @@ describe('academic years and the bill list', () => {
     });
     expect(new URLSearchParams(feeAssessmentQuery({ q: 'x'.repeat(150) })).get('q')).toHaveLength(100);
     expect(feeAssessmentQuery({ q: '   ', includeInactive: false })).toBe('');
+  });
+
+  it("says why the bill list is empty without claiming there are no bills when other years have some", () => {
+    const base = { loadFailed: false, filtered: false, shownYear: '2026-27', availableYears: ['2025-26'] };
+    // Only last year's bills (arrears): name the year shown, and point at All years.
+    expect(assessmentsEmptyText(base, tEn)).toBe(
+      'No bills to show for 2026-27. Choose "All years" to see bills from other years, such as last year\'s unpaid dues.'
+    );
+    expect(assessmentsEmptyText(base, tHi)).toBe(fill(hi.fees.assessmentsList.noBillsForYear, { year: '2026-27' }));
+    // No bill in any year: generate some first, whatever the filters.
+    expect(assessmentsEmptyText({ ...base, availableYears: [] }, tEn)).toBe(
+      '0 assessments yet — generate them from a fee structure first.'
+    );
+    expect(assessmentsEmptyText({ ...base, availableYears: [], filtered: true }, tEn)).toBe(
+      '0 assessments yet — generate them from a fee structure first.'
+    );
+    // A status, search or class filter, every year, or no summary to name a year: no match.
+    expect(assessmentsEmptyText({ ...base, filtered: true }, tEn)).toBe('No bills match these filters.');
+    expect(assessmentsEmptyText({ ...base, shownYear: 'ALL' }, tEn)).toBe('No bills match these filters.');
+    expect(assessmentsEmptyText({ ...base, shownYear: null, availableYears: null }, tEn)).toBe('No bills match these filters.');
+    // A year the admin chose, while the summary is unavailable.
+    expect(assessmentsEmptyText({ ...base, shownYear: '2025-26', availableYears: null }, tEn)).toMatch(/^No bills to show for 2025-26\./);
+    // A failed load says so first.
+    expect(assessmentsEmptyText({ ...base, loadFailed: true, availableYears: [] }, tEn)).toBe('Could not load assessments.');
   });
 
   it('tags a student who has left', () => {
@@ -325,6 +375,13 @@ describe('categories', () => {
     ];
     expect(pickableCategories(categories, null).map((c) => c.id)).toEqual(['a']);
     expect(pickableCategories(categories, 'b').map((c) => c.id)).toEqual(['a', 'b']);
+  });
+
+  it('tells "no categories yet" apart from "all of them not in use"', () => {
+    expect(categoryPickerEmptyKey(0, 0)).toBe('fees.categoryPicker.empty');
+    expect(categoryPickerEmptyKey(3, 0)).toBe('fees.categoryPicker.allNotInUse');
+    expect(categoryPickerEmptyKey(3, 1)).toBeNull();
+    expect(tEn('fees.categoryPicker.allNotInUse')).toMatch(/not in use/);
   });
 });
 

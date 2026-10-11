@@ -172,7 +172,8 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
           editable={!!school}
         />
         <Text style={styles.sectionHint}>{t('fees.paymentSettings.upiVpaOverrideHint')}</Text>
-        {!upiId && (
+        {/* Only once the settings have loaded: after a failed load the blank field says nothing about them. */}
+        {school && !upiId && (
           <Text style={styles.warning}>{t('fees.paymentSettings.upiVpaOverrideWarning')}</Text>
         )}
         <LabeledInput
@@ -183,7 +184,7 @@ export function FeePaymentSettingsScreen({ navigation }: Props) {
           placeholder="yourname@oksbi"
           editable={!!school}
         />
-        {upiId ? (
+        {school && upiId ? (
           <View style={styles.payee}>
             <Text style={styles.payeeText}>{t('fees.paymentSettings.payeePreview', { upiId })}</Text>
           </View>

@@ -82,7 +82,7 @@ export function GenerateBillsDialog({ schoolId, structure, visible, onClose, onG
 
           {error && <ErrorNotice message={error} />}
           {error && !preview && (
-            <Pressable style={styles.secondary} onPress={load}>
+            <Pressable style={styles.secondary} onPress={load} accessibilityRole="button">
               <Text style={styles.secondaryText}>{t('common.retry')}</Text>
             </Pressable>
           )}

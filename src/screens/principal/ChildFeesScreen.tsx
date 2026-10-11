@@ -1,5 +1,6 @@
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -22,30 +23,45 @@ export function ChildFeesScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const student = route.params.student;
-  const [assessments, setAssessments] = useState<FeeAssessment[]>([]);
+  // Kept with the child they're for, so another child's bills never show under this one's name.
+  const [loaded, setLoaded] = useState<{ studentId: string; bills: FeeAssessment[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Each load takes the next number; only the latest one's reply is shown and clears the spinners.
+  const latestRequest = useRef(0);
+  const assessments = loaded?.studentId === student.id ? loaded.bills : [];
 
   const load = useCallback(() => {
+    const id = ++latestRequest.current;
     setError(null);
     return listStudentFeeAssessments(schoolId, student.id)
-      .then(setAssessments)
-      .catch((e) => setError(getErrorMessage(e)));
+      .then((bills) => {
+        if (id === latestRequest.current) setLoaded({ studentId: student.id, bills });
+      })
+      .catch((e) => {
+        if (id === latestRequest.current) setError(getErrorMessage(e));
+      })
+      .finally(() => {
+        if (id !== latestRequest.current) return;
+        setLoading(false);
+        setRefreshing(false);
+      });
   }, [schoolId, student.id]);
 
-  // On focus, so coming back from a bill shows any change made to it meanwhile.
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
+  // On focus, so coming back from a bill shows any change made to it meanwhile; and again when the
+  // params name another child while this screen is showing (a FEE_DUE push for a second child
+  // navigates to this same screen, which only swaps the params).
+  useFocusEffect(
+    useCallback(() => {
       setLoading(true);
-      load().finally(() => setLoading(false));
-    });
-    return unsubscribe;
-  }, [navigation, load]);
+      load();
+    }, [load])
+  );
 
   const handleRefresh = () => {
     setRefreshing(true);
-    load().finally(() => setRefreshing(false));
+    load();
   };
 
   return (
@@ -71,6 +87,7 @@ export function ChildFeesScreen({ route, navigation }: Props) {
               <Pressable
                 style={styles.row}
                 onPress={() => navigation.navigate('FeeAssessmentDetail', { assessment: item })}
+                accessibilityRole="button"
               >
                 <View style={styles.rowMain}>
                   <Text style={styles.rowName}>{item.academicYear}</Text>
