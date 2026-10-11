@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getSalaryHistory } from '../../api/employees';
@@ -13,6 +13,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { formatInr, lineStatusLabel, lineStatusVariant, runMonthLabel } from '../../utils/payroll';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SalaryHistory'>;
 
@@ -41,15 +42,20 @@ export function SalaryHistoryScreen({ route, navigation }: Props) {
           <Text style={styles.empty}>{t('payroll.salaryHistory.empty')}</Text>
         )}
         {history.map((entry) => (
-          <View key={entry.payrollLineId} style={styles.row}>
+          <Pressable
+            key={entry.payrollLineId}
+            style={styles.row}
+            onPress={() =>
+              navigation.navigate('PayslipDetail', { payrollLineId: entry.payrollLineId, employeeName: employee.name })
+            }
+          >
             <View>
-              <Text style={styles.rowTitle}>
-                {entry.month}/{entry.year}
-              </Text>
-              <Text style={styles.rowNet}>₹{entry.net.toLocaleString('en-IN')}</Text>
+              <Text style={styles.rowTitle}>{runMonthLabel(entry.month, entry.year, t)}</Text>
+              <Text style={styles.rowNet}>{formatInr(entry.net)}</Text>
             </View>
-            <StatusChip label={entry.runStatus} variant="neutral" />
-          </View>
+            {/* Held or not, an unpaid month here is simply "Not paid yet". */}
+            <StatusChip label={lineStatusLabel(entry.status, t, false)} variant={lineStatusVariant(entry.status, false)} />
+          </Pressable>
         ))}
       </ScreenContainer>
     </View>
