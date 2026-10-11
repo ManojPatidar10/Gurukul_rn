@@ -81,6 +81,7 @@ export function useCallTargets() {
     listAllEmployees(schoolId)
       .then((all) => {
         const employees = all.filter(isActiveEmployee);
+        // A teacher's employee list keeps `role` only for ADMIN colleagues (null for all others) - see EmployeeResponse in the backend.
         const candidates =
           session.role === 'ADMIN'
             ? employees.filter((e) => e.id !== session.ownerId)

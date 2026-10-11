@@ -29,6 +29,11 @@ public class LocationIntegrityModule: Module {
       self.pendingFix = request
       request.start()
     }.runOnQueue(.main)
+
+    // Play Integrity is Android only; Apple App Attest is a later task.
+    AsyncFunction("requestIntegrityToken") { (_: String, _: String, promise: Promise) in
+      promise.reject("ERR_INTEGRITY_UNSUPPORTED", "Play Integrity is only available on Android")
+    }
   }
 
   private static func isJailbroken() -> Bool {

@@ -142,22 +142,28 @@ export interface StudentClassSectionUpdateRequest {
   classSectionId: string;
 }
 
+/**
+ * A staff record. The backend shapes it per viewer and sends hidden fields as null: an admin or the
+ * employee themself gets every field; a teacher viewing a colleague gets name, designation, phone
+ * and email, with `role` set only when the colleague is an ADMIN; a student or parent gets only
+ * id, name, designation and status.
+ */
 export interface Employee {
   id: string;
   schoolId: string;
   name: string;
   designation: string;
-  joinDate: string;
+  joinDate: string | null;
   /** Optional - for the staff birthday wish. */
   dob: string | null;
-  bankAccount: string;
-  contactPhone: string;
+  bankAccount: string | null;
+  contactPhone: string | null;
   contactEmail: string | null;
   status: string;
   employeeType: EmployeeType | null;
   role: UserRole | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export type EmployeeType = 'TEACHING' | 'NON_TEACHING';
@@ -296,6 +302,8 @@ export interface DuesReport {
 }
 
 export interface PayrollRunSummary {
+  /** The run to open. Missing from servers older than specs/payroll-runs. */
+  runId?: string;
   month: number;
   year: number;
   status: string;
@@ -316,8 +324,11 @@ export interface FeePaymentRequestResponse {
   studentName: string;
   amount: number;
   payeeName: string;
-  accountNumber: string;
-  ifsc: string;
+  /** Admin only; null for a student or parent. The UPI link doesn't use it. */
+  accountNumber: string | null;
+  /** Admin only; null for a student or parent. */
+  ifsc: string | null;
+  /** The school's configured UPI ID (never guessed). */
   payeeVpa: string;
   upiUri: string;
   referenceId: string;
@@ -347,8 +358,14 @@ export interface PaymentAttempt {
   updatedAt: string;
 }
 
+/**
+ * The outcomes a payer may report for a payment attempt. VERIFIED is set only when an admin records
+ * the payment, and INITIATED is the starting state, so the backend refuses both with a 400.
+ */
+export type PayerReportableStatus = 'RESPONSE_SUCCESS' | 'PENDING' | 'FAILED' | 'CANCELLED' | 'UNKNOWN';
+
 export interface PaymentAttemptResultRequest {
-  status: PaymentAttemptStatus;
+  status: PayerReportableStatus;
   upiTransactionId?: string;
   approvalRefNo?: string;
   responseCode?: string;
@@ -363,21 +380,102 @@ export interface SalaryStructure {
   allowances: number;
   deductions: number;
   effectiveFrom: string;
+  /** basic + allowances - deductions, worked out by the server. */
+  net: number;
+  /** The structure in force today for this employee. */
+  current: boolean;
+  /** False once salary was paid for a month on or after effectiveFrom's month: add a later one instead. */
+  editable: boolean;
+  createdAt: string;
 }
 
+/** POST and PUT /salary-structures. PUT is a full replace; null allowances or deductions mean 0. */
 export interface SalaryStructureRequest {
   employeeId: string;
   basic: number;
-  allowances: number;
-  deductions: number;
+  allowances?: number | null;
+  deductions?: number | null;
   effectiveFrom: string;
 }
 
+/** PROCESSED: ready to pay. PARTIALLY_PAID: some lines paid, some held or added since. */
+export type PayrollRunStatus = 'DRAFT' | 'PROCESSED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED';
+export type PayrollLineStatus = 'PAID' | 'PENDING' | 'ON_HOLD';
+/** The backend's PaymentMethod enum. Salaries aren't paid by card. */
+export type PayrollPaymentMethod = 'CASH' | 'UPI' | 'BANK_TRANSFER' | 'CHEQUE';
+export type PayrollLineWarningCode =
+  | 'STRUCTURE_STARTS_MID_MONTH'
+  | 'STRUCTURE_CHANGED_MID_MONTH'
+  | 'JOINED_MID_MONTH'
+  | 'JOINED_AFTER_MONTH'
+  | 'NEGATIVE_COMPONENT';
+export type PayrollSkipReason = 'NO_STRUCTURE' | 'STRUCTURE_STARTS_AFTER_MONTH' | 'NET_NOT_POSITIVE' | 'NOT_IN_RUN';
+
+/** A month's run as listed (GET /payroll/runs). Held lines are unpaid and on hold; payable ones are unpaid and not. */
 export interface PayrollRun {
   id: string;
   month: number;
   year: number;
-  status: string;
+  status: PayrollRunStatus;
+  lineCount: number;
+  paidLineCount: number;
+  heldLineCount: number;
+  payableLineCount: number;
+  totalNet: number;
+  paidNet: number;
+  heldNet: number;
+  payableNet: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** GET /payroll/runs/{id}, and what every run action returns. */
+export interface PayrollRunDetail extends PayrollRun {
+  /** Ordered by employee name. */
+  lines: PayrollLine[];
+  /** Active staff left out of the run and why, ordered by name. Empty for a cancelled run. */
+  skipped: PayrollSkippedEmployee[];
+  /** The earliest payment date: the run month's 1st. */
+  paymentDateMin: string;
+  /** The latest payment date: today in India. Before paymentDateMin for a future-month run. */
+  paymentDateMax: string;
+}
+
+export interface PayrollLineWarning {
+  code: PayrollLineWarningCode;
+  date: string | null;
+}
+
+export interface PayrollLine {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  designation: string | null;
+  /** Null on lines made before specs/payroll-runs. */
+  basic: number | null;
+  allowances: number | null;
+  gross: number;
+  deductions: number;
+  net: number;
+  status: PayrollLineStatus;
+  held: boolean;
+  paidOn: string | null;
+  paymentMethod: PayrollPaymentMethod | null;
+  paymentReference: string | null;
+  warnings: PayrollLineWarning[];
+}
+
+export interface PayrollSkippedEmployee {
+  employeeId: string;
+  employeeName: string;
+  designation: string | null;
+  reason: PayrollSkipReason;
+  /** STRUCTURE_STARTS_AFTER_MONTH: when their earliest structure starts. */
+  date: string | null;
+  /** NET_NOT_POSITIVE only. */
+  net: number | null;
+  /** STRUCTURE_STARTS_AFTER_MONTH and NET_NOT_POSITIVE: the structure to fix. */
+  structureId: string | null;
 }
 
 export interface PayrollRunRequest {
@@ -385,27 +483,41 @@ export interface PayrollRunRequest {
   year: number;
 }
 
+/**
+ * POST /payroll/runs/{id}/pay. transactionDate defaults to today in India. The expected* values are
+ * what the confirmation showed: the server refuses with 409 PAYROLL_RUN_CHANGED when they no longer match.
+ */
 export interface PayrollPayRequest {
-  paymentMethod: string;
-  paymentReference?: string;
-  transactionDate?: string;
+  paymentMethod: PayrollPaymentMethod;
+  paymentReference?: string | null;
+  transactionDate?: string | null;
+  expectedPayableLineCount?: number | null;
+  expectedPayableNet?: number | null;
 }
 
-export interface PayrollLine {
-  id: string;
-  employeeId: string;
-  employeeName: string;
-  gross: number;
-  deductions: number;
-  net: number;
-}
-
+/** GET /payroll/lines/{id}/payslip: any line, paid or not. */
 export interface Payslip {
   payrollLineId: string;
   employeeId: string;
   employeeName: string;
   net: number;
-  documentRef: string;
+  /** The payslip's reference once paid, else null. */
+  documentRef: string | null;
+  runId: string;
+  month: number;
+  year: number;
+  runStatus: PayrollRunStatus;
+  designation: string | null;
+  basic: number | null;
+  allowances: number | null;
+  gross: number;
+  deductions: number;
+  status: PayrollLineStatus;
+  paidOn: string | null;
+  paymentMethod: string | null;
+  paymentReference: string | null;
+  /** Null until paid, and on payslips issued before specs/payroll-runs. */
+  payslipNumber: string | null;
 }
 
 export interface SalaryHistoryEntry {
@@ -413,7 +525,11 @@ export interface SalaryHistoryEntry {
   month: number;
   year: number;
   net: number;
-  runStatus: string;
+  runStatus: PayrollRunStatus;
+  gross: number;
+  deductions: number;
+  status: PayrollLineStatus;
+  paidOn: string | null;
 }
 
 export interface InfraExpenseCategory {
@@ -857,6 +973,23 @@ export interface SelfMarkAttendanceRequest {
     rooted: boolean;
     appCloned: boolean;
   };
+  /** The server treats a missing platform as Android (older builds don't send it). */
+  platform?: 'android' | 'ios';
+  /** Android: Play Integrity token requested with `integrityNonce`; required when the server enforces it. */
+  integrityToken?: string;
+  integrityNonce?: string;
+  /** REPORT mode only: why this phone couldn't get a token (ERR_INTEGRITY_* code), so it isn't logged as an old build. */
+  integrityClientError?: string;
+}
+
+/** How the server treats Play Integrity on Android self check-in: ignored, logged only, or required. */
+export type IntegrityMode = 'OFF' | 'REPORT' | 'ENFORCE';
+
+/** A single-use nonce for one self check-in; a newer one replaces it. */
+export interface SelfMarkNonce {
+  nonce: string;
+  expiresAt: string;
+  integrityMode: IntegrityMode;
 }
 
 export interface StaffAttendanceRecord {
