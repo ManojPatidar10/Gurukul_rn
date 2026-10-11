@@ -92,10 +92,12 @@ describe('locale parity (en.json / hi.json)', () => {
     };
     walk('');
 
-    // t('a.b') / t("a.b") calls, plus any quoted key in this task's namespaces - those include the
-    // enum-to-key maps (Record<Union, string>), which hold keys rather than call t with them.
+    // t('a.b') / t("a.b") calls, plus any quoted key in the Hindi tasks' namespaces - those include
+    // the enum-to-key maps (Record<Union, string>) and key lists (MONTH_KEYS, SORTS), which hold keys
+    // rather than call t with them.
     const T_CALL = /\bt\(\s*(['"])([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)\1/g;
-    const NAMESPACED = /(['"])((?:games|questionBank|assessments|gradingScale)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\1/g;
+    const NAMESPACED =
+      /(['"])((?:games|questionBank|assessments|gradingScale|reportCardGrid|reportCardPublish|sectionDetail|quizInsights)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\1/g;
     const exists = (key: string) => key in EN || `${key}_one` in EN || `${key}_other` in EN;
 
     const used = new Map<string, string>();
@@ -110,13 +112,14 @@ describe('locale parity (en.json / hi.json)', () => {
     expect(missing).toEqual([]);
   });
 
-  it('has Hindi, not pasted English, in the games and assessment namespaces', () => {
-    const OWN = /^(games|questionBank|assessments|gradingScale)\./;
+  it('has Hindi, not pasted English, in the games, assessment, report-card and quiz-results namespaces', () => {
+    const OWN =
+      /^(games|questionBank|assessments|gradingScale|reportCardDetail|reportCardGrid|reportCardPublish|sectionDetail|quizInsights)\./;
     const hasWords = (value: unknown) =>
       /[A-Za-z]/.test(
         String(value)
           .replace(/\{\{[^}]*\}\}/g, '')
-          .replace(/\b(XP|AI)\b/g, '')
+          .replace(/\b(XP|AI|AB|EX|PDF)\b/g, '')
       );
     const english = Object.keys(EN)
       .filter((k) => OWN.test(k) && hasWords(EN[k]))

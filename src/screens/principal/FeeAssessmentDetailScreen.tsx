@@ -1,14 +1,24 @@
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { getErrorMessage } from '../../api/errorMessage';
+import { listStudentFeeAssessments } from '../../api/feeAssessments';
+import type { FeeAssessment } from '../../api/types';
+import { ErrorNotice } from '../../components/ErrorNotice';
+import { FeePaymentHistory } from '../../components/FeePaymentHistory';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
+import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { refreshedBill } from '../../utils/feePayments';
+import { formatRupees } from '../../utils/money';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeAssessmentDetail'>;
 
@@ -25,12 +35,43 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const { session } = useAuth();
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const assessment = route.params.assessment;
+  const schoolId = useSchoolId();
+  // The bill from the list is the first render; each time the screen is focused (e.g. back from
+  // recording or reversing a payment) it's fetched again so the totals are current. If that fails,
+  // the bill we have stays on screen with a notice that its amounts may be out of date.
+  const [assessment, setAssessment] = useState<FeeAssessment>(route.params.assessment);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const billId = route.params.assessment.id;
+  const studentId = route.params.assessment.studentId;
+
+  const refresh = useCallback(() => {
+    let active = true;
+    listStudentFeeAssessments(schoolId, studentId)
+      .then((bills) => {
+        if (!active) return;
+        const fresh = refreshedBill(bills, billId);
+        if (fresh) setAssessment(fresh);
+        setRefreshError(fresh ? null : t('fees.paymentHistory.billRefreshError'));
+      })
+      .catch((e) => {
+        if (active) setRefreshError(`${t('fees.paymentHistory.billRefreshError')} ${getErrorMessage(e)}`);
+      });
+    return () => {
+      active = false;
+    };
+  }, [schoolId, studentId, billId, t]);
+
+  useFocusEffect(refresh);
+
   const fullyPaid = assessment.remainingDue <= 0;
   const paidPercent = assessment.totalDue > 0
     ? Math.min(100, Math.round((assessment.totalPaid / assessment.totalDue) * 100))
     : 0;
   const canPayFees = session.ownerType === 'STUDENT';
+  const canRecordPayment = session.role === 'ADMIN' && assessment.remainingDue > 0;
+  // The API shows payments to an admin and to the student's own family; teachers get a 403.
+  const canSeePayments =
+    session.role === 'ADMIN' || session.ownerType === 'STUDENT' || session.ownerType === 'PARENT';
 
   return (
     <View style={styles.root}>
@@ -44,6 +85,21 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
           <StatusChip label={assessment.status} variant={fullyPaid ? 'success' : 'warning'} />
         </View>
 
+        {refreshError && (
+          <View style={styles.refreshError}>
+            <ErrorNotice message={refreshError} />
+            <Pressable
+              style={styles.retry}
+              onPress={() => {
+                refresh();
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        )}
+
         <View style={styles.card}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressLabel}>{t('fees.assessmentDetail.totalPaid')}</Text>
@@ -53,11 +109,21 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
             <View style={[styles.progressFill, { width: `${paidPercent}%` }, fullyPaid && styles.progressFillComplete]} />
           </View>
 
-          <Field label={t('fees.assessmentDetail.totalDue')} value={`₹${assessment.totalDue.toLocaleString('en-IN')}`} />
-          <Field label={t('fees.assessmentDetail.totalPaid')} value={`₹${assessment.totalPaid.toLocaleString('en-IN')}`} />
-          <Field label={t('fees.assessmentDetail.remainingDue')} value={`₹${assessment.remainingDue.toLocaleString('en-IN')}`} />
+          <Field label={t('fees.assessmentDetail.totalDue')} value={formatRupees(assessment.totalDue)} />
+          <Field label={t('fees.assessmentDetail.totalPaid')} value={formatRupees(assessment.totalPaid)} />
+          <Field label={t('fees.assessmentDetail.remainingDue')} value={formatRupees(assessment.remainingDue)} />
           <Field label={t('fees.assessmentDetail.dueDate')} value={assessment.dueDate} />
         </View>
+
+        {canRecordPayment && (
+          <Pressable
+            style={styles.payButton}
+            onPress={() => navigation.navigate('RecordPayment', { assessment })}
+            accessibilityRole="button"
+          >
+            <Text style={styles.payButtonText}>{t('fees.recordPayment.button')}</Text>
+          </Pressable>
+        )}
 
         {!fullyPaid && canPayFees && (
           <Pressable
@@ -67,6 +133,28 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
             <Text style={styles.payButtonText}>{t('fees.assessmentDetail.payFees')}</Text>
           </Pressable>
         )}
+
+        {canSeePayments && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('fees.paymentHistory.title')}</Text>
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('StudentFeePayments', {
+                    student: { id: assessment.studentId, name: assessment.studentName },
+                  })
+                }
+                accessibilityRole="link"
+              >
+                <Text style={styles.sectionLink}>{t('fees.paymentHistory.allPayments')}</Text>
+              </Pressable>
+            </View>
+            <FeePaymentHistory
+              assessmentId={assessment.id}
+              onOpen={(payment) => navigation.navigate('PaymentReceipt', { payment })}
+            />
+          </>
+        )}
       </ScreenContainer>
     </View>
   );
@@ -75,6 +163,9 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   statusRow: { marginBottom: spacing.lg },
+  refreshError: { marginBottom: spacing.md },
+  retry: { alignSelf: 'center', paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+  retryText: { color: colors.primary, fontWeight: '700' },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -113,4 +204,13 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   payButtonText: { color: colors.white, fontWeight: '700' },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  sectionLink: { fontSize: 13, fontWeight: '700', color: colors.primary },
 });

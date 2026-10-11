@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import type {
   QuestionStat,
   QuestionStatsResponse,
@@ -6,6 +8,7 @@ import type {
   StudentQuizSummary,
 } from '../api/quizInsights';
 import type { ClassSection, LoginResponse, QuizOption, TeacherSubjectAssignment } from '../api/types';
+import { reportWarning } from './questionAuthor';
 
 /**
  * Pure helpers for the Quiz results and Question stats screens. Dates are school days in
@@ -14,7 +17,21 @@ import type { ClassSection, LoginResponse, QuizOption, TeacherSubjectAssignment 
 
 const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Short month names, January first. Full keys, resolved when a label is built. */
+const MONTH_KEYS = [
+  'quizInsights.months.jan',
+  'quizInsights.months.feb',
+  'quizInsights.months.mar',
+  'quizInsights.months.apr',
+  'quizInsights.months.may',
+  'quizInsights.months.jun',
+  'quizInsights.months.jul',
+  'quizInsights.months.aug',
+  'quizInsights.months.sep',
+  'quizInsights.months.oct',
+  'quizInsights.months.nov',
+  'quizInsights.months.dec',
+] as const;
 const OPTIONS: QuizOption[] = ['A', 'B', 'C', 'D'];
 
 /** The range chips, in days. */
@@ -37,10 +54,12 @@ function parseIsoDate(value: string): { year: number; month: number; day: number
   return { year, month, day };
 }
 
-function dayLabel(value: string, withYear: boolean): string {
+function dayLabel(value: string, withYear: boolean, t: TFunction): string {
   const { year, month, day } = parseIsoDate(value);
-  const label = `${day} ${MONTHS[month - 1]}`;
-  return withYear ? `${label} ${year}` : label;
+  const monthName = t(MONTH_KEYS[month - 1]);
+  return withYear
+    ? t('quizInsights.dayMonthYear', { day, month: monthName, year })
+    : t('quizInsights.dayMonth', { day, month: monthName });
 }
 
 /** Today in Asia/Kolkata as YYYY-MM-DD. */
@@ -57,16 +76,16 @@ export function rangeForDays(days: number, now: Date): { from: string; to: strin
 }
 
 /** "11 Sep – 10 Oct 2026"; the start shows its year only when it differs from the end's. */
-export function formatRange(from: string, to: string): string {
+export function formatRange(from: string, to: string, t: TFunction): string {
   const sameYear = parseIsoDate(from).year === parseIsoDate(to).year;
-  return `${dayLabel(from, !sameYear)} – ${dayLabel(to, true)}`;
+  return `${dayLabel(from, !sameYear, t)} – ${dayLabel(to, true, t)}`;
 }
 
 /** The IST calendar day of an ISO instant, e.g. "8 Oct 2026"; "" when it can't be read. */
-export function formatIstDay(instant: string): string {
+export function formatIstDay(instant: string, t: TFunction): string {
   const ms = Date.parse(instant);
   if (Number.isNaN(ms)) return '';
-  return dayLabel(isoDateOf(ms + IST_OFFSET_MS), true);
+  return dayLabel(isoDateOf(ms + IST_OFFSET_MS), true, t);
 }
 
 /** "68%", or a dash when nothing was answered. */
@@ -129,24 +148,37 @@ export function sortStudents(rows: readonly StudentQuizSummary[], key: StudentSo
  * challenge answered earlier can complete in the range): the same rule as `totals.activeStudents`,
  * so a card never shows a game for a student the totals count as not having played.
  */
-export function gameBreakdown(s: StudentQuizSummary): string {
-  if (s.answered === 0) return 'No quiz activity in this period';
-  const match = (label: string, m: StudentQuizSummary['arena']) =>
-    m.played > 0 ? `${label} ${m.answered} (won ${m.won} of ${m.played})` : `${label} ${m.answered}`;
+export function gameBreakdown(s: StudentQuizSummary, t: TFunction): string {
+  if (s.answered === 0) return t('quizInsights.results.noActivity');
+  const { arena, battle } = s;
   const parts: string[] = [];
-  if (s.practice.answered > 0) parts.push(`Practice ${s.practice.answered}`);
-  if (s.arena.answered > 0 || s.arena.played > 0) parts.push(match('Arena', s.arena));
-  if (s.battle.answered > 0 || s.battle.played > 0) parts.push(match('Battle', s.battle));
-  return parts.length > 0 ? parts.join(' · ') : 'No quiz activity in this period';
+  if (s.practice.answered > 0) parts.push(t('quizInsights.results.practice', { answered: s.practice.answered }));
+  if (arena.answered > 0 || arena.played > 0) {
+    parts.push(
+      arena.played > 0
+        ? t('quizInsights.results.arenaWon', { answered: arena.answered, won: arena.won, played: arena.played })
+        : t('quizInsights.results.arena', { answered: arena.answered })
+    );
+  }
+  if (battle.answered > 0 || battle.played > 0) {
+    parts.push(
+      battle.played > 0
+        ? t('quizInsights.results.battleWon', { answered: battle.answered, won: battle.won, played: battle.played })
+        : t('quizInsights.results.battle', { answered: battle.answered })
+    );
+  }
+  return parts.length > 0 ? parts.join(' · ') : t('quizInsights.results.noActivity');
 }
 
 /** "18 of 40 students played · 412 answers · 68% correct"; the % is left out when nothing was answered. */
-export function totalsSummary(t: SectionQuizTotals): string {
+export function totalsSummary(totals: SectionQuizTotals, t: TFunction): string {
   const parts = [
-    `${t.activeStudents} of ${t.students} ${t.students === 1 ? 'student' : 'students'} played`,
-    `${t.answered} ${t.answered === 1 ? 'answer' : 'answers'}`,
+    t('quizInsights.results.played', { count: totals.students, active: totals.activeStudents }),
+    t('quizInsights.answers', { count: totals.answered }),
   ];
-  if (t.percentCorrect !== null && t.percentCorrect !== undefined) parts.push(`${t.percentCorrect}% correct`);
+  if (totals.percentCorrect !== null && totals.percentCorrect !== undefined) {
+    parts.push(t('quizInsights.correct', { percent: formatPercent(totals.percentCorrect) }));
+  }
   return parts.join(' · ');
 }
 
@@ -156,12 +188,13 @@ export function totalsSummary(t: SectionQuizTotals): string {
  * that case is checked first.
  */
 export function summaryEmptyMessage(
-  summary: Pick<SectionQuizSummary, 'subjectId' | 'subjects' | 'totals'>
+  summary: Pick<SectionQuizSummary, 'subjectId' | 'subjects' | 'totals'>,
+  t: TFunction
 ): string | null {
-  const t = summary.totals;
-  if (summary.subjectId === null && summary.subjects.length === 0) return 'No subjects are set up for this school yet.';
-  if (t.students === 0) return 'No students in this class yet.';
-  if (t.activeStudents === 0) return 'No one in this class played Practice, Arena or Battle in this period.';
+  const totals = summary.totals;
+  if (summary.subjectId === null && summary.subjects.length === 0) return t('quizInsights.results.noSubjects');
+  if (totals.students === 0) return t('quizInsights.results.noStudents');
+  if (totals.activeStudents === 0) return t('quizInsights.results.nobodyPlayed');
   return null;
 }
 
@@ -169,18 +202,9 @@ export function summaryEmptyMessage(
  * Why a question may need a look: open "wrong answer" reports, a wrong option picked more often
  * than the right one, or a low % correct. The last two need at least MIN_ANSWERS_FOR_FLAG answers.
  */
-// English until the quiz-results screens get Hindi (audit M15 part 2); questionAuthor's reportWarning
-// now takes a translator.
-function reportWarning(openReportCount: number | null | undefined): string | null {
-  if (!openReportCount || openReportCount <= 0) return null;
-  return openReportCount === 1
-    ? '1 student reported a wrong answer'
-    : `${openReportCount} students reported a wrong answer`;
-}
-
-export function questionFlags(item: QuestionStat): string[] {
+export function questionFlags(item: QuestionStat, t: TFunction): string[] {
   const flags: string[] = [];
-  const report = reportWarning(item.question.openReportCount);
+  const report = reportWarning(item.question.openReportCount, t);
   if (report) flags.push(report);
   if (item.answered < MIN_ANSWERS_FOR_FLAG) return flags;
 
@@ -192,10 +216,10 @@ export function questionFlags(item: QuestionStat): string[] {
       if (o === correctOption || count(o) <= count(correctOption)) continue;
       if (topWrong === null || count(o) > count(topWrong)) topWrong = o;
     }
-    if (topWrong) flags.push(`More students chose ${topWrong} than the right answer`);
+    if (topWrong) flags.push(t('quizInsights.stats.moreChose', { option: topWrong }));
   }
   if (item.percentCorrect !== null && item.percentCorrect !== undefined && item.percentCorrect < 40) {
-    flags.push(`Only ${item.percentCorrect}% got this right`);
+    flags.push(t('quizInsights.stats.lowCorrect', { percent: item.percentCorrect }));
   }
   return flags;
 }
@@ -209,36 +233,40 @@ export function optionCountsLine(item: QuestionStat): string {
 }
 
 /** "50 answers · 30% correct", or "Not answered in this period". */
-export function questionAnswersLine(item: QuestionStat): string {
-  if (item.answered === 0) return 'Not answered in this period';
-  return `${item.answered} ${item.answered === 1 ? 'answer' : 'answers'} · ${formatPercent(item.percentCorrect)} correct`;
+export function questionAnswersLine(item: QuestionStat, t: TFunction): string {
+  if (item.answered === 0) return t('quizInsights.stats.notAnswered');
+  const answers = t('quizInsights.answers', { count: item.answered });
+  return `${answers} · ${t('quizInsights.correct', { percent: formatPercent(item.percentCorrect) })}`;
 }
 
 /** "Practice 20 (6 right) · Arena 18 (5 right) · Battle 12 (4 right)", leaving out games with no answers. */
-export function questionGameSplit(item: QuestionStat): string {
+export function questionGameSplit(item: QuestionStat, t: TFunction): string {
   const games: [string, QuestionStat['practice']][] = [
-    ['Practice', item.practice],
-    ['Arena', item.arena],
-    ['Battle', item.battle],
+    ['quizInsights.stats.practice', item.practice],
+    ['quizInsights.stats.arena', item.arena],
+    ['quizInsights.stats.battle', item.battle],
   ];
   return games
     .filter(([, tally]) => tally.answered > 0)
-    .map(([label, tally]) => `${label} ${tally.answered} (${tally.correct} right)`)
+    .map(([key, tally]) => t(key, { answered: tally.answered, correct: tally.correct }))
     .join(' · ');
 }
 
 /** "Answers from students in Grade 8 - A", or "Answers from all Grade 8 students". */
-export function questionScopeLine(res: Pick<QuestionStatsResponse, 'sectionLabel' | 'className'>): string {
+export function questionScopeLine(
+  res: Pick<QuestionStatsResponse, 'sectionLabel' | 'className'>,
+  t: TFunction
+): string {
   return res.sectionLabel
-    ? `Answers from students in ${res.sectionLabel}`
-    : `Answers from all ${res.className} students`;
+    ? t('quizInsights.stats.scopeSection', { section: res.sectionLabel })
+    : t('quizInsights.stats.scopeClass', { className: res.className });
 }
 
 /** The empty state when no MCQ question matches the filters. */
-export function noQuestionsMessage(onlyMine: boolean, subjectName: string, className: string): string {
+export function noQuestionsMessage(onlyMine: boolean, subjectName: string, className: string, t: TFunction): string {
   return onlyMine
-    ? `You haven't added any multiple-choice questions for ${subjectName} in ${className} yet.`
-    : `No multiple-choice questions for ${subjectName} in ${className} yet.`;
+    ? t('quizInsights.stats.noQuestionsMine', { subject: subjectName, className })
+    : t('quizInsights.stats.noQuestions', { subject: subjectName, className });
 }
 
 /**

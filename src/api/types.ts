@@ -183,28 +183,6 @@ export interface EmployeeRequest {
   employeeType?: EmployeeType;
 }
 
-export interface Vendor {
-  id: string;
-  schoolId: string;
-  name: string;
-  contactPhone: string;
-  contactEmail: string;
-  bankAccount: string;
-  upiId: string;
-  address: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface VendorRequest {
-  name: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  bankAccount?: string;
-  upiId?: string;
-  address?: string;
-}
-
 export interface FeeCategory {
   id: string;
   schoolId: string;
@@ -266,14 +244,48 @@ export interface FeeAssessment {
   updatedAt: string;
 }
 
+/** The backend's payment methods (finance PaymentMethod enum). */
+export type PaymentMethod = 'CASH' | 'UPI' | 'BANK_TRANSFER' | 'CHEQUE';
+
+/** POST /fee-payments (ADMIN). Send an Idempotency-Key header with it - see recordFeePayment. */
 export interface FeePaymentRequest {
   assessmentId: string;
+  /** Rupees, at most 2 decimals (more is a 400, never rounded). */
   amount: number;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
+  /** UTR, cheque number or transaction ID. Required for everything but CASH. */
   paymentReference?: string;
+  /** YYYY-MM-DD; the server defaults it to today in IST. No future dates, none over 400 days back. */
   transactionDate?: string;
+  /** True to record it although the reference is already on another live payment (after a DUPLICATE_REFERENCE 409). */
+  confirmDuplicateReference?: boolean;
 }
 
+export type ReversalType = 'CORRECTION' | 'BOUNCED' | 'REFUND';
+
+/**
+ * How and why a payment was reversed. The refund fields are null unless `type` is REFUND. The payment's
+ * own ledger entry is never changed (it stays completed); a compensating entry is posted against it on
+ * the day of the reversal - `reversalTransactionId`, for every type.
+ */
+export interface FeePaymentReversal {
+  type: ReversalType;
+  reason: string;
+  reversedAt: string;
+  reversedByName: string | null;
+  refundMethod: PaymentMethod | null;
+  refundReference: string | null;
+  /** The day the refund was entered in the books (the day it was reversed, IST). */
+  refundDate: string | null;
+  refundTransactionId: string | null;
+  /** The compensating ledger entry; may be missing from a server older than this field. */
+  reversalTransactionId?: string | null;
+}
+
+/**
+ * One fee payment, and everything its receipt shows. The same shape from record, get, both history
+ * lists and reverse; `schoolLogoUrl` is filled only on single-payment responses (null in lists).
+ */
 export interface FeePayment {
   id: string;
   schoolId: string;
@@ -281,17 +293,45 @@ export interface FeePayment {
   studentId: string;
   amount: number;
   transactionId: string;
-  receiptNumber: string;
+  receiptNumber: string | null;
   studentName: string;
-  rollNumber: string;
-  classSectionLabel: string;
+  rollNumber: string | null;
+  /** The student's current class ("Grade 8 - A"), not the class at the time of payment. */
+  classSectionLabel: string | null;
+  /** The fee bill's academic year. */
   academicYear: string;
   schoolName: string;
-  paymentMethod: string;
+  schoolLogoUrl: string | null;
+  paymentMethod: PaymentMethod;
   paymentReference: string | null;
   transactionDate: string;
+  /** Null for payments recorded before receipts kept who recorded them. */
+  recordedByName: string | null;
+  /** The bill's remaining due right after this payment; null for older payments. */
+  balanceAfter: number | null;
+  reversed: boolean;
+  reversal: FeePaymentReversal | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** POST /fee-payments/{id}/reverse (ADMIN). The refund fields are used only for a REFUND. */
+export interface FeePaymentReversalRequest {
+  type: ReversalType;
+  /** At least 10 characters once trimmed, at most 500. */
+  reason: string;
+  refundMethod?: PaymentMethod;
+  refundReference?: string;
+  // No refund date: a refund is entered in the books on the day it's reversed, like every reversal.
+}
+
+/** The `data` of a 409 DUPLICATE_REFERENCE: the most recent live payment that has the same reference. */
+export interface DuplicateReferenceData {
+  existingPaymentId: string;
+  existingReceiptNumber: string | null;
+  existingStudentName: string;
+  existingAmount: number;
+  existingTransactionDate: string;
 }
 
 export interface DuesReport {
@@ -530,44 +570,6 @@ export interface SalaryHistoryEntry {
   deductions: number;
   status: PayrollLineStatus;
   paidOn: string | null;
-}
-
-export interface InfraExpenseCategory {
-  id: string;
-  code: string;
-  name: string;
-}
-
-export interface InfraExpenseRequest {
-  id: string;
-  categoryId: string;
-  categoryCode: string;
-  description: string;
-  estimatedAmount: number;
-  status: string;
-}
-
-export interface InfraExpenseRequestCreate {
-  categoryId: string;
-  description: string;
-  estimatedAmount: number;
-}
-
-export interface ApprovalActionRequest {
-  actor?: string;
-  comment?: string;
-}
-
-export interface InfraPurchaseRequest {
-  vendorId: string;
-  invoiceNumber: string;
-  actualAmount: number;
-}
-
-export interface InfraPayRequest {
-  paymentMethod: string;
-  paymentReference?: string;
-  transactionDate?: string;
 }
 
 export interface Subject {
@@ -2395,9 +2397,8 @@ export interface Holiday {
 }
 
 // ---------------------------------------------------------------- ledger & receipts (specs/ledger-and-receipts)
+// Payment methods are the fee payments' PaymentMethod above (the backend's one enum).
 
-/** The backend's one PaymentMethod enum, the same type payroll uses. */
-export type PaymentMethod = PayrollPaymentMethod;
 export type LedgerDirection = 'INFLOW' | 'OUTFLOW';
 export type LedgerSourceType = 'FEE_PAYMENT' | 'EVENT_COLLECTION' | 'SPONSORSHIP' | 'SALARY' | 'VENDOR_PAYMENT' | 'MANUAL';
 /** REVERSED is never set: a reversed entry stays COMPLETED and gets a linked reversal entry. */

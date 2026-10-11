@@ -8,12 +8,11 @@ import type {
   FeePayment,
   FeeStructure,
   GeneratedQuizQuestion,
-  InfraExpenseRequest,
   LedgerTransaction,
   SalaryStructure,
   Student,
-  Vendor,
 } from '../api/types';
+import type { InfraExpenseRequest, Vendor } from '../api/expenseTypes';
 
 export type FeatureId =
   | 'students'
@@ -91,7 +90,8 @@ export type PrincipalStackParamList = {
   /** Only id and name: a driver opens their own payslips without being able to read their employee record. */
   SalaryHistory: { employee: Pick<Employee, 'id' | 'name'> };
   VendorsList: undefined;
-  VendorDetail: { vendor: Vendor };
+  /** `vendor`: the copy to show while the latest is fetched. */
+  VendorDetail: { vendorId: string; vendor?: Vendor };
   VendorForm: { vendor?: Vendor };
   FeesHub: undefined;
   FeeCategoriesList: undefined;
@@ -103,7 +103,12 @@ export type PrincipalStackParamList = {
   FeeAssessmentDetail: { assessment: FeeAssessment };
   PayFees: { assessment: FeeAssessment };
   FeePaymentSettings: undefined;
-  PaymentReceipt: { payment: FeePayment };
+  /** The payment itself (after recording, or from a history list), or just its id; fetched again on focus. */
+  PaymentReceipt: { payment?: FeePayment; paymentId?: string };
+  RecordPayment: { assessment: FeeAssessment };
+  ReversePayment: { payment: FeePayment };
+  /** Every payment on every bill of one student. */
+  StudentFeePayments: { student: { id: string; name?: string } };
   /** The school ledger: day book, filtered entries and the receipt lookup (admin, from the Fees hub). */
   Ledger: undefined;
   LedgerEntryDetail: { transaction: LedgerTransaction };
@@ -118,8 +123,10 @@ export type PrincipalStackParamList = {
   PayrollOverview: undefined;
   MyClassFees: { classSection: ClassSection };
   InfraExpensesList: undefined;
-  InfraExpenseDetail: { request: InfraExpenseRequest };
+  /** `request`: the copy to show while the latest (with its history) is fetched. */
+  InfraExpenseDetail: { requestId: string; request?: InfraExpenseRequest };
   InfraExpenseForm: undefined;
+  InfraCategories: undefined;
   /** `homeroom`: a class teacher's own section, pinned above the class list. */
   ClassesList: { homeroom?: ClassSection } | undefined;
   SectionsList: { className: string };

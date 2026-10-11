@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 import type { ReportCardPublishCheck } from '../api/types';
 
 export type PublishWarning =
@@ -40,54 +42,43 @@ export function publishWarnings(check: ReportCardPublishCheck): PublishWarning[]
   return warnings;
 }
 
-function count(n: number, singular: string, plural = `${singular}s`): string {
-  return `${n} ${n === 1 ? singular : plural}`;
-}
-
-function defaultFormatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-function warningText(warning: PublishWarning, check: ReportCardPublishCheck, formatDate: (iso: string) => string): string {
+function warningText(
+  warning: PublishWarning,
+  check: ReportCardPublishCheck,
+  formatDate: (iso: string) => string,
+  t: TFunction
+): string {
   const { term } = check;
   switch (warning.code) {
     case 'noStudents':
-      return 'This section has no students, so no report cards will be published.';
+      return t('reportCardPublish.confirm.noStudents');
     case 'missingMarks':
-      return (
-        `${count(warning.students, 'student has', 'students have')} marks missing ` +
-        `(${count(warning.marks, 'mark')} in all). Their report cards will say marks are missing.`
-      );
+      return t('reportCardPublish.confirm.missingMarks', {
+        count: warning.students,
+        marks: t('reportCardPublish.confirm.marks', { count: warning.marks }),
+      });
     case 'untermedAssessments': {
-      const one = warning.count === 1;
-      const summary =
-        `${count(warning.count, 'assessment')} in this section ${one ? 'has' : 'have'} no term, ` +
-        `so ${one ? 'its' : 'their'} marks won't be on any report card.`;
+      const summary = t('reportCardPublish.confirm.untermed', { count: warning.count });
+      // Named by the button's on-screen label, in either language.
+      const fix = t('reportCardPublish.fixButton');
       // A published term is locked (the app and the server both refuse the fix for it), so on a
       // re-publish don't point the admin at a fix they can't use for this term.
-      if (check.alreadyPublished) {
-        return (
-          `${summary} "${term}" is already published, so ${one ? 'it' : 'they'} can't be added to it. Give ` +
-          `${one ? 'it' : 'them'} another term with "Fix assessments missing a term", or edit ${one ? 'it' : 'each one'}.`
-        );
-      }
-      return (
-        `${summary} If ${one ? 'it belongs' : 'they belong'} to "${term}", use "Fix assessments missing a term" ` +
-        `first: after publishing, nothing can be added to "${term}".`
-      );
+      const next = check.alreadyPublished
+        ? t('reportCardPublish.confirm.untermedLocked', { count: warning.count, term, fix })
+        : t('reportCardPublish.confirm.untermedFixFirst', { count: warning.count, term, fix });
+      return `${summary} ${next}`;
     }
     case 'alreadyPublished':
-      return (
-        `"${term}" was already published${warning.publishedAt ? ` on ${formatDate(warning.publishedAt)}` : ''}. ` +
-        'Publishing again only updates the published date. Students and parents are not notified again.'
-      );
+      return warning.publishedAt
+        ? t('reportCardPublish.confirm.alreadyPublishedOn', { term, date: formatDate(warning.publishedAt) })
+        : t('reportCardPublish.confirm.alreadyPublished', { term });
     case 'previouslyUnpublished': {
-      const by = warning.byName ? ` by ${warning.byName}` : '';
-      const why = warning.reason ? `: ${warning.reason}` : '';
-      return (
-        `"${term}" was unpublished on ${formatDate(warning.unpublishedAt)}${by}${why}. ` +
-        'Publishing it again notifies every family again.'
-      );
+      const date = formatDate(warning.unpublishedAt);
+      const { byName: name, reason } = warning;
+      if (name && reason) return t('reportCardPublish.confirm.unpublishedByWhy', { term, date, name, reason });
+      if (name) return t('reportCardPublish.confirm.unpublishedBy', { term, date, name });
+      if (reason) return t('reportCardPublish.confirm.unpublishedWhy', { term, date, reason });
+      return t('reportCardPublish.confirm.unpublished', { term, date });
     }
   }
 }
@@ -95,32 +86,38 @@ function warningText(warning: PublishWarning, check: ReportCardPublishCheck, for
 /**
  * The confirmation shown before publishing: the counts, every warning, and what publishing does
  * (notifies families the first time, locks the term's marks, and only an admin can unpublish).
- * English only, like the rest of the Publish screen.
  */
 export function publishConfirmation(
   check: ReportCardPublishCheck,
-  formatDate: (iso: string) => string = defaultFormatDate
+  formatDate: (iso: string) => string,
+  t: TFunction
 ): { title: string; message: string } {
   const { term } = check;
-  const lines = [`${count(check.studentCount, 'student')} · ${count(check.assessmentCount, 'assessment')} in "${term}".`];
+  const lines = [
+    t('reportCardPublish.confirm.counts', {
+      students: t('reportCardPublish.confirm.students', { count: check.studentCount }),
+      assessments: t('reportCardPublish.confirm.assessments', { count: check.assessmentCount }),
+      term,
+    }),
+  ];
   const warnings = publishWarnings(check);
   if (warnings.length > 0) {
-    lines.push('', ...warnings.map((w) => `• ${warningText(w, check, formatDate)}`));
+    lines.push('', ...warnings.map((w) => `• ${warningText(w, check, formatDate, t)}`));
   }
   lines.push('');
   if (!check.alreadyPublished) {
-    lines.push('Every student and parent in this section will be notified.');
-    lines.push(`Marks for every assessment in "${term}" will be locked.`);
+    lines.push(t('reportCardPublish.confirm.willNotify'));
+    lines.push(t('reportCardPublish.confirm.willLock', { term }));
   } else {
-    lines.push(`Marks for every assessment in "${term}" stay locked.`);
+    lines.push(t('reportCardPublish.confirm.stayLocked', { term }));
   }
-  lines.push("An admin can unpublish these later with a reason. Families aren't told when that happens.");
-  return { title: `Publish "${term}" report cards?`, message: lines.join('\n') };
+  lines.push(t('reportCardPublish.confirm.unpublishLater'));
+  return { title: t('reportCardPublish.confirm.title', { term }), message: lines.join('\n') };
 }
 
 /** Why publishing is refused outright (see canPublish). */
-export function nothingToPublishMessage(check: ReportCardPublishCheck): string {
-  return `No assessment in this section has the term "${check.term}", so every report card would be empty.`;
+export function nothingToPublishMessage(check: ReportCardPublishCheck, t: TFunction): string {
+  return t('reportCardPublish.nothingMessage', { term: check.term });
 }
 
 /**

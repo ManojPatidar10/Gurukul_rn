@@ -72,6 +72,7 @@ import { FeeStructureDetailScreen } from '../screens/principal/FeeStructureDetai
 import { FeeStructureFormScreen } from '../screens/principal/FeeStructureFormScreen';
 import { FeeStructuresListScreen } from '../screens/principal/FeeStructuresListScreen';
 import { FeesHubScreen } from '../screens/principal/FeesHubScreen';
+import { InfraCategoriesScreen } from '../screens/principal/InfraCategoriesScreen';
 import { InfraExpenseDetailScreen } from '../screens/principal/InfraExpenseDetailScreen';
 import { InfraExpenseFormScreen } from '../screens/principal/InfraExpenseFormScreen';
 import { InfraExpensesListScreen } from '../screens/principal/InfraExpensesListScreen';
@@ -83,6 +84,9 @@ import { PayrollRunsListScreen } from '../screens/principal/PayrollRunsListScree
 import { PayrollOverviewScreen } from '../screens/principal/PayrollOverviewScreen';
 import { MyClassFeesScreen } from '../screens/principal/MyClassFeesScreen';
 import { PaymentReceiptScreen } from '../screens/principal/PaymentReceiptScreen';
+import { RecordPaymentScreen } from '../screens/principal/RecordPaymentScreen';
+import { ReversePaymentScreen } from '../screens/principal/ReversePaymentScreen';
+import { StudentFeePaymentsScreen } from '../screens/principal/StudentFeePaymentsScreen';
 import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
 import { ConnectGoogleAccountScreen } from '../screens/principal/ConnectGoogleAccountScreen';
@@ -157,6 +161,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="PayFees" component={PayFeesScreen} />
         <Stack.Screen name="FeePaymentSettings" component={FeePaymentSettingsScreen} />
         <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} />
+        <Stack.Screen name="RecordPayment" component={RecordPaymentScreen} />
+        <Stack.Screen name="ReversePayment" component={ReversePaymentScreen} />
+        <Stack.Screen name="StudentFeePayments" component={StudentFeePaymentsScreen} />
         <Stack.Screen name="Ledger" component={LedgerScreen} />
         <Stack.Screen name="LedgerEntryDetail" component={LedgerEntryDetailScreen} />
         <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />
@@ -170,6 +177,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="InfraExpensesList" component={InfraExpensesListScreen} />
         <Stack.Screen name="InfraExpenseDetail" component={InfraExpenseDetailScreen} />
         <Stack.Screen name="InfraExpenseForm" component={InfraExpenseFormScreen} />
+        <Stack.Screen name="InfraCategories" component={InfraCategoriesScreen} />
         <Stack.Screen name="ClassesList" component={ClassesListScreen} />
         <Stack.Screen name="SectionsList" component={SectionsListScreen} />
         <Stack.Screen name="SectionDetail" component={SectionDetailScreen} />
