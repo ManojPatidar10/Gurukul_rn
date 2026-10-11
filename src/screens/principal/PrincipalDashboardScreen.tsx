@@ -217,6 +217,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const { session } = useAuth();
   const isStudent = session.ownerType === 'STUDENT';
   const isTeacher = session.role === 'TEACHER';
+  const isAdmin = session.role === 'ADMIN';
   const fabBottom = useBottomInset();
   const [school, setSchool] = useState<School | null>(null);
   const [myName, setMyName] = useState<string | null>(null);
@@ -328,7 +329,10 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       .catch(() => setMyName(null));
   }, [schoolId, session.ownerId, session.ownerType, session.role]);
 
+  // Only the admin sees the school-wide counts, so other logins don't fetch the student count, the
+  // staff roster or the vendor list (admin-only on the server) for cards they never see.
   useEffect(() => {
+    if (!isAdmin) return;
     const load = () => {
       setLoadingCounts(true);
       Promise.allSettled([
@@ -346,7 +350,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     const unsubscribe = navigation.addListener('focus', load);
     load();
     return unsubscribe;
-  }, [schoolId, navigation]);
+  }, [schoolId, navigation, isAdmin]);
 
   return (
     <View style={styles.root}>
@@ -383,7 +387,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       {/* Leave room below the last tile so the floating bot button never covers it. */}
       <ScreenContainer contentContainerStyle={{ paddingBottom: fabBottom + FAB_SIZE + spacing.lg }}>
         <NotificationPermissionPrompt />
-        {!isStudent && !isTeacher && (
+        {isAdmin && (
           <View style={styles.statRow}>
             <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />
             <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} loading={loadingCounts} />

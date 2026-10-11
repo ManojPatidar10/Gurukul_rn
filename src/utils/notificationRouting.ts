@@ -9,7 +9,8 @@ export type NotificationTarget =
   | { screen: 'Announcements' }
   | { screen: 'MyBus' | 'TransportHub' }
   | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string }
-  | { screen: 'ReportCard'; studentId: string; term?: string; sectionId?: string };
+  | { screen: 'ReportCard'; studentId: string; term?: string; sectionId?: string }
+  | { screen: 'PayslipDetail'; payrollLineId: string };
 
 export function notificationTarget(
   data: Record<string, unknown> | null | undefined,
@@ -17,6 +18,7 @@ export function notificationTarget(
 ): NotificationTarget | null {
   if (!data || typeof data.type !== 'string') return null;
   const studentId = typeof data.studentId === 'string' ? data.studentId : null;
+  const payrollLineId = typeof data.payrollLineId === 'string' && data.payrollLineId ? data.payrollLineId : null;
   switch (data.type) {
     case 'NEW_MESSAGE':
       return { screen: 'ConversationsList' };
@@ -46,6 +48,10 @@ export function notificationTarget(
       // Boarding/return updates go to the child's login and parents; unusual ones also to admins.
       if (role === 'STUDENT' || role === 'PARENT') return { screen: 'MyBus' };
       return role === 'ADMIN' ? { screen: 'TransportHub' } : null;
+    case 'SALARY_PAID':
+      // Goes to the employee whose salary was paid. Only staff on the principal navigator have a
+      // payslip screen; a driver's tap just opens the app.
+      return (role === 'TEACHER' || role === 'ADMIN') && payrollLineId ? { screen: 'PayslipDetail', payrollLineId } : null;
     default:
       return null;
   }

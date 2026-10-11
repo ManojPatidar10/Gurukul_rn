@@ -10,7 +10,7 @@ import type {
   GeneratedQuizQuestion,
   InfraExpenseRequest,
   LedgerTransaction,
-  PayrollLine,
+  SalaryStructure,
   Student,
   Vendor,
 } from '../api/types';
@@ -88,7 +88,8 @@ export type PrincipalStackParamList = {
   EmployeesList: undefined;
   EmployeeDetail: { employee: Employee };
   EmployeeForm: { employee?: Employee };
-  SalaryHistory: { employee: Employee };
+  /** Only id and name: a driver opens their own payslips without being able to read their employee record. */
+  SalaryHistory: { employee: Pick<Employee, 'id' | 'name'> };
   VendorsList: undefined;
   VendorDetail: { vendor: Vendor };
   VendorForm: { vendor?: Vendor };
@@ -108,9 +109,12 @@ export type PrincipalStackParamList = {
   LedgerEntryDetail: { transaction: LedgerTransaction };
   PayrollHub: undefined;
   SalaryStructuresList: undefined;
-  SalaryStructureForm: undefined;
-  PayrollRun: undefined;
-  PayslipDetail: { payrollLine: PayrollLine };
+  /** No params: add a structure. `structure`: edit it. `employee`: add one for that employee. */
+  SalaryStructureForm: { structure?: SalaryStructure; employee?: { id: string; name: string } } | undefined;
+  PayrollRunsList: undefined;
+  /** No runId: pick a month and create its run. */
+  PayrollRun: { runId?: string } | undefined;
+  PayslipDetail: { payrollLineId: string; employeeName?: string };
   PayrollOverview: undefined;
   MyClassFees: { classSection: ClassSection };
   InfraExpensesList: undefined;
