@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 
 import type {
+  PayrollLine,
   PayrollLineStatus,
   PayrollLineWarning,
   PayrollLineWarningCode,
@@ -296,35 +297,54 @@ export function payslipStatusText(payslip: Pick<Payslip, 'status' | 'paidOn'>, i
 type RunState = Pick<PayrollRunDetail, 'status' | 'paidLineCount' | 'payableLineCount' | 'paymentDateMin' | 'paymentDateMax'>;
 
 export interface RunActions {
-  /** A legacy run for a month that hasn't started: it can only be cancelled. */
+  /** A legacy run for a month that hasn't started, not cancelled yet: it can only be cancelled. */
   futureMonth: boolean;
   process: boolean;
   recalculate: boolean;
   cancel: boolean;
   /** Create the cancelled month's run again (the server reopens the same run as a draft). */
   runAgain: boolean;
+  /** A cancelled run for a month that hasn't started: it can be run again once the month starts. */
+  runAgainLater: boolean;
   /** Hold or release unpaid lines. */
   hold: boolean;
   pay: boolean;
 }
 
 /**
- * Which buttons the run screen shows, matching what the server allows. A run with paid salary
- * can't be cancelled or recalculated once fully paid - but a legacy PAID run with no paid lines
- * moved no money, so it can be either.
+ * Which buttons and notes the run screen shows, matching what the server allows. A run with paid
+ * salary can't be cancelled or recalculated once fully paid - but a legacy PAID run with no paid
+ * lines moved no money, so it can be either.
  */
 export function runActions(run: RunState): RunActions {
-  const futureMonth = run.paymentDateMin > run.paymentDateMax;
+  const future = run.paymentDateMin > run.paymentDateMax;
+  const cancelled = run.status === 'CANCELLED';
   const payable = run.status === 'PROCESSED' || run.status === 'PARTIALLY_PAID';
   return {
-    futureMonth,
-    process: run.status === 'DRAFT' && !futureMonth,
-    recalculate: !futureMonth && (payable || (run.status === 'PAID' && run.paidLineCount === 0)),
-    cancel: run.status !== 'CANCELLED' && run.paidLineCount === 0,
-    runAgain: run.status === 'CANCELLED' && !futureMonth,
+    futureMonth: future && !cancelled,
+    process: run.status === 'DRAFT' && !future,
+    recalculate: !future && (payable || (run.status === 'PAID' && run.paidLineCount === 0)),
+    cancel: !cancelled && run.paidLineCount === 0,
+    runAgain: cancelled && !future,
+    runAgainLater: cancelled && future,
     hold: payable,
-    pay: payable && run.payableLineCount > 0 && !futureMonth,
+    pay: payable && run.payableLineCount > 0 && !future,
   };
+}
+
+/**
+ * The Hold / Release button on a line, or null when the line can't be held (it's paid, or the run
+ * doesn't allow holds). `label` names the employee, for screen readers.
+ */
+export function lineHoldButton(
+  line: Pick<PayrollLine, 'employeeName' | 'held' | 'status'>,
+  actions: Pick<RunActions, 'hold'>,
+  t: TFunction
+): { text: string; label: string } | null {
+  if (!actions.hold || line.status === 'PAID') return null;
+  return line.held
+    ? { text: t('payroll.run.release'), label: t('payroll.run.releaseFor', { name: line.employeeName }) }
+    : { text: t('payroll.run.hold'), label: t('payroll.run.holdFor', { name: line.employeeName }) };
 }
 
 export interface PaymentDateBounds {

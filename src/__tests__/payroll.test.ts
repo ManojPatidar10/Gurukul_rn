@@ -1,13 +1,14 @@
 import type { PayrollRunDetail, PayrollRunStatus, PayrollSkippedEmployee, SalaryStructure } from '../api/types';
 import en from '../i18n/locales/en.json';
 import hi from '../i18n/locales/hi.json';
-import { tEn, tHi } from '../testUtils/i18nFixture';
+import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 import {
   amountInputText,
   conflictData,
   formatAmount,
   formatInr,
   formatPayrollDate,
+  lineHoldButton,
   lineStatusLabel,
   lineStatusVariant,
   lineWarningText,
@@ -328,7 +329,28 @@ describe('runActions', () => {
     const future = { paymentDateMin: '2026-11-01', paymentDateMax: '2026-10-11' };
     expect(shown(run({ ...future, status: 'DRAFT', payableLineCount: 0 }))).toEqual(['cancel', 'futureMonth']);
     expect(shown(run({ ...future, status: 'PROCESSED' }))).toEqual(['cancel', 'futureMonth', 'hold']);
-    expect(shown(run({ ...future, status: 'CANCELLED', payableLineCount: 0 }))).toEqual(['futureMonth']);
+  });
+
+  it('tells a cancelled future-month run it can run again once the month starts, not to cancel it', () => {
+    const future = { paymentDateMin: '2026-11-01', paymentDateMax: '2026-10-11' };
+    expect(shown(run({ ...future, status: 'CANCELLED', payableLineCount: 0 }))).toEqual(['runAgainLater']);
+    expect(runActions(run({ status: 'CANCELLED', payableLineCount: 0 })).runAgainLater).toBe(false);
+  });
+
+  it('offers Hold or Release on unpaid lines only, naming the employee for screen readers', () => {
+    const open = runActions(run({ status: 'PROCESSED' }));
+    const line = { employeeName: 'Asha Verma', held: false, status: 'PENDING' as const };
+    expect(lineHoldButton(line, open, tEn)).toEqual({ text: 'Hold', label: "Hold Asha Verma's salary" });
+    expect(lineHoldButton({ ...line, held: true, status: 'ON_HOLD' }, open, tEn)).toEqual({
+      text: 'Release',
+      label: "Release Asha Verma's salary",
+    });
+    expect(lineHoldButton(line, open, tHi)).toEqual({
+      text: hi.payroll.run.hold,
+      label: fill(hi.payroll.run.holdFor, { name: 'Asha Verma' }),
+    });
+    expect(lineHoldButton({ ...line, status: 'PAID' }, open, tEn)).toBeNull();
+    expect(lineHoldButton(line, runActions(run({ status: 'PAID', paidLineCount: 3, payableLineCount: 0 })), tEn)).toBeNull();
   });
 
   it('points each left-out employee at the fix', () => {

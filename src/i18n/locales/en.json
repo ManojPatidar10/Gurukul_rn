@@ -687,6 +687,7 @@
       "openExisting": "Open it",
       "cancelledNote": "This run was cancelled. Nothing in it was paid.",
       "runAgain": "Run this month again",
+      "runAgainLater": "You can run this month again once it starts.",
       "futureMonth": "This run is for a month that hasn't started yet. Cancel it, or wait until the month starts.",
       "skippedTitle": "Left out ({{count}})",
       "skipReason": {
@@ -707,6 +708,8 @@
       },
       "hold": "Hold",
       "release": "Release",
+      "holdFor": "Hold {{name}}'s salary",
+      "releaseFor": "Release {{name}}'s salary",
       "payConfirmTitle": "Record salary as paid?",
       "payConfirmBody": "Record {{total}} salary for {{count}} staff as paid by {{method}} on {{date}}?",
       "payConfirmHeld": "{{count}} staff on hold won't be paid now.",

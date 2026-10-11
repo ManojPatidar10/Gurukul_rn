@@ -31,6 +31,7 @@ import {
   conflictData,
   formatInr,
   formatPayrollDate,
+  lineHoldButton,
   lineStatusLabel,
   lineStatusVariant,
   lineWarningText,
@@ -124,6 +125,7 @@ export function PayrollRunScreen({ route, navigation }: Props) {
     try {
       const created = await createPayrollRun(schoolId, req);
       setDetail(created);
+      setLoadError(null);
       navigation.setParams({ runId: created.id });
     } catch (e) {
       const existing = conflictData(e, 'PAYROLL_RUN_EXISTS');
@@ -148,6 +150,8 @@ export function PayrollRunScreen({ route, navigation }: Props) {
     setBusy(kind);
     try {
       setDetail(await call());
+      // The run is current now, so an earlier failed reload no longer applies.
+      setLoadError(null);
       onDone?.();
     } catch (e) {
       if (conflictData(e, 'PAYROLL_RUN_CHANGED')) {
@@ -291,6 +295,7 @@ export function PayrollRunScreen({ route, navigation }: Props) {
             {detail.status === 'CANCELLED' ? (
               <View>
                 <Text style={styles.note}>{t('payroll.run.cancelledNote')}</Text>
+                {actions.runAgainLater && <Text style={styles.note}>{t('payroll.run.runAgainLater')}</Text>}
                 {actions.runAgain && (
                   <Pressable
                     style={[styles.button, !!busy && styles.buttonDisabled]}
@@ -338,42 +343,49 @@ export function PayrollRunScreen({ route, navigation }: Props) {
               <View style={styles.section}>
                 <Text style={styles.label}>{t('payroll.run.payrollLines', { count: detail.lines.length })}</Text>
                 {detail.lines.length === 0 && <Text style={styles.empty}>{t('payroll.run.noLines')}</Text>}
-                {detail.lines.map((line) => (
-                  <Pressable
-                    key={line.id}
-                    style={styles.lineRow}
-                    onPress={() => navigation.navigate('PayslipDetail', { payrollLineId: line.id, employeeName: line.employeeName })}
-                  >
-                    <View style={styles.lineTop}>
-                      <View style={styles.lineMain}>
-                        <Text style={styles.lineName}>{line.employeeName}</Text>
-                        {line.designation ? <Text style={styles.lineMeta}>{line.designation}</Text> : null}
-                      </View>
-                      <StatusChip label={lineStatusLabel(line.status, t)} variant={lineStatusVariant(line.status)} />
-                    </View>
-                    <Text style={styles.lineMeta}>
-                      {t('payroll.run.lineAmounts', {
-                        gross: formatInr(line.gross),
-                        deductions: formatInr(line.deductions),
-                        net: formatInr(line.net),
-                      })}
-                    </Text>
-                    {line.warnings.map((w) => (
-                      <Text key={`${w.code}-${w.date ?? ''}`} style={styles.warning}>
-                        {lineWarningText(w, t)}
-                      </Text>
-                    ))}
-                    {actions.hold && line.status !== 'PAID' && (
+                {detail.lines.map((line) => {
+                  const hold = lineHoldButton(line, actions, t);
+                  // Hold / Release sits beside the payslip link, not inside it, so screen readers reach it.
+                  return (
+                    <View key={line.id} style={styles.lineRow}>
                       <Pressable
-                        style={[styles.smallButton, !!busy && styles.buttonDisabled]}
-                        onPress={() => handleHold(line)}
-                        disabled={!!busy}
+                        onPress={() => navigation.navigate('PayslipDetail', { payrollLineId: line.id, employeeName: line.employeeName })}
+                        accessibilityRole="button"
                       >
-                        <Text style={styles.smallButtonText}>{line.held ? t('payroll.run.release') : t('payroll.run.hold')}</Text>
+                        <View style={styles.lineTop}>
+                          <View style={styles.lineMain}>
+                            <Text style={styles.lineName}>{line.employeeName}</Text>
+                            {line.designation ? <Text style={styles.lineMeta}>{line.designation}</Text> : null}
+                          </View>
+                          <StatusChip label={lineStatusLabel(line.status, t)} variant={lineStatusVariant(line.status)} />
+                        </View>
+                        <Text style={styles.lineMeta}>
+                          {t('payroll.run.lineAmounts', {
+                            gross: formatInr(line.gross),
+                            deductions: formatInr(line.deductions),
+                            net: formatInr(line.net),
+                          })}
+                        </Text>
+                        {line.warnings.map((w) => (
+                          <Text key={`${w.code}-${w.date ?? ''}`} style={styles.warning}>
+                            {lineWarningText(w, t)}
+                          </Text>
+                        ))}
                       </Pressable>
-                    )}
-                  </Pressable>
-                ))}
+                      {hold && (
+                        <Pressable
+                          style={[styles.smallButton, !!busy && styles.buttonDisabled]}
+                          onPress={() => handleHold(line)}
+                          disabled={!!busy}
+                          accessibilityRole="button"
+                          accessibilityLabel={hold.label}
+                        >
+                          <Text style={styles.smallButtonText}>{hold.text}</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             )}
 
