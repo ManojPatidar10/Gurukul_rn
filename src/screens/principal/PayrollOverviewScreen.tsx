@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getPayrollOverview } from '../../api/feeAssessments';
@@ -13,6 +13,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { runStatusLabel } from '../../utils/payroll';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayrollOverview'>;
 
@@ -66,19 +67,27 @@ export function PayrollOverviewScreen({ navigation }: Props) {
 
             <Text style={styles.sectionTitle}>{t('payroll.overview.runsTitle')}</Text>
             {overview.runs.length === 0 && <Text style={styles.empty}>{t('payroll.overview.empty')}</Text>}
-            {overview.runs.map((run) => (
-              <View key={`${run.year}-${run.month}`} style={styles.row}>
-                <View style={styles.rowMain}>
-                  <Text style={styles.rowName}>
-                    {MONTH_NAMES[run.month - 1] ?? run.month} {run.year}
-                  </Text>
-                  <Text style={styles.rowMeta}>
-                    {t('payroll.overview.runSubtitle', { count: run.employeeCount })} · ₹{run.totalNet.toLocaleString('en-IN')}
-                  </Text>
-                </View>
-                <StatusChip label={run.status} variant={run.status === 'PAID' ? 'success' : 'warning'} />
-              </View>
-            ))}
+            {overview.runs.map((run) => {
+              const runId = run.runId;
+              return (
+                <Pressable
+                  key={`${run.year}-${run.month}`}
+                  style={styles.row}
+                  disabled={!runId}
+                  onPress={() => runId && navigation.navigate('PayrollRun', { runId })}
+                >
+                  <View style={styles.rowMain}>
+                    <Text style={styles.rowName}>
+                      {MONTH_NAMES[run.month - 1] ?? run.month} {run.year}
+                    </Text>
+                    <Text style={styles.rowMeta}>
+                      {t('payroll.overview.runSubtitle', { count: run.employeeCount })} · ₹{run.totalNet.toLocaleString('en-IN')}
+                    </Text>
+                  </View>
+                  <StatusChip label={runStatusLabel(run.status, t)} variant={run.status === 'PAID' ? 'success' : 'warning'} />
+                </Pressable>
+              );
+            })}
           </>
         )}
       </ScreenContainer>

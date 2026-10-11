@@ -21,7 +21,7 @@ export function PayrollHubScreen({ navigation }: Props) {
       description: t('payroll.hub.salaryStructures.description'),
     },
     {
-      route: 'PayrollRun',
+      route: 'PayrollRunsList',
       title: t('payroll.hub.runPayroll.title'),
       description: t('payroll.hub.runPayroll.description'),
     },
