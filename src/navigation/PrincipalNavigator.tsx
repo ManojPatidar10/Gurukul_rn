@@ -82,6 +82,9 @@ import { PayrollRunsListScreen } from '../screens/principal/PayrollRunsListScree
 import { PayrollOverviewScreen } from '../screens/principal/PayrollOverviewScreen';
 import { MyClassFeesScreen } from '../screens/principal/MyClassFeesScreen';
 import { PaymentReceiptScreen } from '../screens/principal/PaymentReceiptScreen';
+import { RecordPaymentScreen } from '../screens/principal/RecordPaymentScreen';
+import { ReversePaymentScreen } from '../screens/principal/ReversePaymentScreen';
+import { StudentFeePaymentsScreen } from '../screens/principal/StudentFeePaymentsScreen';
 import { PayslipDetailScreen } from '../screens/principal/PayslipDetailScreen';
 import { PrincipalDashboardScreen } from '../screens/principal/PrincipalDashboardScreen';
 import { ConnectGoogleAccountScreen } from '../screens/principal/ConnectGoogleAccountScreen';
@@ -156,6 +159,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="PayFees" component={PayFeesScreen} />
         <Stack.Screen name="FeePaymentSettings" component={FeePaymentSettingsScreen} />
         <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} />
+        <Stack.Screen name="RecordPayment" component={RecordPaymentScreen} />
+        <Stack.Screen name="ReversePayment" component={ReversePaymentScreen} />
+        <Stack.Screen name="StudentFeePayments" component={StudentFeePaymentsScreen} />
         <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />
         <Stack.Screen name="SalaryStructuresList" component={SalaryStructuresListScreen} />
         <Stack.Screen name="SalaryStructureForm" component={SalaryStructureFormScreen} />

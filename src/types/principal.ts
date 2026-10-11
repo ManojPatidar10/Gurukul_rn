@@ -102,7 +102,12 @@ export type PrincipalStackParamList = {
   FeeAssessmentDetail: { assessment: FeeAssessment };
   PayFees: { assessment: FeeAssessment };
   FeePaymentSettings: undefined;
-  PaymentReceipt: { payment: FeePayment };
+  /** The payment itself (after recording, or from a history list), or just its id; fetched again on focus. */
+  PaymentReceipt: { payment?: FeePayment; paymentId?: string };
+  RecordPayment: { assessment: FeeAssessment };
+  ReversePayment: { payment: FeePayment };
+  /** Every payment on every bill of one student. */
+  StudentFeePayments: { student: { id: string; name?: string } };
   PayrollHub: undefined;
   SalaryStructuresList: undefined;
   /** No params: add a structure. `structure`: edit it. `employee`: add one for that employee. */

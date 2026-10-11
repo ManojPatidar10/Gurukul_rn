@@ -504,7 +504,8 @@
       "errors": {
         "noLines": "Add at least one fee line.",
         "missingCategory": "Choose a category for every fee line.",
-        "invalidAmount": "Enter an amount greater than 0 for every fee line."
+        "invalidAmount": "Enter an amount like 15000 or 15,000.50 for every fee line.",
+        "duplicateCategory": "Each fee category can appear only once in a fee structure."
       }
     },
     "assessmentsList": {
@@ -568,10 +569,16 @@
       "paymentMethod": "Payment Method",
       "paymentReference": "Reference",
       "amountPaid": "Amount Paid",
-      "shareOrPrint": "Share / Print Receipt",
       "sharing": "Preparing…",
       "shareTitle": "Share fee payment receipt",
-      "shareUnavailable": "Sharing isn't available on this device."
+      "cancelled": "CANCELLED",
+      "cancelledBy": "Cancelled on {{date}} by {{name}}",
+      "reason": "Reason: {{reason}}",
+      "refundDetails": "Refunded by {{method}}, ref {{reference}}, on {{date}}",
+      "receivedBy": "Received by",
+      "balanceAfter": "Balance due after this payment",
+      "sharePdf": "Share receipt (PDF)",
+      "loadError": "Could not load this receipt."
     },
     "payFees": {
       "title": "Pay Fees",
@@ -609,6 +616,80 @@
       "resultFailedMessage": "Payment failed.",
       "resultCancelledMessage": "Payment was cancelled.",
       "resultUnknownMessage": "We could not confirm the payment result. Check My Fees later before paying again."
+    },
+    "recordPayment": {
+      "title": "Record payment",
+      "button": "Record payment",
+      "remaining": "Remaining {{amount}}",
+      "amount": "Amount (₹)",
+      "method": "Payment method",
+      "reference": "Reference",
+      "referenceHint": "UTR, cheque number or transaction ID",
+      "referenceOptional": "Optional for cash",
+      "date": "Payment date",
+      "save": "Save payment",
+      "saving": "Saving…",
+      "stillSaving": "Please wait while the payment is saved.",
+      "errors": {
+        "amountInvalid": "Enter an amount like 15000 or 15,000.50 (at most 2 decimals).",
+        "amountTooSmall": "Enter an amount of at least ₹0.01.",
+        "amountTooLarge": "The amount can't be more than the remaining due ({{max}}).",
+        "referenceRequired": "Enter the UTR, cheque or transaction number for this payment.",
+        "dateFuture": "The payment date can't be in the future.",
+        "dateTooOld": "The payment date can't be more than 400 days ago."
+      },
+      "duplicateTitle": "Reference already used",
+      "duplicateMessage": "{{reference}} is already on receipt {{receipt}} ({{student}}, {{date}}, {{amount}}). Record this payment anyway?",
+      "duplicateConfirm": "Record anyway"
+    },
+    "reversePayment": {
+      "title": "Reverse payment",
+      "button": "Reverse payment",
+      "typeLabel": "What happened?",
+      "types": {
+        "CORRECTION": {
+          "label": "Entered by mistake",
+          "description": "The payment was recorded in error or with wrong details. Record the right one afterwards."
+        },
+        "BOUNCED": {
+          "label": "Cheque or transfer bounced",
+          "description": "The cheque or transfer didn't clear, so the money never arrived."
+        },
+        "REFUND": {
+          "label": "Refunded",
+          "description": "The money was paid back to the family."
+        }
+      },
+      "reason": "Reason",
+      "reasonPlaceholder": "Why is this payment being reversed?",
+      "reasonCount": "{{length}}/{{max}}",
+      "refundMethod": "Refund method",
+      "refundReference": "Refund reference",
+      "refundReferenceHint": "UTR, cheque number, or a voucher or slip number for cash",
+      "refundEnteredToday": "The refund is entered in the books today, the day you save it.",
+      "confirmTitle": "Cancel this receipt?",
+      "confirmMessage": "Cancel receipt {{receipt}}? {{amount}} will be taken off {{student}}'s paid total. This can't be undone.",
+      "confirm": "Cancel receipt",
+      "submit": "Reverse payment",
+      "submitting": "Reversing…",
+      "stillReversing": "Please wait while the payment is reversed.",
+      "done": "Payment reversed.",
+      "errors": {
+        "typeRequired": "Choose what happened.",
+        "reasonTooShort": "Give a reason of at least {{min}} characters.",
+        "refundMethodRequired": "Choose how the money was refunded.",
+        "refundReferenceRequired": "Enter the refund's UTR, cheque, voucher or slip number."
+      }
+    },
+    "paymentHistory": {
+      "title": "Payment history",
+      "childTitle": "{{name}}'s payments",
+      "empty": "No payments recorded yet.",
+      "loadError": "Could not load payments.",
+      "billRefreshError": "Could not refresh this bill, so the amounts shown may be out of date.",
+      "cancelled": "Cancelled",
+      "allPayments": "All payments for this student",
+      "recordedBy": "by {{name}}"
     }
   },
   "payroll": {
@@ -2263,6 +2344,9 @@
     "forbidden": "You don't have permission to do that.",
     "codes": {
       "AI_RATE_LIMITED": "You've reached this hour's limit for the AI assistant. Please try again later.",
+      "DUPLICATE_REFERENCE": "This reference is already on another payment.",
+      "ALREADY_REVERSED": "This payment was already reversed.",
+      "IDEMPOTENCY_KEY_REUSED": "This was already sent with different details. Check the payment history before saving again.",
       "EXPENSE_CHANGED": "Someone else changed this request just now. Reload to see the latest before trying again.",
       "EXPENSE_WRONG_STATUS": "This request has moved on, so this step isn't possible now. Reload to see what changed.",
       "SELF_APPROVAL_NOT_ALLOWED": "You sent this request for approval, so another admin has to approve it.",

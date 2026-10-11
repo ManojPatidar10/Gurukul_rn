@@ -9,7 +9,7 @@ has a `FLOW.md` (overview, actors, diagram, endpoints, data model, known limitat
 Kept separate from `docs/`, which is the public smartgurukul.org website served by GitHub Pages.
 
 - [`fee-structure-setup/`](./fee-structure-setup/FLOW.md) — Fee categories, fee structures, and bulk bill (`StudentFeeAssessment`) generation.
-- [`fee-payment/`](./fee-payment/FLOW.md) — Manual fee payment recording, and the built-but-disabled online UPI payment attempt flow.
+- [`fee-payment/`](./fee-payment/FLOW.md) — Recording fee payments in the app, payment history, receipts (PDF), reversals, and the built-but-disabled online UPI payment attempt flow.
 - [`fees-overview/`](./fees-overview/FLOW.md) — The admin's school-wide fee assessments list and a teacher's own-section "My Class Fees" view.
 - [`payroll-runs/`](./payroll-runs/FLOW.md) — Salary structures and the payroll run lifecycle (Draft → Processed → Paid).
 - [`payroll-overview/`](./payroll-overview/FLOW.md) — The paid/pending payroll rollup across every run.
