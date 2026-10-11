@@ -183,28 +183,6 @@ export interface EmployeeRequest {
   employeeType?: EmployeeType;
 }
 
-export interface Vendor {
-  id: string;
-  schoolId: string;
-  name: string;
-  contactPhone: string;
-  contactEmail: string;
-  bankAccount: string;
-  upiId: string;
-  address: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface VendorRequest {
-  name: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  bankAccount?: string;
-  upiId?: string;
-  address?: string;
-}
-
 export interface FeeCategory {
   id: string;
   schoolId: string;
@@ -685,44 +663,6 @@ export interface SalaryHistoryEntry {
   deductions: number;
   status: PayrollLineStatus;
   paidOn: string | null;
-}
-
-export interface InfraExpenseCategory {
-  id: string;
-  code: string;
-  name: string;
-}
-
-export interface InfraExpenseRequest {
-  id: string;
-  categoryId: string;
-  categoryCode: string;
-  description: string;
-  estimatedAmount: number;
-  status: string;
-}
-
-export interface InfraExpenseRequestCreate {
-  categoryId: string;
-  description: string;
-  estimatedAmount: number;
-}
-
-export interface ApprovalActionRequest {
-  actor?: string;
-  comment?: string;
-}
-
-export interface InfraPurchaseRequest {
-  vendorId: string;
-  invoiceNumber: string;
-  actualAmount: number;
-}
-
-export interface InfraPayRequest {
-  paymentMethod: string;
-  paymentReference?: string;
-  transactionDate?: string;
 }
 
 export interface Subject {
