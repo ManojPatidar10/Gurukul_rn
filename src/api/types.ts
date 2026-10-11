@@ -2448,10 +2448,17 @@ export interface LedgerTransaction {
   /** Null on entries recorded before documents were linked. */
   documentType: LedgerDocumentType | null;
   documentId: string | null;
+  /**
+   * Reversal works one way for every entry, fee payments reversed from their bill included: the
+   * original stays COMPLETED and is stamped reversed (these fields), and one compensating entry the
+   * opposite way, with `reversalOfId`, cancels it out.
+   */
   reversed: boolean;
   reversedAt: string | null;
   reversedBy: string | null;
   reversalReason: string | null;
+  /** On a reversed fee payment: how it was reversed. Missing or null on other entries and older servers. */
+  reversalType?: ReversalType | null;
   /** On a reversed entry: the entry that reversed it. */
   reversalTransactionId: string | null;
   /** On a reversal entry: the entry it reverses. */

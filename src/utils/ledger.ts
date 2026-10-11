@@ -10,8 +10,9 @@ import type {
   LedgerTransaction,
   ManualCategory,
   PaymentMethod,
+  ReversalType,
 } from '../api/types';
-import { formatAmount } from './payroll';
+import { formatRupees } from './money';
 import { istToday } from './quizInsights';
 
 /**
@@ -73,6 +74,13 @@ const STATUS_KEYS: Record<LedgerStatus, string> = {
   REVERSED: 'ledger.status.REVERSED',
 };
 
+/** How a fee payment was reversed: the labels the Reverse payment screen offers (finance fix 3). */
+const REVERSAL_TYPE_KEYS: Record<ReversalType, string> = {
+  CORRECTION: 'fees.reversePayment.types.CORRECTION.label',
+  BOUNCED: 'fees.reversePayment.types.BOUNCED.label',
+  REFUND: 'fees.reversePayment.types.REFUND.label',
+};
+
 /** The plural labels the Category filter uses for each source ("Fees", "Vendor payments"). */
 const SOURCE_FILTER_KEYS: Record<LedgerSourceType, string> = {
   FEE_PAYMENT: 'ledger.filter.category.FEE_PAYMENT',
@@ -99,6 +107,7 @@ export const LEDGER_LABEL_KEYS: readonly string[] = [
   ...Object.values(DIRECTION_KEYS),
   ...Object.values(STATUS_KEYS),
   ...Object.values(SOURCE_FILTER_KEYS),
+  ...Object.values(REVERSAL_TYPE_KEYS),
 ];
 
 /** A label for an enum value; a value a newer server adds shows as sent. */
@@ -322,18 +331,18 @@ export function signedAmount(tx: Pick<LedgerTransaction, 'direction' | 'amount'>
 const MINUS = '−';
 
 /**
- * "₹12,34,567.50"; a negative amount gets a minus sign: "−₹2,000.00". The Indian grouping is
- * payroll's `formatAmount`; only the sign differs (a true minus, to pair with "+" in the list).
+ * "₹12,34,567.50", always with paise; a negative amount gets a true minus, "−₹2,000.00", to pair
+ * with "+" in the list. The digits are the shared `formatRupees` of src/utils/money.ts; only the
+ * sign differs. Anything that isn't a number shows as ₹0.00.
  */
-export function formatRupees(n: number): string {
-  const value = Number.isFinite(n) ? n : 0;
-  const text = `₹${formatAmount(Math.abs(value))}`;
-  return value < 0 && text !== '₹0.00' ? `${MINUS}${text}` : text;
+export function formatLedgerRupees(n: number): string {
+  const text = formatRupees(Number.isFinite(n) ? n : 0, { decimals: 'always' });
+  return text.startsWith('-') ? `${MINUS}${text.slice(1)}` : text;
 }
 
 /** "+₹5,000.00" or "−₹2,000.00"; zero has no sign. */
 export function formatSignedRupees(n: number): string {
-  const text = formatRupees(n);
+  const text = formatLedgerRupees(n);
   return n > 0 && text !== '₹0.00' ? `+${text}` : text;
 }
 
@@ -380,6 +389,29 @@ export function isValidReversalReason(reason: string): boolean {
 }
 
 /**
+ * Whether to offer Reverse entry. The server's `reversible` decides, and an entry that is already
+ * reversed or is itself a reversal (a compensating entry, fee reversals included) never gets the
+ * button, whatever a server says: reversing a reversal is refused (400 REVERSAL_ENTRY).
+ */
+export function canReverseEntry(tx: Pick<LedgerTransaction, 'reversible' | 'reversed' | 'reversalOfId'>): boolean {
+  return tx.reversible && !tx.reversed && !tx.reversalOfId;
+}
+
+/**
+ * How a fee payment was reversed ("Entered by mistake", "Cheque or transfer bounced", "Refunded"),
+ * or '' when there's nothing to say: not a fee payment, no type sent, or a type this app doesn't know.
+ * Other entries are reversed with a reason only, so a type on them isn't shown.
+ */
+export function reversalTypeLabel(
+  tx: Pick<LedgerTransaction, 'sourceType' | 'reversalType'>,
+  t: TFunction
+): string {
+  if (tx.sourceType !== 'FEE_PAYMENT' || !tx.reversalType) return '';
+  const key = REVERSAL_TYPE_KEYS[tx.reversalType] as string | undefined;
+  return key ? t(key) : '';
+}
+
+/**
  * Why an entry has no Reverse button, as an i18n key, or null when there's nothing to say: the
  * entry can be reversed, it already was, or it is itself a reversal.
  */
@@ -392,12 +424,16 @@ export function reverseHint(
   return null;
 }
 
-/** The chips a row shows: "Reversed" on a reversed entry, "Reversal" on a reversal entry, "Pending" when not posted. */
+/**
+ * The chips a row shows: "Reversed" on a reversed entry (a fee payment reversed from its bill too),
+ * "Reversal" on a reversal entry, "Pending" when not posted. A REVERSED status (never set by this
+ * ledger, which keeps the original COMPLETED) still reads as reversed.
+ */
 export function entryChips(
   tx: Pick<LedgerTransaction, 'reversed' | 'reversalOfId' | 'status'>
 ): { key: string; variant: 'warning' | 'neutral' }[] {
   const chips: { key: string; variant: 'warning' | 'neutral' }[] = [];
-  if (tx.reversed) chips.push({ key: 'ledger.entry.reversed', variant: 'warning' });
+  if (tx.reversed || tx.status === 'REVERSED') chips.push({ key: 'ledger.entry.reversed', variant: 'warning' });
   if (tx.reversalOfId) chips.push({ key: 'ledger.entry.reversal', variant: 'neutral' });
   if (tx.status === 'PENDING') chips.push({ key: 'ledger.status.PENDING', variant: 'neutral' });
   return chips;
@@ -431,7 +467,7 @@ export function reverseConfirmText(
   tx: Pick<LedgerTransaction, 'amount' | 'receiptNumber' | 'voucherNumber'>,
   t: TFunction
 ): string {
-  const parts = [t('ledger.reverse.body', { amount: formatRupees(tx.amount) })];
+  const parts = [t('ledger.reverse.body', { amount: formatLedgerRupees(tx.amount) })];
   if (tx.receiptNumber) parts.push(t('ledger.reverse.receiptCancelled', { number: tx.receiptNumber }));
   else if (tx.voucherNumber) parts.push(t('ledger.reverse.voucherCancelled', { number: tx.voucherNumber }));
   parts.push(t('ledger.reverse.cannotUndo'));

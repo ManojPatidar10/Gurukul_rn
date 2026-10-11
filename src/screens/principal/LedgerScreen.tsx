@@ -41,7 +41,7 @@ import {
   entryChips,
   entryLabel,
   formatLedgerDate,
-  formatRupees,
+  formatLedgerRupees,
   formatSignedRupees,
   isZeroBucket,
   methodOptions,
@@ -110,7 +110,7 @@ function MoneyStat({ label, value, tone, flat }: { label: string; value: number;
         {label}
       </Text>
       <Text style={[styles.statValue, { color }]} numberOfLines={1} adjustsFontSizeToFit>
-        {formatRupees(value)}
+        {formatLedgerRupees(value)}
       </Text>
     </View>
   );
@@ -370,7 +370,7 @@ export function LedgerScreen({ navigation }: Props) {
                 </Text>
                 {[bucket.opening, bucket.inflow, bucket.outflow, bucket.closing].map((amount, i) => (
                   <Text key={i} style={styles.tableCell} numberOfLines={1} adjustsFontSizeToFit>
-                    {formatRupees(amount)}
+                    {formatLedgerRupees(amount)}
                   </Text>
                 ))}
               </View>

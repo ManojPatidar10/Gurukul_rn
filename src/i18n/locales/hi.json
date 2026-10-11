@@ -842,6 +842,7 @@
       "reversalTitle": "उलट",
       "reversedAt": "उलटने की तारीख",
       "reversedBy": "किसने उलटा",
+      "reversalType": "किस तरह उलटा गया",
       "reversalReason": "कारण",
       "isReversal": "यह प्रविष्टि किसी दूसरी प्रविष्टि को उलटती है।",
       "viewReversal": "उलट प्रविष्टि देखें",

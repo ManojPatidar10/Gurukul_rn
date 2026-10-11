@@ -16,6 +16,7 @@ import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
+  canReverseEntry,
   directionLabel,
   displayNumber,
   entryChips,
@@ -27,6 +28,7 @@ import {
   numberLabelKey,
   paymentMethodLabel,
   REVERSAL_REASON_MAX,
+  reversalTypeLabel,
   reverseConfirmText,
   reverseHint,
   signedAmount,
@@ -65,6 +67,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
 
   const number = displayNumber(tx);
   const hintKey = reverseHint(tx);
+  const reversalType = reversalTypeLabel(tx, t);
   const inflow = tx.direction === 'INFLOW';
   const canConfirm = isValidReversalReason(reason) && !reversing;
 
@@ -162,6 +165,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
               <>
                 <Field label={t('ledger.detail.reversedAt')} value={formatInstant(tx.reversedAt)} />
                 <Field label={t('ledger.detail.reversedBy')} value={tx.reversedBy} />
+                {reversalType ? <Field label={t('ledger.detail.reversalType')} value={reversalType} /> : null}
               </>
             ) : null}
             <Field label={t('ledger.detail.reversalReason')} value={tx.reversalReason} />
@@ -198,7 +202,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
           </View>
         ) : null}
 
-        {tx.reversible ? (
+        {canReverseEntry(tx) ? (
           <Pressable
             style={styles.reverseButton}
             onPress={() => {

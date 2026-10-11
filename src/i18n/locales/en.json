@@ -842,6 +842,7 @@
       "reversalTitle": "Reversal",
       "reversedAt": "Reversed on",
       "reversedBy": "Reversed by",
+      "reversalType": "Reversed as",
       "reversalReason": "Reason",
       "isReversal": "This entry reverses another entry.",
       "viewReversal": "View reversal entry",

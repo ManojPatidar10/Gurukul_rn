@@ -15,6 +15,7 @@ import {
   appendPage,
   buildEntriesFilter,
   buildLedgerQuery,
+  canReverseEntry,
   categoryFilterOf,
   categoryOptions,
   customRangeError,
@@ -24,7 +25,7 @@ import {
   entryLabel,
   financialYearOf,
   formatLedgerDate,
-  formatRupees,
+  formatLedgerRupees,
   formatSignedRupees,
   isValidReversalReason,
   isZeroBucket,
@@ -36,6 +37,7 @@ import {
   numberLabelKey,
   paymentMethodLabel,
   periodRange,
+  reversalTypeLabel,
   reverseConfirmText,
   reverseHint,
   shiftIsoDate,
@@ -134,14 +136,15 @@ describe('enum lists', () => {
       'ledger.detail.voucherNumber',
       'ledger.detail.notLinked',
       'ledger.detail.linkedValue',
+      'ledger.detail.reversalType',
       'ledger.reverse.body',
       'ledger.reverse.receiptCancelled',
       'ledger.reverse.voucherCancelled',
       'ledger.reverse.cannotUndo',
       ...Array.from({ length: 12 }, (_, i) => `ledger.monthsShort.${i + 1}`),
     ];
-    // One per value of each of the six enums, plus the six plural filter labels.
-    expect(LEDGER_LABEL_KEYS).toHaveLength(6 + 7 + 7 + 4 + 2 + 3 + 6);
+    // One per value of each of the six enums, the six plural filter labels and the three fee reversal types.
+    expect(LEDGER_LABEL_KEYS).toHaveLength(6 + 7 + 7 + 4 + 2 + 3 + 6 + 3);
     expect(keys.filter((k) => !hasKey(en as Tree, k))).toEqual([]);
     expect(keys.filter((k) => !hasKey(hi as Tree, k))).toEqual([]);
   });
@@ -319,16 +322,16 @@ describe('amounts and numbers', () => {
     expect(signedAmount({ direction: 'OUTFLOW', amount: 2000 })).toBe(-2000);
   });
 
-  it('formats rupees with Indian grouping and two decimals', () => {
-    expect(formatRupees(5000)).toBe('₹5,000.00');
-    expect(formatRupees(999)).toBe('₹999.00');
-    expect(formatRupees(100000)).toBe('₹1,00,000.00');
-    expect(formatRupees(1234567.5)).toBe('₹12,34,567.50');
-    expect(formatRupees(0.1 + 0.2)).toBe('₹0.30');
-    expect(formatRupees(0)).toBe('₹0.00');
-    expect(formatRupees(-2000)).toBe('−₹2,000.00');
-    expect(formatRupees(-0.001)).toBe('₹0.00');
-    expect(formatRupees(Number.NaN)).toBe('₹0.00');
+  it('formats rupees with Indian grouping and two decimals (src/utils/money.ts), a true minus for money out', () => {
+    expect(formatLedgerRupees(5000)).toBe('₹5,000.00');
+    expect(formatLedgerRupees(999)).toBe('₹999.00');
+    expect(formatLedgerRupees(100000)).toBe('₹1,00,000.00');
+    expect(formatLedgerRupees(1234567.5)).toBe('₹12,34,567.50');
+    expect(formatLedgerRupees(0.1 + 0.2)).toBe('₹0.30');
+    expect(formatLedgerRupees(0)).toBe('₹0.00');
+    expect(formatLedgerRupees(-2000)).toBe('−₹2,000.00');
+    expect(formatLedgerRupees(-0.001)).toBe('₹0.00');
+    expect(formatLedgerRupees(Number.NaN)).toBe('₹0.00');
     expect(formatSignedRupees(5000)).toBe('+₹5,000.00');
     expect(formatSignedRupees(-2000)).toBe('−₹2,000.00');
     expect(formatSignedRupees(0)).toBe('₹0.00');
@@ -403,6 +406,15 @@ describe('receipts and reversal', () => {
     expect(isValidReversalReason('x'.repeat(501))).toBe(false);
   });
 
+  it('offers Reverse only on an entry the server allows that is neither reversed nor a reversal', () => {
+    expect(canReverseEntry(tx({ reversible: true }))).toBe(true);
+    expect(canReverseEntry(tx({ reversible: false }))).toBe(false);
+    // Reversing a compensating entry is refused (400 REVERSAL_ENTRY), so it's never offered, even
+    // if a server wrongly says reversible; nor is a second reversal (409 ALREADY_REVERSED).
+    expect(canReverseEntry(tx({ reversible: true, reversalOfId: 'orig-1', direction: 'OUTFLOW' }))).toBe(false);
+    expect(canReverseEntry(tx({ reversible: true, reversed: true }))).toBe(false);
+  });
+
   it('explains why there is no Reverse button, in every case', () => {
     expect(reverseHint(tx({ reversible: true }))).toBeNull();
     expect(reverseHint(tx({ reversible: false, reversed: true }))).toBeNull();
@@ -419,6 +431,8 @@ describe('receipts and reversal', () => {
   it('chips a reversed entry, a reversal entry and a pending one', () => {
     expect(entryChips(tx())).toEqual([]);
     expect(entryChips(tx({ reversed: true }))).toEqual([{ key: 'ledger.entry.reversed', variant: 'warning' }]);
+    // A REVERSED status (this ledger never sets one) still reads as reversed.
+    expect(entryChips(tx({ status: 'REVERSED' }))).toEqual([{ key: 'ledger.entry.reversed', variant: 'warning' }]);
     expect(entryChips(tx({ reversalOfId: 'orig-1' }))).toEqual([{ key: 'ledger.entry.reversal', variant: 'neutral' }]);
     expect(entryChips(tx({ status: 'PENDING' }))).toEqual([{ key: 'ledger.status.PENDING', variant: 'neutral' }]);
   });
@@ -445,5 +459,93 @@ describe('receipts and reversal', () => {
     expect(reverseConfirmText(tx({ amount: 100, receiptNumber: null, voucherNumber: null }), tEn)).toBe(
       "This adds a reversal entry of ₹100.00 dated today. This can't be undone."
     );
+  });
+});
+
+describe('a fee payment reversed from its bill (finance fix 3), in the ledger', () => {
+  // POST /fee-payments/{id}/reverse goes through the same ledger reversal as every other entry: the
+  // payment's entry stays COMPLETED on its own date and is stamped reversed; one compensating
+  // outflow, with no number, is dated the day of the reversal.
+  const feePaymentId = '9f8e7d6c-5b4a-4321-8765-0123456789ab';
+  const original = tx({
+    id: 'fee-tx-1',
+    sourceType: 'FEE_PAYMENT',
+    sourceId: 'bill-1',
+    manualCategory: null,
+    documentType: 'FEE_PAYMENT',
+    documentId: feePaymentId,
+    amount: 5000,
+    paymentMethod: 'CHEQUE',
+    paymentReference: '004512',
+    transactionDate: '2026-10-05',
+    receiptNumber: 'GUR/2026-27/RCPT/000012',
+    notes: 'Fee payment for Asha Verma',
+    reversible: false,
+    reversed: true,
+    reversedAt: '2026-10-11T06:10:00Z',
+    reversedBy: 'Meena Sharma',
+    reversalReason: 'Cheque returned unpaid by the bank',
+    reversalType: 'BOUNCED',
+    reversalTransactionId: 'fee-contra-1',
+  });
+  const contra = tx({
+    ...original,
+    id: 'fee-contra-1',
+    direction: 'OUTFLOW',
+    transactionDate: '2026-10-11',
+    receiptNumber: null,
+    voucherNumber: null,
+    paymentReference: null,
+    notes: 'Reversal of GUR/2026-27/RCPT/000012: Cheque returned unpaid by the bank',
+    reversed: false,
+    reversedAt: null,
+    reversedBy: null,
+    reversalType: null,
+    reversalTransactionId: null,
+    reversalOfId: 'fee-tx-1',
+  });
+
+  it('lists the payment as reversed with its receipt number, and the compensating entry as a reversal', () => {
+    expect(entryLabel(original, tEn)).toBe('Fee payment');
+    expect(entryLabel(contra, tEn)).toBe('Fee payment');
+    expect(entryChips(original)).toEqual([{ key: 'ledger.entry.reversed', variant: 'warning' }]);
+    expect(entryChips(contra)).toEqual([{ key: 'ledger.entry.reversal', variant: 'neutral' }]);
+    expect(displayNumber(original)).toBe('GUR/2026-27/RCPT/000012');
+    // The compensating entry takes no receipt or voucher number; it's money out, so a voucher label.
+    expect(displayNumber(contra)).toBeNull();
+    expect(numberLabelKey(contra)).toBe('ledger.detail.voucherNumber');
+    expect(formatSignedRupees(signedAmount(original))).toBe('+₹5,000.00');
+    expect(formatSignedRupees(signedAmount(contra))).toBe('−₹5,000.00');
+    // Together they net to nothing, and each stays on its own day: the payment day's entries are as before.
+    expect(signedAmount(original) + signedAmount(contra)).toBe(0);
+    expect(original.transactionDate).toBe('2026-10-05');
+    expect(contra.transactionDate).toBe('2026-10-11');
+  });
+
+  it('shows how it was reversed on the entry, and links both entries to the fee payment', () => {
+    expect(reversalTypeLabel(original, tEn)).toBe('Cheque or transfer bounced');
+    expect(reversalTypeLabel({ sourceType: 'FEE_PAYMENT', reversalType: 'CORRECTION' }, tEn)).toBe('Entered by mistake');
+    expect(reversalTypeLabel({ sourceType: 'FEE_PAYMENT', reversalType: 'REFUND' }, tEn)).toBe('Refunded');
+    expect(reversalTypeLabel(original, tHi)).toBe(hi.fees.reversePayment.types.BOUNCED.label);
+    expect(reversalTypeLabel(contra, tEn)).toBe('');
+    // Older servers don't send a type; other entries are reversed with a reason only.
+    expect(reversalTypeLabel({ sourceType: 'FEE_PAYMENT' }, tEn)).toBe('');
+    expect(reversalTypeLabel({ sourceType: 'MANUAL', reversalType: 'CORRECTION' }, tEn)).toBe('');
+    expect(
+      reversalTypeLabel({ sourceType: 'FEE_PAYMENT', reversalType: 'WRITE_OFF' as LedgerTransaction['reversalType'] }, tEn)
+    ).toBe('');
+    expect(linkedDocumentText(original, tEn)).toBe('Fee payment · 9f8e7d6c');
+    expect(linkedDocumentText(contra, tEn)).toBe('Fee payment · 9f8e7d6c');
+  });
+
+  it('offers no Reverse on either entry and no hint, while a live fee payment points to its bill', () => {
+    expect(canReverseEntry(original)).toBe(false);
+    expect(canReverseEntry(contra)).toBe(false);
+    expect(canReverseEntry({ ...contra, reversible: true })).toBe(false);
+    expect(reverseHint(original)).toBeNull();
+    expect(reverseHint(contra)).toBeNull();
+    const live = tx({ ...original, reversed: false, reversedAt: null, reversalType: null, reversalTransactionId: null });
+    expect(canReverseEntry(live)).toBe(false);
+    expect(reverseHint(live)).toBe('ledger.detail.hint.feePayment');
   });
 });
