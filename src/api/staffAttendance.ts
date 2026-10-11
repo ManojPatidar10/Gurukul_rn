@@ -3,12 +3,18 @@ import type {
   BulkStaffAttendanceRequest,
   EmployeeAttendanceHistory,
   SelfMarkAttendanceRequest,
+  SelfMarkNonce,
   StaffAttendanceRecord,
   StaffAttendanceRoster,
 } from './types';
 
 export function selfMarkAttendance(schoolId: string, req: SelfMarkAttendanceRequest) {
   return api.post<StaffAttendanceRecord>('/api/v1/staff-attendance/self-mark', req, schoolId);
+}
+
+/** A fresh nonce for the Play Integrity token, plus the server's integrity mode. Replaces any earlier nonce. */
+export function getSelfMarkNonce(schoolId: string) {
+  return api.get<SelfMarkNonce>('/api/v1/staff-attendance/self-mark/nonce', schoolId);
 }
 
 /** Admin only: marks or corrects staff for one date (past dates too) and returns that day's roster. */

@@ -17,13 +17,14 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { defaultIntegrityDeps, isIntegrityRefusal, withPlayIntegrity } from '../../utils/selfMarkIntegrity';
 import { readSelfMarkLocation, SelfMarkLocationError } from '../../utils/selfMarkLocation';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MarkMyAttendance'>;
 
 // 'setByAdmin': an admin already entered today's attendance (e.g. ABSENT), and only an admin can
-// change it - so there's nothing to retry.
-type Status = 'checking' | 'idle' | 'locating' | 'submitting' | 'success' | 'error' | 'setByAdmin';
+// change it - so there's nothing to retry. 'verifying': getting a Play Integrity token (Android).
+type Status = 'checking' | 'idle' | 'locating' | 'verifying' | 'submitting' | 'success' | 'error' | 'setByAdmin';
 
 // The backend's 409 code when a self check-in would overwrite an admin's entry for today.
 const ATTENDANCE_SET_BY_ADMIN = 'ATTENDANCE_SET_BY_ADMIN';
@@ -105,13 +106,20 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
         return;
       }
 
-      const request = await readSelfMarkLocation();
+      const location = await readSelfMarkLocation();
+      // 'verifying' only once Google Play is really asked (not on iOS, in OFF mode or on an older backend).
+      const request = await withPlayIntegrity(location, {
+        ...defaultIntegrityDeps(schoolId),
+        onRequestingToken: () => setStatus('verifying'),
+      });
       setStatus('submitting');
       const saved = await selfMarkAttendance(schoolId, request);
       setRecord(saved);
       setStatus('success');
     } catch (e) {
-      setError(e instanceof SelfMarkLocationError ? e.message : getErrorMessage(e));
+      // The server's Play Integrity refusals say what to do; getErrorMessage would turn the 503 one into
+      // generic "unavailable" text.
+      setError(e instanceof SelfMarkLocationError || isIntegrityRefusal(e) ? e.message : getErrorMessage(e));
       if (e instanceof ApiError && e.errorCode === ATTENDANCE_SET_BY_ADMIN) {
         setStatus('setByAdmin');
         // Reload the calendar so it shows the admin's entry for today.
@@ -121,6 +129,8 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
       }
     }
   };
+
+  const busy = status === 'locating' || status === 'verifying' || status === 'submitting';
 
   return (
     <View style={styles.root}>
@@ -165,9 +175,9 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
               <Pressable
                 style={styles.primaryButton}
                 onPress={handleMark}
-                disabled={status === 'locating' || status === 'submitting'}
+                disabled={busy}
               >
-                {status === 'locating' || status === 'submitting' ? (
+                {busy ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
                   <Text style={styles.primaryButtonText}>
@@ -176,6 +186,7 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
                 )}
               </Pressable>
               {status === 'locating' && <Text style={styles.hint}>Getting your location...</Text>}
+              {status === 'verifying' && <Text style={styles.hint}>Checking this phone with Google Play...</Text>}
               {status === 'submitting' && <Text style={styles.hint}>Verifying you&apos;re within range...</Text>}
             </>
           )}
