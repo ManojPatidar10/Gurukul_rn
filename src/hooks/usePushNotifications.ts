@@ -41,6 +41,7 @@ const CHANNELS = [
   { id: 'alerts', key: 'alerts', importance: Notifications.AndroidImportance.HIGH },
   { id: 'games', key: 'games', importance: Notifications.AndroidImportance.HIGH },
   { id: 'transport', key: 'transport', importance: Notifications.AndroidImportance.HIGH },
+  { id: 'payroll', key: 'payroll', importance: Notifications.AndroidImportance.HIGH },
 ] as const;
 
 async function setUpAndroidChannels() {
@@ -230,7 +231,8 @@ export function usePushNotifications(schoolId: string | null, session: Session |
         // ABSENCE_ALERT / FEE_DUE / REPORT_CARD_PUBLISHED (a parent's copy names one child) open
         // that child's attendance / fees / report card for that term; ANNOUNCEMENT opens the
         // parent's Announcements screen (staff and students have none, so it just opens the app);
-        // BUS_TRIP opens the family's bus map, or an admin's transport screen.
+        // BUS_TRIP opens the family's bus map, or an admin's transport screen; SALARY_PAID opens
+        // the staff member's payslip.
         const target = notificationTarget(data, session.role);
         if (target) {
           openNotificationTarget(session.schoolId, target, navigationRef.navigate).catch(() => {});

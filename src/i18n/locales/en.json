@@ -576,7 +576,7 @@
       },
       "runPayroll": {
         "title": "Run Payroll",
-        "description": "Create a run, process it, and pay employees for the month"
+        "description": "See each month's run, fix who's left out, and record salary as paid"
       },
       "overview": {
         "title": "Payroll Overview",
@@ -599,7 +599,12 @@
       "loadError": "Could not load salary structures.",
       "empty": "0 salary structures yet — add the first one.",
       "rowSubtitle": "Basic ₹{{basic}} + Allowances ₹{{allowances}} − Deductions ₹{{deductions}}",
-      "effectiveFrom": "Effective from {{date}}"
+      "effectiveFrom": "Effective from {{date}}",
+      "current": "Current",
+      "startsOn": "From {{date}}",
+      "badNet": "Net pay is ₹0 or less: this person is left out of payroll until it's fixed",
+      "lockedHint": "Used in paid payroll: add a new structure with a later date",
+      "newForEmployee": "New structure for {{name}}"
     },
     "salaryStructureForm": {
       "title": "Add salary structure",
@@ -615,8 +620,19 @@
       "errors": {
         "basic": "Basic must be greater than 0.",
         "allowances": "Allowances cannot be negative.",
-        "deductions": "Deductions cannot be negative."
-      }
+        "deductions": "Deductions cannot be negative.",
+        "netNotPositive": "Deductions must be less than basic + allowances, so net pay is more than ₹0.",
+        "tooLarge": "{{field}} can be at most ₹10,00,000 a month.",
+        "decimals": "{{field}} can have at most 2 decimal places.",
+        "notANumber": "{{field}} must be a number, like 25000 or 25000.50."
+      },
+      "editTitle": "Edit salary structure",
+      "save": "Save changes",
+      "netPreview": "Net pay: {{net}}",
+      "effectiveFromHint": "Payroll for a month uses the latest structure starting on or before that month's last day. Pay isn't prorated: a structure starting mid-month pays the whole month.",
+      "dateTakenTitle": "Date already used",
+      "dateTakenBody": "This employee already has a salary structure from {{date}}. Edit that one instead, or pick another date.",
+      "editThatOne": "Edit that one instead"
     },
     "run": {
       "title": "Run Payroll",
@@ -649,18 +665,103 @@
         "10": "October",
         "11": "November",
         "12": "December"
-      }
+      },
+      "staffCount": "Staff in this run",
+      "totalNet": "Total net pay",
+      "paid": "Paid",
+      "onHold": "On hold",
+      "toPayNow": "To pay now",
+      "summaryValue": "{{count}} · {{amount}}",
+      "lineAmounts": "Gross {{gross}} · Deductions {{deductions}} · Net {{net}}",
+      "recalculateButton": "Recalculate",
+      "recalculating": "Recalculating…",
+      "recalculateConfirmTitle": "Recalculate this run?",
+      "recalculateConfirmBody": "Lines not paid yet are worked out again from the current salary structures, and staff who now qualify are added. Paid lines don't change.",
+      "cancelButton": "Cancel this run",
+      "cancelConfirmTitle": "Cancel this run?",
+      "cancelConfirmBody": "Every line in the {{month}} run is removed. You can run this month again afterwards.",
+      "cancelConfirm": "Cancel run",
+      "keepRun": "Keep it",
+      "existsTitle": "Run already exists",
+      "existsBody": "There is already a payroll run for {{month}}. Open it?",
+      "openExisting": "Open it",
+      "cancelledNote": "This run was cancelled. Nothing in it was paid.",
+      "runAgain": "Run this month again",
+      "runAgainLater": "You can run this month again once it starts.",
+      "futureMonth": "This run is for a month that hasn't started yet. Cancel it, or wait until the month starts.",
+      "skippedTitle": "Left out ({{count}})",
+      "skipReason": {
+        "NO_STRUCTURE": "No salary structure",
+        "STRUCTURE_STARTS_AFTER_MONTH": "Their salary structure starts on {{date}}, after this month",
+        "NET_NOT_POSITIVE": "Net pay is {{net}}: deductions are more than basic + allowances",
+        "NOT_IN_RUN": "Not in this run"
+      },
+      "addStructure": "Add salary structure",
+      "fixStructure": "Fix salary structure",
+      "recalculateToAdd": "Recalculate to add them",
+      "warning": {
+        "STRUCTURE_STARTS_MID_MONTH": "Salary structure starts on {{date}}, mid-month. The whole month is paid.",
+        "STRUCTURE_CHANGED_MID_MONTH": "Salary changed on {{date}}. The new amount is paid for the whole month.",
+        "JOINED_MID_MONTH": "Joined on {{date}}, mid-month. The whole month is paid.",
+        "JOINED_AFTER_MONTH": "Join date {{date}} is after this month. Check it, or hold this line.",
+        "NEGATIVE_COMPONENT": "The salary structure has a negative allowance or deduction. Check it."
+      },
+      "hold": "Hold",
+      "release": "Release",
+      "holdFor": "Hold {{name}}'s salary",
+      "releaseFor": "Release {{name}}'s salary",
+      "payConfirmTitle": "Record salary as paid?",
+      "payConfirmBody": "Record {{total}} salary for {{count}} staff as paid by {{method}} on {{date}}?",
+      "payConfirmHeld": "{{count}} staff on hold won't be paid now.",
+      "payConfirmUndo": "This can't be undone in the app.",
+      "payConfirm": "Record as paid",
+      "paidToast": "Salary recorded as paid for {{count}} staff.",
+      "runChanged": "This run changed since you opened it. Check the new total and try again.",
+      "nothingToPay": "Nothing to pay now: every line is paid or on hold.",
+      "paymentDateHint": "Between {{min}} and {{max}}."
     },
     "payslip": {
       "title": "Payslip",
       "gross": "Gross",
       "deductions": "Deductions",
       "netPay": "Net pay",
-      "documentReference": "Document reference"
+      "documentReference": "Document reference",
+      "month": "Month",
+      "employee": "Employee",
+      "designation": "Designation",
+      "basic": "Basic",
+      "allowances": "Allowances",
+      "status": "Status",
+      "paidOn": "Paid on {{date}}",
+      "method": "Payment method",
+      "reference": "Payment reference",
+      "payslipNumber": "Payslip number",
+      "loadError": "Could not load this payslip.",
+      "retry": "Try again"
     },
     "salaryHistory": {
       "title": "Salary History",
       "empty": "No payroll history yet for this employee."
+    },
+    "runStatus": {
+      "DRAFT": "Draft",
+      "PROCESSED": "Ready to pay",
+      "PARTIALLY_PAID": "Partly paid",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    },
+    "lineStatus": {
+      "PAID": "Paid",
+      "PENDING": "Not paid yet",
+      "ON_HOLD": "On hold"
+    },
+    "runsList": {
+      "title": "Payroll runs",
+      "newRun": "+ Run payroll for a month",
+      "empty": "No payroll runs yet. Run payroll for a month to start.",
+      "loadError": "Could not load payroll runs.",
+      "rowSubtitle": "{{count}} staff · {{total}}",
+      "toPay": "{{amount}} to pay"
     }
   },
   "classSection": {
@@ -1536,6 +1637,10 @@
       "transport": {
         "name": "School bus",
         "description": "When your child boards, reaches school or heads home"
+      },
+      "payroll": {
+        "name": "Salary",
+        "description": "When your salary is marked paid"
       }
     },
     "prompt": {
