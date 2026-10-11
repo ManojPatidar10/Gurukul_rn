@@ -12,6 +12,7 @@ import {
   toPaise,
   type AmountProblem,
 } from '../utils/money';
+import * as payroll from '../utils/payroll';
 
 type Tree = { [key: string]: string | Tree };
 const at = (tree: Tree, key: string) => key.split('.').reduce<unknown>((node, part) => (node as Tree)?.[part], tree);
@@ -106,5 +107,25 @@ describe('paise helpers', () => {
       expect(at(en as Tree, key)).toEqual(expect.any(String));
       expect(at(hi as Tree, key)).toEqual(expect.any(String));
     }
+  });
+});
+
+describe('payroll uses the same helper', () => {
+  it('re-exports the formatters, so payroll and expense screens show amounts alike', () => {
+    expect(payroll.formatInr).toBe(formatInr);
+    expect(payroll.formatAmount).toBe(formatAmount);
+    expect(payroll.toPaise).toBe(toPaise);
+  });
+
+  it('reads salary amounts with parseInrAmount, within the structure limit and allowing 0', () => {
+    expect(payroll.parseAmount('25,000.50')).toEqual({ ok: true, paise: 2500050 });
+    expect(payroll.parseAmount('₹ 25,000')).toEqual({ ok: true, paise: 2500000 });
+    expect(payroll.parseAmount('0')).toEqual({ ok: true, paise: 0 });
+    expect(payroll.parseAmount('')).toEqual({ ok: false, problem: 'empty' });
+    expect(payroll.parseAmount('1e5')).toEqual({ ok: false, problem: 'invalid' });
+    expect(payroll.parseAmount('-5')).toEqual({ ok: false, problem: 'negative' });
+    expect(payroll.parseAmount('5.123')).toEqual({ ok: false, problem: 'decimals' });
+    expect(payroll.parseAmount('1000000.01')).toEqual({ ok: false, problem: 'tooLarge' });
+    expect(parseInrAmount('1000000.01').ok).toBe(true);
   });
 });

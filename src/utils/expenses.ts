@@ -9,6 +9,7 @@ import type {
   InfraExpenseCategory,
   InfraExpenseRequest,
   InfraExpenseStatus,
+  InfraPurchaseInfo,
   PaymentMethod,
 } from '../api/expenseTypes';
 import { formatInr, toPaise } from './money';
@@ -57,6 +58,28 @@ export function paymentMethodOptions(t: TFunction): { label: string; value: Paym
 /** UPI, bank transfer and cheque need the UTR, transaction ID or cheque number; cash doesn't. */
 export function needsPaymentReference(method: string | null | undefined): boolean {
   return method === 'UPI' || method === 'BANK_TRANSFER' || method === 'CHEQUE';
+}
+
+/**
+ * The "Mark as paid" confirmation: what's paid, to whom, how and when. Paying writes the ledger
+ * outflow, which the app can't undo, so it's confirmed like cancelling is.
+ */
+export function payConfirmation(
+  purchase: Pick<InfraPurchaseInfo, 'actualAmount' | 'vendorName'>,
+  method: PaymentMethod,
+  transactionDate: string,
+  t: TFunction,
+  locale?: string
+): { title: string; body: string } {
+  return {
+    title: t('infraExpenses.panels.payConfirmTitle'),
+    body: t('infraExpenses.panels.payConfirmBody', {
+      amount: formatInr(purchase.actualAmount),
+      vendor: purchase.vendorName,
+      method: paymentMethodLabel(method, t),
+      date: formatExpenseDate(transactionDate, locale),
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -209,6 +232,17 @@ export function categoryLabel(category: Pick<InfraExpenseCategory, 'code'> & { n
     : undefined;
   if (defaultName && (name === '' || name === defaultName)) return t(`expenseCategories.defaultNames.${category.code}`);
   return name || category.code;
+}
+
+/**
+ * A spend-history row's category, which the server sends by name only: a default category's English
+ * name shows in the app's language, any other name as stored. Null when there's none.
+ */
+export function paymentCategoryLabel(name: string | null | undefined, t: TFunction): string | null {
+  const trimmed = (name ?? '').trim();
+  if (!trimmed) return null;
+  const code = Object.keys(DEFAULT_CATEGORY_NAMES).find((c) => DEFAULT_CATEGORY_NAMES[c] === trimmed);
+  return code ? t(`expenseCategories.defaultNames.${code}`) : trimmed;
 }
 
 /** The request's category name (an older server sends only the code). */

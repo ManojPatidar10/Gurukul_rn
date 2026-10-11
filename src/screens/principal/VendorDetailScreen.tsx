@@ -14,7 +14,7 @@ import { accents, colors, radius, softShadow, spacing } from '../../theme/colors
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { actorLabel, formatExpenseDate, paymentMethodLabel } from '../../utils/expenses';
+import { actorLabel, formatExpenseDate, paymentCategoryLabel, paymentMethodLabel } from '../../utils/expenses';
 import { formatInr } from '../../utils/money';
 import { bankDetailsChangedRecently } from '../../utils/vendors';
 
@@ -69,7 +69,7 @@ export function VendorDetailScreen({ route, navigation }: Props) {
           ) : (
             <>
               <ErrorNotice message={error ?? t('errors.generic')} />
-              <Pressable style={styles.actionButton} onPress={() => load()}>
+              <Pressable style={styles.actionButton} onPress={() => load()} accessibilityRole="button">
                 <Text style={styles.actionText}>{t('common.retry')}</Text>
               </Pressable>
             </>
@@ -120,7 +120,7 @@ export function VendorDetailScreen({ route, navigation }: Props) {
           )}
         </View>
 
-        <Pressable style={styles.actionButton} onPress={() => navigation.navigate('VendorForm', { vendor })}>
+        <Pressable style={styles.actionButton} onPress={() => navigation.navigate('VendorForm', { vendor })} accessibilityRole="button">
           <Text style={styles.actionText}>{t('common.edit')}</Text>
         </Pressable>
 
@@ -147,7 +147,9 @@ export function VendorDetailScreen({ route, navigation }: Props) {
                     <Text style={styles.paymentMeta}>
                       {[
                         formatExpenseDate(p.transactionDate, locale),
-                        p.source === 'EVENT' && p.eventName ? t('vendors.detail.eventLabel', { name: p.eventName }) : p.categoryName,
+                        p.source === 'EVENT' && p.eventName
+                          ? t('vendors.detail.eventLabel', { name: p.eventName })
+                          : paymentCategoryLabel(p.categoryName, t),
                         p.invoiceNumber ? t('vendors.detail.invoice', { number: p.invoiceNumber }) : null,
                         paymentMethodLabel(p.paymentMethod, t),
                       ]

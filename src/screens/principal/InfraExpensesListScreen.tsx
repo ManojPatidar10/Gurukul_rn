@@ -28,7 +28,8 @@ export function InfraExpensesListScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Only the latest load may update the list, so a slow answer for the previous filter can't win.
+  // Only the latest load may update the list or end the spinner, so a slow answer for the previous
+  // filter can't win, and can't hide the spinner while the newer load is still running.
   const latestLoad = useRef(0);
 
   // The server filters and orders the list (newest first).
@@ -41,6 +42,9 @@ export function InfraExpensesListScreen({ navigation }: Props) {
       })
       .catch((e) => {
         if (id === latestLoad.current) setError(getErrorMessage(e));
+      })
+      .finally(() => {
+        if (id === latestLoad.current) setLoading(false);
       });
   }, [schoolId, status]);
 
@@ -48,9 +52,17 @@ export function InfraExpensesListScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      load().finally(() => setLoading(false));
+      load();
     }, [load])
   );
+
+  // A new filter empties the list first, so the old filter's rows never sit under the new chip:
+  // the spinner shows until its rows arrive, or the error if they don't.
+  const selectStatus = (value: InfraExpenseStatus | null) => {
+    if (value === status) return;
+    setRequests([]);
+    setStatus(value);
+  };
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -79,7 +91,7 @@ export function InfraExpensesListScreen({ navigation }: Props) {
             return (
               <Pressable
                 key={value ?? 'ALL'}
-                onPress={() => setStatus(value)}
+                onPress={() => selectStatus(value)}
                 style={[styles.filterChip, selected && styles.filterChipSelected]}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}

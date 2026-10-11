@@ -162,16 +162,22 @@ export function InfraCategoriesScreen({ navigation }: Props) {
               autoFocus
             />
             <View style={styles.rowButtons}>
-              <Pressable style={[styles.primaryButton, busy && styles.disabled]} onPress={handleCreate} disabled={busy}>
+              <Pressable
+                style={[styles.primaryButton, busy && styles.disabled]}
+                onPress={handleCreate}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busy, busy }}
+              >
                 <Text style={styles.primaryButtonText}>{busy ? t('expenseCategories.creating') : t('expenseCategories.create')}</Text>
               </Pressable>
-              <Pressable style={styles.secondaryButton} onPress={() => setShowCreate(false)}>
+              <Pressable style={styles.secondaryButton} onPress={() => setShowCreate(false)} accessibilityRole="button">
                 <Text style={styles.secondaryButtonText}>{t('common.cancel')}</Text>
               </Pressable>
             </View>
           </View>
         ) : (
-          <Pressable style={styles.addButton} onPress={() => setShowCreate(true)}>
+          <Pressable style={styles.addButton} onPress={() => setShowCreate(true)} accessibilityRole="button">
             <Text style={styles.addButtonText}>{t('expenseCategories.add')}</Text>
           </Pressable>
         )}
@@ -216,13 +222,20 @@ export function InfraCategoriesScreen({ navigation }: Props) {
                         value={editActive}
                         onValueChange={setEditActive}
                         trackColor={{ true: colors.primary, false: colors.border }}
+                        accessibilityLabel={t('expenseCategories.inUseFor', { name: categoryLabel(item, t) })}
                       />
                     </View>
                     <View style={styles.rowButtons}>
-                      <Pressable style={[styles.primaryButton, busy && styles.disabled]} onPress={() => handleSave(item)} disabled={busy}>
+                      <Pressable
+                        style={[styles.primaryButton, busy && styles.disabled]}
+                        onPress={() => handleSave(item)}
+                        disabled={busy}
+                        accessibilityRole="button"
+                        accessibilityState={{ disabled: busy, busy }}
+                      >
                         <Text style={styles.primaryButtonText}>{busy ? t('common.saving') : t('common.save')}</Text>
                       </Pressable>
-                      <Pressable style={styles.secondaryButton} onPress={() => setEditingId(null)}>
+                      <Pressable style={styles.secondaryButton} onPress={() => setEditingId(null)} accessibilityRole="button">
                         <Text style={styles.secondaryButtonText}>{t('common.cancel')}</Text>
                       </Pressable>
                     </View>

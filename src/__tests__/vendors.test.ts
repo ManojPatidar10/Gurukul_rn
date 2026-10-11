@@ -3,6 +3,7 @@ import en from '../i18n/locales/en.json';
 import hi from '../i18n/locales/hi.json';
 import {
   bankDetailsChangedRecently,
+  firstVendorFormError,
   gstinMatchesPan,
   isValidGstin,
   isValidIfsc,
@@ -10,6 +11,7 @@ import {
   vendorFormErrors,
   vendorFormFrom,
   vendorRequestFrom,
+  VENDOR_FORM_FIELD_ORDER,
   type VendorForm,
 } from '../utils/vendors';
 
@@ -157,7 +159,7 @@ describe('vendorFormErrors', () => {
 
 describe('vendorRequestFrom', () => {
   it('leaves empty fields out of a new vendor, and upper-cases the ids', () => {
-    expect(vendorRequestFrom(form({ name: ' ABC ', ifsc: ' sbin0001234 ', gstin: '08abcde1234f1z5', pan: 'abcde1234f' }), false)).toEqual({
+    expect(vendorRequestFrom(form({ name: ' ABC ', ifsc: ' sbin0001234 ', gstin: '08abcde1234f1z5', pan: 'abcde1234f' }))).toEqual({
       name: 'ABC',
       ifsc: 'SBIN0001234',
       gstin: '08ABCDE1234F1Z5',
@@ -165,14 +167,40 @@ describe('vendorRequestFrom', () => {
     });
   });
 
-  it("sends '' for an empty field on an edit, which clears it", () => {
-    const request = vendorRequestFrom({ ...vendorFormFrom(vendor), ifsc: '' }, true);
-    expect(request.ifsc).toBe('');
-    expect(request.bankAccount).toBe('123456789012');
-    expect(request.contactEmail).toBe('');
-    expect(Object.keys(request).sort()).toEqual(
-      ['name', 'contactPhone', 'contactEmail', 'bankAccount', 'ifsc', 'accountHolderName', 'upiId', 'address', 'gstin', 'pan'].sort()
-    );
+  it("sends only what changed on an edit, and '' for a field the user cleared", () => {
+    const original = vendorFormFrom(vendor);
+    const request = vendorRequestFrom({ ...original, ifsc: '', gstin: '08abcde1234f1z5 ' }, original);
+    expect(request).toEqual({ name: 'ABC Supplies', ifsc: '', gstin: '08ABCDE1234F1Z5' });
+  });
+
+  it('leaves out bank details an older vendor stored as blanks or with spaces, so an unrelated edit does not mark them changed', () => {
+    const legacy: Vendor = { ...vendor, bankAccount: '', upiId: '  ', ifsc: null, accountHolderName: ' ABC Supplies ' };
+    const original = vendorFormFrom(legacy);
+    const request = vendorRequestFrom({ ...original, contactPhone: '9876543210', ifsc: ' ' }, original);
+    expect(request).toEqual({ name: 'ABC Supplies', contactPhone: '9876543210' });
+  });
+
+  it('sends just the name when nothing else changed', () => {
+    const original = vendorFormFrom(vendor);
+    expect(vendorRequestFrom({ ...original, name: ' ABC Supplies Ltd ' }, original)).toEqual({ name: 'ABC Supplies Ltd' });
+    expect(vendorRequestFrom(original, original)).toEqual({ name: 'ABC Supplies' });
+  });
+});
+
+describe('firstVendorFormError', () => {
+  it('names the topmost field on the screen that is wrong', () => {
+    expect(firstVendorFormError({ upiId: 'u', gstin: 'g', contactEmail: 'e' })).toBe('e');
+    expect(firstVendorFormError({ bankAccount: 'b', pan: 'p' })).toBe('p');
+    expect(firstVendorFormError(vendorFormErrors(form({ name: '', ifsc: 'x' })))).toBe('vendors.form.errors.name');
+  });
+
+  it('is null when nothing is wrong', () => {
+    expect(firstVendorFormError({})).toBeNull();
+    expect(firstVendorFormError(vendorFormErrors(form({})))).toBeNull();
+  });
+
+  it('covers every field once', () => {
+    expect([...VENDOR_FORM_FIELD_ORDER].sort()).toEqual(Object.keys(vendorFormFrom(null)).sort());
   });
 });
 

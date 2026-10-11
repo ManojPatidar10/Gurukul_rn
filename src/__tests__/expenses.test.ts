@@ -24,6 +24,8 @@ import {
   needsPaymentReference,
   needsReapproval,
   otherAdminNames,
+  payConfirmation,
+  paymentCategoryLabel,
   paymentMethodLabel,
   paymentMethodOptions,
   requestCategoryLabel,
@@ -189,6 +191,24 @@ describe('payment method', () => {
     expect(needsPaymentReference('')).toBe(false);
     expect(needsPaymentReference(null)).toBe(false);
   });
+
+  it('confirms a payment with the amount, vendor, method and date', () => {
+    const purchase = { actualAmount: 48000.5, vendorName: 'ABC Supplies' };
+    const inEnglish = payConfirmation(purchase, 'BANK_TRANSFER', '2026-10-11', tEn, 'en-IN');
+    expect(inEnglish.title).toBe('Mark as paid?');
+    expect(inEnglish.body).toContain('₹48,000.50');
+    expect(inEnglish.body).toContain('ABC Supplies');
+    expect(inEnglish.body).toContain('Bank transfer');
+    expect(inEnglish.body).toContain('2026');
+    expect(inEnglish.body).toContain("can't be undone");
+    expect(inEnglish.body).not.toMatch(/\{\{/);
+
+    const inHindi = payConfirmation(purchase, 'CASH', '2026-10-11', tHi, 'hi-IN');
+    expect(inHindi.title).toBe(hi.infraExpenses.panels.payConfirmTitle);
+    expect(inHindi.body).toContain(hi.fees.paymentMethods.cash);
+    expect(inHindi.body).toContain('₹48,000.50');
+    expect(inHindi.body).not.toMatch(/\{\{/);
+  });
 });
 
 describe('categories', () => {
@@ -211,6 +231,16 @@ describe('categories', () => {
       expect(categoryLabel({ code, name: DEFAULT_CATEGORY_NAMES[code] }, tEn)).toBe(DEFAULT_CATEGORY_NAMES[code]);
       expect(categoryLabel({ code, name: DEFAULT_CATEGORY_NAMES[code] }, tHi)).toMatch(/[ऀ-ॿ]/);
     }
+  });
+
+  it("translates a default category's name in a vendor's payment history, which carries only the name", () => {
+    expect(paymentCategoryLabel('Library', tHi)).toBe(hi.expenseCategories.defaultNames.LIBRARY);
+    expect(paymentCategoryLabel(' Classroom Maintenance ', tHi)).toBe(hi.expenseCategories.defaultNames.CLASSROOM);
+    expect(paymentCategoryLabel('Library', tEn)).toBe('Library');
+    expect(paymentCategoryLabel('Science Lab', tHi)).toBe('Science Lab');
+    expect(paymentCategoryLabel('library', tHi)).toBe('library');
+    expect(paymentCategoryLabel(null, tHi)).toBeNull();
+    expect(paymentCategoryLabel('  ', tEn)).toBeNull();
   });
 
   it("uses the request's category name, or the code from an older server", () => {

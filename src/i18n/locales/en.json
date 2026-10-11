@@ -2370,6 +2370,7 @@
     },
     "detail": {
       "title": "Expense request",
+      "refreshFailed": "Couldn't load the latest for this request, so what you see may be out of date. {{error}}",
       "category": "Category",
       "description": "Description",
       "amountsTitle": "Amounts",
@@ -2432,6 +2433,8 @@
       "pickVendor": "Pick a vendor.",
       "enterInvoice": "Enter the invoice number.",
       "pickMethod": "Pick how it was paid.",
+      "payConfirmTitle": "Mark as paid?",
+      "payConfirmBody": "Record {{amount}} paid to {{vendor}} by {{method}} on {{date}}? This can't be undone in the app.",
       "confirm": "Confirm",
       "working": "Saving…"
     },
@@ -2460,6 +2463,7 @@
     "empty": "No categories yet.",
     "turnedOff": "Turned off",
     "inUse": "In use",
+    "inUseFor": "{{name}}: in use",
     "activeHint": "Turned-off categories can't be picked for new requests. Old requests keep theirs.",
     "nameRequired": "Enter a name.",
     "existsTitle": "Category already exists",

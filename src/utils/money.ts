@@ -2,7 +2,7 @@
  * Rupee amounts, typed and shown one way on the expense, vendor and payroll screens
  * (specs/expenses-and-vendors D9): sums in whole paise, Indian digit grouping, always 2 decimals.
  * Done by hand rather than with toLocaleString/Intl, so Hermes, Android and Jest all print the same.
- * The format and parse rules match formatInr/parseAmount in fix 2's src/utils/payroll.ts.
+ * src/utils/payroll.ts re-exports toPaise/formatAmount/formatInr and reads amounts with parseInrAmount.
  */
 
 /** The most a DECIMAL(12,2) column holds - ₹99,99,99,99,999.99 - in paise. */

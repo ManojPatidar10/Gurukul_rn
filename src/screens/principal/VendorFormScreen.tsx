@@ -15,6 +15,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import {
+  firstVendorFormError,
   normalizeVendorField,
   VENDOR_MAX_LENGTHS,
   vendorFormErrors,
@@ -54,7 +55,7 @@ export function VendorFormScreen({ route, navigation }: Props) {
   const save = async () => {
     setSubmitting(true);
     try {
-      const request = vendorRequestFrom(form, isEdit);
+      const request = vendorRequestFrom(form, original);
       if (isEdit) {
         await updateVendor(schoolId, vendor!.id, request);
         // The detail screen underneath refetches on focus.
@@ -72,7 +73,12 @@ export function VendorFormScreen({ route, navigation }: Props) {
 
   const handleSubmit = async () => {
     setAttempted(true);
-    if (Object.keys(errors).length > 0) return;
+    // The fields show their errors inline; the toast says why Save did nothing when they're off-screen.
+    const firstError = firstVendorFormError(errors);
+    if (firstError) {
+      showToast(t(firstError), 'error');
+      return;
+    }
 
     // A vendor with the same name is a warning, never a block.
     const name = normalizeVendorField('name', form.name);
@@ -121,6 +127,8 @@ export function VendorFormScreen({ route, navigation }: Props) {
           style={[styles.submit, submitting && styles.submitDisabled]}
           onPress={handleSubmit}
           disabled={submitting}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: submitting, busy: submitting }}
         >
           <Text style={styles.submitText}>
             {submitting ? t('common.saving') : isEdit ? t('common.saveChanges') : t('vendors.form.submitCreate')}

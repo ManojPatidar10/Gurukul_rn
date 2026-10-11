@@ -123,16 +123,46 @@ export function vendorFormErrors(form: VendorForm, original?: VendorForm | null)
   return errors;
 }
 
+/** The order VendorFormScreen shows its fields in, top to bottom. */
+export const VENDOR_FORM_FIELD_ORDER: readonly VendorFormField[] = [
+  'name',
+  'contactPhone',
+  'contactEmail',
+  'address',
+  'gstin',
+  'pan',
+  'accountHolderName',
+  'bankAccount',
+  'ifsc',
+  'upiId',
+];
+
+/**
+ * The topmost field error (an i18n key), or null when there's none - for the toast on Save, since
+ * the field itself may be off-screen behind the keyboard.
+ */
+export function firstVendorFormError(errors: Partial<Record<VendorFormField, string>>): string | null {
+  for (const field of VENDOR_FORM_FIELD_ORDER) {
+    const key = errors[field];
+    if (key) return key;
+  }
+  return null;
+}
+
 /**
  * The body to send. Values are trimmed, and IFSC, GSTIN and PAN upper-cased. A new vendor leaves
- * empty fields out; an edit sends '' for them, which clears whatever was saved.
+ * empty fields out. An edit (`original`, the form as it opened) sends only the fields the user
+ * changed, '' for one they cleared: the server keeps any field left out. Re-sending an unchanged
+ * field would rewrite how an older vendor stored it ('' or stray spaces), which the server counts
+ * as a change - and for bank details that's a false "bank details changed" warning.
  */
-export function vendorRequestFrom(form: VendorForm, isEdit: boolean): VendorRequest {
+export function vendorRequestFrom(form: VendorForm, original?: VendorForm | null): VendorRequest {
   const request: VendorRequest = { name: normalizeVendorField('name', form.name) };
   for (const field of FIELDS) {
     if (field === 'name') continue;
     const value = normalizeVendorField(field, form[field]);
-    if (value !== '' || isEdit) request[field] = value;
+    const send = original ? value !== normalizeVendorField(field, original[field]) : value !== '';
+    if (send) request[field] = value;
   }
   return request;
 }

@@ -82,7 +82,7 @@ export function PayrollOverviewScreen({ navigation }: Props) {
                       {MONTH_NAMES[run.month - 1] ?? run.month} {run.year}
                     </Text>
                     <Text style={styles.rowMeta}>
-                      {t('payroll.overview.runSubtitle', { count: run.employeeCount })} · ₹{run.totalNet.toLocaleString('en-IN')}
+                      {t('payroll.overview.runSubtitle', { count: run.employeeCount })} · {formatInr(run.totalNet)}
                     </Text>
                   </View>
                   <StatusChip label={runStatusLabel(run.status, t)} variant={run.status === 'PAID' ? 'success' : 'warning'} />

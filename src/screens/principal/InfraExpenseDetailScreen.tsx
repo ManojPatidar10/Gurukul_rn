@@ -54,6 +54,7 @@ import {
   needsPaymentReference,
   needsReapproval,
   PAYMENT_REFERENCE_MAX_LENGTH,
+  payConfirmation,
   paymentMethodLabel,
   paymentMethodOptions,
   REJECT_REASON_MIN_LENGTH,
@@ -100,7 +101,13 @@ function AmountCell({ label, value }: { label: string; value: string }) {
 function ConfirmButton({ label, busy, onPress }: { label: string; busy: boolean; onPress: () => void }) {
   const { t } = useTranslation();
   return (
-    <Pressable style={[styles.submit, busy && styles.disabled]} onPress={onPress} disabled={busy} accessibilityRole="button">
+    <Pressable
+      style={[styles.submit, busy && styles.disabled]}
+      onPress={onPress}
+      disabled={busy}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: busy, busy }}
+    >
       <Text style={styles.submitText}>{busy ? t('infraExpenses.panels.working') : label}</Text>
     </Pressable>
   );
@@ -197,6 +204,8 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
       const updated = await call(current);
       requestRef.current = updated;
       setRequest(updated);
+      // The server's answer is the latest copy, history included.
+      setLoadError(null);
       closePanel();
       return true;
     } catch (e) {
@@ -347,15 +356,27 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
   const referenceNeeded = needsPaymentReference(paymentMethod);
   const handlePay = () => {
     setAttempted(true);
-    if (!paymentMethod || (referenceNeeded && !paymentReference.trim())) return;
-    run((current) =>
-      payInfraExpenseRequest(schoolId, current.id, {
-        paymentMethod,
-        paymentReference: paymentReference.trim() || undefined,
-        transactionDate: transactionDate || undefined,
-        expectedVersion: current.version,
-      })
-    );
+    const purchase = request?.purchase;
+    if (!purchase || !paymentMethod || (referenceNeeded && !paymentReference.trim())) return;
+    // Paying writes the ledger outflow, which can't be undone in the app: confirm it first.
+    const method = paymentMethod;
+    const { title, body } = payConfirmation(purchase, method, transactionDate, t, i18n.language);
+    Alert.alert(title, body, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('infraExpenses.actions.PAY'),
+        onPress: () => {
+          run((current) =>
+            payInfraExpenseRequest(schoolId, current.id, {
+              paymentMethod: method,
+              paymentReference: paymentReference.trim() || undefined,
+              transactionDate: transactionDate || undefined,
+              expectedVersion: current.version,
+            })
+          );
+        },
+      },
+    ]);
   };
 
   // ---- Render
@@ -370,7 +391,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
           ) : (
             <>
               <ErrorNotice message={loadError ?? t('errors.generic')} />
-              <Pressable style={styles.actionButton} onPress={() => refetch()}>
+              <Pressable style={styles.actionButton} onPress={() => refetch()} accessibilityRole="button">
                 <Text style={styles.actionText}>{t('common.retry')}</Text>
               </Pressable>
             </>
@@ -398,11 +419,15 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
         onPress={() => openPanel(action)}
         disabled={busy}
         accessibilityRole="button"
+        accessibilityState={{ disabled: busy, busy, expanded: openAction === action }}
       >
         <Text style={[styles.actionText, destructive && styles.destructiveText]}>{t(`infraExpenses.actions.${action}`)}</Text>
       </Pressable>
     );
   };
+
+  // An action's error, shown just above the open panel's button, where the user is looking.
+  const panelError = error ? <ErrorNotice message={error} /> : null;
 
   const commentInput = (label = t('infraExpenses.panels.comment')) => (
     <LabeledInput label={label} value={comment} onChangeText={setComment} maxLength={COMMENT_MAX_LENGTH} multiline />
@@ -419,6 +444,16 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
         <View style={styles.statusRow}>
           <StatusChip label={infraStatusLabel(request.status, t)} variant={infraStatusVariant(request.status)} />
         </View>
+
+        {loadError && (
+          // The refetch failed: what's shown is the list's copy (or an older one) - say so, and offer to try again.
+          <View style={styles.refreshError}>
+            <ErrorNotice message={t('infraExpenses.detail.refreshFailed', { error: loadError })} />
+            <Pressable style={styles.actionButton} onPress={() => refetch()} accessibilityRole="button">
+              <Text style={styles.actionText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
+        )}
 
         <View style={styles.card}>
           <Field label={t('infraExpenses.detail.category')} value={requestCategoryLabel(request, t)} />
@@ -486,7 +521,8 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
             <Text style={styles.infoText}>{notice}</Text>
           </View>
         )}
-        {error && <ErrorNotice message={error} />}
+        {/* With a panel open, its error shows next to the panel's button instead (panelError). */}
+        {error && !openAction && <ErrorNotice message={error} />}
 
         {request.selfApprovalBlocked && (
           <View style={styles.info}>
@@ -508,6 +544,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
                 : t('infraExpenses.panels.approveTitle', { amount: formatInr(request.estimatedAmount) })}
             </Text>
             {commentInput()}
+            {panelError}
             <ConfirmButton label={t(`infraExpenses.actions.${openAction}`)} busy={busy} onPress={() => handleSimple(openAction)} />
           </View>
         )}
@@ -516,6 +553,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
           <View style={styles.panel}>
             <Text style={styles.panelTitle}>{t('infraExpenses.panels.cancelTitle')}</Text>
             {commentInput()}
+            {panelError}
             <ConfirmButton label={t('infraExpenses.actions.CANCEL')} busy={busy} onPress={handleCancel} />
           </View>
         )}
@@ -527,6 +565,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
             {attempted && comment.trim().length < REJECT_REASON_MIN_LENGTH && (
               <Text style={styles.fieldError}>{t('infraExpenses.panels.rejectReasonTooShort')}</Text>
             )}
+            {panelError}
             <ConfirmButton label={t('infraExpenses.actions.REJECT')} busy={busy} onPress={handleReject} />
           </View>
         )}
@@ -544,6 +583,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
             {reviseError && <Text style={styles.fieldError}>{reviseError}</Text>}
             {commentInput()}
             <Text style={styles.hint}>{t('infraExpenses.panels.reviseNote')}</Text>
+            {panelError}
             <ConfirmButton label={t('infraExpenses.actions.SUBMIT')} busy={busy} onPress={handleRevise} />
           </View>
         )}
@@ -573,6 +613,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
               keyboardType="decimal-pad"
             />
             {billError && <Text style={styles.fieldError}>{billError}</Text>}
+            {panelError}
             <ConfirmButton label={t('infraExpenses.actions.RECORD_PURCHASE')} busy={busy} onPress={handlePurchase} />
           </View>
         )}
@@ -620,6 +661,7 @@ export function InfraExpenseDetailScreen({ route, navigation }: Props) {
               onChange={setTransactionDate}
               maximumDate={new Date()}
             />
+            {panelError}
             <ConfirmButton label={t('infraExpenses.actions.PAY')} busy={busy} onPress={handlePay} />
           </View>
         )}
@@ -661,6 +703,7 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   historyCard: { marginTop: spacing.lg },
+  refreshError: { marginBottom: spacing.md },
   cardTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.md },
   field: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },

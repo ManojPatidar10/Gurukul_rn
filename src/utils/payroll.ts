@@ -14,6 +14,7 @@ import type {
   Payslip,
   SalaryStructure,
 } from '../api/types';
+import { formatAmount, formatInr, parseInrAmount, toPaise } from './money';
 
 /**
  * Payroll decisions the screens share (specs/payroll-runs): money maths in whole paise, the words
@@ -44,34 +45,14 @@ export function paymentMethodOptions(t: TFunction): { label: string; value: Payr
 }
 
 // ---------------------------------------------------------------------------------------------
-// Money
+// Money - the app's one rupee helper (src/utils/money.ts), so payroll, expense and vendor screens
+// type and show amounts the same way. Re-exported for the payroll screens and tests.
 
-/** Rupees to whole paise, so sums don't pick up float error (0.1 + 0.2 is 0.30000000000000004). */
-export function toPaise(amount: number): number {
-  return Math.round(amount * 100);
-}
+export { formatAmount, formatInr, toPaise };
 
 /** basic + allowances - deductions in rupees, added up in paise. Null parts count as 0. */
 export function structureNet(basic: number, allowances?: number | null, deductions?: number | null): number {
   return (toPaise(basic) + toPaise(allowances ?? 0) - toPaise(deductions ?? 0)) / 100;
-}
-
-/** 412500 -> "4,12,500.00": Indian digit grouping, always 2 decimals, done by hand so every engine agrees. */
-export function formatAmount(amount: number): string {
-  const paise = toPaise(amount);
-  const abs = Math.abs(paise);
-  const rupees = String(Math.floor(abs / 100));
-  const fraction = String(abs % 100).padStart(2, '0');
-  const lastThree = rupees.slice(-3);
-  const rest = rupees.slice(0, -3);
-  const grouped = rest ? `${rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',')},${lastThree}` : lastThree;
-  return `${paise < 0 ? '-' : ''}${grouped}.${fraction}`;
-}
-
-/** 412500 -> "₹4,12,500.00", -500 -> "-₹500.00". */
-export function formatInr(amount: number): string {
-  const text = formatAmount(amount);
-  return text.startsWith('-') ? `-₹${text.slice(1)}` : `₹${text}`;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -99,19 +80,15 @@ type ParsedAmount =
   | { ok: true; paise: number }
   | { ok: false; problem: 'empty' | 'invalid' | 'negative' | 'decimals' | 'tooLarge' };
 
-/** A typed amount, like "25000", "25,000" or "2500.50". Commas and spaces are ignored. */
+/**
+ * A typed amount, like "25000", "25,000" or "2500.50", read by money.ts's parseInrAmount with the
+ * structure limit. Commas, spaces and a leading ₹ are ignored; 0 is allowed (blank parts are 0).
+ */
 export function parseAmount(text: string): ParsedAmount {
-  const cleaned = text.replace(/[\s,]/g, '');
-  if (cleaned === '') return { ok: false, problem: 'empty' };
-  const match = /^(-?)(\d*)(?:\.(\d*))?$/.exec(cleaned);
-  if (!match || (!match[2] && !match[3])) return { ok: false, problem: 'invalid' };
-  const [, sign, whole, rawFraction = ''] = match;
-  const fraction = rawFraction.replace(/0+$/, '');
-  const paise = Number(whole || '0') * 100 + Number(fraction.padEnd(2, '0').slice(0, 2));
-  if (sign && paise > 0) return { ok: false, problem: 'negative' };
-  if (fraction.length > 2) return { ok: false, problem: 'decimals' };
-  if (paise > MAX_STRUCTURE_AMOUNT_PAISE) return { ok: false, problem: 'tooLarge' };
-  return { ok: true, paise };
+  const parsed = parseInrAmount(text, { maxPaise: MAX_STRUCTURE_AMOUNT_PAISE, allowZero: true });
+  if (parsed.ok) return { ok: true, paise: parsed.paise };
+  // 'zero' can't come back with allowZero; it would mean 0, which a structure part may be.
+  return parsed.problem === 'zero' ? { ok: true, paise: 0 } : { ok: false, problem: parsed.problem };
 }
 
 const FORM_ERRORS = 'payroll.salaryStructureForm.errors';
