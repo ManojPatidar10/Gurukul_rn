@@ -78,6 +78,7 @@ import { InfraExpenseFormScreen } from '../screens/principal/InfraExpenseFormScr
 import { InfraExpensesListScreen } from '../screens/principal/InfraExpensesListScreen';
 import { PayrollHubScreen } from '../screens/principal/PayrollHubScreen';
 import { PayrollRunScreen } from '../screens/principal/PayrollRunScreen';
+import { PayrollRunsListScreen } from '../screens/principal/PayrollRunsListScreen';
 import { PayrollOverviewScreen } from '../screens/principal/PayrollOverviewScreen';
 import { MyClassFeesScreen } from '../screens/principal/MyClassFeesScreen';
 import { PaymentReceiptScreen } from '../screens/principal/PaymentReceiptScreen';
@@ -158,6 +159,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="PayrollHub" component={PayrollHubScreen} />
         <Stack.Screen name="SalaryStructuresList" component={SalaryStructuresListScreen} />
         <Stack.Screen name="SalaryStructureForm" component={SalaryStructureFormScreen} />
+        <Stack.Screen name="PayrollRunsList" component={PayrollRunsListScreen} />
         <Stack.Screen name="PayrollRun" component={PayrollRunScreen} />
         <Stack.Screen name="PayrollOverview" component={PayrollOverviewScreen} />
         <Stack.Screen name="PayslipDetail" component={PayslipDetailScreen} />

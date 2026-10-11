@@ -8,7 +8,7 @@ import type {
   FeePayment,
   FeeStructure,
   GeneratedQuizQuestion,
-  PayrollLine,
+  SalaryStructure,
   Student,
 } from '../api/types';
 import type { InfraExpenseRequest, Vendor } from '../api/expenseTypes';
@@ -104,9 +104,12 @@ export type PrincipalStackParamList = {
   PaymentReceipt: { payment: FeePayment };
   PayrollHub: undefined;
   SalaryStructuresList: undefined;
-  SalaryStructureForm: undefined;
-  PayrollRun: undefined;
-  PayslipDetail: { payrollLine: PayrollLine };
+  /** No params: add a structure. `structure`: edit it. `employee`: add one for that employee. */
+  SalaryStructureForm: { structure?: SalaryStructure; employee?: { id: string; name: string } } | undefined;
+  PayrollRunsList: undefined;
+  /** No runId: pick a month and create its run. */
+  PayrollRun: { runId?: string } | undefined;
+  PayslipDetail: { payrollLineId: string; employeeName?: string };
   PayrollOverview: undefined;
   MyClassFees: { classSection: ClassSection };
   InfraExpensesList: undefined;

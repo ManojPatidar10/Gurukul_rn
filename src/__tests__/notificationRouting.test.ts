@@ -70,6 +70,23 @@ describe('notificationTarget', () => {
     ).toBeNull();
   });
 
+  it("opens a staff member's payslip for a salary-paid alert", () => {
+    const paid = { type: 'SALARY_PAID', payrollLineId: 'line1', month: '6', year: '2026' };
+    expect(notificationTarget(paid, 'TEACHER')).toEqual({ screen: 'PayslipDetail', payrollLineId: 'line1' });
+    expect(notificationTarget(paid, 'ADMIN')).toEqual({ screen: 'PayslipDetail', payrollLineId: 'line1' });
+  });
+
+  it('ignores a salary-paid alert for roles without a payslip screen, or without a line', () => {
+    const paid = { type: 'SALARY_PAID', payrollLineId: 'line1', month: '6', year: '2026' };
+    // Drivers get the push too, but their app has no payslip screen yet: the tap just opens the app.
+    expect(notificationTarget(paid, 'DRIVER')).toBeNull();
+    expect(notificationTarget(paid, 'STUDENT')).toBeNull();
+    expect(notificationTarget(paid, 'PARENT')).toBeNull();
+    expect(notificationTarget({ type: 'SALARY_PAID', month: '6', year: '2026' }, 'TEACHER')).toBeNull();
+    expect(notificationTarget({ type: 'SALARY_PAID', payrollLineId: '' }, 'ADMIN')).toBeNull();
+    expect(notificationTarget({ type: 'SALARY_PAID', payrollLineId: 7 }, 'ADMIN')).toBeNull();
+  });
+
   it('drops a report-card term that is not a string', () => {
     expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', term: 2, studentId: 's1' }, 'PARENT')).toEqual({
       screen: 'ReportCard',
@@ -126,6 +143,13 @@ describe('openNotificationTarget', () => {
     await openNotificationTarget('school1', { screen: 'AttendanceHistory', studentId: 's1' }, navigate);
     expect(navigate).toHaveBeenNthCalledWith(1, 'ChildFees', { student: { id: 's1', name: 'Asha' } });
     expect(navigate).toHaveBeenNthCalledWith(2, 'AttendanceHistory', { student: { id: 's1', name: 'Asha' } });
+  });
+
+  it('opens the payslip for a salary-paid alert, without looking up children', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'PayslipDetail', payrollLineId: 'line1' }, navigate);
+    expect(navigate).toHaveBeenCalledWith('PayslipDetail', { payrollLineId: 'line1' });
+    expect(mockedGetMyChildren).not.toHaveBeenCalled();
   });
 
   it('opens screens without a child straight away, without looking up children', async () => {
