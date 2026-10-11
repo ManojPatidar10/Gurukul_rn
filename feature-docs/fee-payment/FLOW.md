@@ -7,13 +7,11 @@ Double taps and retries never record a second payment (an `Idempotency-Key` per 
 
 A second subsystem lets a student or parent start a UPI payment from the app (a `upi://pay` deep link plus a `PaymentAttempt` row), but its only UI entry point is disabled — the "Pay Fees" button shows a "coming soon" toast — because there is no payment gateway behind it, so a "success" is only the UPI app's unverified claim. A payer's report never marks a fee paid; only an admin recording the payment does.
 
-> **Waiting on fix 1.** Some access and UPI rules below come with `fix/finance-access-and-privacy` (specs/finance-access-and-privacy), which isn't merged yet. They are marked **(fix 1)**, each with what the code does until it merges. Everything else is in this change.
-
 ## Actors / roles
 - **ADMIN**: the only role that records or reverses a payment. Reads every bill, payment, receipt and attempt. Sets the school's UPI ID and bank details in Fee Payment Settings.
 - **STUDENT**: reads their **own** bills, payment history and receipts (and can download the receipt PDF). May make a payment request and report an attempt's outcome for their own bills. Never sees Record or Reverse.
 - **PARENT**: the same as a student, for a **linked** child only (`ParentService.requireLinkedChild`, else 403). Reaches a child's bills from `ChildFees`.
-- **TEACHER**: no part in payments — 403 on recording, reversing, history, receipts and the PDF, even as the student's class teacher. **(fix 1)** Also 403 on payment requests and attempts, and reads bills only for their own class-teacher section (see the fees-overview doc). Until fix 1 merges, a teacher passes the route rule and `assertCanPayOrRecord` on the four payment-request and attempt endpoints, and can list every bill (`GET /fee-assessments`) and read any student's bills.
+- **TEACHER**: no part in payments — 403 on recording, reversing, history, receipts, the PDF, payment requests and attempts, even as the student's class teacher. Reads one student's bills only as the class teacher of that student's current section, and a section's bills only for their own class-teacher section (see the fees-overview doc).
 - **DRIVER** and any other role: 403 on every fee route. Unauthenticated: 401.
 
 ## Flow diagram
@@ -53,9 +51,9 @@ flowchart TD
   subgraph Disabled online flow - UI entry point removed
     U1[Student bill detail: Pay Fees] --> U2["showToast(payFeesComingSoon) - no navigation"]
     U2 -.->|never reached in current UI| U3[PayFeesScreen - still routed as 'PayFees']
-    U3 --> U4[POST /fee-assessments/id/payment-request\nfix 1: 409 UPI_NOT_CONFIGURED without a UPI ID]
+    U3 --> U4[POST /fee-assessments/id/payment-request\n409 UPI_NOT_CONFIGURED without a UPI ID]
     U4 --> U5[PaymentAttempt INITIATED, upi://pay link]
-    U5 --> U6[payer self-reports -> POST /payment-attempts/ref/result\nattempt status only, bill unchanged]
+    U5 --> U6[payer self-reports -> POST /payment-attempts/ref/result\nfirst result wins, else 409 PAYMENT_ATTEMPT_ALREADY_REPORTED\nattempt status only, bill unchanged]
     U6 -.->|admin sees the money, records it citing the ref| D
   end
 
@@ -121,21 +119,25 @@ flowchart TD
 A ledger row is **cancelled** when `reversed_at` is set, and **counts in totals** only when `status = COMPLETED`.
 
 ### Online UPI flow (backend works; UI entry point disabled)
-20. A student reaches the bill detail from My Fees. "Pay Fees" only shows "Online fee payment is coming soon.". `PayFeesScreen` is still registered as `'PayFees'`, but nothing navigates to it.
-21. If reached, "Pay Now" sets a busy flag at once and shows "Preparing…" (a double tap can't start two attempts), calls `findPendingPaymentAttempt` — if that check fails it shows the error instead of starting a payment anyway; if an `INITIATED`/`PENDING` attempt exists it asks first — then `createFeePaymentRequest` → `POST /api/v1/fee-assessments/{id}/payment-request`. The amount shown switches to the server's `paymentRequest.amount` once a request exists.
-22. `createPaymentRequest`: 404 not in school → 403 for another student or an unlinked parent → 400 already fully paid → the payee check. Then it saves an `INITIATED` attempt (`transactionRef = FEE<12 hex>`, amount = remaining due) and returns a `upi://pay?pa=<payee>…` link.
-    - **(fix 1)** Every role but ADMIN, STUDENT and PARENT gets 403. With no school UPI ID → **409 `UPI_NOT_CONFIGURED`** and no attempt saved. The payee is only the school's UPI ID, and `accountNumber`/`ifsc` are returned to an admin only.
-    - Until fix 1 merges: a teacher passes. With no bank account or IFSC → 400 "Your school has not set up a fee payment account yet…". The payee is the UPI ID when set, otherwise a guessed `<account number>@<bank handle from the IFSC>`. Every caller gets `accountNumber` and `ifsc`.
-23. The app opens the link; back in the app an alert asks the payer to self-report → `POST /api/v1/payment-attempts/{transactionRef}/result` with `RESPONSE_SUCCESS`, `PENDING`, `FAILED`, `CANCELLED` or `UNKNOWN`. A report never records a payment or changes the bill.
-    - **(fix 1)** `VERIFIED`/`INITIATED` → 400. An open attempt takes the reported status and fills only empty evidence fields; a final attempt answers 200 to the same outcome and 409 `PAYMENT_ATTEMPT_ALREADY_REPORTED` to a different one.
-    - Until fix 1 merges: any status is accepted, and each report overwrites the attempt's status and evidence fields, except that a `VERIFIED` attempt comes back unchanged. "Never records a payment" rests on `app.fees.unverified-upi-auto-mark-paid` being off (the default); fix 1 removes that setting.
-24. To confirm a reported payment, an admin records it (step 4) with the attempt's `transactionRef` as the reference. Once that payment is reversed, the attempt can be confirmed again with the same reference (only non-reversed payments block it); the attempt stays `VERIFIED`.
+20. A student reaches the bill detail from My Fees. "Pay Fees" only shows "Online fee payment is coming soon.". `PayFeesScreen` is still registered as `'PayFees'`, but nothing navigates to it. If it were reached, "Pay Now" sets a busy flag at once and shows "Preparing…" (a double tap can't start two attempts), then lists the bill's attempts (`listPaymentAttempts` → `GET /api/v1/fee-assessments/{id}/payment-attempts`) and warns before starting another payment (`earlierAttemptWarning`, `src/utils/feePaymentAttempts.ts`): "Payment already reported" if an attempt is `RESPONSE_SUCCESS` (a reported success the school hasn't confirmed, which doesn't mark the fee paid, so the fee still shows its full due), otherwise "Payment already in progress" if one is `INITIATED`/`PENDING`. The payer can cancel or pay again. If the list call fails, the error is shown instead of starting a payment anyway. It then calls `createFeePaymentRequest` → `POST /api/v1/fee-assessments/{id}/payment-request`. The Pay button is disabled except when idle or after an error, and the amount shown switches to the server's `paymentRequest.amount` once a request exists.
+21. `FeePaymentService.createPaymentRequest` checks, in order: the assessment is in the school (404), the caller may pay it (403 — admin, the student, or a linked parent; every other role, a teacher included, is refused), it isn't already fully paid (400), and the school has a UPI ID set (`upiVpaOverride`, entered as "Your school's UPI ID" in `FeePaymentSettingsScreen.tsx`). With no UPI ID it returns **409 `UPI_NOT_CONFIGURED`** ("This school has not set up UPI payments yet.") and saves nothing; the app shows that message and offers only **Back**, since trying again can't help. Bank account and IFSC are not needed, and the payee address is never guessed from them.
+22. On success it builds a `upi://pay?...` link with `pa=` the school's UPI ID and persists a `PaymentAttempt` (`transactionRef = FEE<12 hex>`, amount = remaining due) with status `INITIATED` **before** the UPI app opens, so abandoned attempts are still traceable. The response's `payeeVpa` is that UPI ID; `accountNumber` and `ifsc` are `null` unless the caller is an ADMIN.
+23. The frontend calls `Linking.openURL` to hand off to whichever UPI app is installed. React Native's `Linking` API cannot receive a real activity result, so there is no automatic verified outcome.
+24. When the app returns to the foreground (`AppState` listener), the user self-reports through an `Alert`: succeeded, cancelled, or not sure → `RESPONSE_SUCCESS` / `CANCELLED` / `UNKNOWN`.
+25. That report goes to `POST /api/v1/payment-attempts/{transactionRef}/result` (`FeePaymentService.recordAttemptResult`), which locks the attempt row and applies these rules:
+    - The reported `status` must be `RESPONSE_SUCCESS`, `PENDING`, `FAILED`, `CANCELLED` or `UNKNOWN`. `VERIFIED` or `INITIATED` → 400.
+    - An attempt still open (`INITIATED`, `PENDING`, `UNKNOWN`) takes the reported status. Each evidence field (`upiTransactionId`, `approvalRefNo`, `responseCode`, `rawResponse`) is filled only if it is still empty, so earlier evidence is never overwritten or cleared.
+    - An attempt with a final result (`RESPONSE_SUCCESS`, `FAILED`, `CANCELLED`, `VERIFIED`) returns 200 unchanged when the same outcome is reported again (a `RESPONSE_SUCCESS` report on a `VERIFIED` attempt counts as the same), and **409 `PAYMENT_ATTEMPT_ALREADY_REPORTED`** for a different outcome, writing nothing.
+    - A report never records a `FeePayment`, ledger entry or receipt, and never changes the fee.
+26. The app shows the returned attempt by its status (`paymentResultKind`): `RESPONSE_SUCCESS` → "Payment response received" with the amount, any UPI transaction id and a caveat that it is unverified and the fee shows as paid once the school confirms; `VERIFIED` (a success report on an attempt an admin already confirmed) → the same success card with "The school has confirmed this payment."; `PENDING` / `UNKNOWN` → their messages with **Done**; `FAILED` / `CANCELLED` → their messages with **Try again** (a fresh payment).
+27. On a 409 `PAYMENT_ATTEMPT_ALREADY_REPORTED` (for example, the first report reached the server but its reply was lost, and the payer then reported something else from the manual card), the app lists the attempts again, finds the one whose `transactionRef` is the request's `referenceId`, and shows its stored result as in step 26. If that lookup fails, the error screen shows the 409 message with only **Back** and hides the manual "I've completed this payment" card, since a fresh payment could pay twice.
+28. To confirm a reported payment, an admin records it (step 4) with the attempt's `transactionRef` as the reference; the attempt becomes `VERIFIED` (the only place that status is set). "Already recorded" is decided only from the ledger, never from the attempt's status. Once that payment is reversed, the attempt can be confirmed again with the same reference (only non-reversed payments block it); the attempt stays `VERIFIED`.
 
 ### Fee-due reminders
-25. `FeeDueAlertService.runDaily` (default 09:00 IST) pushes `FEE_DUE` to linked parents of ACTIVE students with a positive balance: once from 3 days before the due date, then once a week while overdue. Tapping opens `ChildFees`.
+29. `FeeDueAlertService.runDaily` (default 09:00 IST) pushes `FEE_DUE` to linked parents of ACTIVE students with a positive balance: once from 3 days before the due date, then once a week while overdue. Tapping opens `ChildFees`.
 
 ## Backend endpoints involved
-All matchers are in `SecurityConfig`'s fee block; `…/receipt.pdf` and `…/reverse` are separate patterns from `/fee-payments/*`. **(fix 1)** These specific rules sit before its ADMIN-only fee catch-all. Until fix 1 merges there is no catch-all: any other fee path falls to the general `/api/v1/**` rule (ADMIN, TEACHER, STUDENT, PARENT).
+All matchers are in `SecurityConfig`'s fee block; `…/receipt.pdf` and `…/reverse` are separate patterns from `/fee-payments/*`. These specific rules sit before the ADMIN-only fee catch-all.
 
 | Endpoint | Route rule | Service check |
 |---|---|---|
@@ -145,12 +147,18 @@ All matchers are in `SecurityConfig`'s fee block; `…/receipt.pdf` and `…/rev
 | `POST /api/v1/fee-payments/{id}/reverse` (optional `Idempotency-Key`) | ADMIN | admin; step 17 |
 | `GET /api/v1/fee-assessments/{id}/payments` | ADMIN, STUDENT, PARENT | step 15 |
 | `GET /api/v1/students/{studentId}/fee-payments` | ADMIN, STUDENT, PARENT | step 15 |
-| `POST /api/v1/fee-assessments/{id}/payment-request` | ADMIN, STUDENT, PARENT **(fix 1)**; TEACHER too until then | step 22 |
-| `GET /api/v1/fee-assessments/{id}/payment-attempts/pending` | ADMIN, STUDENT, PARENT **(fix 1)**; TEACHER too until then | own student / linked parent / admin (until fix 1, any staff); `data: null` when none |
-| `GET /api/v1/fee-assessments/{id}/payment-attempts` | ADMIN, STUDENT, PARENT **(fix 1)**; TEACHER too until then | same; newest first |
-| `POST /api/v1/payment-attempts/{transactionRef}/result` | ADMIN, STUDENT, PARENT **(fix 1)**; TEACHER too until then | step 23 |
+| `POST /api/v1/fee-assessments/{id}/payment-request` | ADMIN, STUDENT, PARENT | step 21 |
+| `GET /api/v1/fee-assessments/{id}/payment-attempts/pending` | ADMIN, STUDENT, PARENT | own student / linked parent / admin; `data: null` when none |
+| `GET /api/v1/fee-assessments/{id}/payment-attempts` | ADMIN, STUDENT, PARENT | same; newest first |
+| `POST /api/v1/payment-attempts/{transactionRef}/result` | ADMIN, STUDENT, PARENT | step 25 |
+| `GET /api/v1/fee-assessments` | ADMIN | none (school-wide list) |
+| `GET /api/v1/students/{studentId}/fee-assessments` | ADMIN, TEACHER, STUDENT, PARENT | STUDENT: self. PARENT: linked child. TEACHER: class teacher of the student's current section. ADMIN: any |
+| `GET /api/v1/class-sections/{id}/fee-status` | TEACHER, ADMIN | ADMIN, or that section's class teacher |
+| any other path under `/fee-assessments/**`, `/fee-payments/**`, `/payment-attempts/**`, `/fee-categories/**`, `/fee-structures/**` | ADMIN (catch-all) | n/a |
 
-Error codes: `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED` (all 409; the app has its own wording for each under `errors.codes`), plus, with fix 1, `UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED`. Old app builds call neither the new endpoints nor `POST /fee-payments`; the added response fields are additive.
+`requireAdminOrFamily` (behind `assertCanPayOrRecord` and every payment read) fails closed: no principal (an internal call or a unit test) passes, ADMIN passes, a STUDENT (or a principal with `ownerType == STUDENT`) passes only for its own student, a PARENT only for a linked child, and every other role gets 403.
+
+Error codes: `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED`, `UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED` (all 409; the app has its own wording for each under `errors.codes`). Old app builds call neither the new endpoints nor `POST /fee-payments`; the added response fields are additive.
 
 ## Frontend screens involved
 - `src/screens/principal/FeeAssessmentDetailScreen.tsx` — bill totals (`formatRupees`), progress bar, status; refetched on focus. Admin: **Record payment**. Admin/student/parent: payment history and "All payments for this student". Student: the disabled "Pay Fees" toast. Registered in `PrincipalNavigator` and `ParentNavigator`.
@@ -161,17 +169,17 @@ Error codes: `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED`
 - `src/components/FeePaymentHistory.tsx` — the list used by the bill detail and StudentFeePayments.
 - `src/screens/principal/MyFeesScreen.tsx` (student) — own bills; "Payment history" button; rows open the bill detail.
 - `src/screens/principal/ChildFeesScreen.tsx` (parent) — a child's bills; rows now open the bill detail; "Payment history" button.
-- `src/screens/principal/PayFeesScreen.tsx` — the unreachable online-payment screen (step 21).
+- `src/screens/principal/PayFeesScreen.tsx` — the unreachable online-payment screen (steps 20–27). For `UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED` the error screen shows **Back** instead of **Try again** and no manual-payment card (`canRetryFeePayment`, `src/utils/feePaymentErrors.ts`); the earlier-attempt warning and the result card's status mapping are in `src/utils/feePaymentAttempts.ts`.
 - `src/screens/principal/FeePaymentSettingsScreen.tsx` — the school's UPI ID and bank details.
-- API: `src/api/feePayments.ts` (`recordFeePayment`, `getFeePayment`, `listBillPayments`, `listStudentPayments`, `reverseFeePayment`, `downloadFeeReceiptPdf`), `src/api/client.ts` (`api.post(…, { headers })` — extra headers are re-sent unchanged on the 401 refresh retry), `src/api/feePaymentRequest.ts`, `src/api/paymentAttempts.ts`.
+- API: `src/api/feePayments.ts` (`recordFeePayment`, `getFeePayment`, `listBillPayments`, `listStudentPayments`, `reverseFeePayment`, `downloadFeeReceiptPdf`), `src/api/client.ts` (`api.post(…, { headers })` — extra headers are re-sent unchanged on the 401 refresh retry), `src/api/feePaymentRequest.ts` (`createFeePaymentRequest`), `src/api/paymentAttempts.ts` (`findPendingPaymentAttempt`, `listPaymentAttempts`, `recordPaymentAttemptResult`).
 - Helpers (unit-tested): `src/utils/money.ts` (`parseRupees`, `formatRupees` with Indian grouping and no `Intl`, `sumRupees` in paise, `rupeesInputValue`), `src/utils/feePayments.ts` (methods, reference rules, date bounds, `validateRecordPayment`, `reversalTypesFor`, `validateReversal`, `duplicateReferenceInfo`, `refreshedBill`), `src/utils/idempotencyKey.ts`. Hook: `src/hooks/useHoldWhileSaving.ts` (`usePreventRemove` while a record or reverse request is in flight).
 
 ## Data model
 - `StudentFeeAssessment`: `student`, `academicYear`, `totalDue`, `totalPaid`, `status` (`UNPAID`, `PARTIAL`, `PAID`, `OVERDUE`; computed against IST today), `dueDate`.
 - `FeePayment`: `assessment`, `amount`, `transactionId` (the ledger row), and new `recordedById`, `recordedByName`, `balanceAfter` — snapshots taken when recorded; null for payments recorded before this change, so those receipts hide "Received by" and the balance row.
 - `FinancialTransaction` (ledger) gains `client_request_id` and `reversal_request_id` (unique per school; NULLs never collide), `reversed_at`, `reversed_by_id`, `reversed_by_name`, `reversal_type` (`CORRECTION`/`BOUNCED`/`REFUND`), `reversal_reason`, `reversal_of_id` (a refund's contra row → its original). `TransactionStatus.REVERSED` is now used. A payment's method, reference, date and receipt number live on its ledger row; references are stored without whitespace, upper-cased.
-- `PaymentAttempt`: `assessment`, `transactionRef` (`FEE<12 hex>`), `amount`, `currency`, `status` (`INITIATED`; payer reports `RESPONSE_SUCCESS`/`PENDING`/`FAILED`/`CANCELLED`/`UNKNOWN`; `VERIFIED` via an admin's recording, and with fix 1 only that way; until then a payer's report can set any status), evidence fields.
-- `School`: `upiVpaOverride` (the school's UPI ID; with fix 1 the only payee, until then the payee is guessed from the bank account when it's empty), bank details.
+- `PaymentAttempt`: `assessment`, `transactionRef` (`FEE<12 hex>`), `amount`, `currency`, `status` (`INITIATED`; payer reports `RESPONSE_SUCCESS`/`PENDING`/`FAILED`/`CANCELLED`/`UNKNOWN`; `VERIFIED` only via an admin's recording), evidence fields (`upiTransactionId`, `approvalRefNo`, `responseCode`, `rawResponse` ≤ 2000 chars).
+- `School`: `upiVpaOverride` (the school's UPI ID, the only payee a payment request uses), `bankAccountNumber`, `bankIfsc`, `bankAccountHolderName` (or the school name: the payee name).
 
 ## Known limitations / edge cases
 - **Online UPI flow built, then disabled in the UI** (step 20). No gateway; there is no claimed-UPI verification queue — an admin records the payment once they see the money.
@@ -183,6 +191,8 @@ Error codes: `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED`
 - "Today" in the app is the phone's date; the server checks against IST, so a phone set to a zone ahead of India could have tomorrow's date refused.
 - Receipts have no fee-category / tuition (80C) breakdown and no amount in words.
 - `findPendingAttempt` treats only `INITIATED`/`PENDING` as in flight, not `UNKNOWN`; the backend doesn't yet refuse a new payment request while a recent attempt is open.
+- Schools without a UPI ID get the 409 once online payment is switched back on in the app; an admin must enter one in Payment Settings first. The app can't confirm the UPI ID's registered payee name (that needs a payment provider).
+- Payment Settings still asks for a bank account number and IFSC before it saves, even though a payment request only needs the UPI ID.
 
 ## Known gaps
 - Other money screens (payroll, infra expenses, collections) still format with `toLocaleString('en-IN')`; they should move to `src/utils/money.ts`.

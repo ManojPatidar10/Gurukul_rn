@@ -51,6 +51,24 @@ describe('getErrorMessage', () => {
     );
   });
 
+  it('explains a school with no UPI ID set up by its error code', () => {
+    expect(
+      getErrorMessage(new ApiError('This school has not set up UPI payments yet.', 409, 'UPI_NOT_CONFIGURED'))
+    ).toBe(en.errors.codes.UPI_NOT_CONFIGURED);
+  });
+
+  it('explains a payment result that was already recorded by its error code', () => {
+    expect(
+      getErrorMessage(
+        new ApiError(
+          "A result was already recorded for this payment, so it can't be changed.",
+          409,
+          'PAYMENT_ATTEMPT_ALREADY_REPORTED'
+        )
+      )
+    ).toBe(en.errors.codes.PAYMENT_ATTEMPT_ALREADY_REPORTED);
+  });
+
   it('explains a bare permission refusal', () => {
     expect(getErrorMessage(new ApiError('Forbidden', 403))).toBe(en.errors.forbidden);
   });

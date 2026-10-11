@@ -405,7 +405,7 @@
       },
       "paymentSettings": {
         "title": "Payment Settings",
-        "description": "Set the bank account fee payments are received into"
+        "description": "Set the UPI ID families pay fees to"
       }
     },
     "categories": {
@@ -502,7 +502,7 @@
     },
     "paymentSettings": {
       "title": "Payment Settings",
-      "hint": "Students pay their fees directly into this bank account from the app. Set it once for your school.",
+      "hint": "Families pay fees by UPI to your school's UPI ID set below. Bank details are kept for your records.",
       "saved": "Payment settings saved.",
       "errors": {
         "bankAccountNumber": "Enter a valid bank account number (9-18 digits).",
@@ -512,9 +512,9 @@
       "bankAccountNumber": "Bank account number",
       "bankIfsc": "IFSC code",
       "bankAccountHolderName": "Account holder name shown to students",
-      "upiVpaOverride": "Your real UPI ID (needed for payments to work)",
-      "upiVpaOverrideHint": "Without this, the app guesses a UPI ID from your account number and IFSC (e.g. 123456789012@sbi) — this is rarely a real, working payee, so student payments will fail with an error inside their UPI app. Enter the same UPI ID you'd give someone to pay you directly (the one behind your bank's UPI QR code, e.g. name@oksbi, name@ybl, name@paytm) to fix this.",
-      "upiVpaOverrideWarning": "No real UPI ID set yet — payments will likely fail until you add one below."
+      "upiVpaOverride": "Your school's UPI ID (needed for UPI payments)",
+      "upiVpaOverrideHint": "Families can pay fees by UPI only once this is set. Enter the same UPI ID you'd give someone to pay you directly (the one behind your bank's UPI QR code, e.g. name@oksbi, name@ybl, name@paytm). The app never guesses a UPI ID from your account number.",
+      "upiVpaOverrideWarning": "No UPI ID set yet — families can't pay by UPI until you add one below."
     },
     "receipt": {
       "title": "Payment Receipt",
@@ -565,9 +565,12 @@
       "pendingMessage": "You already started a payment for this fee that hasn't been confirmed yet. Pay again anyway?",
       "pendingCancel": "Cancel",
       "pendingContinue": "Pay Again",
+      "reportedTitle": "Payment already reported",
+      "reportedMessage": "You already reported that a payment for this fee succeeded. The school hasn't confirmed it yet, so the fee still shows as due. Pay again only if you're sure that payment didn't go through.",
       "resultSuccessTitle": "Payment response received",
       "resultTransactionId": "Transaction ID",
-      "resultUnverifiedCaveat": "This reflects what was reported, not an independently verified payment.",
+      "resultUnverifiedCaveat": "This reflects what was reported, not an independently verified payment. The fee shows as paid once the school confirms the money arrived.",
+      "resultConfirmedNote": "The school has confirmed this payment.",
       "resultPendingMessage": "Payment is being processed. Do not make another payment yet.",
       "resultFailedMessage": "Payment failed.",
       "resultCancelledMessage": "Payment was cancelled.",
@@ -2083,7 +2086,9 @@
       "AI_RATE_LIMITED": "You've reached this hour's limit for the AI assistant. Please try again later.",
       "DUPLICATE_REFERENCE": "This reference is already on another payment.",
       "ALREADY_REVERSED": "This payment was already reversed.",
-      "IDEMPOTENCY_KEY_REUSED": "This was already sent with different details. Check the payment history before saving again."
+      "IDEMPOTENCY_KEY_REUSED": "This was already sent with different details. Check the payment history before saving again.",
+      "UPI_NOT_CONFIGURED": "This school has not set up UPI payments yet.",
+      "PAYMENT_ATTEMPT_ALREADY_REPORTED": "This payment's result was already recorded and can't be changed."
     }
   },
   "sectionHub": {

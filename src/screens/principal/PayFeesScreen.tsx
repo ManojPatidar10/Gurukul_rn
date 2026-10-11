@@ -5,13 +5,21 @@ import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '../../api/client';
 import { createFeePaymentRequest } from '../../api/feePaymentRequest';
-import { findPendingPaymentAttempt, recordPaymentAttemptResult } from '../../api/paymentAttempts';
-import type { FeePaymentRequestResponse, PaymentAttempt, PaymentAttemptStatus } from '../../api/types';
+import { listPaymentAttempts, recordPaymentAttemptResult } from '../../api/paymentAttempts';
+import type { FeePaymentRequestResponse, PayerReportableStatus, PaymentAttempt } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import {
+  canPayAgainAfter,
+  earlierAttemptWarning,
+  findAttemptByRef,
+  paymentResultKind,
+  type EarlierAttemptWarning,
+} from '../../utils/feePaymentAttempts';
+import { canRetryFeePayment, isPaymentAlreadyReported } from '../../utils/feePaymentErrors';
 import { formatRupees } from '../../utils/money';
 import { resolvePaymentAppUrl } from '../../utils/upiPaymentLinks';
 import { getErrorMessage } from '../../api/errorMessage';
@@ -32,6 +40,8 @@ export function PayFeesScreen({ route, navigation }: Props) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [paymentRequest, setPaymentRequest] = useState<FeePaymentRequestResponse | null>(null);
   const [resultAttempt, setResultAttempt] = useState<PaymentAttempt | null>(null);
+  // False when the failure needs the school to act first (no UPI ID set): the error then offers Back, not Try again.
+  const [canRetry, setCanRetry] = useState(true);
   const returnHandled = useRef(false);
   // Set synchronously on the first tap, so a double tap can't start two payment attempts.
   const busyRef = useRef(false);
@@ -70,7 +80,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
     );
   };
 
-  const reportOutcome = async (request: FeePaymentRequestResponse, status: PaymentAttemptStatus) => {
+  const reportOutcome = async (request: FeePaymentRequestResponse, status: PayerReportableStatus) => {
     setStage('reporting');
     try {
       const attempt = await recordPaymentAttemptResult(schoolId, request.referenceId, {
@@ -80,14 +90,30 @@ export function PayFeesScreen({ route, navigation }: Props) {
       setResultAttempt(attempt);
       setStage('result');
     } catch (e) {
-      const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
-      setErrorMessage(message);
+      const errorCode = e instanceof ApiError ? e.errorCode : undefined;
+      if (isPaymentAlreadyReported(errorCode)) {
+        // The server kept an earlier, different result for this attempt (perhaps a report whose reply
+        // was lost), so show that result instead of an error that invites paying again.
+        try {
+          const stored = findAttemptByRef(await listPaymentAttempts(schoolId, assessment.id), request.referenceId);
+          if (stored) {
+            setResultAttempt(stored);
+            setStage('result');
+            return;
+          }
+        } catch {
+          // Fall through to the error, which then offers only Back.
+        }
+      }
+      setErrorMessage(getErrorMessage(e));
+      setCanRetry(canRetryFeePayment(errorCode));
       setStage('error');
     }
   };
 
   const startPayment = async () => {
     setErrorMessage(null);
+    setCanRetry(true);
     setStage('creating');
     returnHandled.current = false;
     try {
@@ -105,6 +131,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
     } catch (e) {
       const message = e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e);
       setErrorMessage(message);
+      setCanRetry(canRetryFeePayment(e instanceof ApiError ? e.errorCode : undefined));
       setStage('error');
     }
   };
@@ -113,37 +140,43 @@ export function PayFeesScreen({ route, navigation }: Props) {
     if (busyRef.current) return;
     busyRef.current = true;
     setErrorMessage(null);
+    setCanRetry(true);
     setStage('creating');
-    let pending: PaymentAttempt | null;
+    let warning: EarlierAttemptWarning;
     try {
-      pending = await findPendingPaymentAttempt(schoolId, assessment.id);
+      warning = earlierAttemptWarning(await listPaymentAttempts(schoolId, assessment.id));
     } catch (e) {
       // Without knowing whether a payment is already in flight, starting another could charge twice.
       setErrorMessage(getErrorMessage(e));
+      setCanRetry(canRetryFeePayment(e instanceof ApiError ? e.errorCode : undefined));
       setStage('error');
       busyRef.current = false;
       return;
     }
-    if (pending) {
+    if (warning) {
       // Stays busy until the payer answers, so no second attempt can start behind the alert.
-      Alert.alert(t('fees.payFees.pendingTitle'), t('fees.payFees.pendingMessage'), [
-        {
-          text: t('fees.payFees.pendingCancel'),
-          style: 'cancel',
-          onPress: () => {
-            busyRef.current = false;
-            setStage('idle');
-          },
-        },
-        {
-          text: t('fees.payFees.pendingContinue'),
-          onPress: () => {
-            startPayment().finally(() => {
+      Alert.alert(
+        warning === 'reportedSuccess' ? t('fees.payFees.reportedTitle') : t('fees.payFees.pendingTitle'),
+        warning === 'reportedSuccess' ? t('fees.payFees.reportedMessage') : t('fees.payFees.pendingMessage'),
+        [
+          {
+            text: t('fees.payFees.pendingCancel'),
+            style: 'cancel',
+            onPress: () => {
               busyRef.current = false;
-            });
+              setStage('idle');
+            },
           },
-        },
-      ]);
+          {
+            text: t('fees.payFees.pendingContinue'),
+            onPress: () => {
+              startPayment().finally(() => {
+                busyRef.current = false;
+              });
+            },
+          },
+        ]
+      );
       return;
     }
     await startPayment();
@@ -152,6 +185,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
 
   const handleRetry = () => {
     setErrorMessage(null);
+    setCanRetry(true);
     setPaymentRequest(null);
     setResultAttempt(null);
     returnHandled.current = false;
@@ -160,6 +194,8 @@ export function PayFeesScreen({ route, navigation }: Props) {
 
   const handleDone = () => navigation.navigate('MyFees');
   const canPress = stage === 'idle' || stage === 'error';
+
+  const resultKind = resultAttempt ? paymentResultKind(resultAttempt.status) : null;
 
   return (
     <View style={styles.root}>
@@ -180,13 +216,18 @@ export function PayFeesScreen({ route, navigation }: Props) {
         {(stage === 'idle' || stage === 'error') && (
           <>
             {stage === 'error' && errorMessage && <ErrorNotice message={errorMessage} />}
-            <Pressable style={styles.payButton} onPress={stage === 'error' ? handleRetry : handlePay} disabled={!canPress}>
+            <Pressable
+              style={styles.payButton}
+              onPress={stage !== 'error' ? handlePay : canRetry ? handleRetry : () => navigation.goBack()}
+              disabled={!canPress}
+            >
               <Text style={styles.payButtonText}>
-                {stage === 'error' ? t('fees.payFees.tryAgain') : t('fees.payFees.payNow')}
+                {stage !== 'error' ? t('fees.payFees.payNow') : canRetry ? t('fees.payFees.tryAgain') : t('common.back')}
               </Text>
             </Pressable>
 
-            {stage === 'error' && paymentRequest && (
+            {/* Not after a refusal retrying can't fix: a result the server already keeps would only be refused again. */}
+            {stage === 'error' && paymentRequest && canRetry && (
               <View style={styles.manualCard}>
                 <Text style={styles.manualTitle}>{t('fees.payFees.manualTitle')}</Text>
                 <Text style={styles.manualHint}>{t('fees.payFees.manualHint')}</Text>
@@ -218,9 +259,9 @@ export function PayFeesScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {stage === 'result' && resultAttempt && (
+        {stage === 'result' && resultKind && resultAttempt && (
           <View style={styles.resultCard}>
-            {resultAttempt.status === 'RESPONSE_SUCCESS' && (
+            {(resultKind === 'reportedSuccess' || resultKind === 'confirmed') && (
               <>
                 <Text style={[styles.resultTitle, styles.resultSuccess]}>{t('fees.payFees.resultSuccessTitle')}</Text>
                 <Text style={styles.resultAmount}>{formatRupees(resultAttempt.amount)}</Text>
@@ -229,28 +270,27 @@ export function PayFeesScreen({ route, navigation }: Props) {
                     {t('fees.payFees.resultTransactionId')}: {resultAttempt.upiTransactionId}
                   </Text>
                 )}
-                <Text style={styles.resultCaveat}>{t('fees.payFees.resultUnverifiedCaveat')}</Text>
+                <Text style={styles.resultCaveat}>
+                  {resultKind === 'confirmed'
+                    ? t('fees.payFees.resultConfirmedNote')
+                    : t('fees.payFees.resultUnverifiedCaveat')}
+                </Text>
               </>
             )}
-            {resultAttempt.status === 'PENDING' && (
-              <Text style={styles.resultTitle}>{t('fees.payFees.resultPendingMessage')}</Text>
-            )}
-            {resultAttempt.status === 'FAILED' && (
+            {resultKind === 'pending' && <Text style={styles.resultTitle}>{t('fees.payFees.resultPendingMessage')}</Text>}
+            {resultKind === 'failed' && (
               <Text style={[styles.resultTitle, styles.resultFailed]}>{t('fees.payFees.resultFailedMessage')}</Text>
             )}
-            {resultAttempt.status === 'CANCELLED' && (
+            {resultKind === 'cancelled' && (
               <Text style={[styles.resultTitle, styles.resultFailed]}>{t('fees.payFees.resultCancelledMessage')}</Text>
             )}
-            {resultAttempt.status === 'UNKNOWN' && (
-              <Text style={styles.resultTitle}>{t('fees.payFees.resultUnknownMessage')}</Text>
-            )}
+            {resultKind === 'unknown' && <Text style={styles.resultTitle}>{t('fees.payFees.resultUnknownMessage')}</Text>}
 
-            {(resultAttempt.status === 'FAILED' || resultAttempt.status === 'CANCELLED') && (
+            {canPayAgainAfter(resultKind) ? (
               <Pressable style={styles.payButton} onPress={handleRetry}>
                 <Text style={styles.payButtonText}>{t('fees.payFees.tryAgain')}</Text>
               </Pressable>
-            )}
-            {resultAttempt.status !== 'FAILED' && resultAttempt.status !== 'CANCELLED' && (
+            ) : (
               <Pressable style={styles.payButton} onPress={handleDone}>
                 <Text style={styles.payButtonText}>{t('common.done')}</Text>
               </Pressable>

@@ -49,11 +49,29 @@
 - [ ] Reverse twice with the same key → both 200, reversed once; a second reverse with a new key → 409 `ALREADY_REVERSED`. BOUNCED on cash → 400.
 - [ ] Access matrix for GET payment, both lists, the PDF, record and reverse: ADMIN 200/200; class teacher and other teacher 403/403; own student and linked parent 200 reads, 403 writes; other student and unlinked parent 403; anonymous 401; another school's admin on school A's ids 404.
 
-### Online UPI flow (backend/screen functional but unreachable from UI)
-- [ ] As STUDENT, an unpaid bill's "Pay Fees" button only shows "Online fee payment is coming soon." and doesn't navigate.
-- [ ] (Driving `PayFeesScreen` directly) Double-tap Pay Now → one payment request. With the pending-attempt check failing (offline) → the error stage, no request made. Once a request exists, the amount shown is the server's.
-- [ ] **(fix 1, finance-access-and-privacy)** Payment request with no school UPI ID → 409 `UPI_NOT_CONFIGURED`, no attempt saved; with a UPI ID → `upiUri` contains `pa=<UPI ID>`; as a teacher → 403. Until fix 1 merges: no bank account or IFSC → 400, and with no UPI ID the link pays a guessed `<account>@<bank handle>`.
-- [ ] A payer's `RESPONSE_SUCCESS` report leaves the bill unpaid; an admin confirms it by recording with the attempt's `transactionRef`; recording it again → 400; after that payment is reversed, it can be confirmed again.
+### Online UPI flow (backend and screen work, but nothing in the UI opens the screen)
+- [ ] Confirm the "Pay Fees" button on `FeeAssessmentDetailScreen` only ever shows the "coming soon" toast and never navigates, for every role/fully-paid combination.
+- [ ] Confirm no in-app path (menus, deep links surfaced in the UI, notifications) routes to the `'PayFees'` screen.
+- [ ] Create a payment request for a school with no UPI ID set and verify 409 `UPI_NOT_CONFIGURED` ("This school has not set up UPI payments yet."), no `PaymentAttempt` row, and (driving `PayFees` by deep link) the app shows that message with a **Back** button instead of **Try again**.
+- [ ] Set a UPI ID but no bank account or IFSC on the school: the payment request succeeds, `payeeVpa` equals the UPI ID, and `upiUri` contains `pa=<that id>`.
+- [ ] As a STUDENT, verify `accountNumber` and `ifsc` in the payment-request response are `null`; as an ADMIN, verify they are filled.
+- [ ] Create a payment request for an already fully-paid assessment and verify 400 ("This fee assessment is already fully paid").
+- [ ] Create a payment request and verify a `PaymentAttempt` is persisted with status `INITIATED` and a `transactionRef` starting with `FEE`, before any simulated UPI-app return.
+- [ ] Verify `GET /api/v1/fee-assessments/{id}/payment-attempts/pending` returns that attempt while `INITIATED`/`PENDING`, and nothing once it has a final result.
+- [ ] Post `VERIFIED` or `INITIATED` as a result → 400.
+- [ ] Post `RESPONSE_SUCCESS` with a UPI transaction id → 200. The assessment stays unpaid (`totalPaid` unchanged, no `FeePayment`, no ledger entry).
+- [ ] Then post `CANCELLED` for the same attempt → 409 `PAYMENT_ATTEMPT_ALREADY_REPORTED`, and the stored transaction id is unchanged. Post `RESPONSE_SUCCESS` again → 200, nothing changes.
+- [ ] Post `PENDING` with some evidence, then `RESPONSE_SUCCESS` with different evidence → 200, status `RESPONSE_SUCCESS`, the first evidence kept, only empty fields filled.
+- [ ] As a TEACHER, call payment-request, attempts, pending and result → 403 each. An unlinked PARENT → 403; a linked PARENT → 200.
+- [ ] (Driving `PayFees` directly) Double-tap Pay Now → one payment request. With the attempts check failing (offline) → the error stage, no request made. Once a request exists, the amount shown is the server's.
+- [ ] A reported payment confirmed by an admin (recording with the attempt's `transactionRef`); recording it again → 400; after that payment is reversed, it can be confirmed again.
+- [ ] (Driving `PayFees` by deep link) Report "Yes, it succeeded", tap Done, then Pay Now again: a "Payment already reported" warning appears (the fee still shows its full due until an admin records the payment). With only an `INITIATED`/`PENDING` attempt, the "Payment already in progress" warning appears instead. Both offer Cancel and Pay Again.
+- [ ] (`PayFees`) An admin records the payment for a reported attempt (it becomes `VERIFIED`), then the payer reports success again from the manual card: the result card shows the success title with "The school has confirmed this payment.", not an empty card.
+- [ ] (`PayFees`) Report "Yes, it succeeded" with the reply lost (e.g. airplane mode after the request leaves), then "No, cancelled" from the manual card: the 409 is replaced by the stored "Payment response received" result with Done, never Try again. With the attempts lookup also failing, the error shows Back only and no manual card.
+
+### Payment Settings (ADMIN)
+- [ ] The UPI ID field and hint say families can pay by UPI only once it is set, and that the app never guesses a UPI ID. With the field empty, the warning shows.
+- [ ] The screen's hint and the Fees hub's "Payment Settings" description say families pay to the school's UPI ID and the bank details are for records, not that fees go into the bank account.
 
 ### Old builds
 - [ ] The current Play Store build against the new backend: fee screens render, nothing calls the new endpoints.
@@ -65,10 +83,12 @@
   - `src/__tests__/idempotencyKey.test.ts` — UUID v4 in the server's key format, distinct per call, with and without `crypto.randomUUID`.
   - `src/__tests__/feeStructureLines.test.ts` — fee-structure line validation (shared amount parser, duplicate category).
   - `src/__tests__/apiClientHeaders.test.ts` — `Idempotency-Key` is sent, and re-sent unchanged on the 401 refresh retry.
-  - `src/__tests__/errorMessage.test.ts` — `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED` wording; `i18nParity.test.ts` — every new key in en and hi.
-- Backend (`Gurukul_bk`): `FeePaymentRecordingIntegrationTest`, `FeePaymentReversalIntegrationTest`, `FeePaymentAccessIntegrationTest`, `FeeReceiptPdfIntegrationTest`, `finance/LedgerReversalIntegrationTest`, `common/IndianRupeesTest`, `common/IdempotencyKeysTest`, plus `FeePaymentIntegrationTest`, `PaymentIntegrityIntegrationTest`, `PaymentAttemptIntegrationTest`, `FeePaymentServiceOwnershipTest`, `SecurityMatcherIntegrationTest`, `AdminOnlyRulesIntegrationTest`.
+  - `src/__tests__/errorMessage.test.ts` — `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED`, `UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED` wording; `i18nParity.test.ts` — every new key in en and hi.
+  - `src/__tests__/feePaymentErrors.test.ts` — `UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED` offer Back, everything else Try again.
+  - `src/__tests__/feePaymentAttempts.test.ts` — the result card per status including `VERIFIED`, the Pay Now warning for a reported success or an attempt in progress, finding the attempt by reference.
+- Backend (`Gurukul_bk`): `FeePaymentRecordingIntegrationTest`, `FeePaymentReversalIntegrationTest`, `FeePaymentAccessIntegrationTest`, `FeeReceiptPdfIntegrationTest`, `finance/LedgerReversalIntegrationTest`, `common/IndianRupeesTest`, `common/IdempotencyKeysTest`, plus `FeePaymentIntegrationTest`, `PaymentIntegrityIntegrationTest`, `PaymentAttemptIntegrationTest` (attempt lifecycle, the payer-report rules, roles, UPI ID requirement), `FeeAccessIntegrationTest`, `FeePaymentServiceOwnershipTest`, `SecurityMatcherIntegrationTest`, `AdminOnlyRulesIntegrationTest`.
 
 ## Suggested additional test coverage
 - Screen-level tests for RecordPayment (key kept on retry, cleared on edit; the duplicate alert resends with `confirmDuplicateReference`) and ReversePayment (no BOUNCED for cash; ALREADY_REVERSED goes back).
-- A frontend test that "Pay Fees" only toasts and never navigates.
+- A frontend test that "Pay Fees" only toasts and never navigates, and one that drives `PayFeesScreen` itself (the error stage and its Back/Try again button).
 - Concurrent `recordAttemptResult` calls for one reference.
