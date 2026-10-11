@@ -211,6 +211,16 @@ export function DriverHomeScreen({ navigation }: Props) {
           </Pressable>
         )}
 
+        {/* A driver can't read their own employee record, so the history is opened from the session. */}
+        {session.ownerType === 'EMPLOYEE' && (
+          <Pressable
+            style={[styles.historyButton, home && styles.payslipsButton]}
+            onPress={() => navigation.navigate('SalaryHistory', { employee: { id: session.ownerId, name: session.username } })}
+          >
+            <Text style={styles.historyText}>🧾 {t('profile.myPayslips')}</Text>
+          </Pressable>
+        )}
+
         <Pressable style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
@@ -302,6 +312,7 @@ const styles = StyleSheet.create({
     ...softShadow,
   },
   historyText: { fontSize: 16, fontWeight: '800', color: colors.primary },
+  payslipsButton: { marginTop: spacing.md },
   logoutButton: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.md },
   logoutText: { color: colors.error, fontWeight: '700', fontSize: 14 },
 });

@@ -19,12 +19,13 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { visibleEmployeeFields, type EmployeeDetailField } from '../../utils/employeeFields';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeDetail'>;
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -50,6 +51,14 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
   const [messaging, setMessaging] = useState(false);
   const isSelf = session.ownerType === 'EMPLOYEE' && session.ownerId === employee.id;
   const confirmBeforeCall = useGoogleMeetGate(schoolId, navigation);
+  // Non-admins get hidden fields as null from the backend; those rows are left out, not shown as "—".
+  const detailFields = visibleEmployeeFields(employee, isViewerAdmin);
+  const fieldLabels: Record<EmployeeDetailField, string> = {
+    designation: t('employees.detail.designation'),
+    joinDate: t('employees.detail.joinDate'),
+    bankAccount: t('employees.detail.bankAccount'),
+    contactPhone: t('employees.detail.contactPhone'),
+  };
 
   const handleVideoCall = () => {
     setCalling(true);
@@ -139,12 +148,13 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
           )}
         </View>
 
-        <View style={styles.card}>
-          <Field label={t('employees.detail.designation')} value={employee.designation} />
-          <Field label={t('employees.detail.joinDate')} value={employee.joinDate} />
-          {isViewerAdmin && <Field label={t('employees.detail.bankAccount')} value={employee.bankAccount} />}
-          <Field label={t('employees.detail.contactPhone')} value={employee.contactPhone} />
-        </View>
+        {detailFields.length > 0 && (
+          <View style={styles.card}>
+            {detailFields.map((field) => (
+              <Field key={field} label={fieldLabels[field]} value={employee[field]} />
+            ))}
+          </View>
+        )}
 
         {error && <ErrorNotice message={error} />}
 
