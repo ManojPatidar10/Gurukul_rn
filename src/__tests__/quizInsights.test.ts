@@ -400,6 +400,14 @@ describe('quiz insights in Hindi', () => {
         fill(q.correct, { percent: '68%' }),
       ].join(' · ')
     );
+    // One of 40 played: the plural follows the class size, which the Hindi noun sits next to.
+    expect(totalsSummary({ students: 40, activeStudents: 1, answered: 5, correct: 3, percentCorrect: 60 }, tHi)).toBe(
+      [
+        fill(q.results.played_other, { active: 1, count: 40 }),
+        fill(q.answers_other, { count: 5 }),
+        fill(q.correct, { percent: '60%' }),
+      ].join(' · ')
+    );
   });
 
   it('breaks a card down by game in Hindi', () => {
