@@ -6,6 +6,7 @@
 - [ ] Create a category with code `" lab "`: the form shows "Saved as LAB" and the list shows `LAB`.
 - [ ] Create `"Tuition_Fee"` when `TUITION_FEE` exists → "A fee category with this code already exists." (409 `FEE_CATEGORY_CODE_EXISTS`). A one-letter code (`"T"`) is refused before sending.
 - [ ] Tap a category, rename it and save: the new name shows. Switch "In use" off and save: the row is greyed with "Not in use".
+- [ ] Mark every category not in use: a new structure's picker says to turn one back on in Fee Categories (not "No fee categories yet").
 - [ ] On the structure form's category picker, the category not in use no longer appears; on a structure that already has it, its line still shows it (marked "Not in use") and saving keeps it.
 - [ ] As a TEACHER, `PUT /api/v1/fee-categories/{id}` → 403.
 

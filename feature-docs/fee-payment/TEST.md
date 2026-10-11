@@ -39,7 +39,7 @@
 ### Payment Settings (ADMIN)
 - [ ] The UPI ID field and hint say families can pay by UPI only once it is set, and that the app never guesses a UPI ID. With the field empty, the warning shows; with one typed, "UPI payments go to: <id>" shows.
 - [ ] The screen's hint says families can't pay fees in the app yet and doesn't claim fees go into the bank account.
-- [ ] With the network off, open the screen: the error shows with Retry and Save is disabled. Retry once online loads the settings.
+- [ ] With the network off, open the screen: the error shows with Retry and Save is disabled, and no "No UPI ID set yet" warning shows. Retry once online loads the settings.
 - [ ] A school with no holder name saved: the field is empty with the school's name as a placeholder (not filled in).
 - [ ] Change the account number without retyping it in "Confirm bank account number": the mismatch message shows and Save is refused. Retype it: Save asks "Save account XXXX…  and UPI ID …?"; Cancel saves nothing.
 
