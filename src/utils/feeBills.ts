@@ -180,8 +180,12 @@ export function formatDueDate(iso: string, t: TFunction): string {
   return `${Number(match[3])} ${t(`fees.bill.monthsShort.${month}`)} ${match[1]}`;
 }
 
-/** An instant ("2026-10-11T20:00:00Z") as its date in India: "12 Oct 2026". */
-export function formatInstantDate(instant: string, t: TFunction): string {
+/**
+ * An instant ("2026-10-11T20:00:00Z") as its date in India: "12 Oct 2026", the month in the app's
+ * language. '—' when there is none. Used for a cancelled bill, an adjustment and a reversed payment.
+ */
+export function formatInstantDate(instant: string | null | undefined, t: TFunction): string {
+  if (!instant) return '—';
   const time = Date.parse(instant);
   return Number.isNaN(time) ? instant : formatDueDate(todayIst(new Date(time)), t);
 }

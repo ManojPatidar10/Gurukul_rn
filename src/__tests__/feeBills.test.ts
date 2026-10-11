@@ -26,6 +26,7 @@ import {
   feeStatusVariant,
   formatAdjustmentLine,
   formatDueDate,
+  formatInstantDate,
   formatSignedRupees,
   generateConfirmation,
   generateDueDateBounds,
@@ -206,6 +207,15 @@ describe('dates', () => {
     expect(formatDueDate('2026-11-05', tHi)).toBe(`5 ${hi.fees.bill.monthsShort['11']} 2026`);
     expect(formatDueDate('not a date', tEn)).toBe('not a date');
     expect(formatDueDate('2026-13-01', tEn)).toBe('2026-13-01');
+  });
+
+  it("formats an instant as its date in India, in the app language, and '—' when there is none", () => {
+    expect(formatInstantDate('2026-10-11T20:00:00Z', tEn)).toBe('12 Oct 2026');
+    expect(formatInstantDate('2026-10-11T18:29:00Z', tEn)).toBe('11 Oct 2026');
+    expect(formatInstantDate('2026-10-11T20:00:00Z', tHi)).toBe(`12 ${hi.fees.bill.monthsShort['10']} 2026`);
+    expect(formatInstantDate(null, tEn)).toBe('—');
+    expect(formatInstantDate(undefined, tEn)).toBe('—');
+    expect(formatInstantDate('not a time', tEn)).toBe('not a time');
   });
 });
 

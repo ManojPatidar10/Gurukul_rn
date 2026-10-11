@@ -131,7 +131,7 @@ export function ReversePaymentScreen({ route, navigation }: Props) {
               ? `${methodLabel(payment.paymentMethod)} · ${payment.paymentReference}`
               : methodLabel(payment.paymentMethod)}
           </Text>
-          <Text style={styles.cardMeta}>{formatPaymentDate(payment.transactionDate)}</Text>
+          <Text style={styles.cardMeta}>{formatPaymentDate(payment.transactionDate, t)}</Text>
         </View>
 
         <Text style={styles.label}>{t('fees.reversePayment.typeLabel')} *</Text>

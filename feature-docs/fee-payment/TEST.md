@@ -23,6 +23,7 @@
 ### Receipt and PDF
 - [ ] Share receipt (PDF) → the share sheet opens with `fee-receipt-<receipt-slug>.pdf`: logo (or school name), the rows above, "Amount received ₹…", footer with the generation date.
 - [ ] A Hindi student name renders correctly in the PDF.
+- [ ] With the app in Hindi on a phone set to English: the receipt's date, cancelled-on and refund dates, the payment history rows, the reverse form and the duplicate-reference alert all show the Hindi month, the same as the bill's due date. On a phone set to another time zone, a payment reversed at 23:30 IST still shows that Indian date as its cancelled-on date, like a bill cancelled at that time.
 - [ ] Done / back returns to where the receipt was opened from (for a parent: the bill or Payment history, never an admin screen).
 - [ ] A payment recorded before this release shows no "Received by" or balance row (no crash).
 
@@ -66,7 +67,7 @@
 - [ ] Create a payment request and verify a `PaymentAttempt` is persisted with status `INITIATED` and a `transactionRef` starting with `FEE`, before any simulated UPI-app return.
 - [ ] Verify `GET /api/v1/fee-assessments/{id}/payment-attempts/pending` returns that attempt while `INITIATED`/`PENDING`, and nothing once it has a final result.
 - [ ] Post `VERIFIED` or `INITIATED` as a result → 400. A 256-character `upiTransactionId` → 400.
-- [ ] Create a payment request on a cancelled bill → 409 `FEE_BILL_CANCELLED`, no attempt saved.
+- [ ] Create a payment request on a cancelled bill → 409 `FEE_BILL_CANCELLED`, no attempt saved, and (driving `PayFees` by deep link) the app shows "This bill was cancelled, so it can't be changed or paid." with **Back**, not **Try again**.
 - [ ] Post `RESPONSE_SUCCESS` with a UPI transaction id → 200. The assessment stays unpaid (`totalPaid` unchanged, no `FeePayment`, no ledger entry).
 - [ ] Then post `CANCELLED` for the same attempt → 409 `PAYMENT_ATTEMPT_ALREADY_REPORTED`, and the stored transaction id is unchanged. Post `RESPONSE_SUCCESS` again → 200, nothing changes.
 - [ ] Post `PENDING` with some evidence, then `RESPONSE_SUCCESS` with different evidence → 200, status `RESPONSE_SUCCESS`, the first evidence kept, only empty fields filled.
@@ -94,12 +95,12 @@
 ## Existing automated test coverage
 - App (`npm test`):
   - `src/__tests__/money.test.ts` — `parseRupees` (grouped, ₹/Rs prefixes, refuses >2 decimals, `1e5`, `0x10`, signs, `.`, `5.`), paise maths (`sumRupees([0.1, 0.2]) === 0.3`), `formatRupees` (Indian grouping, `'always'` decimals, no symbol, negatives, rounding, missing values), `rupeesInputValue`.
-  - `src/__tests__/feePayments.test.ts` — methods and labels, reference rule and normalisation, 400-day date bounds, `validateRecordPayment`, `reversalTypesFor('CASH')` without BOUNCED, `validateReversal` (reason, refund method and reference, no refund date), `duplicateReferenceInfo`, the PDF file name.
+  - `src/__tests__/feePayments.test.ts` — methods and labels, reference rule and normalisation, 400-day date bounds, `validateRecordPayment`, `reversalTypesFor('CASH')` without BOUNCED, `validateReversal` (reason, refund method and reference, no refund date), `duplicateReferenceInfo`, the PDF file name, `formatPaymentDate` (en/hi month, '—' for none).
   - `src/__tests__/idempotencyKey.test.ts` — UUID v4 in the server's key format, distinct per call, with and without `crypto.randomUUID`.
   - `src/__tests__/feeBills.test.ts` — `billDetailActions` (Record payment only on a live bill with money owed; corrections hidden on a cancelled bill; Cancel only once every payment is reversed; How to pay for families; no payments for a teacher), fee-structure lines read with the shared `parseRupees` (0 allowed, duplicate category, over 2 decimals refused), and the other fee bill helpers.
   - `src/__tests__/apiClientHeaders.test.ts` — `Idempotency-Key` is sent, and re-sent unchanged on the 401 refresh retry.
   - `src/__tests__/errorMessage.test.ts` — `DUPLICATE_REFERENCE`, `ALREADY_REVERSED`, `IDEMPOTENCY_KEY_REUSED`, `UPI_NOT_CONFIGURED`, `PAYMENT_ATTEMPT_ALREADY_REPORTED` and the fee bill codes (`FEE_BILL_CANCELLED`, `FEE_BILL_HAS_PAYMENTS`, …) wording; `i18nParity.test.ts` — every new key in en and hi.
-  - `src/__tests__/feePaymentErrors.test.ts` — `UPI_NOT_CONFIGURED` and `PAYMENT_ATTEMPT_ALREADY_REPORTED` offer Back, everything else Try again.
+  - `src/__tests__/feePaymentErrors.test.ts` — `UPI_NOT_CONFIGURED`, `PAYMENT_ATTEMPT_ALREADY_REPORTED` and `FEE_BILL_CANCELLED` offer Back, everything else Try again.
   - `src/__tests__/feePaymentAttempts.test.ts` — the result card per status including `VERIFIED`, the Pay Now warning for a reported success or an attempt in progress, finding the attempt by reference.
 - Backend (`Gurukul_bk`): `FeePaymentRecordingIntegrationTest`, `FeePaymentReversalIntegrationTest`, `FeePaymentAccessIntegrationTest`, `FeeReceiptPdfIntegrationTest`, `finance/LedgerReversalIntegrationTest`, `common/IndianRupeesTest`, `common/IdempotencyKeysTest`, plus `FeePaymentIntegrationTest`, `PaymentIntegrityIntegrationTest`, `PaymentAttemptIntegrationTest` (attempt lifecycle, the payer-report rules, roles, UPI ID requirement), `FeeAccessIntegrationTest`, `FeePaymentServiceOwnershipTest`, `SecurityMatcherIntegrationTest`, `AdminOnlyRulesIntegrationTest`.
 

@@ -101,7 +101,7 @@ export function RecordPaymentScreen({ route, navigation }: Props) {
             reference: normalizeReference(reference) ?? reference,
             receipt: duplicate.existingReceiptNumber ?? '—',
             student: duplicate.existingStudentName,
-            date: formatPaymentDate(duplicate.existingTransactionDate),
+            date: formatPaymentDate(duplicate.existingTransactionDate, t),
             amount: formatRupees(duplicate.existingAmount),
           }),
           [

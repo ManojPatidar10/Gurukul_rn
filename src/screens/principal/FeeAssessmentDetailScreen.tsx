@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -57,17 +57,22 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const [assessment, setAssessment] = useState<FeeAssessment>(route.params.assessment);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const billId = route.params.assessment.id;
+  // Bumped by every refetch and every bill a correction hands back, so a slower refetch that started
+  // earlier can't overwrite a newer bill when it lands.
+  const latestBill = useRef(0);
 
   const refresh = useCallback(() => {
     let active = true;
+    const request = ++latestBill.current;
+    const current = () => active && request === latestBill.current;
     getFeeAssessment(schoolId, billId)
       .then((bill) => {
-        if (!active) return;
+        if (!current()) return;
         setAssessment(bill);
         setRefreshError(null);
       })
       .catch((e) => {
-        if (active) setRefreshError(`${t('fees.paymentHistory.billRefreshError')} ${getErrorMessage(e)}`);
+        if (current()) setRefreshError(`${t('fees.paymentHistory.billRefreshError')} ${getErrorMessage(e)}`);
       });
     return () => {
       active = false;
@@ -75,6 +80,14 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   }, [schoolId, billId, t]);
 
   useFocusEffect(refresh);
+
+  // The server just sent this bill (after a correction, or reloaded after a 409), so it is current:
+  // it replaces what's shown and clears any "could not refresh" notice.
+  const billUpdated = useCallback((bill: FeeAssessment) => {
+    latestBill.current += 1;
+    setAssessment(bill);
+    setRefreshError(null);
+  }, []);
 
   const fullyPaid = assessment.remainingDue <= 0;
   const paidPercent = assessment.totalDue > 0
@@ -181,7 +194,9 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
         )}
 
         {/* After the payments: cancelling needs every payment reversed first, from its receipt above. */}
-        {actions.adminActions && <FeeBillAdminActions schoolId={schoolId} bill={assessment} onUpdated={setAssessment} />}
+        {actions.adminActions && (
+          <FeeBillAdminActions schoolId={schoolId} bill={assessment} cancel={actions} onUpdated={billUpdated} />
+        )}
       </ScreenContainer>
     </View>
   );

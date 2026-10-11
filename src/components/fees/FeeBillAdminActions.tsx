@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { ApiError } from '../../api/client';
 import { getErrorMessage } from '../../api/errorMessage';
-import { addFeeAdjustment, cancelFeeAssessment, updateFeeAssessmentDueDate } from '../../api/feeAssessments';
+import { addFeeAdjustment, cancelFeeAssessment, getFeeAssessment, updateFeeAssessmentDueDate } from '../../api/feeAssessments';
 import type { FeeAdjustmentType, FeeAssessment } from '../../api/types';
 import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
@@ -11,7 +12,7 @@ import {
   adjustmentConfirmText,
   adjustmentDraft,
   adjustmentLabel,
-  canCancelBill,
+  type BillDetailActions,
   dueDateChangeBounds,
   FEE_ADJUSTMENT_TYPES,
   isBillCancelled,
@@ -29,7 +30,12 @@ const MAX_REASON = 500;
 interface Props {
   schoolId: string;
   bill: FeeAssessment;
-  /** Called with the bill the server sent back after each change. */
+  /**
+   * Whether Cancel bill is offered, or replaced by the hint to reverse the payments first: the bill
+   * detail's billDetailActions (src/utils/feeBills.ts), so the screen and this card share one rule.
+   */
+  cancel: Pick<BillDetailActions, 'cancelBill' | 'cancelBlockedByPayments'>;
+  /** Called with the bill the server sent back after each change, or reloaded after a 409. */
   onUpdated: (bill: FeeAssessment) => void;
 }
 
@@ -37,9 +43,10 @@ interface Props {
  * The admin's corrections to one bill: add a concession, waiver, late fee or correction with a
  * reason, move its due date, or cancel it (only while nothing has been paid on it). Each change
  * comes back as the updated bill; refusals (a cancelled bill, a fee below what's paid) show the
- * server's reason. Nothing shows for a cancelled bill.
+ * server's reason, and a 409 also reloads the bill, since it changed under this screen. Nothing
+ * shows for a cancelled bill.
  */
-export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
+export function FeeBillAdminActions({ schoolId, bill, cancel, onUpdated }: Props) {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [panel, setPanel] = useState<Panel | null>(null);
@@ -54,7 +61,7 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
 
   if (isBillCancelled(bill)) return null;
 
-  const canCancel = canCancelBill(bill);
+  const canCancel = cancel.cancelBill;
   const draft = adjustmentDraft(bill, type, amount, correctionSign);
   const bounds = dueDateChangeBounds(todayIst());
 
@@ -73,7 +80,20 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
       setPanel(null);
       return true;
     } catch (e) {
-      setError(getErrorMessage(e));
+      const message = getErrorMessage(e);
+      setError(message);
+      // A 409 usually means the bill changed under this screen: an adjustment whose reply was lost
+      // went through (FEE_ADJUSTMENT_DUPLICATE), it was cancelled on another device
+      // (FEE_BILL_CANCELLED), or a payment was recorded on it (FEE_TOTAL_BELOW_PAID,
+      // FEE_BILL_HAS_PAYMENTS). Reload it, so its totals - and what Record payment prefills - are
+      // current. The refusal stays on screen; a cancelled bill hides this card and shows its
+      // cancelled banner instead, so that refusal is shown as a toast too.
+      if (e instanceof ApiError && e.status === 409) {
+        if (e.errorCode === 'FEE_BILL_CANCELLED') showToast(message, 'error');
+        getFeeAssessment(schoolId, bill.id)
+          .then(onUpdated)
+          .catch(() => {});
+      }
       return false;
     } finally {
       setBusy(false);
@@ -151,7 +171,7 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
         <Tab label={t('fees.bill.changeDueDate')} selected={panel === 'dueDate'} onPress={() => togglePanel('dueDate')} />
         {canCancel && <Tab label={t('fees.bill.cancel')} selected={panel === 'cancel'} onPress={() => togglePanel('cancel')} danger />}
       </View>
-      {!canCancel && <Text style={styles.hint}>{t('fees.bill.cancelBlocked')}</Text>}
+      {cancel.cancelBlockedByPayments && <Text style={styles.hint}>{t('fees.bill.cancelBlocked')}</Text>}
 
       {panel === 'adjust' && (
         <View style={styles.panel}>
