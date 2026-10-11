@@ -172,7 +172,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
         if (latest) {
           load(latest.term, latest.classSectionId);
         } else if (isSelfView) {
-          setError('No report card has been published for your class yet.');
+          setError(t('reportCardDetail.nothingPublishedSelf'));
         } else {
           setNothingPublished(true);
         }
@@ -234,7 +234,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={`${student.name}'s report card`} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('reportCardDetail.title', { name: student.name })} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {/* Staff only (the list isn't loaded for students and parents): without it, drafts fall back to a typed term. */}
         {termListError && (
@@ -251,11 +251,11 @@ export function ReportCardScreen({ route, navigation }: Props) {
               style={styles.termInput}
               value={typedTerm}
               onChangeText={setTypedTerm}
-              placeholder="Term (e.g. Term 1)"
+              placeholder={t('reportCardDetail.termPlaceholder')}
               placeholderTextColor={colors.textMuted}
             />
             <Pressable style={styles.viewButton} onPress={viewTypedTerm} disabled={!typedTerm.trim() || loading}>
-              {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.viewButtonText}>View</Text>}
+              {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.viewButtonText}>{t('reportCardDetail.view')}</Text>}
             </Pressable>
           </View>
         )}
@@ -292,7 +292,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
           <Text style={styles.empty}>
             {termListConfigured
               ? t('reportCardDetail.pickTermPreview')
-              : 'No report card has been published for this student yet. Type a term above and tap View to preview one.'}
+              : t('reportCardDetail.typeTermPreview')}
           </Text>
         )}
 
@@ -305,7 +305,7 @@ export function ReportCardScreen({ route, navigation }: Props) {
                   {reportCard.className} - {reportCard.section} · {reportCard.academicYear}
                 </Text>
                 <StatusChip
-                  label={reportCard.published ? 'Published' : 'Draft'}
+                  label={reportCard.published ? t('reportCardDetail.published') : t('reportCardDetail.draft')}
                   variant={reportCard.published ? 'success' : 'neutral'}
                 />
               </View>
@@ -320,11 +320,11 @@ export function ReportCardScreen({ route, navigation }: Props) {
               <View style={styles.statRow}>
                 <View style={styles.statCard}>
                   <Text style={styles.statValue}>{formatOverallPercentage(reportCard.overallPercentage)}</Text>
-                  <Text style={styles.statLabel}>Overall</Text>
+                  <Text style={styles.statLabel}>{t('reportCardDetail.overall')}</Text>
                 </View>
                 <View style={styles.statCard}>
                   <Text style={styles.statValue}>{formatOverallGrade(reportCard.overallGrade)}</Text>
-                  <Text style={styles.statLabel}>Grade</Text>
+                  <Text style={styles.statLabel}>{t('reportCardDetail.grade')}</Text>
                 </View>
                 <View style={styles.statCard}>
                   <Text style={styles.statValue}>
@@ -345,9 +345,9 @@ export function ReportCardScreen({ route, navigation }: Props) {
               )}
             </Pressable>
 
-            <Text style={styles.sectionTitle}>Subjects</Text>
+            <Text style={styles.sectionTitle}>{t('reportCardDetail.subjects')}</Text>
             {reportCard.subjects.length === 0 && (
-              <Text style={styles.empty}>No results recorded for this term yet.</Text>
+              <Text style={styles.empty}>{t('reportCardDetail.noResults')}</Text>
             )}
             {reportCard.subjects.map((subject) => {
               const counts = subjectCounts(subject);

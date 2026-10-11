@@ -25,18 +25,14 @@ import {
   type SubjectChoice,
   type TeacherChoice,
 } from '../../utils/assessmentPermissions';
+import { assessmentTypeLabel } from '../../utils/assessmentLabels';
 import { parseMarks } from '../../utils/assessmentResults';
 import { formTermChoices, termKey } from '../../utils/academicTerms';
 import { canonicalTerm, findExistingTerm } from '../../utils/assessmentTerms';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AssessmentForm'>;
 
-const TYPES: { value: AssessmentType; label: string }[] = [
-  { value: 'ASSIGNMENT', label: 'Assignment' },
-  { value: 'QUIZ', label: 'Quiz' },
-  { value: 'TEST', label: 'Test' },
-  { value: 'EXAM', label: 'Exam' },
-];
+const TYPES: AssessmentType[] = ['ASSIGNMENT', 'QUIZ', 'TEST', 'EXAM'];
 
 // The server's limits (AssessmentRequest).
 const MAX_TITLE_LENGTH = 255;
@@ -120,7 +116,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
       ? [
           {
             subjectId: assessment.subjectId,
-            subjectName: assessment.subjectName ?? 'Current subject',
+            subjectName: assessment.subjectName ?? t('assessments.form.currentSubject'),
             subjectCode: assessment.subjectCode ?? '',
           },
           ...permissions.subjectChoices,
@@ -133,19 +129,22 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
       ? [
           {
             teacherId: assessment.createdByTeacherId,
-            teacherName: assessment.createdByTeacherName ?? 'Current teacher',
+            teacherName: assessment.createdByTeacherName ?? t('assessments.form.currentTeacher'),
             isClassTeacher: false,
           },
           ...permissions.teacherChoices,
         ]
       : permissions.teacherChoices;
 
-  const teacherHint = adminTeacherHint({
-    assignmentsLoading,
-    assignmentsFailed: !!assignmentsError,
-    hasChoices: teacherOptions.length > 0,
-    adminIsEmployee: session.ownerType === 'EMPLOYEE',
-  });
+  const teacherHint = adminTeacherHint(
+    {
+      assignmentsLoading,
+      assignmentsFailed: !!assignmentsError,
+      hasChoices: teacherOptions.length > 0,
+      adminIsEmployee: session.ownerType === 'EMPLOYEE',
+    },
+    t
+  );
 
   const pickSubject = (id: string) => {
     setSubjectId(id);
@@ -167,14 +166,14 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
   const parsedMaxMarks = parseMarks(maxMarks);
   const maxMarksValid = parsedMaxMarks !== null && parsedMaxMarks > 0;
 
-  const termNames = (sectionTerms ?? []).map((t) => t.term);
+  const termNames = (sectionTerms ?? []).map((summary) => summary.term);
   // From the list, the chip's value is sent as it is: it's already the section's own spelling.
   const savedTerm = termListConfigured ? term.trim() : canonicalTerm(term, termNames);
   const termMatch = findExistingTerm(term, termNames);
   const listChoices = termListConfigured ? formTermChoices(listedTerms, sectionTerms ?? [], assessment?.term) : [];
   // A published term is locked: the server refuses moving an assessment into it, and refuses any
   // edit at all to an assessment already in one, so say so up front instead of after Save.
-  const isLockedTerm = (candidate: string) => (sectionTerms ?? []).some((t) => t.published && t.term === candidate);
+  const isLockedTerm = (candidate: string) => (sectionTerms ?? []).some((summary) => summary.published && summary.term === candidate);
   const editLocked = isEdit && !!assessment?.term && isLockedTerm(assessment.term);
   const termLocked = !!savedTerm && isLockedTerm(savedTerm);
 
@@ -220,32 +219,35 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={isEdit ? 'Edit assessment' : 'New assessment'} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={isEdit ? t('assessments.form.editTitle') : t('assessments.form.newTitle')}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         {editLocked && (
-          <Text style={styles.lockNotice}>
-            Report cards for &quot;{assessment?.term}&quot; are published, so this assessment can&apos;t be edited.
-          </Text>
+          <Text style={styles.lockNotice}>{t('assessments.form.editLocked', { term: assessment?.term })}</Text>
         )}
-        <Text style={styles.label}>Type</Text>
+        <Text style={styles.label}>{t('assessments.form.type')}</Text>
         <View style={styles.typeRow}>
-          {TYPES.map((t) => (
+          {TYPES.map((option) => (
             <Pressable
-              key={t.value}
-              style={[styles.typeChip, type === t.value && styles.typeChipSelected]}
-              onPress={() => setType(t.value)}
+              key={option}
+              style={[styles.typeChip, type === option && styles.typeChipSelected]}
+              onPress={() => setType(option)}
               accessibilityRole="radio"
-              accessibilityState={{ checked: type === t.value }}
+              accessibilityState={{ checked: type === option }}
             >
-              <Text style={[styles.typeChipText, type === t.value && styles.typeChipTextSelected]}>{t.label}</Text>
+              <Text style={[styles.typeChipText, type === option && styles.typeChipTextSelected]}>
+                {assessmentTypeLabel(option, t)}
+              </Text>
             </Pressable>
           ))}
         </View>
-        {!type && <Text style={styles.fieldHint}>Pick a type</Text>}
+        {!type && <Text style={styles.fieldHint}>{t('assessments.form.pickType')}</Text>}
 
-        <LabeledInput label="Title" value={title} onChangeText={setTitle} maxLength={MAX_TITLE_LENGTH} />
+        <LabeledInput label={t('assessments.form.title')} value={title} onChangeText={setTitle} maxLength={MAX_TITLE_LENGTH} />
 
-        <Text style={styles.label}>Subject</Text>
+        <Text style={styles.label}>{t('assessments.form.subject')}</Text>
         {subjectOptions.length > 0 && (
           <View style={styles.typeRow}>
             {subjectOptions.map((s) => {
@@ -269,46 +271,57 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         ) : assignmentsError ? (
           <View style={styles.noticeRow}>
             <Text style={styles.noticeText}>
-              {isAdmin ? "Couldn't load this class's subjects." : "Couldn't check which subjects you teach here."}
+              {isAdmin ? t('assessments.form.subjectsLoadFailed') : t('assessments.subjectsCheckFailed')}
             </Text>
             <Pressable onPress={reloadAssignments}>
-              <Text style={styles.retryText}>Retry</Text>
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
             </Pressable>
           </View>
         ) : subjectOptions.length === 0 ? (
           <View style={styles.noticeRow}>
-            <Text style={styles.noticeText}>No subjects are set up for this class yet.</Text>
+            <Text style={styles.noticeText}>{t('assessments.form.noSubjects')}</Text>
             {permissions.canAssignSubjectTeachers && (
               <Pressable onPress={openAssignSubjects}>
-                <Text style={styles.retryText}>Assign subjects</Text>
+                <Text style={styles.retryText}>{t('assessments.form.assignSubjects')}</Text>
               </Pressable>
             )}
           </View>
         ) : null}
 
-        <DatePickerField label="Assessment date" value={assessmentDate} onChange={setAssessmentDate} />
-        <LabeledInput label="Max marks" value={maxMarks} onChangeText={setMaxMarks} keyboardType="decimal-pad" />
+        <DatePickerField
+          label={t('assessments.form.date')}
+          value={assessmentDate}
+          onChange={setAssessmentDate}
+          placeholder={t('common.selectDate')}
+        />
+        <LabeledInput
+          label={t('assessments.form.maxMarks')}
+          value={maxMarks}
+          onChangeText={setMaxMarks}
+          keyboardType="decimal-pad"
+        />
         {maxMarks.trim() !== '' && !maxMarksValid ? (
-          <Text style={styles.termWarning}>Max marks must be from 0.01 to 999.99, with up to 2 decimal places.</Text>
+          <Text style={styles.termWarning}>{t('assessments.form.maxMarksInvalid')}</Text>
         ) : isEdit ? (
-          <Text style={styles.termHint}>Can&apos;t go below a mark already entered.</Text>
+          <Text style={styles.termHint}>{t('assessments.form.maxMarksFloor')}</Text>
         ) : null}
         {termListLoading ? (
           <>
-            <Text style={styles.label}>Term (for report cards)</Text>
+            <Text style={styles.label}>{t('assessments.form.term')}</Text>
             <ActivityIndicator style={styles.termsLoading} color={colors.primary} />
           </>
         ) : termListConfigured ? (
           <>
             <Text style={styles.label}>
-              Term (for report cards)<Text style={styles.required}> *</Text>
+              {t('assessments.form.term')}
+              <Text style={styles.required}> *</Text>
             </Text>
             {sectionTerms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
             {termsError && (
               <>
                 <ErrorNotice message={termsError} />
                 <Pressable onPress={retryTerms} style={styles.retry}>
-                  <Text style={styles.retryText}>Retry</Text>
+                  <Text style={styles.retryText}>{t('common.retry')}</Text>
                 </Pressable>
               </>
             )}
@@ -334,9 +347,7 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
               })}
             </View>
             {editLocked ? null : termLocked ? (
-              <Text style={styles.termWarning}>
-                Report cards for &quot;{savedTerm}&quot; are already published, so assessments can&apos;t be added to it.
-              </Text>
+              <Text style={styles.termWarning}>{t('assessments.form.termLocked', { term: savedTerm })}</Text>
             ) : !savedTerm ? (
               <Text style={isEdit ? styles.termWarning : styles.termHint}>{t('academicTerms.picker.pickOne')}</Text>
             ) : null}
@@ -344,13 +355,15 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
         ) : (
           <>
             <LabeledInput
-              label="Term (for report cards)"
+              label={t('assessments.form.term')}
               required
               value={term}
               onChangeText={setTerm}
               maxLength={MAX_TERM_LENGTH}
               placeholder={
-                sectionTerms && sectionTerms.length > 0 ? 'Pick one below or type a new term, e.g. Term 1' : 'Type a term, e.g. Term 1'
+                sectionTerms && sectionTerms.length > 0
+                  ? t('assessments.form.termPlaceholderWithChoices')
+                  : t('assessments.form.termPlaceholder')
               }
             />
             {sectionTerms === null && !termsError && <ActivityIndicator style={styles.termsLoading} color={colors.primary} />}
@@ -358,13 +371,13 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
               <>
                 <ErrorNotice message={termsError} />
                 <Pressable onPress={retryTerms} style={styles.retry}>
-                  <Text style={styles.retryText}>Retry</Text>
+                  <Text style={styles.retryText}>{t('common.retry')}</Text>
                 </Pressable>
               </>
             )}
             {sectionTerms && sectionTerms.length > 0 && (
               <>
-                <Text style={styles.termHint}>Terms this section already uses (✓ = report cards published):</Text>
+                <Text style={styles.termHint}>{t('assessments.form.sectionTerms')}</Text>
                 <View style={styles.typeRow}>
                   {sectionTerms.map((summary) => {
                     const selected = savedTerm === summary.term;
@@ -387,16 +400,12 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
               </>
             )}
             {editLocked ? null : termLocked ? (
-              <Text style={styles.termWarning}>
-                Report cards for &quot;{savedTerm}&quot; are already published, so assessments can&apos;t be added to it.
-              </Text>
+              <Text style={styles.termWarning}>{t('assessments.form.termLocked', { term: savedTerm })}</Text>
             ) : termMatch && termMatch !== term.trim() ? (
-              <Text style={styles.termHint}>Will be saved as &quot;{termMatch}&quot;, the spelling this section already uses.</Text>
+              <Text style={styles.termHint}>{t('assessments.form.savedAs', { term: termMatch })}</Text>
             ) : !savedTerm ? (
               // Otherwise Save is greyed out with no reason given - e.g. editing an old assessment saved without a term.
-              <Text style={isEdit ? styles.termWarning : styles.termHint}>
-                Pick or type a term - an assessment without one is left off every report card.
-              </Text>
+              <Text style={isEdit ? styles.termWarning : styles.termHint}>{t('assessments.form.pickOrType')}</Text>
             ) : null}
             {termListError && (
               <View style={styles.noticeRow}>
@@ -410,13 +419,13 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
           </>
         )}
         <LabeledInput
-          label="Description (optional)"
+          label={t('assessments.form.description')}
           value={description}
           onChangeText={setDescription}
           maxLength={MAX_DESCRIPTION_LENGTH}
         />
 
-        <Text style={[styles.label, { marginTop: spacing.md }]}>Teacher</Text>
+        <Text style={[styles.label, { marginTop: spacing.md }]}>{t('assessments.form.teacher')}</Text>
         {isAdmin ? (
           <>
             {teacherOptions.length > 0 && (
@@ -432,8 +441,11 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
                       accessibilityState={{ checked: selected }}
                     >
                       <Text style={[styles.typeChipText, selected && styles.typeChipTextSelected]}>
-                        {c.teacherName}
-                        {c.isClassTeacher ? ' (class teacher)' : ''}
+                        {c.isClassTeacher
+                          ? t('assessments.form.classTeacherChip', {
+                              name: c.teacherName || t('assessments.form.classTeacher'),
+                            })
+                          : c.teacherName}
                       </Text>
                     </Pressable>
                   );
@@ -444,7 +456,9 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
           </>
         ) : (
           <Text style={styles.teacherText}>
-            {isEdit ? `Created by: ${assessment?.createdByTeacherName ?? '—'}` : 'Teacher: You'}
+            {isEdit
+              ? t('assessments.form.createdBy', { name: assessment?.createdByTeacherName ?? '—' })
+              : t('assessments.form.teacherYou')}
           </Text>
         )}
 
@@ -455,7 +469,9 @@ export function AssessmentFormScreen({ route, navigation }: Props) {
           onPress={handleSubmit}
           disabled={!canSubmit || submitting}
         >
-          <Text style={styles.submitText}>{submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Create assessment'}</Text>
+          <Text style={styles.submitText}>
+            {submitting ? t('common.saving') : isEdit ? t('common.saveChanges') : t('assessments.form.create')}
+          </Text>
         </Pressable>
       </ScreenContainer>
     </View>

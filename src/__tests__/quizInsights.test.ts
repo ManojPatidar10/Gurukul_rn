@@ -1,5 +1,7 @@
 import type { QuestionStat, SectionQuizTotals, StudentQuizSummary, SubjectOption } from '../api/quizInsights';
 import type { ClassSection, LoginResponse, QuizQuestionResponse, TeacherSubjectAssignment } from '../api/types';
+import hi from '../i18n/locales/hi.json';
+import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 import {
   DEFAULT_RANGE_DAYS,
   MIN_ANSWERS_FOR_FLAG,
@@ -53,18 +55,18 @@ describe('istToday / rangeForDays', () => {
 
 describe('formatRange / formatIstDay', () => {
   it('shows the year once when both ends share it', () => {
-    expect(formatRange('2026-09-11', '2026-10-10')).toBe('11 Sep – 10 Oct 2026');
-    expect(formatRange('2026-10-10', '2026-10-10')).toBe('10 Oct – 10 Oct 2026');
+    expect(formatRange('2026-09-11', '2026-10-10', tEn)).toBe('11 Sep – 10 Oct 2026');
+    expect(formatRange('2026-10-10', '2026-10-10', tEn)).toBe('10 Oct – 10 Oct 2026');
   });
 
   it('shows both years across a year end', () => {
-    expect(formatRange('2026-12-27', '2027-01-02')).toBe('27 Dec 2026 – 2 Jan 2027');
+    expect(formatRange('2026-12-27', '2027-01-02', tEn)).toBe('27 Dec 2026 – 2 Jan 2027');
   });
 
   it('gives the IST day of an instant', () => {
-    expect(formatIstDay('2026-10-08T10:02:11Z')).toBe('8 Oct 2026');
-    expect(formatIstDay('2026-10-08T18:30:00Z')).toBe('9 Oct 2026');
-    expect(formatIstDay('not a date')).toBe('');
+    expect(formatIstDay('2026-10-08T10:02:11Z', tEn)).toBe('8 Oct 2026');
+    expect(formatIstDay('2026-10-08T18:30:00Z', tEn)).toBe('9 Oct 2026');
+    expect(formatIstDay('not a date', tEn)).toBe('');
   });
 });
 
@@ -161,7 +163,7 @@ describe('sortStudents', () => {
 
 describe('gameBreakdown / totalsSummary / summaryEmptyMessage', () => {
   it('says so when there was no activity', () => {
-    expect(gameBreakdown(student('Asha', 0, null))).toBe('No quiz activity in this period');
+    expect(gameBreakdown(student('Asha', 0, null), tEn)).toBe('No quiz activity in this period');
   });
 
   it('counts a student with no answers in the period as inactive, even if a game finished in it', () => {
@@ -171,12 +173,12 @@ describe('gameBreakdown / totalsSummary / summaryEmptyMessage', () => {
       practice: { answered: 0, correct: 0, sessions: 0 },
       arena: { answered: 0, correct: 0, played: 1, won: 1 },
     });
-    expect(gameBreakdown(finishedLater)).toBe('No quiz activity in this period');
+    expect(gameBreakdown(finishedLater, tEn)).toBe('No quiz activity in this period');
     const battleFinishedLater = student('Asha', 0, null, {
       practice: { answered: 0, correct: 0, sessions: 0 },
       battle: { answered: 0, correct: 0, played: 1, won: 0 },
     });
-    expect(gameBreakdown(battleFinishedLater)).toBe('No quiz activity in this period');
+    expect(gameBreakdown(battleFinishedLater, tEn)).toBe('No quiz activity in this period');
   });
 
   it("still shows a finished game with no answers in the period for a student who answered something else", () => {
@@ -184,7 +186,7 @@ describe('gameBreakdown / totalsSummary / summaryEmptyMessage', () => {
       practice: { answered: 4, correct: 2, sessions: 1 },
       arena: { answered: 0, correct: 0, played: 1, won: 1 },
     });
-    expect(gameBreakdown(active)).toBe('Practice 4 · Arena 0 (won 1 of 1)');
+    expect(gameBreakdown(active, tEn)).toBe('Practice 4 · Arena 0 (won 1 of 1)');
   });
 
   it('lists only the games with something in them', () => {
@@ -193,27 +195,27 @@ describe('gameBreakdown / totalsSummary / summaryEmptyMessage', () => {
       arena: { answered: 10, correct: 7, played: 2, won: 1 },
       battle: { answered: 9, correct: 6, played: 1, won: 0 },
     });
-    expect(gameBreakdown(mixed)).toBe('Practice 12 · Arena 10 (won 1 of 2) · Battle 9 (won 0 of 1)');
+    expect(gameBreakdown(mixed, tEn)).toBe('Practice 12 · Arena 10 (won 1 of 2) · Battle 9 (won 0 of 1)');
 
     const battleOnly = student('Asha', 5, 60, {
       practice: { answered: 0, correct: 0, sessions: 0 },
       battle: { answered: 5, correct: 3, played: 1, won: 1 },
     });
-    expect(gameBreakdown(battleOnly)).toBe('Battle 5 (won 1 of 1)');
+    expect(gameBreakdown(battleOnly, tEn)).toBe('Battle 5 (won 1 of 1)');
 
     // Answers in a challenge that expired: answered, but never "played".
     const expired = student('Asha', 3, 33, {
       practice: { answered: 0, correct: 0, sessions: 0 },
       arena: { answered: 3, correct: 1, played: 0, won: 0 },
     });
-    expect(gameBreakdown(expired)).toBe('Arena 3');
+    expect(gameBreakdown(expired, tEn)).toBe('Arena 3');
   });
 
   it('sums up the class', () => {
-    expect(totalsSummary({ students: 40, activeStudents: 18, answered: 412, correct: 280, percentCorrect: 68 })).toBe(
+    expect(totalsSummary({ students: 40, activeStudents: 18, answered: 412, correct: 280, percentCorrect: 68 }, tEn)).toBe(
       '18 of 40 students played · 412 answers · 68% correct'
     );
-    expect(totalsSummary({ students: 1, activeStudents: 0, answered: 0, correct: 0, percentCorrect: null })).toBe(
+    expect(totalsSummary({ students: 1, activeStudents: 0, answered: 0, correct: 0, percentCorrect: null }, tEn)).toBe(
       '0 of 1 student played · 0 answers'
     );
   });
@@ -227,22 +229,22 @@ describe('gameBreakdown / totalsSummary / summaryEmptyMessage', () => {
   const none: SectionQuizTotals = { students: 0, activeStudents: 0, answered: 0, correct: 0, percentCorrect: null };
 
   it('picks the empty-state line', () => {
-    expect(summaryEmptyMessage(summary(none))).toBe('No students in this class yet.');
-    expect(summaryEmptyMessage(summary({ ...none, students: 5 }))).toBe(
+    expect(summaryEmptyMessage(summary(none), tEn)).toBe('No students in this class yet.');
+    expect(summaryEmptyMessage(summary({ ...none, students: 5 }), tEn)).toBe(
       'No one in this class played Practice, Arena or Battle in this period.'
     );
     expect(
-      summaryEmptyMessage(summary({ students: 5, activeStudents: 1, answered: 2, correct: 1, percentCorrect: 50 }))
+      summaryEmptyMessage(summary({ students: 5, activeStudents: 1, answered: 2, correct: 1, percentCorrect: 50 }), tEn)
     ).toBeNull();
     // A subject filter with nobody playing.
-    expect(summaryEmptyMessage(summary({ ...none, students: 5 }, science, 'sci'))).toBe(
+    expect(summaryEmptyMessage(summary({ ...none, students: 5 }, science, 'sci'), tEn)).toBe(
       'No one in this class played Practice, Arena or Battle in this period.'
     );
   });
 
   it('says the school has no subjects rather than no students when there is nothing to filter by', () => {
     // The server lists no students when there are no subjects, even for a class that has some.
-    expect(summaryEmptyMessage(summary(none, []))).toBe('No subjects are set up for this school yet.');
+    expect(summaryEmptyMessage(summary(none, []), tEn)).toBe('No subjects are set up for this school yet.');
   });
 });
 
@@ -288,19 +290,19 @@ function stat(
 describe('questionFlags', () => {
   it('needs at least 5 answers before judging a question', () => {
     expect(MIN_ANSWERS_FOR_FLAG).toBe(5);
-    expect(questionFlags(stat({ A: 0, B: 0, C: 4, D: 0 }))).toEqual([]);
-    expect(questionFlags(stat({ A: 0, B: 0, C: 0, D: 0 }))).toEqual([]);
+    expect(questionFlags(stat({ A: 0, B: 0, C: 4, D: 0 }), tEn)).toEqual([]);
+    expect(questionFlags(stat({ A: 0, B: 0, C: 0, D: 0 }), tEn)).toEqual([]);
   });
 
   it('flags a wrong option picked more than the right one', () => {
     // 15 of 50 right = 30%, and C beats B.
-    expect(questionFlags(stat({ A: 5, B: 15, C: 28, D: 2 }))).toEqual([
+    expect(questionFlags(stat({ A: 5, B: 15, C: 28, D: 2 }), tEn)).toEqual([
       'More students chose C than the right answer',
       'Only 30% got this right',
     ]);
     // A tie with the right answer isn't flagged; only the most-picked wrong option is named.
-    expect(questionFlags(stat({ A: 2, B: 4, C: 4, D: 0 }))).toEqual([]);
-    expect(questionFlags(stat({ A: 6, B: 5, C: 7, D: 0 }))).toEqual([
+    expect(questionFlags(stat({ A: 2, B: 4, C: 4, D: 0 }), tEn)).toEqual([]);
+    expect(questionFlags(stat({ A: 6, B: 5, C: 7, D: 0 }), tEn)).toEqual([
       'More students chose C than the right answer',
       'Only 28% got this right',
     ]);
@@ -308,15 +310,15 @@ describe('questionFlags', () => {
 
   it('flags a low % correct on its own', () => {
     // 3 of 10 right, but no single wrong option beats B.
-    expect(questionFlags(stat({ A: 3, B: 3, C: 2, D: 2 }))).toEqual(['Only 30% got this right']);
-    expect(questionFlags(stat({ A: 2, B: 4, C: 2, D: 2 }))).toEqual([]);
+    expect(questionFlags(stat({ A: 3, B: 3, C: 2, D: 2 }), tEn)).toEqual(['Only 30% got this right']);
+    expect(questionFlags(stat({ A: 2, B: 4, C: 2, D: 2 }), tEn)).toEqual([]);
   });
 
   it('shows open reports whatever the answer count', () => {
-    expect(questionFlags(stat({ A: 0, B: 1, C: 0, D: 0 }, {}, { openReportCount: 2 }))).toEqual([
+    expect(questionFlags(stat({ A: 0, B: 1, C: 0, D: 0 }, {}, { openReportCount: 2 }), tEn)).toEqual([
       '2 students reported a wrong answer',
     ]);
-    expect(questionFlags(stat({ A: 5, B: 15, C: 28, D: 2 }, {}, { openReportCount: 1 }))[0]).toBe(
+    expect(questionFlags(stat({ A: 5, B: 15, C: 28, D: 2 }, {}, { openReportCount: 1 }), tEn)[0]).toBe(
       '1 student reported a wrong answer'
     );
   });
@@ -328,9 +330,9 @@ describe('question card lines', () => {
   });
 
   it('summarises answers, or says nobody answered', () => {
-    expect(questionAnswersLine(stat({ A: 5, B: 15, C: 28, D: 2 }))).toBe('50 answers · 30% correct');
-    expect(questionAnswersLine(stat({ A: 0, B: 1, C: 0, D: 0 }))).toBe('1 answer · 100% correct');
-    expect(questionAnswersLine(stat({ A: 0, B: 0, C: 0, D: 0 }))).toBe('Not answered in this period');
+    expect(questionAnswersLine(stat({ A: 5, B: 15, C: 28, D: 2 }), tEn)).toBe('50 answers · 30% correct');
+    expect(questionAnswersLine(stat({ A: 0, B: 1, C: 0, D: 0 }), tEn)).toBe('1 answer · 100% correct');
+    expect(questionAnswersLine(stat({ A: 0, B: 0, C: 0, D: 0 }), tEn)).toBe('Not answered in this period');
   });
 
   it('splits by game, leaving out games with no answers', () => {
@@ -342,22 +344,98 @@ describe('question card lines', () => {
         battle: { answered: 12, correct: 4 },
       }
     );
-    expect(questionGameSplit(item)).toBe('Practice 20 (6 right) · Battle 12 (4 right)');
+    expect(questionGameSplit(item, tEn)).toBe('Practice 20 (6 right) · Battle 12 (4 right)');
   });
 
   it('describes whose answers count', () => {
-    expect(questionScopeLine({ sectionLabel: 'Grade 8 - A', className: 'Grade 8' })).toBe(
+    expect(questionScopeLine({ sectionLabel: 'Grade 8 - A', className: 'Grade 8' }, tEn)).toBe(
       'Answers from students in Grade 8 - A'
     );
-    expect(questionScopeLine({ sectionLabel: null, className: 'Grade 8' })).toBe('Answers from all Grade 8 students');
+    expect(questionScopeLine({ sectionLabel: null, className: 'Grade 8' }, tEn)).toBe('Answers from all Grade 8 students');
   });
 
   it('words the empty state for a teacher and an admin', () => {
-    expect(noQuestionsMessage(true, 'Science', 'Grade 8')).toBe(
+    expect(noQuestionsMessage(true, 'Science', 'Grade 8', tEn)).toBe(
       "You haven't added any multiple-choice questions for Science in Grade 8 yet."
     );
-    expect(noQuestionsMessage(false, 'Science', 'Grade 8')).toBe(
+    expect(noQuestionsMessage(false, 'Science', 'Grade 8', tEn)).toBe(
       'No multiple-choice questions for Science in Grade 8 yet.'
+    );
+  });
+});
+
+describe('quiz insights in Hindi', () => {
+  const q = hi.quizInsights;
+
+  it('names the months in Hindi, with both years across a year end', () => {
+    expect(formatRange('2026-12-27', '2027-01-02', tHi)).toBe(
+      `${fill(q.dayMonthYear, { day: 27, month: q.months.dec, year: 2026 })} – ${fill(q.dayMonthYear, {
+        day: 2,
+        month: q.months.jan,
+        year: 2027,
+      })}`
+    );
+    expect(formatRange('2026-09-11', '2026-10-10', tHi)).toBe(
+      `${fill(q.dayMonth, { day: 11, month: q.months.sep })} – ${fill(q.dayMonthYear, {
+        day: 10,
+        month: q.months.oct,
+        year: 2026,
+      })}`
+    );
+    expect(formatIstDay('2026-10-08T10:02:11Z', tHi)).toBe(fill(q.dayMonthYear, { day: 8, month: q.months.oct, year: 2026 }));
+  });
+
+  it('sums up a class of 1 with the singular and a class of 40 with the plural', () => {
+    expect(totalsSummary({ students: 1, activeStudents: 1, answered: 1, correct: 1, percentCorrect: 100 }, tHi)).toBe(
+      [
+        fill(q.results.played_one, { active: 1, count: 1 }),
+        fill(q.answers_one, { count: 1 }),
+        fill(q.correct, { percent: '100%' }),
+      ].join(' · ')
+    );
+    expect(totalsSummary({ students: 40, activeStudents: 18, answered: 412, correct: 280, percentCorrect: 68 }, tHi)).toBe(
+      [
+        fill(q.results.played_other, { active: 18, count: 40 }),
+        fill(q.answers_other, { count: 412 }),
+        fill(q.correct, { percent: '68%' }),
+      ].join(' · ')
+    );
+  });
+
+  it('breaks a card down by game in Hindi', () => {
+    const mixed = student('Asha', 22, 71, {
+      practice: { answered: 12, correct: 9, sessions: 2 },
+      arena: { answered: 10, correct: 7, played: 2, won: 1 },
+    });
+    expect(gameBreakdown(mixed, tHi)).toBe(
+      `${fill(q.results.practice, { answered: 12 })} · ${fill(q.results.arenaWon, { answered: 10, won: 1, played: 2 })}`
+    );
+    expect(gameBreakdown(student('Asha', 0, null), tHi)).toBe(q.results.noActivity);
+  });
+
+  it("uses the question bank's own report warning, singular for 1 and plural for 2", () => {
+    const warning = hi.questionBank.myQuestions;
+    expect(questionFlags(stat({ A: 0, B: 1, C: 0, D: 0 }, {}, { openReportCount: 1 }), tHi)).toEqual([
+      fill(warning.reportWarning_one, { count: 1 }),
+    ]);
+    expect(questionFlags(stat({ A: 0, B: 1, C: 0, D: 0 }, {}, { openReportCount: 2 }), tHi)).toEqual([
+      fill(warning.reportWarning_other, { count: 2 }),
+    ]);
+    expect(questionFlags(stat({ A: 5, B: 15, C: 28, D: 2 }), tHi)).toEqual([
+      fill(q.stats.moreChose, { option: 'C' }),
+      fill(q.stats.lowCorrect, { percent: 30 }),
+    ]);
+  });
+
+  it('keeps the subject and class in the empty state and the scope line', () => {
+    expect(noQuestionsMessage(true, 'Science', 'Grade 8', tHi)).toBe(
+      fill(q.stats.noQuestionsMine, { subject: 'Science', className: 'Grade 8' })
+    );
+    expect(noQuestionsMessage(false, 'Science', 'Grade 8', tHi)).toBe(
+      fill(q.stats.noQuestions, { subject: 'Science', className: 'Grade 8' })
+    );
+    expect(questionScopeLine({ sectionLabel: 'Grade 8 - A', className: 'Grade 8' }, tHi)).toBe(
+      fill(q.stats.scopeSection, { section: 'Grade 8 - A' })
     );
   });
 });

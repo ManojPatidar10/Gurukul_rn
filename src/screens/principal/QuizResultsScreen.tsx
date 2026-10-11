@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getErrorMessage } from '../../api/errorMessage';
 import { getSectionQuizSummary, type SectionQuizSummary, type SubjectOption } from '../../api/quizInsights';
@@ -29,10 +30,11 @@ import {
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'QuizResults'>;
 
-const SORTS: { key: StudentSortKey; label: string }[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'leastActive', label: 'Least active' },
-  { key: 'lowestAccuracy', label: 'Lowest accuracy' },
+/** The sort chips. Full keys, resolved at render so a language switch re-labels them. */
+const SORTS: { key: StudentSortKey; labelKey: string }[] = [
+  { key: 'name', labelKey: 'quizInsights.results.sort.name' },
+  { key: 'leastActive', labelKey: 'quizInsights.results.sort.leastActive' },
+  { key: 'lowestAccuracy', labelKey: 'quizInsights.results.sort.lowestAccuracy' },
 ];
 
 function FilterChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
@@ -54,6 +56,7 @@ function FilterChip({ label, selected, onPress }: { label: string; selected: boo
  * limits a subject teacher to the subjects they teach here.
  */
 export function QuizResultsScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { classSection } = route.params;
   const [days, setDays] = useState<number>(DEFAULT_RANGE_DAYS);
@@ -95,27 +98,32 @@ export function QuizResultsScreen({ route, navigation }: Props) {
   const error = current?.error ?? null;
   const students = useMemo(() => (summary ? sortStudents(summary.students, sortKey) : []), [summary, sortKey]);
   const selectedSubject = subjects.find((s) => s.id === subjectId) ?? null;
-  const allLabel = allSubjectsAllowed ? 'All subjects' : 'All my subjects';
-  const emptyMessage = summary ? summaryEmptyMessage(summary) : null;
+  const allLabel = allSubjectsAllowed ? t('quizInsights.results.allSubjects') : t('quizInsights.results.allMySubjects');
+  const emptyMessage = summary ? summaryEmptyMessage(summary, t) : null;
 
   return (
     <View style={styles.root}>
       <ScreenHeader
-        title="Quiz results"
+        title={t('quizInsights.results.title')}
         subtitle={`${classSection.className} - ${classSection.section}`}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
-        <Text style={styles.fieldLabel}>Period</Text>
+        <Text style={styles.fieldLabel}>{t('quizInsights.period')}</Text>
         <View style={styles.chips}>
           {RANGE_PRESETS.map((d) => (
-            <FilterChip key={d} label={`${d} days`} selected={days === d} onPress={() => setDays(d)} />
+            <FilterChip
+              key={d}
+              label={t('quizInsights.days', { count: d })}
+              selected={days === d}
+              onPress={() => setDays(d)}
+            />
           ))}
         </View>
 
         {subjects.length > 0 && (
           <>
-            <Text style={styles.fieldLabel}>Subject</Text>
+            <Text style={styles.fieldLabel}>{t('quizInsights.subject')}</Text>
             <View style={styles.chips}>
               <FilterChip label={allLabel} selected={subjectId === null} onPress={() => setSubjectId(null)} />
               {subjects.map((s) => (
@@ -138,7 +146,7 @@ export function QuizResultsScreen({ route, navigation }: Props) {
               })
             }
           >
-            <Text style={styles.outlineButtonText}>Question stats</Text>
+            <Text style={styles.outlineButtonText}>{t('quizInsights.results.questionStats')}</Text>
           </Pressable>
         )}
 
@@ -146,7 +154,7 @@ export function QuizResultsScreen({ route, navigation }: Props) {
           <>
             <ErrorNotice message={error} />
             <Pressable style={styles.outlineButton} onPress={() => setReload((n) => n + 1)} accessibilityRole="button">
-              <Text style={styles.outlineButtonText}>Retry</Text>
+              <Text style={styles.outlineButtonText}>{t('common.retry')}</Text>
             </Pressable>
           </>
         )}
@@ -157,8 +165,8 @@ export function QuizResultsScreen({ route, navigation }: Props) {
             {summary.totals.students > 0 && (
               <View style={styles.totalsCard}>
                 <Text style={styles.totalsTitle}>{summary.subjectName ?? allLabel}</Text>
-                <Text style={styles.totalsRange}>{formatRange(summary.from, summary.to)}</Text>
-                <Text style={styles.totalsText}>{totalsSummary(summary.totals)}</Text>
+                <Text style={styles.totalsRange}>{formatRange(summary.from, summary.to, t)}</Text>
+                <Text style={styles.totalsText}>{totalsSummary(summary.totals, t)}</Text>
               </View>
             )}
 
@@ -166,10 +174,15 @@ export function QuizResultsScreen({ route, navigation }: Props) {
 
             {students.length > 0 && (
               <>
-                <Text style={styles.fieldLabel}>Sort by</Text>
+                <Text style={styles.fieldLabel}>{t('quizInsights.results.sortBy')}</Text>
                 <View style={styles.chips}>
-                  {SORTS.map((s) => (
-                    <FilterChip key={s.key} label={s.label} selected={sortKey === s.key} onPress={() => setSortKey(s.key)} />
+                  {SORTS.map((option) => (
+                    <FilterChip
+                      key={option.key}
+                      label={t(option.labelKey)}
+                      selected={sortKey === option.key}
+                      onPress={() => setSortKey(option.key)}
+                    />
                   ))}
                 </View>
               </>
@@ -180,16 +193,22 @@ export function QuizResultsScreen({ route, navigation }: Props) {
                 <View style={styles.cardTop}>
                   <View style={styles.nameBlock}>
                     <Text style={styles.name}>{s.name}</Text>
-                    {!!s.rollNumber && <Text style={styles.meta}>Roll {s.rollNumber}</Text>}
+                    {!!s.rollNumber && (
+                      <Text style={styles.meta}>{t('quizInsights.results.roll', { roll: s.rollNumber })}</Text>
+                    )}
                   </View>
                   <StatusChip
                     label={formatPercent(s.percentCorrect)}
                     variant={bandChipVariant(accuracyBand(s.percentCorrect))}
                   />
                 </View>
-                <Text style={styles.answered}>{s.answered} answered</Text>
-                <Text style={styles.meta}>{gameBreakdown(s)}</Text>
-                {s.lastActiveAt && <Text style={styles.meta}>Last played {formatIstDay(s.lastActiveAt)}</Text>}
+                <Text style={styles.answered}>{t('quizInsights.results.answered', { answered: s.answered })}</Text>
+                <Text style={styles.meta}>{gameBreakdown(s, t)}</Text>
+                {s.lastActiveAt && (
+                  <Text style={styles.meta}>
+                    {t('quizInsights.results.lastPlayed', { date: formatIstDay(s.lastActiveAt, t) })}
+                  </Text>
+                )}
               </View>
             ))}
           </>
