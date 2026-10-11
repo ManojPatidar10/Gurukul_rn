@@ -96,10 +96,12 @@ export type PrincipalStackParamList = {
   FeesHub: undefined;
   FeeCategoriesList: undefined;
   FeeStructuresList: undefined;
-  FeeStructureForm: undefined;
+  /** No params: create a structure. `feeStructure`: edit its lines (the section and year stay fixed). */
+  FeeStructureForm: { feeStructure?: FeeStructure } | undefined;
   FeeStructureDetail: { feeStructure: FeeStructure };
   FeeAssessmentsList: undefined;
   MyFees: undefined;
+  /** `assessment` is only the first paint: the screen fetches the bill (with its adjustments) on focus. */
   FeeAssessmentDetail: { assessment: FeeAssessment };
   PayFees: { assessment: FeeAssessment };
   FeePaymentSettings: undefined;

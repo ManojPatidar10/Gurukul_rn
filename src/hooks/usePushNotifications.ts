@@ -229,7 +229,8 @@ export function usePushNotifications(schoolId: string | null, session: Session |
       } else {
         // Shared with the in-app Alerts inbox, so a push tap and an inbox tap can't drift apart:
         // ABSENCE_ALERT / FEE_DUE / REPORT_CARD_PUBLISHED (a parent's copy names one child) open
-        // that child's attendance / fees / report card for that term; ANNOUNCEMENT opens the
+        // that child's attendance / fees / report card for that term (a student's own FEE_DUE, sent
+        // when no parent is linked, opens My Fees); ANNOUNCEMENT opens the
         // parent's Announcements screen (staff and students have none, so it just opens the app);
         // BUS_TRIP opens the family's bus map, or an admin's transport screen; SALARY_PAID opens
         // the staff member's payslip.

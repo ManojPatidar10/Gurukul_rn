@@ -1,5 +1,8 @@
+import type { TFunction } from 'i18next';
+
 import type { ApiError } from '../api/client';
 import type { DuplicateReferenceData, FeePayment, PaymentMethod, ReversalType } from '../api/types';
+import { formatDueDate } from './feeBills';
 import { parseRupees, toPaise } from './money';
 import { fileSlug } from './reportCardPdfName';
 
@@ -170,35 +173,16 @@ export function duplicateReferenceInfo(error: unknown): DuplicateReferenceData |
   };
 }
 
-/**
- * The bill detail's refetch on focus: the fresh copy of the bill from the student's bills, or null
- * when the request failed or the list came back without it. The screen then keeps the bill it
- * shows and says the amounts may be out of date.
- */
-export function refreshedBill<T extends { id: string }>(
-  bills: readonly T[] | null | undefined,
-  billId: string
-): T | null {
-  return bills?.find((bill) => bill.id === billId) ?? null;
-}
-
 /** The server's PDF file name: fee-receipt-<receipt number slug>.pdf, or the id's first 8 characters. */
 export function feeReceiptFileName(payment: Pick<FeePayment, 'id' | 'receiptNumber'>): string {
   return `fee-receipt-${fileSlug(payment.receiptNumber, '') || payment.id.slice(0, 8)}.pdf`;
 }
 
-/** A YYYY-MM-DD date for display ("5 Oct 2026" in English), in the phone's language. */
-export function formatPaymentDate(isoDate: string | null | undefined): string {
-  if (!isoDate) return '—';
-  const date = new Date(`${isoDate}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return isoDate;
-  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-/** The local date of an ISO instant (e.g. when a payment was reversed), for display. */
-export function formatInstantDate(instant: string | null | undefined): string {
-  if (!instant) return '—';
-  const date = new Date(instant);
-  if (Number.isNaN(date.getTime())) return instant;
-  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+/**
+ * A payment's YYYY-MM-DD date for display ("5 Oct 2026"), in the app's language like every other fee
+ * date (formatDueDate), or '—' when there is none. An instant (e.g. when a payment was reversed) is
+ * shown with feeBills' formatInstantDate, as its date in India.
+ */
+export function formatPaymentDate(isoDate: string | null | undefined, t: TFunction): string {
+  return isoDate ? formatDueDate(isoDate, t) : '—';
 }

@@ -188,13 +188,22 @@ export interface FeeCategory {
   schoolId: string;
   code: string;
   name: string;
+  /** False once retired: it can't go on a new fee structure line, but lines that have it keep working. */
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface FeeCategoryRequest {
+  /** The server trims and upper-cases it and turns spaces/hyphens into _ (" tuition fee " -> TUITION_FEE). */
   code: string;
   name: string;
+}
+
+/** The code never changes. `active` left out keeps it as it is. */
+export interface FeeCategoryUpdateRequest {
+  name: string;
+  active?: boolean;
 }
 
 export interface FeeStructureLine {
@@ -216,16 +225,102 @@ export interface FeeStructure {
   classSectionId: string;
   className: string;
   section: string;
+  /** Always the canonical "2026-27" form. */
   academicYear: string;
   lines: FeeStructureLine[];
+  /** The due date chosen at the last Generate; null until bills are first generated. */
+  dueDate: string | null;
+  totalPerStudent: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface FeeStructureRequest {
   classSectionId: string;
-  academicYear: string;
+  /** Left out: the server uses the class-section's own year (a different year is refused). */
+  academicYear?: string;
+  /** Amounts may be 0 (a fee this class doesn't charge). */
   lines: FeeStructureLineRequest[];
+}
+
+export interface FeeStructureUpdateRequest {
+  lines: FeeStructureLineRequest[];
+  /** Also re-price this structure's bills that have no payments and no adjustments. */
+  repriceBills: boolean;
+}
+
+export type FeeBillLeftAloneReason = 'HAS_PAYMENTS' | 'HAS_ADJUSTMENTS' | 'NOT_REQUESTED';
+
+export interface FeeBillLeftAlone {
+  assessmentId: string;
+  studentId: string;
+  studentName: string;
+  totalDue: number;
+  reason: FeeBillLeftAloneReason;
+}
+
+export interface FeeStructureUpdateResult {
+  structure: FeeStructure;
+  repricedCount: number;
+  leftAloneCount: number;
+  /** At most 100 of the bills whose amount now differs from the structure's total. */
+  leftAlone: FeeBillLeftAlone[];
+}
+
+export interface FeeBillDifferentTotal {
+  assessmentId: string;
+  studentId: string;
+  studentName: string;
+  totalDue: number;
+}
+
+/** What Generate would do, shown before the admin confirms. */
+export interface GeneratePreview {
+  structureId: string;
+  academicYear: string;
+  totalPerStudent: number;
+  activeStudentCount: number;
+  toCreateCount: number;
+  alreadyBilledCount: number;
+  alreadyBilledDifferentTotal: FeeBillDifferentTotal[];
+  inactiveStudentCount: number;
+  structureDueDate: string | null;
+  suggestedDueDate: string;
+}
+
+export interface GenerateBillsResult {
+  academicYear: string;
+  dueDate: string;
+  createdCount: number;
+  alreadyBilledCount: number;
+  inactiveSkippedCount: number;
+  alreadyBilledDifferentTotal: FeeBillDifferentTotal[];
+  created: FeeAssessment[];
+}
+
+/**
+ * A bill's status, worked out by the server from its due date (India time) on every read: OVERDUE
+ * as soon as the due date has passed with money still owed, without waiting for a payment.
+ */
+export type FeeBillStatus = 'UNPAID' | 'PARTIAL' | 'OVERDUE' | 'PAID' | 'CANCELLED';
+
+export type FeeAdjustmentType = 'CONCESSION' | 'WAIVER' | 'LATE_FEE' | 'CORRECTION';
+
+export interface FeeAdjustment {
+  id: string;
+  type: FeeAdjustmentType;
+  /** Signed: a concession or waiver is negative, a late fee positive, a correction either. */
+  amount: number;
+  reason: string;
+  /** Only sent to an admin; null for a student or parent. */
+  createdByName: string | null;
+  createdAt: string;
+}
+
+export interface FeeAdjustmentRequest {
+  type: FeeAdjustmentType;
+  amount: number;
+  reason: string;
 }
 
 export interface FeeAssessment {
@@ -234,14 +329,67 @@ export interface FeeAssessment {
   studentId: string;
   studentName: string;
   rollNumber: string;
+  /** ACTIVE, or ALUMNI / WITHDRAWN for a student who has left. */
+  studentStatus: string;
+  /** The student's current class-section. */
+  classSectionId: string | null;
+  classSectionLabel: string | null;
   academicYear: string;
+  /** The structure's total when the bill was made; totalDue = baseAmount + adjustmentsTotal. */
+  baseAmount: number;
+  adjustmentsTotal: number;
   totalDue: number;
   totalPaid: number;
+  /** 0 for a cancelled bill. */
   remainingDue: number;
-  status: string;
-  dueDate: string;
+  status: FeeBillStatus;
+  overdue: boolean;
+  /** Days past the due date while OVERDUE, else 0. */
+  daysOverdue: number;
+  dueDate: string | null;
+  cancelled: boolean;
+  cancelledAt: string | null;
+  /** Only sent to an admin. */
+  cancelledByName: string | null;
+  cancelReason: string | null;
+  /**
+   * Oldest first, on a single bill, a student's bills and every bill a write returns. Null on paged
+   * lists, class fee status, the dues report and generate results.
+   */
+  adjustments: FeeAdjustment[] | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Filters for the admin's bill list and summary. Left out: the server's default. */
+export interface FeeAssessmentFilters {
+  status?: FeeBillStatus;
+  classSectionId?: string;
+  /** Default: the current academic year. 'ALL' for every year; "2026-27" or "2026-2027". */
+  academicYear?: string;
+  /** Name contains / roll number starts with, ignoring case. */
+  q?: string;
+  /** Default false: only ACTIVE students' bills. */
+  includeInactive?: boolean;
+}
+
+/** Server totals over the non-cancelled bills matching the filters (cancelledCount aside). */
+export interface FeeAssessmentSummary {
+  /** The year the filters resolved to, or 'ALL'. */
+  academicYear: string;
+  classSectionId: string | null;
+  includeInactive: boolean;
+  billCount: number;
+  paidCount: number;
+  unpaidCount: number;
+  overdueCount: number;
+  cancelledCount: number;
+  totalDue: number;
+  totalPaid: number;
+  totalRemaining: number;
+  totalOverdue: number;
+  /** Years with bills in the school, newest first. */
+  availableAcademicYears: string[];
 }
 
 /** The backend's payment methods (finance PaymentMethod enum). */
@@ -334,11 +482,18 @@ export interface DuplicateReferenceData {
   existingTransactionDate: string;
 }
 
+/** Active students' open bills for one academic year (or 'ALL'); cancelled bills never count. */
 export interface DuesReport {
+  academicYear: string;
   unpaidAssessments: FeeAssessment[];
   totalUnpaid: number;
+  unpaidCount: number;
   overdueAssessments: FeeAssessment[];
   totalOverdue: number;
+  overdueCount: number;
+  /** Open bills of students who have left (ALUMNI / WITHDRAWN), for the admin to cancel. */
+  inactiveStudentsUnpaidCount: number;
+  inactiveStudentsTotalUnpaid: number;
 }
 
 export interface PayrollRunSummary {

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { createFeeCategory, listFeeCategories } from '../api/feeCategories';
+import { listFeeCategories } from '../api/feeCategories';
 import type { FeeCategory } from '../api/types';
 import { useToast } from '../context/ToastContext';
+import { useCreateFeeCategory } from '../hooks/useCreateFeeCategory';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
+import { categoryPickerEmptyKey, pickableCategories } from '../utils/feeBills';
 import LabeledInput from './LabeledInput';
 import { getErrorMessage } from '../api/errorMessage';
 
@@ -14,14 +16,13 @@ interface Props {
   onSelect: (feeCategory: FeeCategory) => void;
 }
 
+/** Categories in use (plus the one already on this line, even if it was retired since), and a quick "new category" form. */
 export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Props) {
   const { t } = useTranslation();
   const [categories, setCategories] = useState<FeeCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
-  const [creating, setCreating] = useState(false);
+  const { code, setCode, name, setName, normalisedCode, creating, create } = useCreateFeeCategory(schoolId);
   const { showToast } = useToast();
 
   const load = () => {
@@ -35,45 +36,30 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
   useEffect(load, [schoolId]);
 
   const handleCreate = async () => {
-    if (!code.trim()) {
-      showToast(t('fees.categories.errors.code'), 'error');
-      return;
-    }
-    if (!name.trim()) {
-      showToast(t('fees.categories.errors.name'), 'error');
-      return;
-    }
-    setCreating(true);
-    try {
-      const created = await createFeeCategory(schoolId, { code, name });
-      setCategories((prev) => [...prev, created]);
-      onSelect(created);
-      setShowCreate(false);
-      setCode('');
-      setName('');
-    } catch (e) {
-      showToast(getErrorMessage(e), 'error');
-    } finally {
-      setCreating(false);
-    }
+    const created = await create();
+    if (!created) return;
+    setCategories((prev) => [...prev, created]);
+    onSelect(created);
+    setShowCreate(false);
   };
 
   if (loading) return <ActivityIndicator style={styles.loading} />;
 
+  const shown = pickableCategories(categories, selectedId);
+  const emptyKey = categoryPickerEmptyKey(categories.length, shown.length);
+
   return (
     <View>
-      {categories.length === 0 && !showCreate && (
-        <Text style={styles.empty}>{t('fees.categoryPicker.empty')}</Text>
-      )}
+      {emptyKey && !showCreate && <Text style={styles.empty}>{t(emptyKey)}</Text>}
       <View style={styles.chips}>
-        {categories.map((cat) => (
+        {shown.map((cat) => (
           <Pressable
             key={cat.id}
             onPress={() => onSelect(cat)}
             style={[styles.chip, selectedId === cat.id && styles.chipSelected]}
           >
             <Text style={[styles.chipText, selectedId === cat.id && styles.chipTextSelected]}>
-              {cat.name} ({cat.code})
+              {cat.name} ({cat.code}){cat.active === false ? ` · ${t('fees.categories.notInUse')}` : ''}
             </Text>
           </Pressable>
         ))}
@@ -81,8 +67,26 @@ export default function FeeCategoryPicker({ schoolId, selectedId, onSelect }: Pr
 
       {showCreate ? (
         <View style={styles.createForm}>
-          <LabeledInput label={t('fees.categoryPicker.code')} required value={code} onChangeText={setCode} placeholder="e.g. TUITION" autoCapitalize="characters" />
-          <LabeledInput label={t('fees.categoryPicker.name')} required value={name} onChangeText={setName} placeholder="e.g. Tuition Fee" />
+          <LabeledInput
+            label={t('fees.categoryPicker.code')}
+            required
+            value={code}
+            onChangeText={setCode}
+            placeholder={t('fees.categories.codePlaceholder')}
+            autoCapitalize="characters"
+            maxLength={40}
+          />
+          {normalisedCode && normalisedCode !== code ? (
+            <Text style={styles.codePreview}>{t('fees.categories.codePreview', { code: normalisedCode })}</Text>
+          ) : null}
+          <LabeledInput
+            label={t('fees.categoryPicker.name')}
+            required
+            value={name}
+            onChangeText={setName}
+            placeholder={t('fees.categories.namePlaceholder')}
+            maxLength={100}
+          />
           <Pressable style={styles.createButton} onPress={handleCreate} disabled={creating}>
             <Text style={styles.createButtonText}>{creating ? t('common.creating') : t('common.createAndSelect')}</Text>
           </Pressable>
@@ -116,6 +120,7 @@ const styles = StyleSheet.create({
   chipTextSelected: { color: colors.white },
   addNew: { color: colors.primary, fontWeight: '700', marginTop: spacing.xs },
   createForm: { marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md },
+  codePreview: { fontSize: 12, color: colors.textMuted, marginTop: -spacing.sm, marginBottom: spacing.md },
   createButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,

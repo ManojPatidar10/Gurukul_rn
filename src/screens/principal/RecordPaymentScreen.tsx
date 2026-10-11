@@ -101,7 +101,7 @@ export function RecordPaymentScreen({ route, navigation }: Props) {
             reference: normalizeReference(reference) ?? reference,
             receipt: duplicate.existingReceiptNumber ?? '—',
             student: duplicate.existingStudentName,
-            date: formatPaymentDate(duplicate.existingTransactionDate),
+            date: formatPaymentDate(duplicate.existingTransactionDate, t),
             amount: formatRupees(duplicate.existingAmount),
           }),
           [
@@ -110,6 +110,14 @@ export function RecordPaymentScreen({ route, navigation }: Props) {
             { text: t('fees.recordPayment.duplicateConfirm'), onPress: () => void submit(true) },
           ]
         );
+        return;
+      }
+      // The bill was cancelled meanwhile (409 FEE_BILL_CANCELLED): nothing can be recorded on it, so
+      // go back to the bill, which refetches on focus and shows it cancelled.
+      if (e instanceof ApiError && e.errorCode === 'FEE_BILL_CANCELLED') {
+        showToast(getErrorMessage(e), 'error');
+        savingRef.current = false;
+        navigation.goBack();
         return;
       }
       // A key the server has seen with other details can't be reused; the next save gets a new one.

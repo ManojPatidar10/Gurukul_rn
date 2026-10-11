@@ -14,12 +14,8 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { usePdfDownload } from '../../hooks/usePdfDownload';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import {
-  formatInstantDate,
-  formatPaymentDate,
-  paymentMethodLabelKey,
-  REVERSAL_TYPE_KEYS,
-} from '../../utils/feePayments';
+import { formatInstantDate } from '../../utils/feeBills';
+import { formatPaymentDate, paymentMethodLabelKey, REVERSAL_TYPE_KEYS } from '../../utils/feePayments';
 import { formatRupees } from '../../utils/money';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PaymentReceipt'>;
@@ -120,7 +116,7 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
                 <Text style={styles.cancelledType}>{t(REVERSAL_TYPE_KEYS[reversal.type]?.label ?? reversal.type)}</Text>
                 <Text style={styles.cancelledLine}>
                   {t('fees.receipt.cancelledBy', {
-                    date: formatInstantDate(reversal.reversedAt),
+                    date: formatInstantDate(reversal.reversedAt, t),
                     name: reversal.reversedByName ?? '—',
                   })}
                 </Text>
@@ -129,7 +125,7 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
                     {t('fees.receipt.refundDetails', {
                       method: methodLabel(reversal.refundMethod),
                       reference: reversal.refundReference ?? '—',
-                      date: formatPaymentDate(reversal.refundDate),
+                      date: formatPaymentDate(reversal.refundDate, t),
                     })}
                   </Text>
                 )}
@@ -147,7 +143,7 @@ export function PaymentReceiptScreen({ route, navigation }: Props) {
           <Text style={styles.receiptSubtitle}>{t('fees.receipt.subtitle')}</Text>
           <View style={styles.divider} />
           <Row label={t('fees.receipt.receiptNumber')} value={payment.receiptNumber} />
-          <Row label={t('fees.receipt.date')} value={formatPaymentDate(payment.transactionDate)} />
+          <Row label={t('fees.receipt.date')} value={formatPaymentDate(payment.transactionDate, t)} />
           <Row label={t('fees.receipt.studentName')} value={payment.studentName} />
           <Row label={t('fees.receipt.rollNumber')} value={payment.rollNumber} />
           <Row label={t('fees.receipt.classSection')} value={payment.classSectionLabel} />

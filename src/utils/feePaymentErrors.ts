@@ -1,8 +1,9 @@
 // Fee payment refusals that trying again can't fix, by the server's errorCode. UPI_NOT_CONFIGURED
 // (409): the school has no UPI ID set, so only its admin can make UPI payments possible.
 // PAYMENT_ATTEMPT_ALREADY_REPORTED (409): this attempt already has a different result, which the
-// server keeps; starting a fresh payment from here could pay twice.
-const NOT_RETRYABLE_CODES = new Set(['UPI_NOT_CONFIGURED', 'PAYMENT_ATTEMPT_ALREADY_REPORTED']);
+// server keeps; starting a fresh payment from here could pay twice. FEE_BILL_CANCELLED (409): the
+// bill was cancelled, so it takes no payment and every retry gets the same refusal.
+const NOT_RETRYABLE_CODES = new Set(['UPI_NOT_CONFIGURED', 'PAYMENT_ATTEMPT_ALREADY_REPORTED', 'FEE_BILL_CANCELLED']);
 
 /**
  * Whether the Pay Fees error screen offers "Try again" (true) or only "Back" (false). Every failure

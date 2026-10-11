@@ -8,6 +8,7 @@ export type NotificationTarget =
   | { screen: 'ConversationsList' }
   | { screen: 'Announcements' }
   | { screen: 'MyBus' | 'TransportHub' }
+  | { screen: 'MyFees' }
   | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string }
   | { screen: 'ReportCard'; studentId: string; term?: string; sectionId?: string }
   | { screen: 'PayslipDetail'; payrollLineId: string };
@@ -28,7 +29,9 @@ export function notificationTarget(
     case 'ABSENCE_ALERT':
       return role === 'PARENT' && studentId ? { screen: 'AttendanceHistory', studentId } : null;
     case 'FEE_DUE':
-      // Online payment is on hold, so a fee reminder opens the child's fee summary.
+      // Online payment is on hold, so a fee reminder opens the fee summary: the child's for a
+      // parent, or the student's own (the reminder goes to a student's login when no parent is linked).
+      if (role === 'STUDENT') return { screen: 'MyFees' };
       return role === 'PARENT' && studentId ? { screen: 'ChildFees', studentId } : null;
     case 'REPORT_CARD_PUBLISHED': {
       // A parent's copy names one child (a parent may have several), so it opens that child's card

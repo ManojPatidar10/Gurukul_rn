@@ -87,7 +87,7 @@ export function FeePaymentHistory({ assessmentId, studentId, showAcademicYear, o
                 {payment.receiptNumber ?? '—'}
               </Text>
               <Text style={styles.meta}>
-                {formatPaymentDate(payment.transactionDate)}
+                {formatPaymentDate(payment.transactionDate, t)}
                 {showAcademicYear ? ` · ${payment.academicYear}` : ''}
               </Text>
               <Text style={styles.meta}>

@@ -243,6 +243,16 @@
         "title": "Admissions",
         "description": "New admission and applications"
       }
+    },
+    "studentCopy": {
+      "classes": {
+        "title": "My Class",
+        "description": "Classmates, subjects, assessments and timetable"
+      },
+      "fees": {
+        "title": "My Fees",
+        "description": "Your fee dues"
+      }
     }
   },
   "academicHelper": {
@@ -463,11 +473,20 @@
       "empty": "0 fee categories yet — add the first one.",
       "errors": {
         "code": "Enter a category code.",
-        "name": "Enter a category name."
-      }
+        "name": "Enter a category name.",
+        "codeFormat": "Use 2 to 30 letters, digits or _ for the code."
+      },
+      "codePlaceholder": "e.g. TUITION",
+      "namePlaceholder": "e.g. Tuition Fee",
+      "codePreview": "Saved as {{code}}",
+      "notInUse": "Not in use",
+      "inUse": "In use",
+      "inUseHint": "A category that's not in use can't be added to a fee structure. Structures that already have it keep it.",
+      "saved": "Category saved."
     },
     "categoryPicker": {
       "empty": "No fee categories yet.",
+      "allNotInUse": "Every fee category is marked not in use. Turn one back on in Fee Categories, or add a new one.",
       "code": "Code",
       "name": "Name",
       "addNew": "+ New fee category"
@@ -489,7 +508,31 @@
       "generateButton": "Generate assessments for this class",
       "generating": "Generating…",
       "generatedMessage_one": "Generated {{count}} assessment for active students in this class-section.",
-      "generatedMessage_other": "Generated {{count}} assessments for active students in this class-section."
+      "generatedMessage_other": "Generated {{count}} assessments for active students in this class-section.",
+      "editLines": "Edit fee lines",
+      "dueDate": "Bills due on {{date}}",
+      "noDueDate": "No due date yet: you'll choose one when you generate bills.",
+      "generateBills": "Generate bills for this class",
+      "generate": {
+        "title": "Generate bills",
+        "loading": "Checking who needs a bill…",
+        "dueDate": "Due date",
+        "confirmCreate_one": "Create {{count}} new bill of ₹{{amount}}, due {{date}}?",
+        "confirmCreate_other": "Create {{count}} new bills of ₹{{amount}} each, due {{date}}?",
+        "everyoneBilled": "Everyone already has a bill. There's nothing to create.",
+        "noStudents": "There are no active students in this class yet.",
+        "alreadyBilled_one": "{{count}} student already has a bill.",
+        "alreadyBilled_other": "{{count}} students already have a bill.",
+        "alreadyBilledDifferent_one": "{{count}} student already has a bill, for a different amount: {{names}}.",
+        "alreadyBilledDifferent_other": "{{count}} students already have a bill ({{different}} for a different amount: {{names}}).",
+        "moreNames": "{{names}} and {{extra}} more",
+        "inactiveSkipped_one": "{{count}} withdrawn student won't be billed.",
+        "inactiveSkipped_other": "{{count}} withdrawn students won't be billed.",
+        "confirm": "Create bills",
+        "creating": "Creating…",
+        "result_one": "Created {{count}} new bill. {{already}} already had one.",
+        "result_other": "Created {{count}} new bills. {{already}} already had one."
+      }
     },
     "structureForm": {
       "title": "New fee structure",
@@ -508,8 +551,30 @@
       "errors": {
         "noLines": "Add at least one fee line.",
         "missingCategory": "Choose a category for every fee line.",
-        "invalidAmount": "Enter an amount like 15000 or 15,000.50 for every fee line.",
-        "duplicateCategory": "Each fee category can appear only once in a fee structure."
+        "invalidAmount": "Enter an amount of 0 or more, like 15000 or 15,000.50 (at most 2 decimals), for every fee line.",
+        "duplicateCategory": "Each fee category can appear only once.",
+        "tooManyLines": "A fee structure can have at most 50 fee lines."
+      },
+      "editTitle": "Edit fee structure",
+      "academicYearValue": "Academic year: {{year}}",
+      "zeroAmountHint": "0 is allowed, for a fee this class doesn't pay (for example RTE students).",
+      "lineTotal": "Total per student: ₹{{amount}}",
+      "repriceBills": "Also update bills that have no payments or adjustments yet",
+      "repriceHint": "Bills with payments or adjustments keep their amount (a payment that was reversed doesn't count); change those one at a time.",
+      "saveChanges": "Save changes",
+      "saving": "Saving…",
+      "result": {
+        "title": "Fee structure saved",
+        "nothingToUpdate": "No bills needed a change.",
+        "repriced_one": "{{count}} bill was updated to the new total.",
+        "repriced_other": "{{count}} bills were updated to the new total.",
+        "leftAlone_one": "{{count}} bill keeps its old amount.",
+        "leftAlone_other": "{{count}} bills keep their old amount.",
+        "reason": {
+          "HAS_PAYMENTS": "{{n}} with payments",
+          "HAS_ADJUSTMENTS": "{{n}} with adjustments",
+          "NOT_REQUESTED": "{{n}} because you chose not to update bills"
+        }
       }
     },
     "assessmentsList": {
@@ -520,7 +585,19 @@
       "summaryTotal": "Total students",
       "summaryUnpaidCount": "Unpaid",
       "summaryUnpaidAmount": "Amount due",
-      "searchPlaceholder": "Search by name or roll number…"
+      "searchPlaceholder": "Search by name or roll number…",
+      "summaryBills": "Bills",
+      "summaryOverdue": "Overdue",
+      "academicYear": "Academic year",
+      "allYears": "All years",
+      "classFilter": "Class",
+      "allClasses": "All classes",
+      "showWithdrawn": "Show withdrawn students",
+      "withdrawnTag": "Withdrawn",
+      "alumniTag": "Alumni",
+      "noMatches": "No bills match these filters.",
+      "noBillsForYear": "No bills to show for {{year}}. Choose \"All years\" to see bills from other years, such as last year's unpaid dues.",
+      "summaryError": "Couldn't load the totals for these filters."
     },
     "myClassFees": {
       "title": "My Class Fees",
@@ -547,19 +624,26 @@
     },
     "paymentSettings": {
       "title": "Payment Settings",
-      "hint": "Families pay fees by UPI to your school's UPI ID set below. Bank details are kept for your records.",
+      "hint": "Your school's bank account and UPI ID for fees. Families can't pay fees in the app yet; these details are kept for your records until they can.",
       "saved": "Payment settings saved.",
       "errors": {
         "bankAccountNumber": "Enter a valid bank account number (9-18 digits).",
         "bankIfsc": "Enter a valid IFSC code, e.g. SBIN0001234.",
-        "upiVpaOverride": "Enter a valid UPI ID, e.g. name@oksbi."
+        "upiVpaOverride": "Enter a valid UPI ID, e.g. name@oksbi.",
+        "confirmAccountNumber": "The two account numbers don't match."
       },
       "bankAccountNumber": "Bank account number",
       "bankIfsc": "IFSC code",
       "bankAccountHolderName": "Account holder name shown to students",
       "upiVpaOverride": "Your school's UPI ID (needed for UPI payments)",
       "upiVpaOverrideHint": "Families can pay fees by UPI only once this is set. Enter the same UPI ID you'd give someone to pay you directly (the one behind your bank's UPI QR code, e.g. name@oksbi, name@ybl, name@paytm). The app never guesses a UPI ID from your account number.",
-      "upiVpaOverrideWarning": "No UPI ID set yet — families can't pay by UPI until you add one below."
+      "upiVpaOverrideWarning": "No UPI ID set yet — families can't pay by UPI until you add one below.",
+      "loadError": "Couldn't load your payment settings.",
+      "confirmAccountNumber": "Confirm bank account number",
+      "payeePreview": "UPI payments go to: {{upiId}}",
+      "confirmTitle": "Save payment settings?",
+      "confirmWithUpi": "Save account {{account}} and UPI ID {{upiId}}?",
+      "confirmWithoutUpi": "Save account {{account}}? No UPI ID is set, so families can't pay by UPI in the app."
     },
     "receipt": {
       "title": "Payment Receipt",
@@ -620,6 +704,97 @@
       "resultFailedMessage": "Payment failed.",
       "resultCancelledMessage": "Payment was cancelled.",
       "resultUnknownMessage": "We could not confirm the payment result. Check My Fees later before paying again."
+    },
+    "status": {
+      "UNPAID": "Unpaid",
+      "PARTIAL": "Part paid",
+      "OVERDUE": "Overdue",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled",
+      "ALL": "All"
+    },
+    "adjustment": {
+      "title": "Adjustments",
+      "types": {
+        "CONCESSION": "Concession",
+        "WAIVER": "Waiver",
+        "LATE_FEE": "Late fee",
+        "CORRECTION": "Correction"
+      },
+      "typeHints": {
+        "CONCESSION": "Takes money off the fee, for example a sibling or staff-child discount.",
+        "WAIVER": "Lets off some or all of what's still owed.",
+        "LATE_FEE": "Adds a charge for paying late.",
+        "CORRECTION": "Fixes a mistake in the fee, up or down."
+      },
+      "line": "{{type}}: {{amount}} ({{reason}})",
+      "by": "{{name}} · {{date}}",
+      "add": "Add adjustment",
+      "type": "Type",
+      "amount": "Amount (₹)",
+      "increase": "Add to the fee",
+      "decrease": "Take off the fee",
+      "waiveRemaining": "Waive all ₹{{amount}} still owed",
+      "reason": "Reason",
+      "reasonPlaceholder": "e.g. Sibling concession",
+      "reasonVisible": "The student and their parents see this reason on the bill.",
+      "newTotal": "New total: ₹{{amount}}",
+      "submit": "Save adjustment",
+      "submitting": "Saving…",
+      "added": "Adjustment saved.",
+      "confirmTitle": "Save this adjustment?",
+      "confirmMessage": "{{type}} of {{amount}} on {{name}}'s bill. The new total will be ₹{{total}}.\n\nThe family will see this and its reason on the bill. It can't be deleted later, only reversed with a correction.",
+      "errors": {
+        "amount": "Enter an amount above 0, with at most 2 decimals.",
+        "reason": "Enter a reason.",
+        "belowPaid": "This would make the fee ₹{{total}}, less than the ₹{{paid}} already paid."
+      }
+    },
+    "bill": {
+      "baseAmount": "Fee from the structure",
+      "dueOn": "Due {{date}}",
+      "overdueBy_one": "Overdue by {{count}} day",
+      "overdueBy_other": "Overdue by {{count}} days",
+      "cancelled": "Cancelled",
+      "cancelledBanner": "This bill was cancelled on {{date}}. Nothing is owed on it.",
+      "cancelledReason": "Reason: {{reason}}",
+      "cancelledBy": "Cancelled by {{name}}",
+      "noFeeToPay": "Nothing is owed on this bill.",
+      "adminActions": "Change this bill",
+      "changeDueDate": "Change due date",
+      "newDueDate": "New due date",
+      "saveDueDate": "Save due date",
+      "dueDateSaved": "Due date changed.",
+      "cancel": "Cancel bill",
+      "cancelReason": "Why is this bill being cancelled?",
+      "cancelReasonPlaceholder": "e.g. TC issued, or billed by mistake",
+      "cancelReasonVisible": "The student and their parents see this reason on the cancelled bill.",
+      "cancelReasonRequired": "Enter why the bill is being cancelled.",
+      "cancelConfirmTitle": "Cancel this bill?",
+      "cancelConfirmMessage": "{{name}}'s bill of ₹{{amount}} will be cancelled and left out of dues and reminders. This can't be undone.",
+      "cancelConfirm": "Cancel bill",
+      "keepBill": "Keep bill",
+      "cancelledToast": "Bill cancelled.",
+      "cancelBlocked": "This bill has payments. To cancel it, first reverse each one: open it under Payment history and tap Reverse payment.",
+      "monthsShort": {
+        "1": "Jan",
+        "2": "Feb",
+        "3": "Mar",
+        "4": "Apr",
+        "5": "May",
+        "6": "Jun",
+        "7": "Jul",
+        "8": "Aug",
+        "9": "Sep",
+        "10": "Oct",
+        "11": "Nov",
+        "12": "Dec"
+      }
+    },
+    "howToPay": {
+      "title": "How to pay",
+      "body": "Pay at the school office by cash, cheque or bank transfer. Once the school records your payment, its receipt shows under Payment history below.",
+      "later": "Paying in the app is coming later."
     },
     "recordPayment": {
       "title": "Record payment",
@@ -1074,7 +1249,11 @@
         "className": "Enter a class name.",
         "section": "Choose a section.",
         "academicYear": "Choose an academic year."
-      }
+      },
+      "title": "Select class-section",
+      "classNamePlaceholder": "e.g. Grade 5",
+      "sectionPlaceholder": "e.g. A",
+      "academicYearPlaceholder": "e.g. 2026-2027"
     }
   },
   "teacherTools": {
@@ -2533,7 +2712,14 @@
       "EVENT_OUTFLOW_DISABLED": "Outflow is not enabled for this event.",
       "CONCURRENT_UPDATE": "Someone else changed this at the same moment, so your change wasn't saved. Reload and try again.",
       "UPI_NOT_CONFIGURED": "This school has not set up UPI payments yet.",
-      "PAYMENT_ATTEMPT_ALREADY_REPORTED": "This payment's result was already recorded and can't be changed."
+      "PAYMENT_ATTEMPT_ALREADY_REPORTED": "This payment's result was already recorded and can't be changed.",
+      "FEE_BILL_CANCELLED": "This bill was cancelled, so it can't be changed or paid.",
+      "FEE_BILL_HAS_PAYMENTS": "This bill has payments. Reverse them first, then cancel the bill.",
+      "FEE_BILL_HAS_REPORTED_PAYMENT": "The family reported paying this bill by UPI, and that payment hasn't been recorded yet. Record it if the money arrived; if it didn't, waive the fee instead of cancelling.",
+      "FEE_ADJUSTMENT_DUPLICATE": "This adjustment was added to the bill a moment ago, so it wasn't added again.",
+      "FEE_TOTAL_BELOW_PAID": "This would make the fee less than what has already been paid.",
+      "FEE_CATEGORY_CODE_EXISTS": "A fee category with this code already exists.",
+      "FEE_STRUCTURE_EXISTS": "This class already has a fee structure for this academic year. Edit that one instead."
     }
   },
   "sectionHub": {
