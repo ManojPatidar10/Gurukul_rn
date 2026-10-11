@@ -1,0 +1,56 @@
+name: EAS Update (Expo Go)
+
+# Publishes the app's JavaScript to EAS Update on every merge to main, so anyone signed in to Expo Go
+# with access to the project can open the latest app from anywhere - no laptop or dev server needed:
+#   exp://u.expo.dev/f610c224-f96d-4706-a22c-38f27170b00c?channel-name=main
+# EXPO_GO_UPDATE=1 makes app.config.js use the sdkVersion runtime (exposdk:<SDK>), the only one
+# Expo Go opens. Release builds use their own channels and the appVersion runtime, so they never
+# receive these updates. Needs the EXPO_TOKEN repository secret (an Expo access token with access
+# to the project).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: eas-update-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::The EXPO_TOKEN repository secret is missing."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish to the main channel for Expo Go
+        env:
+          EXPO_GO_UPDATE: '1'
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || 'Manual publish' }}
+        run: |
+          MESSAGE="$(printf '%s' "$COMMIT_MESSAGE" | head -n 1 | cut -c1-200)"
+          eas update --channel main --environment preview --platform all --message "$MESSAGE" --non-interactive

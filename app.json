@@ -106,6 +106,12 @@
       },
       "playIntegrityCloudProjectNumber": "855182407063"
     },
-    "owner": "yashcodes105"
+    "owner": "yashcodes105",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f610c224-f96d-4706-a22c-38f27170b00c"
+    }
   }
 }
