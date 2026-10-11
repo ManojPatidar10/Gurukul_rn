@@ -36,7 +36,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          # eas-cli needs Node 22 or later.
+          node-version: 22
           cache: npm
 
       - uses: expo/expo-github-action@v8
