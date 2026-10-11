@@ -3,7 +3,7 @@
 > Smart Gurukul (smartgurukul.org) is an AI-powered, gamified school app for Indian schools. Tagline: "Your whole school, connected." (Hindi: "पूरा स्कूल, एक ऐप पर जुड़ा।"). It brings AI (an AI helpdesk assistant inside the app), school work (GPS teacher attendance with no hardware, class attendance, fees, basic payroll, exams and report cards, chat, video calls and events) and games (XP, streaks, weekly leagues, House Wars, Battle Room quizzes and 1v1 Arena challenges) into one app for principals, teachers, students and parents. It is made for private CBSE and State Board schools across India, including school groups, and is built by an IIT-BHU team.
 
 Key facts:
-- Brand: Smart Gurukul. Website: https://smartgurukul.org. Contact: WhatsApp +91 70242 74770. Instagram: @smartgurukul.app.
+- Brand: Smart Gurukul. Website: https://smartgurukul.org. Contact: the demo request form at https://smartgurukul.org/#demo. Instagram: @smartgurukul.app.
 - Positioning: AI + School + Games. Most school management software is an office record-keeping tool; Smart Gurukul is designed so teachers, students and parents use it every day.
 - Attendance: the class teacher marks daily student attendance in the app (present, absent, late, half-day). Teachers check in by GPS at school from their own phone; the distance to the school's saved location is checked on the server (100 m radius by default). No biometric hardware is needed.
 - AI: an AI helpdesk assistant inside the app. Teachers use it for teaching notes and explanations; principals and office staff ask about school records; students get help with topics. It uses a fixed set of checked, school-scoped lookups rather than writing its own database queries.
