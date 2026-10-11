@@ -2396,7 +2396,8 @@ export interface Holiday {
 
 // ---------------------------------------------------------------- ledger & receipts (specs/ledger-and-receipts)
 
-export type PaymentMethod = 'CASH' | 'UPI' | 'BANK_TRANSFER' | 'CHEQUE';
+/** The backend's one PaymentMethod enum, the same type payroll uses. */
+export type PaymentMethod = PayrollPaymentMethod;
 export type LedgerDirection = 'INFLOW' | 'OUTFLOW';
 export type LedgerSourceType = 'FEE_PAYMENT' | 'EVENT_COLLECTION' | 'SPONSORSHIP' | 'SALARY' | 'VENDOR_PAYMENT' | 'MANUAL';
 /** REVERSED is never set: a reversed entry stays COMPLETED and gets a linked reversal entry. */

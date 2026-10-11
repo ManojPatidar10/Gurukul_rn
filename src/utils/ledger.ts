@@ -11,6 +11,7 @@ import type {
   ManualCategory,
   PaymentMethod,
 } from '../api/types';
+import { formatAmount } from './payroll';
 import { istToday } from './quizInsights';
 
 /**
@@ -300,19 +301,14 @@ export function signedAmount(tx: Pick<LedgerTransaction, 'direction' | 'amount'>
 
 const MINUS = '−';
 
-/** Indian digit grouping: 1234567 → "12,34,567". */
-function groupIndian(digits: string): string {
-  if (digits.length <= 3) return digits;
-  const head = digits.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-  return `${head},${digits.slice(-3)}`;
-}
-
-/** "₹12,34,567.50"; a negative amount gets a minus sign: "−₹2,000.00". */
+/**
+ * "₹12,34,567.50"; a negative amount gets a minus sign: "−₹2,000.00". The Indian grouping is
+ * payroll's `formatAmount`; only the sign differs (a true minus, to pair with "+" in the list).
+ */
 export function formatRupees(n: number): string {
   const value = Number.isFinite(n) ? n : 0;
-  const paise = Math.round(Math.abs(value) * 100);
-  const text = `₹${groupIndian(String(Math.floor(paise / 100)))}.${pad(paise % 100)}`;
-  return value < 0 && paise > 0 ? `${MINUS}${text}` : text;
+  const text = `₹${formatAmount(Math.abs(value))}`;
+  return value < 0 && text !== '₹0.00' ? `${MINUS}${text}` : text;
 }
 
 /** "+₹5,000.00" or "−₹2,000.00"; zero has no sign. */
