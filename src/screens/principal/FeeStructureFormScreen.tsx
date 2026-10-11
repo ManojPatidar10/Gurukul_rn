@@ -14,16 +14,15 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
-  amountInputText,
   canonicalAcademicYear,
   feeLinesError,
   feeLinesRequest,
   feeLinesTotal,
-  formatAmount,
   structureUpdateMessage,
   type FeeLineDraft,
   type FeeLinesError,
 } from '../../utils/feeBills';
+import { formatRupees, rupeesInputValue } from '../../utils/money';
 import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructureForm'>;
@@ -56,7 +55,7 @@ export function FeeStructureFormScreen({ route, navigation }: Props) {
     (editing?.lines ?? []).map((line) => ({
       feeCategoryId: line.feeCategoryId,
       feeCategoryLabel: t('fees.structureDetail.lineFormat', { name: line.feeCategoryName, code: line.feeCategoryCode }),
-      amount: amountInputText(line.amount),
+      amount: rupeesInputValue(line.amount),
     }))
   );
   const [pickerForIndex, setPickerForIndex] = useState<number | null>(null);
@@ -206,7 +205,7 @@ export function FeeStructureFormScreen({ route, navigation }: Props) {
         </Pressable>
 
         {lines.length > 0 && total !== null && (
-          <Text style={styles.total}>{t('fees.structureForm.lineTotal', { amount: formatAmount(total) })}</Text>
+          <Text style={styles.total}>{t('fees.structureForm.lineTotal', { amount: formatRupees(total, { symbol: false }) })}</Text>
         )}
         {linesError && shownLinesError && <Text style={styles.error}>{t(LINE_ERROR_KEYS[linesError])}</Text>}
 

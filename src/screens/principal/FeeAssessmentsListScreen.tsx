@@ -25,10 +25,10 @@ import {
   FEE_BILL_STATUSES,
   feeStatusLabel,
   feeStatusVariant,
-  formatAmount,
   sectionsForYear,
   studentLeftTagKey,
 } from '../../utils/feeBills';
+import { formatRupees } from '../../utils/money';
 import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeAssessmentsList'>;
@@ -234,7 +234,7 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
             <Text style={styles.summaryLabel}>{t('fees.assessmentsList.summaryOverdue')}</Text>
           </View>
           <View style={styles.summaryStat}>
-            <Text style={styles.summaryValue}>₹{formatAmount(summary.totalRemaining)}</Text>
+            <Text style={styles.summaryValue}>{formatRupees(summary.totalRemaining)}</Text>
             <Text style={styles.summaryLabel}>{t('fees.assessmentsList.summaryUnpaidAmount')}</Text>
           </View>
         </View>
@@ -331,8 +331,8 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
                   <Text style={styles.rowMeta}>
                     {t('fees.assessmentsList.rowSubtitle', {
                       roll: item.rollNumber,
-                      due: formatAmount(item.remainingDue),
-                      total: formatAmount(item.totalDue),
+                      due: formatRupees(item.remainingDue, { symbol: false }),
+                      total: formatRupees(item.totalDue, { symbol: false }),
                     })}
                   </Text>
                   {(!!item.classSectionLabel || !!dueNote) && (

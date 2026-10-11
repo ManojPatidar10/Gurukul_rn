@@ -12,7 +12,8 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { formatAmount, formatDueDate, generateResultText, structureTotal } from '../../utils/feeBills';
+import { formatDueDate, generateResultText, structureTotal } from '../../utils/feeBills';
+import { formatRupees } from '../../utils/money';
 import { getErrorMessage } from '../../api/errorMessage';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'FeeStructureDetail'>;
@@ -57,12 +58,12 @@ export function FeeStructureDetailScreen({ route, navigation }: Props) {
             <Text style={styles.lineName}>
               {t('fees.structureDetail.lineFormat', { name: line.feeCategoryName, code: line.feeCategoryCode })}
             </Text>
-            <Text style={styles.lineAmount}>₹{formatAmount(line.amount)}</Text>
+            <Text style={styles.lineAmount}>{formatRupees(line.amount)}</Text>
           </View>
         ))}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>{t('fees.structureDetail.totalPerStudent')}</Text>
-          <Text style={styles.totalAmount}>₹{formatAmount(total)}</Text>
+          <Text style={styles.totalAmount}>{formatRupees(total)}</Text>
         </View>
         <Text style={styles.dueDate}>
           {feeStructure.dueDate

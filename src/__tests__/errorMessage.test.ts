@@ -107,6 +107,18 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(new ApiError('Forbidden', 403))).toBe(en.errors.forbidden);
   });
 
+  it('explains the fee payment conflicts by their error codes', () => {
+    expect(getErrorMessage(new ApiError('Reference UTR1 is already on receipt R1.', 409, 'DUPLICATE_REFERENCE'))).toBe(
+      en.errors.codes.DUPLICATE_REFERENCE
+    );
+    expect(getErrorMessage(new ApiError('This payment was already reversed.', 409, 'ALREADY_REVERSED'))).toBe(
+      en.errors.codes.ALREADY_REVERSED
+    );
+    expect(getErrorMessage(new ApiError('Idempotency key reused', 409, 'IDEMPOTENCY_KEY_REUSED'))).toBe(
+      en.errors.codes.IDEMPOTENCY_KEY_REUSED
+    );
+  });
+
   it('uses the session-expired message', () => {
     expect(getErrorMessage(new SessionExpiredError())).toBe(en.auth.sessionExpired);
   });

@@ -13,7 +13,8 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { billDueNote, feeStatusLabel, feeStatusVariant, formatAmount } from '../../utils/feeBills';
+import { billDueNote, feeStatusLabel, feeStatusVariant } from '../../utils/feeBills';
+import { formatRupees } from '../../utils/money';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyClassFees'>;
 
@@ -84,7 +85,7 @@ export function MyClassFeesScreen({ route, navigation }: Props) {
               <Text style={styles.summaryLabel}>{t('fees.myClassFees.fullyPaid')}</Text>
             </View>
             <View style={styles.summaryStat}>
-              <Text style={styles.summaryValue}>₹{formatAmount(summary.totalRemaining)}</Text>
+              <Text style={styles.summaryValue}>{formatRupees(summary.totalRemaining)}</Text>
               <Text style={styles.summaryLabel}>{t('fees.myClassFees.remaining')}</Text>
             </View>
           </View>
@@ -103,8 +104,8 @@ export function MyClassFeesScreen({ route, navigation }: Props) {
                 <Text style={styles.rowMeta}>
                   {t('fees.myClassFees.rowSubtitle', {
                     roll: assessment.rollNumber,
-                    due: formatAmount(assessment.remainingDue),
-                    total: formatAmount(assessment.totalDue),
+                    due: formatRupees(assessment.remainingDue, { symbol: false }),
+                    total: formatRupees(assessment.totalDue, { symbol: false }),
                   })}
                 </Text>
                 {dueNote?.tone === 'error' && <Text style={[styles.rowMeta, styles.overdue]}>{dueNote.text}</Text>}

@@ -12,9 +12,10 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { formatRupees } from '../../utils/money';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { billDueNote, feeStatusLabel, feeStatusVariant, formatAmount } from '../../utils/feeBills';
+import { billDueNote, feeStatusLabel, feeStatusVariant } from '../../utils/feeBills';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyFees'>;
 
@@ -52,6 +53,13 @@ export function MyFeesScreen({ navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader title={t('myFees.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
+        <Pressable
+          style={styles.historyButton}
+          onPress={() => navigation.navigate('StudentFeePayments', { student: { id: session.ownerId } })}
+          accessibilityRole="button"
+        >
+          <Text style={styles.historyButtonText}>{t('fees.paymentHistory.title')}</Text>
+        </Pressable>
         {error && <ErrorNotice message={error} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
@@ -76,8 +84,8 @@ export function MyFeesScreen({ navigation }: Props) {
                   <Text style={styles.rowName}>{item.academicYear}</Text>
                   <Text style={styles.rowMeta}>
                     {t('myFees.due', {
-                      remaining: formatAmount(item.remainingDue),
-                      total: formatAmount(item.totalDue),
+                      remaining: formatRupees(item.remainingDue, { symbol: false }),
+                      total: formatRupees(item.totalDue, { symbol: false }),
                     })}
                   </Text>
                   {dueNote && (
@@ -114,4 +122,6 @@ const styles = StyleSheet.create({
   rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   overdue: { color: colors.error, fontWeight: '600' },
+  historyButton: { alignSelf: 'flex-end', paddingVertical: spacing.xs, marginBottom: spacing.sm },
+  historyButtonText: { color: colors.primary, fontWeight: '700' },
 });

@@ -1,9 +1,9 @@
 # Fees Overview, Bills & My Class Fees — Flow
 
 ## Overview
-Everything about reading and correcting `StudentFeeAssessment` bills: the admin's school-wide bill list (server filters for academic year, class, status, name/roll search and withdrawn students, plus a summary card of server totals), one bill's detail screen where an admin adds a concession, waiver, late fee or correction, moves the due date or cancels the bill, the family screens (My Fees, a child's fees, the same bill detail with a "How to pay" card), a class teacher's "My Class Fees", and the dues report. A bill shows **OVERDUE** as soon as its due date (India time) has passed with money still owed — no payment needed. Every response carries that derived status, and a nightly job keeps the stored column in step for the insights engine.
+Everything about reading and correcting `StudentFeeAssessment` bills: the admin's school-wide bill list (server filters for academic year, class, status, name/roll search and withdrawn students, plus a summary card of server totals), one bill's detail screen where an admin records a payment, sees its payments, adds a concession, waiver, late fee or correction, moves the due date or cancels the bill, the family screens (My Fees, a child's fees, the same bill detail with a "How to pay" card), a class teacher's "My Class Fees", and the dues report. A bill shows **OVERDUE** as soon as its due date (India time) has passed with money still owed — no payment needed. Every response carries that derived status, and a nightly job keeps the stored column in step for the insights engine.
 
-Source: `specs/fee-bills-and-dues` (finance fix 4). Statements about the server follow that spec's API contract.
+Source: `specs/fee-bills-and-dues` (finance fix 4). Statements about the server follow that spec's API contract. Recording, reversing and listing payments are finance fix 3 (`specs/fee-payments-in-app`); see the fee-payment doc.
 
 ## Actors / roles
 - **ADMIN**: The bill list and summary (`GET /api/v1/fee-assessments`, `/summary`), any bill (`GET /api/v1/fee-assessments/{id}`), adjustments, due-date changes and cancelling, the dues report, any section's fee status. Sees who added an adjustment or cancelled a bill.
@@ -19,12 +19,15 @@ flowchart TD
   A[Admin: Fees hub → Assessments & Dues] --> B["FeeAssessmentsListScreen\nGET /fee-assessments?academicYear&classSectionId&status&q&includeInactive&page&size=50\nGET /fee-assessments/summary (same year/class/withdrawn)"]
   B --> C[Tap a bill] --> D["FeeAssessmentDetailScreen\nGET /fee-assessments/{id} on focus"]
   D --> E{ADMIN?}
+  E -- yes --> R["Record payment (live bill, money owed)\n→ RecordPayment, see fee-payment"]
+  D --> PH["Payment history: admin, student, parent\nGET /fee-assessments/{id}/payments\n→ receipt → Reverse payment (admin)"]
   E -- yes --> F["FeeBillAdminActions"]
   F --> F1["Add adjustment\nPOST /fee-assessments/{id}/adjustments"]
   F --> F2["Change due date\nPATCH /fee-assessments/{id}"]
   F --> F3{totalPaid > 0?}
   F3 -- no --> F4["Cancel bill: reason → confirm\nPOST /fee-assessments/{id}/cancel"]
-  F3 -- yes --> F5[Hint: reverse payments first]
+  F3 -- yes --> F5[Hint: reverse each payment first,\nfrom its receipt in the history]
+  F5 -.->|every payment reversed: totalPaid 0| F4
   E -- student/parent --> G{owed and not cancelled?}
   G -- yes --> G1[How to pay card]
   G -- no --> G2[Nothing is owed on this bill]
@@ -40,7 +43,7 @@ flowchart TD
 
 ### Status rule (server, one rule everywhere)
 1. `FeeStatusRule.compute(bill, todayIst)`: stored CANCELLED → CANCELLED; `totalPaid ≥ totalDue` → PAID; due date before today (IST) → OVERDUE; `totalPaid > 0` → PARTIAL; else UNPAID. A bill due today is not overdue. `daysOverdue = today − dueDate` while OVERDUE.
-2. Lists, the status filter, the summary, the dues report, class fee status and reminders all use that rule (the list filter is the same rule as a SQL predicate). Every write (payment, adjustment, due-date change, re-price) also stores it, and `FeeStatusSyncJob` bulk-syncs the stored column at 00:05 IST for the insights engine (bulk updates skip the audit log).
+2. Lists, the status filter, the summary, the dues report, class fee status and reminders all use that rule (the list filter is the same rule as a SQL predicate). Every write (recording or reversing a payment, adjustment, due-date change, re-price) also stores it, and `FeeStatusSyncJob` bulk-syncs the stored column at 00:05 IST for the insights engine (bulk updates skip the audit log).
 
 ### Admin bill list
 3. `FeeAssessmentsListScreen` loads the summary and page 0 together. Defaults: the current academic year (April-March by IST date), ACTIVE students only, no cancelled bills.
@@ -51,13 +54,13 @@ flowchart TD
 7. Rows show name, a "Withdrawn"/"Alumni" tag when `studentStatus` isn't ACTIVE, roll and amounts, the class label (`classSectionLabel`, the student's current section) and "Overdue by N days" in red or "Due 5 Nov 2026". Coming back from a bill reloads the list and the totals.
 
 ### Bill detail
-8. `FeeAssessmentDetailScreen` paints the bill it was opened with, then fetches `GET /api/v1/fee-assessments/{id}` on every focus (with its adjustments). It shows the translated status chip, "Overdue by N days" / "Due …", a cancelled banner (date, reason, and who for an admin), totals, the formatted due date, and `FeeBillAdjustmentsCard` (the structure's fee, each adjustment as "Concession: -₹2,000 (Sibling)" with its date, and the total) when there are adjustments.
-9. ADMIN — `FeeBillAdminActions` (hidden on a cancelled bill):
+8. `FeeAssessmentDetailScreen` paints the bill it was opened with, then fetches `GET /api/v1/fee-assessments/{id}` on every focus (with its adjustments), so coming back from recording or reversing a payment shows the new totals and status. If that fetch fails it keeps the bill it has with "Could not refresh this bill, so the amounts shown may be out of date." and **Retry**. It shows the translated status chip, "Overdue by N days" / "Due …", a cancelled banner (date, reason, and who for an admin), totals, the formatted due date, and `FeeBillAdjustmentsCard` (the structure's fee, each adjustment as "Concession: -₹2,000 (Sibling)" with its date, and the total) when there are adjustments. Below that, in this order: **Record payment** (ADMIN, on a bill that isn't cancelled and still has money owed) or the family's "How to pay" card (step 10); the **Payment history** section for an admin, student or parent (every payment on the bill, reversed ones struck through, each opening its receipt; see the fee-payment doc); then the admin's corrections (step 9). Which parts show is decided by `billDetailActions` (`src/utils/feeBills.ts`, unit-tested).
+9. ADMIN — `FeeBillAdminActions` ("Change this bill", hidden on a cancelled bill):
    - **Add adjustment**: type (Concession, Waiver, Late fee, Correction — with "Take off the fee"/"Add to the fee"), amount (a size; the app signs it by type), a "Waive all ₹X still owed" shortcut for a waiver, and a reason (1-500, with a note that the family sees it). The app previews the new total and refuses below what's paid; Save then asks first ("Late fee of +₹5,000 on Asha's bill. The new total will be ₹25,000." — the family sees it with its reason, and it can't be deleted, only reversed with a correction); the server re-checks under a row lock: 409 `FEE_TOTAL_BELOW_PAID`, 409 `FEE_BILL_CANCELLED`, 400 for a wrong sign, 0, 3 decimals or a missing reason.
    - **Change due date**: a date within two years either side of today → `PATCH {dueDate}`; the status follows at once (moving it to yesterday makes the bill OVERDUE, "Overdue by 1 day").
-   - **Cancel bill**: only while `totalPaid == 0` (otherwise the button is hidden with "Reverse them first, then cancel the bill"); a reason (with a note that the family sees it on the cancelled bill), then a confirmation alert. The bill becomes CANCELLED with `remainingDue` 0, keeps its amounts for the record, and drops out of the default list, summary, dues, class fee status and reminders. Cancelling again is a no-op; there is no un-cancel.
+   - **Cancel bill**: only while `totalPaid == 0`. Otherwise the button is hidden with "This bill has payments. To cancel it, first reverse each one: open it under Payment history and tap Reverse payment." A reversed payment comes off `totalPaid`, so once every payment is reversed the button appears (the server's own check is the same: only non-reversed payments block cancelling, 409 `FEE_BILL_HAS_PAYMENTS`). a reason (with a note that the family sees it on the cancelled bill), then a confirmation alert. The bill becomes CANCELLED with `remainingDue` 0, keeps its amounts for the record, and drops out of the default list, summary, dues, class fee status and reminders. Cancelling again is a no-op; there is no un-cancel.
    - Each action replaces the bill with the server's response; errors show through `getErrorMessage` (`errors.codes.*`).
-10. STUDENT/PARENT — while something is owed and the bill isn't cancelled, a "How to pay" card: pay at the school office by cash, cheque or bank transfer and keep the receipt; paying in the app is coming later. Otherwise "Nothing is owed on this bill.".
+10. STUDENT/PARENT — while something is owed and the bill isn't cancelled, a "How to pay" card: pay at the school office by cash, cheque or bank transfer; once the school records the payment its receipt shows under Payment history; paying in the app is coming later. Otherwise "Nothing is owed on this bill.". There is no Pay Fees button.
 
 ### Families
 11. `MyFeesScreen` and `ChildFeesScreen` list a student's bills (newest year first, cancelled ones included) with the translated chip and "Overdue by N days" / "Due …" / "Cancelled". Both re-fetch on focus; ChildFees also re-fetches when its params name another child while it's showing (a FEE_DUE push for a second child only swaps the params), never shows one child's bills under another's name, and drops replies to superseded loads. ChildFees rows now open the bill detail.
@@ -86,10 +89,10 @@ Every bill in every response (`FeeAssessmentResponse`) now also has `studentStat
 
 ## Frontend screens involved
 - `src/screens/principal/FeeAssessmentsListScreen.tsx` — admin list, filters, summary card, stale-response guard.
-- `src/screens/principal/FeeAssessmentDetailScreen.tsx` — bill detail for every role; `src/components/fees/FeeBillAdjustmentsCard.tsx`, `FeeBillAdminActions.tsx`, `HowToPayCard.tsx`.
+- `src/screens/principal/FeeAssessmentDetailScreen.tsx` — bill detail for every role; `src/components/fees/FeeBillAdjustmentsCard.tsx`, `FeeBillAdminActions.tsx`, `HowToPayCard.tsx`, and fee payments' `src/components/FeePaymentHistory.tsx` and Record payment button.
 - `src/screens/principal/MyFeesScreen.tsx`, `ChildFeesScreen.tsx` — family lists; `src/navigation/ParentNavigator.tsx` registers `FeeAssessmentDetail`.
 - `src/screens/principal/MyClassFeesScreen.tsx` — class teacher view.
-- `src/utils/feeBills.ts` — `feeStatusVariant`/`feeStatusLabel` (one chip colour and label for every fee screen), `billDueNote`, `formatDueDate`, `adjustmentDraft`, `signedAdjustmentAmount`, `formatAdjustmentLine`, `canCancelBill`, `dueDateChangeBounds`, `adjustmentConfirmText`, `academicYearOptions`, `canonicalAcademicYear` (the backend's lenient form: `-`, `/`, en or em dash, spaces allowed around it), `sectionsForYear`, `assessmentsEmptyText`, `feeAssessmentQuery`, `studentLeftTagKey`, `formatAmount`.
+- `src/utils/feeBills.ts` — `feeStatusVariant`/`feeStatusLabel` (one chip colour and label for every fee screen), `billDueNote`, `formatDueDate`, `adjustmentDraft`, `signedAdjustmentAmount`, `formatAdjustmentLine`, `canCancelBill`, `dueDateChangeBounds`, `adjustmentConfirmText`, `academicYearOptions`, `canonicalAcademicYear` (the backend's lenient form: `-`, `/`, en or em dash, spaces allowed around it), `sectionsForYear`, `assessmentsEmptyText`, `feeAssessmentQuery`, `studentLeftTagKey`, `billDetailActions` (which of Record payment, the corrections, Cancel, How to pay and the payment history a viewer gets). Amounts are shown with `formatRupees` and read with `parseRupees` (`src/utils/money.ts`).
 - `src/api/feeAssessments.ts` — `listFeeAssessments(schoolId, filters, page, size)`, `getFeeAssessmentSummary`, `getFeeAssessment`, `updateFeeAssessmentDueDate`, `addFeeAdjustment`, `cancelFeeAssessment`, `listStudentFeeAssessments`, `getClassSectionFeeStatus`, `getDuesReport(schoolId, academicYear?)`.
 
 ## Data model

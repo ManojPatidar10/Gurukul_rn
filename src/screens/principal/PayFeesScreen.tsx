@@ -20,6 +20,7 @@ import {
   type EarlierAttemptWarning,
 } from '../../utils/feePaymentAttempts';
 import { canRetryFeePayment, isPaymentAlreadyReported } from '../../utils/feePaymentErrors';
+import { formatRupees } from '../../utils/money';
 import { resolvePaymentAppUrl } from '../../utils/upiPaymentLinks';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
@@ -42,6 +43,8 @@ export function PayFeesScreen({ route, navigation }: Props) {
   // False when the failure needs the school to act first (no UPI ID set): the error then offers Back, not Try again.
   const [canRetry, setCanRetry] = useState(true);
   const returnHandled = useRef(false);
+  // Set synchronously on the first tap, so a double tap can't start two payment attempts.
+  const busyRef = useRef(false);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
@@ -134,25 +137,50 @@ export function PayFeesScreen({ route, navigation }: Props) {
   };
 
   const handlePay = async () => {
-    let warning: EarlierAttemptWarning = null;
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setErrorMessage(null);
+    setCanRetry(true);
+    setStage('creating');
+    let warning: EarlierAttemptWarning;
     try {
       warning = earlierAttemptWarning(await listPaymentAttempts(schoolId, assessment.id));
-    } catch {
-      // Non-fatal - if the earlier-attempt check itself fails, fall through to a normal attempt
-      // rather than blocking the student from paying at all.
+    } catch (e) {
+      // Without knowing whether a payment is already in flight, starting another could charge twice.
+      setErrorMessage(getErrorMessage(e));
+      setCanRetry(canRetryFeePayment(e instanceof ApiError ? e.errorCode : undefined));
+      setStage('error');
+      busyRef.current = false;
+      return;
     }
     if (warning) {
+      // Stays busy until the payer answers, so no second attempt can start behind the alert.
       Alert.alert(
         warning === 'reportedSuccess' ? t('fees.payFees.reportedTitle') : t('fees.payFees.pendingTitle'),
         warning === 'reportedSuccess' ? t('fees.payFees.reportedMessage') : t('fees.payFees.pendingMessage'),
         [
-          { text: t('fees.payFees.pendingCancel'), style: 'cancel' },
-          { text: t('fees.payFees.pendingContinue'), onPress: startPayment },
+          {
+            text: t('fees.payFees.pendingCancel'),
+            style: 'cancel',
+            onPress: () => {
+              busyRef.current = false;
+              setStage('idle');
+            },
+          },
+          {
+            text: t('fees.payFees.pendingContinue'),
+            onPress: () => {
+              startPayment().finally(() => {
+                busyRef.current = false;
+              });
+            },
+          },
         ]
       );
       return;
     }
     await startPayment();
+    busyRef.current = false;
   };
 
   const handleRetry = () => {
@@ -165,6 +193,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
   };
 
   const handleDone = () => navigation.navigate('MyFees');
+  const canPress = stage === 'idle' || stage === 'error';
 
   const resultKind = resultAttempt ? paymentResultKind(resultAttempt.status) : null;
 
@@ -179,7 +208,8 @@ export function PayFeesScreen({ route, navigation }: Props) {
         {stage !== 'result' && (
           <View style={styles.amountCard}>
             <Text style={styles.amountLabel}>{t('fees.payFees.amountDue')}</Text>
-            <Text style={styles.amountValue}>₹{assessment.remainingDue.toLocaleString('en-IN')}</Text>
+            {/* Once a request exists, the server's amount is what the UPI app is asked for. */}
+            <Text style={styles.amountValue}>{formatRupees(paymentRequest?.amount ?? assessment.remainingDue)}</Text>
           </View>
         )}
 
@@ -189,6 +219,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
             <Pressable
               style={styles.payButton}
               onPress={stage !== 'error' ? handlePay : canRetry ? handleRetry : () => navigation.goBack()}
+              disabled={!canPress}
             >
               <Text style={styles.payButtonText}>
                 {stage !== 'error' ? t('fees.payFees.payNow') : canRetry ? t('fees.payFees.tryAgain') : t('common.back')}
@@ -206,7 +237,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
                 </Text>
                 <Text style={styles.manualLabel}>{t('fees.payFees.manualAmount')}</Text>
                 <Text style={styles.manualValue} selectable>
-                  ₹{paymentRequest.amount.toLocaleString('en-IN')}
+                  {formatRupees(paymentRequest.amount)}
                 </Text>
                 <Text style={styles.manualNote}>{t('fees.payFees.manualNote')}</Text>
                 <Pressable style={styles.manualReportButton} onPress={() => promptForOutcome(paymentRequest)}>
@@ -233,7 +264,7 @@ export function PayFeesScreen({ route, navigation }: Props) {
             {(resultKind === 'reportedSuccess' || resultKind === 'confirmed') && (
               <>
                 <Text style={[styles.resultTitle, styles.resultSuccess]}>{t('fees.payFees.resultSuccessTitle')}</Text>
-                <Text style={styles.resultAmount}>₹{resultAttempt.amount.toLocaleString('en-IN')}</Text>
+                <Text style={styles.resultAmount}>{formatRupees(resultAttempt.amount)}</Text>
                 {resultAttempt.upiTransactionId && (
                   <Text style={styles.resultLine}>
                     {t('fees.payFees.resultTransactionId')}: {resultAttempt.upiTransactionId}

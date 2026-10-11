@@ -18,6 +18,7 @@
 
 ### Editing a structure
 - [ ] Edit fee lines with "Also update bills…" on, on a structure whose class has one unpaid unadjusted bill, one with a payment and one with a concession: the alert says 1 bill was updated and 2 kept their amount (1 with payments, 1 with adjustments). The unpaid bill's total is the new total.
+- [ ] A bill whose only payment was reversed (Payment history → receipt → Reverse payment) counts as unpaid: editing the lines with "Also update bills…" on re-prices it to the new total. Its cancelled receipt still shows the balance it had when issued.
 - [ ] Same with the switch off: every differing bill is listed as "because you chose not to update bills".
 - [ ] Back on the detail screen, the lines and total show the new values without reopening.
 

@@ -241,10 +241,18 @@ export function serverNow(): number {
 // `body` may be a function, evaluated only once the access token is settled - for requests whose
 // body carries the refresh token (profile switch), which a refresh just before sending would rotate.
 type RequestBody = unknown | (() => unknown);
-type RequestOptions = { method?: string; schoolId?: string; body?: RequestBody; timeoutMs?: number };
+// `headers` go on after the defaults, and the 401 refresh-and-retry sends them again unchanged, so
+// an Idempotency-Key is the same on the retry and the server can tell it's a repeat.
+type RequestOptions = {
+  method?: string;
+  schoolId?: string;
+  body?: RequestBody;
+  timeoutMs?: number;
+  headers?: Record<string, string>;
+};
 
 async function send(path: string, options: RequestOptions) {
-  const { method = 'GET', schoolId, body, timeoutMs } = options;
+  const { method = 'GET', schoolId, body, timeoutMs, headers: extraHeaders } = options;
   const resolvedBody = typeof body === 'function' ? body() : body;
   const tokenUsed = currentSession?.token ?? null;
 
@@ -252,6 +260,7 @@ async function send(path: string, options: RequestOptions) {
   if (schoolId) headers['X-School-Id'] = schoolId;
   if (resolvedBody !== undefined) headers['Content-Type'] = 'application/json';
   if (tokenUsed) headers['Authorization'] = `Bearer ${tokenUsed}`;
+  if (extraHeaders) Object.assign(headers, extraHeaders);
 
   const response = await fetchWithTimeout(
     `${BASE_URL}${path}`,
@@ -319,7 +328,7 @@ async function requestPaginated<T>(path: string, schoolId?: string): Promise<Pag
 export const api = {
   get: <T>(path: string, schoolId?: string) => request<T>(path, { method: 'GET', schoolId }),
   getPaginated: <T>(path: string, schoolId?: string) => requestPaginated<T>(path, schoolId),
-  post: <T>(path: string, body: RequestBody, schoolId?: string, opts?: { timeoutMs?: number }) =>
+  post: <T>(path: string, body: RequestBody, schoolId?: string, opts?: { timeoutMs?: number; headers?: Record<string, string> }) =>
     request<T>(path, { method: 'POST', body, schoolId, ...opts }),
   put: <T>(path: string, body: unknown, schoolId: string) =>
     request<T>(path, { method: 'PUT', body, schoolId }),

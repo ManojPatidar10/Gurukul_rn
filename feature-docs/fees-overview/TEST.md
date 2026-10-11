@@ -20,10 +20,12 @@
 - [ ] A late fee on a paid bill: no longer Paid. A correction with "Add to the fee" raises the total.
 - [ ] Change the due date to yesterday: Overdue, "Overdue by 1 day". To next week: back to Unpaid/Part paid.
 - [ ] On an unpaid bill, Cancel bill asks for a reason, then confirms; the bill shows the cancelled banner and disappears from the default list (and appears under Cancelled). On a bill with a payment, the Cancel button is hidden and the hint says to reverse payments first.
-- [ ] On a cancelled bill, no admin actions show; recording a payment on it → "This bill was cancelled, so it can't be changed or paid."
+- [ ] On a cancelled bill, no admin actions and no Record payment show (its reversed payments are still listed); recording a payment on it through the API → "This bill was cancelled, so it can't be changed or paid."
+- [ ] Order on an open bill: totals, adjustments, Record payment, Payment history, then "Change this bill". Record a payment → back on the bill the totals, status and history are current.
+- [ ] A bill with one payment: Cancel bill is hidden with the hint to reverse it first. Open the payment from the history → Reverse payment → back on the bill: paid total 0, status by the due date (Overdue if it has passed), and **Cancel bill** now shows; cancelling works.
 
 ### Families
-- [ ] Parent: a child's fees list shows the translated chip and due date / overdue note; tapping a bill opens its detail with the adjustments (no names) and the How to pay card. Coming back re-fetches.
+- [ ] Parent: a child's fees list shows the translated chip and due date / overdue note; tapping a bill opens its detail with the adjustments (no names), the How to pay card and the bill's payment history (no Record or Reverse). Coming back re-fetches.
 - [ ] Student: My Fees → a bill: same. A fully paid or zero bill says "Nothing is owed on this bill." A cancelled bill shows "Cancelled" and no How to pay card.
 - [ ] Tap a FEE_DUE push as a student (no parent linked): My Fees opens. As a parent: the child's fees open. A parent on child A's fees who taps a FEE_DUE push for child B: the header and the list both switch to B.
 - [ ] `GET /api/v1/fee-assessments/{id}`: own STUDENT 200, another student 403, linked PARENT 200, unrelated TEACHER 403.
@@ -40,4 +42,4 @@
 
 ## Suggested additional test coverage
 - No app test renders the list screen to check the stale-response guard and loading flags end to end (the logic is a request counter in the screen), or ChildFees switching child on a push.
-- No app test drives `FeeBillAdminActions` (adjustment and cancel confirmations, hidden cancel with payments; the adjustment text itself is unit-tested).
+- No app test drives `FeeBillAdminActions` (adjustment and cancel confirmations, hidden cancel with payments; the adjustment text itself is unit-tested). Which bill-detail parts show per role and bill state is unit-tested through `billDetailActions`; a render test of the screen is still missing.

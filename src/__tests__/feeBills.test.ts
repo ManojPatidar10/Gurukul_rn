@@ -1,4 +1,4 @@
-import type { FeeAssessmentSummary, GeneratePreview } from '../api/types';
+import type { FeeAssessmentSummary, FeeBillStatus, GeneratePreview } from '../api/types';
 import hi from '../i18n/locales/hi.json';
 import { fill, tEn, tHi } from '../testUtils/i18nFixture';
 import {
@@ -7,8 +7,8 @@ import {
   adjustmentConfirmText,
   adjustmentDraft,
   adjustmentLabelKey,
-  amountInputText,
   assessmentsEmptyText,
+  billDetailActions,
   billDueNote,
   canCancelBill,
   canonicalAcademicYear,
@@ -25,9 +25,7 @@ import {
   feeStatusLabelKey,
   feeStatusVariant,
   formatAdjustmentLine,
-  formatAmount,
   formatDueDate,
-  formatRupees,
   formatSignedRupees,
   generateConfirmation,
   generateDueDateBounds,
@@ -35,7 +33,6 @@ import {
   isBillCancelled,
   maskAccountNumber,
   normaliseCategoryCode,
-  parseAmountInput,
   paymentSettingsConfirmText,
   pickableCategories,
   sectionsForYear,
@@ -48,40 +45,11 @@ import {
 } from '../utils/feeBills';
 
 describe('money', () => {
-  it('parses typed amounts: commas and spaces ignored, at most 2 decimals, never negative', () => {
-    expect(parseAmountInput('25000')).toBe(25000);
-    expect(parseAmountInput('25,000')).toBe(25000);
-    expect(parseAmountInput(' 2,500.50 ')).toBe(2500.5);
-    expect(parseAmountInput('0')).toBe(0);
-    expect(parseAmountInput('0.05')).toBe(0.05);
-    for (const bad of ['', '  ', '-5', '1.234', 'abc', '12.', '.5', '12345678901', '1e3']) {
-      expect(parseAmountInput(bad)).toBeNull();
-    }
-  });
-
-  it('formats with Indian digit grouping, paise only when there are some', () => {
-    expect(formatAmount(4000)).toBe('4,000');
-    expect(formatAmount(150000)).toBe('1,50,000');
-    expect(formatAmount(1234567.5)).toBe('12,34,567.50');
-    expect(formatAmount(0.5)).toBe('0.50');
-    expect(formatAmount(0)).toBe('0');
-    expect(formatAmount(999)).toBe('999');
-    expect(formatAmount(-2000)).toBe('-2,000');
-    expect(formatAmount(0.1 + 0.2)).toBe('0.30');
-  });
-
-  it('puts the rupee sign after any minus, and a plus on an increase', () => {
-    expect(formatRupees(2000)).toBe('₹2,000');
-    expect(formatRupees(-2000)).toBe('-₹2,000');
+  it('shows an adjustment with its sign either way, on the shared rupee format', () => {
     expect(formatSignedRupees(-2000)).toBe('-₹2,000');
     expect(formatSignedRupees(500)).toBe('+₹500');
+    expect(formatSignedRupees(1234567.5)).toBe('+₹12,34,567.50');
     expect(formatSignedRupees(0)).toBe('₹0');
-  });
-
-  it('turns a number back into what an amount field accepts', () => {
-    expect(amountInputText(13000)).toBe('13000');
-    expect(amountInputText(13000.5)).toBe('13000.5');
-    expect(parseAmountInput(amountInputText(1234.56))).toBe(1234.56);
   });
 });
 
@@ -119,6 +87,93 @@ describe('status', () => {
     expect(canCancelBill({ status: 'OVERDUE', totalPaid: 0 })).toBe(true);
     expect(canCancelBill({ status: 'PARTIAL', totalPaid: 0.01 })).toBe(false);
     expect(canCancelBill({ status: 'CANCELLED', totalPaid: 0 })).toBe(false);
+  });
+});
+
+describe('bill detail actions', () => {
+  const admin = { role: 'ADMIN', ownerType: 'EMPLOYEE' };
+  const teacher = { role: 'TEACHER', ownerType: 'EMPLOYEE' };
+  const student = { role: 'STUDENT', ownerType: 'STUDENT' };
+  const parent = { role: 'PARENT', ownerType: 'PARENT' };
+  const bill = (status: FeeBillStatus, totalPaid: number, remainingDue: number, cancelled = status === 'CANCELLED') => ({
+    status,
+    totalPaid,
+    remainingDue,
+    cancelled,
+  });
+
+  it('gives an admin Record payment, the bill corrections and the payments on an open bill', () => {
+    expect(billDetailActions(bill('PARTIAL', 5000, 13000), admin)).toEqual({
+      recordPayment: true,
+      adminActions: true,
+      cancelBill: false,
+      cancelBlockedByPayments: true,
+      howToPay: false,
+      nothingOwed: false,
+      paymentHistory: true,
+    });
+  });
+
+  it('lets an admin cancel once every payment is reversed (totalPaid back to 0)', () => {
+    // A reversal takes the payment off totalPaid, so the same bill after reversing its only payment:
+    const reversed = billDetailActions(bill('UNPAID', 0, 18000), admin);
+    expect(reversed.cancelBill).toBe(true);
+    expect(reversed.cancelBlockedByPayments).toBe(false);
+    expect(reversed.recordPayment).toBe(true);
+    expect(reversed.paymentHistory).toBe(true);
+  });
+
+  it('offers no Record payment and no corrections on a cancelled bill, but still shows its payments', () => {
+    expect(billDetailActions(bill('CANCELLED', 0, 0), admin)).toEqual({
+      recordPayment: false,
+      adminActions: false,
+      cancelBill: false,
+      cancelBlockedByPayments: false,
+      howToPay: false,
+      nothingOwed: false,
+      paymentHistory: true,
+    });
+    // Even if a stale copy still says money is owed, the cancelled flag wins.
+    expect(billDetailActions(bill('UNPAID', 0, 18000, true), admin).recordPayment).toBe(false);
+  });
+
+  it('keeps the corrections but not Record payment on a fully paid bill (a late fee can still be added)', () => {
+    const paid = billDetailActions(bill('PAID', 18000, 0), admin);
+    expect(paid.recordPayment).toBe(false);
+    expect(paid.adminActions).toBe(true);
+    expect(paid.cancelBill).toBe(false);
+  });
+
+  it('tells a family how to pay while money is owed, and that nothing is owed once paid', () => {
+    for (const viewer of [student, parent]) {
+      expect(billDetailActions(bill('OVERDUE', 0, 18000), viewer)).toEqual({
+        recordPayment: false,
+        adminActions: false,
+        cancelBill: false,
+        cancelBlockedByPayments: false,
+        howToPay: true,
+        nothingOwed: false,
+        paymentHistory: true,
+      });
+      const paid = billDetailActions(bill('PAID', 18000, 0), viewer);
+      expect(paid.howToPay).toBe(false);
+      expect(paid.nothingOwed).toBe(true);
+      const cancelled = billDetailActions(bill('CANCELLED', 0, 0), viewer);
+      expect(cancelled.howToPay).toBe(false);
+      expect(cancelled.nothingOwed).toBe(false);
+    }
+  });
+
+  it("shows a teacher the bill only: no payments (the API refuses them), no actions", () => {
+    expect(billDetailActions(bill('OVERDUE', 0, 18000), teacher)).toEqual({
+      recordPayment: false,
+      adminActions: false,
+      cancelBill: false,
+      cancelBlockedByPayments: false,
+      howToPay: false,
+      nothingOwed: false,
+      paymentHistory: false,
+    });
   });
 });
 
@@ -397,6 +452,14 @@ describe('structure lines', () => {
     expect(feeLinesError([line('a', '-1')])).toBe('invalidAmount');
     expect(feeLinesError([line('a', '100'), line('a', '200')])).toBe('duplicateCategory');
     expect(feeLinesError(Array.from({ length: 51 }, (_, i) => line(`c${i}`, '1')))).toBe('tooManyLines');
+  });
+
+  it("reads amounts with the shared parser: grouped or with a rupee sign, never over 2 decimals", () => {
+    expect(feeLinesError([line('a', '15,000'), line('b', ' ₹ 1,200 '), line('c', '2500.50')])).toBeNull();
+    for (const bad of ['100.555', '1e5', '0x10', 'abc', '.5']) {
+      expect(feeLinesError([line('a', bad)])).toBe('invalidAmount');
+    }
+    expect(feeLinesRequest([line('a', '1,50,000.5')])).toEqual([{ feeCategoryId: 'a', amount: 150000.5 }]);
   });
 
   it('sends the parsed amounts and adds them up in paise', () => {

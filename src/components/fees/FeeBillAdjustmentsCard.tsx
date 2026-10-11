@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 import type { FeeAssessment } from '../../api/types';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
-import { adjustmentByLine, formatAdjustmentLine, formatAmount } from '../../utils/feeBills';
+import { adjustmentByLine, formatAdjustmentLine } from '../../utils/feeBills';
+import { formatRupees } from '../../utils/money';
 
 /**
  * How a bill's total was reached: the structure's fee, then each concession, waiver, late fee or
@@ -20,7 +21,7 @@ export function FeeBillAdjustmentsCard({ bill }: { bill: Pick<FeeAssessment, 'ba
       <Text style={styles.title}>{t('fees.adjustment.title')}</Text>
       <View style={styles.row}>
         <Text style={styles.label}>{t('fees.bill.baseAmount')}</Text>
-        <Text style={styles.amount}>₹{formatAmount(bill.baseAmount)}</Text>
+        <Text style={styles.amount}>{formatRupees(bill.baseAmount)}</Text>
       </View>
       {adjustments.map((adjustment) => (
         <View key={adjustment.id} style={styles.adjustment}>
@@ -30,7 +31,7 @@ export function FeeBillAdjustmentsCard({ bill }: { bill: Pick<FeeAssessment, 'ba
       ))}
       <View style={[styles.row, styles.totalRow]}>
         <Text style={styles.totalLabel}>{t('fees.assessmentDetail.totalDue')}</Text>
-        <Text style={styles.totalAmount}>₹{formatAmount(bill.totalDue)}</Text>
+        <Text style={styles.totalAmount}>{formatRupees(bill.totalDue)}</Text>
       </View>
     </View>
   );

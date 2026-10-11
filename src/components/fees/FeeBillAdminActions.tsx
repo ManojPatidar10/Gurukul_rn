@@ -11,14 +11,13 @@ import {
   adjustmentConfirmText,
   adjustmentDraft,
   adjustmentLabel,
-  amountInputText,
   canCancelBill,
   dueDateChangeBounds,
   FEE_ADJUSTMENT_TYPES,
-  formatAmount,
   isBillCancelled,
   todayIst,
 } from '../../utils/feeBills';
+import { formatRupees, rupeesInputValue } from '../../utils/money';
 import { DatePickerField, parseIsoDate } from '../DatePickerField';
 import { ErrorNotice } from '../ErrorNotice';
 import LabeledInput from '../LabeledInput';
@@ -125,7 +124,7 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
     }
     Alert.alert(
       t('fees.bill.cancelConfirmTitle'),
-      t('fees.bill.cancelConfirmMessage', { name: bill.studentName, amount: formatAmount(bill.totalDue) }),
+      t('fees.bill.cancelConfirmMessage', { name: bill.studentName, amount: formatRupees(bill.totalDue, { symbol: false }) }),
       [
         { text: t('fees.bill.keepBill'), style: 'cancel' },
         {
@@ -179,21 +178,21 @@ export function FeeBillAdminActions({ schoolId, bill, onUpdated }: Props) {
           />
           {type === 'WAIVER' && bill.remainingDue > 0 && (
             <Pressable
-              onPress={() => setAmount(amountInputText(bill.remainingDue))}
+              onPress={() => setAmount(rupeesInputValue(bill.remainingDue))}
               style={styles.linkButton}
               accessibilityRole="button"
             >
-              <Text style={styles.link}>{t('fees.adjustment.waiveRemaining', { amount: formatAmount(bill.remainingDue) })}</Text>
+              <Text style={styles.link}>{t('fees.adjustment.waiveRemaining', { amount: formatRupees(bill.remainingDue, { symbol: false }) })}</Text>
             </Pressable>
           )}
           {amountTyped && draft.error === 'amount' && <Text style={styles.fieldError}>{t('fees.adjustment.errors.amount')}</Text>}
           {showBelowPaid && (
             <Text style={styles.fieldError}>
-              {t('fees.adjustment.errors.belowPaid', { total: formatAmount(draft.newTotal ?? 0), paid: formatAmount(bill.totalPaid) })}
+              {t('fees.adjustment.errors.belowPaid', { total: formatRupees(draft.newTotal ?? 0, { symbol: false }), paid: formatRupees(bill.totalPaid, { symbol: false }) })}
             </Text>
           )}
           {!draft.error && draft.newTotal !== null && (
-            <Text style={styles.preview}>{t('fees.adjustment.newTotal', { amount: formatAmount(draft.newTotal) })}</Text>
+            <Text style={styles.preview}>{t('fees.adjustment.newTotal', { amount: formatRupees(draft.newTotal, { symbol: false }) })}</Text>
           )}
           <LabeledInput
             label={t('fees.adjustment.reason')}

@@ -16,6 +16,7 @@ import type {
   GenerateBillsResult,
   GeneratePreview,
 } from '../api/types';
+import { formatRupees, parseRupees, toPaise } from './money';
 
 /**
  * Fee bill decisions the screens share (specs/fee-bills-and-dues): the status chip's colour and
@@ -25,50 +26,17 @@ import type {
  */
 
 // ---------------------------------------------------------------------------------------------
-// Money. formatAmount and parseAmountInput stand in for src/utils/money.ts (finance fix 3) until it
-// lands on main, with the same behaviour, so they can be swapped for it.
-
-function toPaise(amount: number): number {
-  return Math.round(amount * 100);
-}
-
-const AMOUNT_INPUT = /^\d{1,10}(\.\d{1,2})?$/;
-
-/** "25000", "25,000" or " 2500.50 " -> the number. Blank, negative, 3 decimals or letters -> null. */
-export function parseAmountInput(text: string): number | null {
-  const cleaned = text.replace(/[\s,]/g, '');
-  return AMOUNT_INPUT.test(cleaned) ? Number(cleaned) : null;
-}
-
-/**
- * 150000 -> "1,50,000", 1234567.5 -> "12,34,567.50", -2000 -> "-2,000": Indian digit grouping, with
- * paise only when there are some. Done by hand so every JS engine agrees.
- */
-export function formatAmount(amount: number): string {
-  const paise = toPaise(amount);
-  const abs = Math.abs(paise);
-  const rupees = String(Math.floor(abs / 100));
-  const fraction = abs % 100;
-  const lastThree = rupees.slice(-3);
-  const rest = rupees.slice(0, -3);
-  const grouped = rest ? `${rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',')},${lastThree}` : lastThree;
-  return `${paise < 0 ? '-' : ''}${grouped}${fraction ? `.${String(fraction).padStart(2, '0')}` : ''}`;
-}
-
-/** 2000 -> "₹2,000", -2000 -> "-₹2,000". */
-export function formatRupees(amount: number): string {
-  const text = formatAmount(amount);
-  return text.startsWith('-') ? `-₹${text.slice(1)}` : `₹${text}`;
-}
+// Money: amounts are read with parseRupees and shown with formatRupees (src/utils/money.ts, finance
+// fix 3), in whole paise, with Indian digit grouping and paise only when there are some.
 
 /** An adjustment's amount with its sign either way: "-₹2,000", "+₹500". */
 export function formatSignedRupees(amount: number): string {
   return toPaise(amount) > 0 ? `+${formatRupees(amount)}` : formatRupees(amount);
 }
 
-/** What goes back in an amount field for a number: 13000 -> "13000", 13000.5 -> "13000.5". */
-export function amountInputText(amount: number): string {
-  return String(toPaise(amount) / 100);
+/** An amount for text that already has the ₹ sign ("₹{{amount}}"): 150000 -> "1,50,000". */
+function plainRupees(amount: number): string {
+  return formatRupees(amount, { symbol: false });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -119,9 +87,57 @@ export function isBillCancelled(bill: BillStatusFields): boolean {
   return bill.status === 'CANCELLED' || bill.cancelled === true;
 }
 
-/** A bill can be cancelled only while no money is on it: payments are reversed first. */
+/**
+ * A bill can be cancelled only while no money is on it. A reversed payment (finance fix 3) takes its
+ * amount back off totalPaid, so once every payment is reversed the bill can be cancelled - the same
+ * rule the server applies.
+ */
 export function canCancelBill(bill: BillStatusFields & Pick<FeeAssessment, 'totalPaid'>): boolean {
   return !isBillCancelled(bill) && toPaise(bill.totalPaid) <= 0;
+}
+
+/** Who is looking at a bill: the session's role and login type. */
+export interface BillViewer {
+  role: string;
+  ownerType: string;
+}
+
+/** What the bill detail screen offers, worked out in one place so it's unit-tested. */
+export interface BillDetailActions {
+  /** Admin: Record payment. Only on a live bill with money still owed. */
+  recordPayment: boolean;
+  /** Admin: add an adjustment, change the due date, cancel. Not on a cancelled bill. */
+  adminActions: boolean;
+  /** Admin: Cancel bill, among those actions: only while nothing is paid on it. */
+  cancelBill: boolean;
+  /** Admin: the bill has payments, so Cancel is replaced by a hint to reverse them first. */
+  cancelBlockedByPayments: boolean;
+  /** Student or parent: how to pay at the school office, while money is owed on a live bill. */
+  howToPay: boolean;
+  /** Student or parent: "Nothing is owed" on a live bill that's fully paid. */
+  nothingOwed: boolean;
+  /** The bill's payments, reversed ones included: an admin or the student's own family (teachers get a 403). */
+  paymentHistory: boolean;
+}
+
+export function billDetailActions(
+  bill: BillStatusFields & Pick<FeeAssessment, 'totalPaid' | 'remainingDue'>,
+  viewer: BillViewer
+): BillDetailActions {
+  const isAdmin = viewer.role === 'ADMIN';
+  const isFamily = !isAdmin && (viewer.ownerType === 'STUDENT' || viewer.ownerType === 'PARENT');
+  const live = !isBillCancelled(bill);
+  const owed = live && toPaise(bill.remainingDue) > 0;
+  const cancellable = canCancelBill(bill);
+  return {
+    recordPayment: isAdmin && owed,
+    adminActions: isAdmin && live,
+    cancelBill: isAdmin && cancellable,
+    cancelBlockedByPayments: isAdmin && live && !cancellable,
+    howToPay: isFamily && owed,
+    nothingOwed: isFamily && live && !owed,
+    paymentHistory: isAdmin || isFamily,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -258,7 +274,7 @@ export function adjustmentDraft(
   amountText: string,
   correctionSign: 1 | -1
 ): AdjustmentDraft {
-  const entered = parseAmountInput(amountText);
+  const entered = parseRupees(amountText);
   if (entered === null || toPaise(entered) === 0) return { amount: null, newTotal: null, error: 'amount' };
   const amount = signedAdjustmentAmount(type, entered, correctionSign);
   const newTotalPaise = toPaise(bill.totalDue) + toPaise(amount);
@@ -282,7 +298,7 @@ export function adjustmentConfirmText(
     type: adjustmentLabel(type, t),
     amount: formatSignedRupees(amount),
     name: studentName,
-    total: formatAmount(newTotal),
+    total: plainRupees(newTotal),
   });
 }
 
@@ -407,21 +423,21 @@ export function feeLinesError(lines: FeeLineDraft[]): FeeLinesError | null {
   if (lines.length === 0) return 'noLines';
   if (lines.length > MAX_FEE_LINES) return 'tooManyLines';
   if (lines.some((line) => !line.feeCategoryId)) return 'missingCategory';
-  if (lines.some((line) => parseAmountInput(line.amount) === null)) return 'invalidAmount';
+  if (lines.some((line) => parseRupees(line.amount) === null)) return 'invalidAmount';
   if (new Set(lines.map((line) => line.feeCategoryId)).size !== lines.length) return 'duplicateCategory';
   return null;
 }
 
 /** The lines to send. Call only once feeLinesError is null. */
 export function feeLinesRequest(lines: FeeLineDraft[]): FeeStructureLineRequest[] {
-  return lines.map((line) => ({ feeCategoryId: line.feeCategoryId, amount: parseAmountInput(line.amount) ?? 0 }));
+  return lines.map((line) => ({ feeCategoryId: line.feeCategoryId, amount: parseRupees(line.amount) ?? 0 }));
 }
 
 /** The lines' total, added in paise, or null while any amount isn't valid. */
 export function feeLinesTotal(lines: FeeLineDraft[]): number | null {
   let paise = 0;
   for (const line of lines) {
-    const amount = parseAmountInput(line.amount);
+    const amount = parseRupees(line.amount);
     if (amount === null) return null;
     paise += toPaise(amount);
   }
@@ -462,7 +478,7 @@ export function generateConfirmation(preview: GeneratePreview, dueDate: string, 
     lines.push(
       t('fees.structureDetail.generate.confirmCreate', {
         count: preview.toCreateCount,
-        amount: formatAmount(preview.totalPerStudent),
+        amount: plainRupees(preview.totalPerStudent),
         date: formatDueDate(dueDate, t),
       })
     );
