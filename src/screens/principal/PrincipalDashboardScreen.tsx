@@ -180,10 +180,8 @@ const STUDENT_TILE_ORDER: FeatureId[] = [
 
 // Classes/Fees route to the same screens admins use, but scoped to the student's own
 // class-section - the copy needs to reflect that scope instead of the school-wide admin framing.
-const STUDENT_COPY: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>> = {
-  classes: { title: 'My Class', description: 'Classmates, subjects, assessments and timetable' },
-  fees: { title: 'My Fees', description: 'Your fee dues and payment history' },
-};
+// Their words are under dashboard.studentCopy.<id> in the translations.
+const STUDENT_COPY_IDS: FeatureId[] = ['classes', 'fees'];
 
 // Students routes to the same screen admins use, but scoped to the classes a teacher teaches -
 // the copy needs to reflect that instead of the school-wide framing.
@@ -291,7 +289,11 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       return tileRank(order, a.id) - tileRank(order, b.id);
     })
     .map((feature) => {
-      if (isStudent) return applyRoleCopy(feature, STUDENT_COPY);
+      if (isStudent) {
+        return STUDENT_COPY_IDS.includes(feature.id)
+          ? { ...feature, title: t(`dashboard.studentCopy.${feature.id}.title`), description: t(`dashboard.studentCopy.${feature.id}.description`) }
+          : feature;
+      }
       if (isTeacher) return applyRoleCopy(feature, TEACHER_COPY);
       return feature;
     });

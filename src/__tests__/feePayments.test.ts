@@ -4,11 +4,11 @@ import {
   duplicateReferenceInfo,
   FEE_PAYMENT_METHODS,
   feeReceiptFileName,
+  formatPaymentDate,
   normalizeReference,
   paymentDateBounds,
   paymentMethodLabelKey,
   referenceRequired,
-  refreshedBill,
   reversalTypesFor,
   validateRecordPayment,
   validateReversal,
@@ -16,6 +16,8 @@ import {
   type ReversalForm,
 } from '../utils/feePayments';
 import en from '../i18n/locales/en.json';
+import hi from '../i18n/locales/hi.json';
+import { tEn, tHi } from '../testUtils/i18nFixture';
 
 jest.mock('../api/authStorage', () => ({ setStoredSession: jest.fn() }));
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -195,24 +197,8 @@ describe('duplicateReferenceInfo', () => {
   });
 });
 
-describe('refreshedBill', () => {
-  const bills = [
-    { id: 'bill-2025', remainingDue: 0 },
-    { id: 'bill-2026', remainingDue: 2500 },
-  ];
-
-  it('picks the fresh copy of the bill shown', () => {
-    expect(refreshedBill(bills, 'bill-2026')).toBe(bills[1]);
-  });
-
-  it('is null when the bill is missing or nothing came back, so the screen keeps its copy and says so', () => {
-    expect(refreshedBill(bills, 'bill-other')).toBeNull();
-    expect(refreshedBill([], 'bill-2026')).toBeNull();
-    expect(refreshedBill(null, 'bill-2026')).toBeNull();
-    expect(refreshedBill(undefined, 'bill-2026')).toBeNull();
-  });
-
-  it('has its notice, and the in-flight hold messages, in en.json', () => {
+describe('in-flight messages', () => {
+  it('has the bill refresh notice, and the in-flight hold messages, in en.json', () => {
     expect(hasKey('fees.paymentHistory.billRefreshError')).toBe(true);
     expect(hasKey('fees.recordPayment.stillSaving')).toBe(true);
     expect(hasKey('fees.reversePayment.stillReversing')).toBe(true);
@@ -228,5 +214,19 @@ describe('feeReceiptFileName', () => {
 
   it("falls back to the id's first 8 characters", () => {
     expect(feeReceiptFileName({ id: 'abcdef12-3456-7890', receiptNumber: null })).toBe('fee-receipt-abcdef12.pdf');
+  });
+});
+
+describe('formatPaymentDate', () => {
+  it("shows a payment's date like every other fee date: the month in the app language, whatever the phone's", () => {
+    expect(formatPaymentDate('2026-10-05', tEn)).toBe('5 Oct 2026');
+    expect(formatPaymentDate('2026-10-05', tHi)).toBe(`5 ${hi.fees.bill.monthsShort['10']} 2026`);
+  });
+
+  it("shows '—' for no date, and anything else as sent", () => {
+    expect(formatPaymentDate(null, tEn)).toBe('—');
+    expect(formatPaymentDate(undefined, tEn)).toBe('—');
+    expect(formatPaymentDate('', tEn)).toBe('—');
+    expect(formatPaymentDate('soon', tEn)).toBe('soon');
   });
 });

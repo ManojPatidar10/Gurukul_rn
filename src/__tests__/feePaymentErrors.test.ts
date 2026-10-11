@@ -9,6 +9,10 @@ describe('canRetryFeePayment', () => {
     expect(canRetryFeePayment('PAYMENT_ATTEMPT_ALREADY_REPORTED')).toBe(false);
   });
 
+  it('offers only Back on a cancelled bill, which takes no payment however often it is retried', () => {
+    expect(canRetryFeePayment('FEE_BILL_CANCELLED')).toBe(false);
+  });
+
   it('offers Try again for failures without a code (no connection, server trouble)', () => {
     expect(canRetryFeePayment(undefined)).toBe(true);
     expect(canRetryFeePayment(null)).toBe(true);
