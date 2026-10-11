@@ -137,7 +137,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
         </View>
 
         <View style={styles.card}>
-          <Field label={t('ledger.detail.date')} value={formatLedgerDate(tx.transactionDate, true)} />
+          <Field label={t('ledger.detail.date')} value={formatLedgerDate(tx.transactionDate, t, true)} />
           <Field label={t('ledger.detail.category')} value={entryLabel(tx, t)} />
           <Field label={t('ledger.detail.method')} value={paymentMethodLabel(tx.paymentMethod, t)} />
           <Field label={t('ledger.detail.reference')} value={tx.paymentReference} />
@@ -171,6 +171,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
                 onPress={() => openLinked(tx.reversalTransactionId!)}
                 disabled={!!opening}
                 accessibilityRole="link"
+                accessibilityLabel={t('ledger.detail.viewReversal')}
               >
                 {opening === tx.reversalTransactionId ? (
                   <ActivityIndicator color={accent.base} size="small" />
@@ -185,6 +186,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
                 onPress={() => openLinked(tx.reversalOfId!)}
                 disabled={!!opening}
                 accessibilityRole="link"
+                accessibilityLabel={t('ledger.detail.viewOriginal')}
               >
                 {opening === tx.reversalOfId ? (
                   <ActivityIndicator color={accent.base} size="small" />
@@ -244,6 +246,7 @@ export function LedgerEntryDetailScreen({ route, navigation }: Props) {
                 onPress={handleReverse}
                 disabled={!canConfirm}
                 accessibilityRole="button"
+                accessibilityLabel={t('ledger.reverse.confirm')}
               >
                 {reversing ? (
                   <ActivityIndicator color={colors.white} size="small" />

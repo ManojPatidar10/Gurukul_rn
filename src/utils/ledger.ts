@@ -278,6 +278,26 @@ export function appendPage<T extends { id: string }>(shown: readonly T[], next: 
   return [...shown, ...next.filter((row) => !seen.has(row.id))];
 }
 
+export type EntriesView = 'invalidRange' | 'error' | 'loading' | 'ready';
+
+/**
+ * What the Entries tab shows: nothing to load for a backwards custom range; the error alone when
+ * the last load failed; a spinner until the totals and rows on hand were loaded for the filter on
+ * screen; then those. Going by which filter the data belongs to, not by a loading flag, means a
+ * previous filter's money totals never show under new chips, and a load that finished while the
+ * other tab was open still shows when the user comes back.
+ */
+export function entriesView(input: {
+  filterKey: string;
+  loadedKey: string | null;
+  rangeInvalid: boolean;
+  failed: boolean;
+}): EntriesView {
+  if (input.rangeInvalid) return 'invalidRange';
+  if (input.failed) return 'error';
+  return input.loadedKey === input.filterKey ? 'ready' : 'loading';
+}
+
 // ---------------------------------------------------------------- amounts & numbers
 
 export type MethodBucket = 'cash' | 'bank' | 'unspecified';
@@ -320,7 +340,6 @@ export function formatSignedRupees(n: number): string {
 // ---------------------------------------------------------------- dates
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** A YYYY-MM-DD date moved by `days` (negative goes back). */
 export function shiftIsoDate(isoDate: string, days: number): string {
@@ -329,11 +348,15 @@ export function shiftIsoDate(isoDate: string, days: number): string {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 }
 
-/** "11 Oct", or "11 Oct 2026" with the year; "" for anything that isn't YYYY-MM-DD. */
-export function formatLedgerDate(isoDate: string | null | undefined, withYear = false): string {
+/**
+ * "11 Oct", or "11 Oct 2026" with the year, the month in the app's language; "" for anything that
+ * isn't a YYYY-MM-DD date.
+ */
+export function formatLedgerDate(isoDate: string | null | undefined, t: TFunction, withYear = false): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate ?? '');
-  if (!match) return '';
-  const label = `${Number(match[3])} ${MONTHS[Number(match[2]) - 1]}`;
+  const month = match ? Number(match[2]) : 0;
+  if (!match || month < 1 || month > 12) return '';
+  const label = `${Number(match[3])} ${t(`ledger.monthsShort.${month}`)}`;
   return withYear ? `${label} ${match[1]}` : label;
 }
 
@@ -380,9 +403,14 @@ export function entryChips(
   return chips;
 }
 
-/** "Receipt no." for a receipt, "Voucher no." for a voucher. */
-export function numberLabelKey(tx: Pick<LedgerTransaction, 'receiptNumber' | 'voucherNumber'>): string {
-  return tx.receiptNumber || !tx.voucherNumber ? 'ledger.detail.receiptNumber' : 'ledger.detail.voucherNumber';
+/**
+ * "Receipt no." for a receipt, "Voucher no." for a voucher. With neither (an old row, or a reversal
+ * row) it goes by direction: receipts are for money in only, so money out is a voucher.
+ */
+export function numberLabelKey(tx: Pick<LedgerTransaction, 'receiptNumber' | 'voucherNumber' | 'direction'>): string {
+  if (tx.receiptNumber) return 'ledger.detail.receiptNumber';
+  if (tx.voucherNumber) return 'ledger.detail.voucherNumber';
+  return tx.direction === 'OUTFLOW' ? 'ledger.detail.voucherNumber' : 'ledger.detail.receiptNumber';
 }
 
 /** The "Linked to" line: "Fee payment · 1a2b3c4d", the type alone with no id, or "Not linked (…)" for old entries. */

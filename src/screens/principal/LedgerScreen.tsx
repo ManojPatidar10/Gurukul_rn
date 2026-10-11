@@ -37,6 +37,7 @@ import {
   categoryOptions,
   customRangeError,
   displayNumber,
+  entriesView,
   entryChips,
   entryLabel,
   formatLedgerDate,
@@ -68,7 +69,7 @@ function LedgerRow({ tx, t, onPress }: { tx: LedgerTransaction; t: TFunction; on
   return (
     <Pressable style={styles.row} onPress={onPress} accessibilityRole="button">
       <View style={styles.rowMain}>
-        <Text style={styles.rowDate}>{formatLedgerDate(tx.transactionDate)}</Text>
+        <Text style={styles.rowDate}>{formatLedgerDate(tx.transactionDate, t)}</Text>
         <Text style={styles.rowLabel} numberOfLines={1}>
           {entryLabel(tx, t)}
         </Text>
@@ -151,12 +152,13 @@ export function LedgerScreen({ navigation }: Props) {
   const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [totalEntries, setTotalEntries] = useState(0);
-  const [entriesLoading, setEntriesLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [entriesError, setEntriesError] = useState<string | null>(null);
+  // The query the totals and rows on hand were loaded for; they show only while it matches the filter.
+  const [shownEntriesKey, setShownEntriesKey] = useState<string | null>(null);
   const entriesRequest = useRef(0);
-  // The query the entries on screen were loaded for, so switching tabs doesn't reload them.
-  const loadedEntriesKey = useRef<string | null>(null);
+  // The query last loaded or being loaded, so switching tabs doesn't load it again.
+  const requestedEntriesKey = useRef<string | null>(null);
 
   const filter = useMemo(
     () => buildEntriesFilter({ period, customFrom, customTo, category, method }, now),
@@ -164,6 +166,13 @@ export function LedgerScreen({ navigation }: Props) {
   );
   const filterKey = buildLedgerQuery(filter);
   const rangeErrorKey = period === 'custom' ? customRangeError(customFrom, customTo) : null;
+  const entriesState = entriesView({
+    filterKey,
+    loadedKey: shownEntriesKey,
+    rangeInvalid: rangeErrorKey !== null,
+    failed: entriesError !== null,
+  });
+  const entriesReady = entriesState === 'ready';
 
   const loadDayBook = useCallback(
     async (day: string) => {
@@ -187,7 +196,7 @@ export function LedgerScreen({ navigation }: Props) {
   const loadEntries = useCallback(async () => {
     const id = ++entriesRequest.current;
     setEntriesError(null);
-    loadedEntriesKey.current = filterKey;
+    requestedEntriesKey.current = filterKey;
     try {
       const [totals, first] = await Promise.all([getFundSummary(schoolId, filter), listLedger(schoolId, filter, 0)]);
       if (id !== entriesRequest.current) return;
@@ -196,9 +205,11 @@ export function LedgerScreen({ navigation }: Props) {
       setHasNext(first.hasNext);
       setTotalEntries(first.totalElements);
       setPage(0);
+      setShownEntriesKey(filterKey);
     } catch (e) {
       if (id !== entriesRequest.current) return;
-      loadedEntriesKey.current = null;
+      requestedEntriesKey.current = null;
+      setShownEntriesKey(null);
       setSummary(null);
       setEntries([]);
       setHasNext(false);
@@ -216,16 +227,11 @@ export function LedgerScreen({ navigation }: Props) {
     };
   }, [date, loadDayBook]);
 
+  // No loading flag to clear: the spinner shows until rows for this filter land (see entriesView),
+  // so a load that finishes while the Day book tab is open still shows on coming back.
   useEffect(() => {
-    if (tab !== 'entries' || rangeErrorKey || loadedEntriesKey.current === filterKey) return;
-    let active = true;
-    setEntriesLoading(true);
-    loadEntries().finally(() => {
-      if (active) setEntriesLoading(false);
-    });
-    return () => {
-      active = false;
-    };
+    if (tab !== 'entries' || rangeErrorKey || requestedEntriesKey.current === filterKey) return;
+    loadEntries();
   }, [tab, filterKey, rangeErrorKey, loadEntries]);
 
   // Coming back from an entry that was reversed: reload what's on screen.
@@ -235,7 +241,7 @@ export function LedgerScreen({ navigation }: Props) {
       if (ledgerChangeCount() === seenChanges.current) return;
       seenChanges.current = ledgerChangeCount();
       loadDayBook(date);
-      if (loadedEntriesKey.current !== null) loadEntries();
+      if (requestedEntriesKey.current !== null) loadEntries();
     }, [date, loadDayBook, loadEntries])
   );
 
@@ -385,6 +391,8 @@ export function LedgerScreen({ navigation }: Props) {
               key={p}
               style={[styles.chip, selected && { backgroundColor: accent.base }]}
               onPress={() => setPeriod(p)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
             >
               <Text style={[styles.chipText, selected && styles.chipTextActive]}>{periodLabel(p)}</Text>
             </Pressable>
@@ -425,7 +433,7 @@ export function LedgerScreen({ navigation }: Props) {
 
       {entriesError ? <ErrorNotice message={entriesError} /> : null}
 
-      {summary && !rangeErrorKey ? (
+      {summary && entriesReady ? (
         <View style={styles.card}>
           <View style={styles.statLine}>
             <MoneyStat label={t('ledger.entries.totals.in')} value={summary.totalInflow} tone="in" flat />
@@ -448,7 +456,7 @@ export function LedgerScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      {!entriesLoading && !rangeErrorKey && entries.length > 0 ? (
+      {entriesReady && entries.length > 0 ? (
         <Text style={styles.countLine}>
           {t('ledger.entries.count', { shown: entries.length, total: Math.max(totalEntries, entries.length) })}
         </Text>
@@ -472,6 +480,7 @@ export function LedgerScreen({ navigation }: Props) {
           onPress={handleFind}
           disabled={!normalizeReceiptQuery(query) || finding}
           accessibilityRole="button"
+          accessibilityLabel={t('ledger.find.button')}
         >
           {finding ? (
             <ActivityIndicator color={colors.white} size="small" />
@@ -502,28 +511,29 @@ export function LedgerScreen({ navigation }: Props) {
     </View>
   );
 
-  const loading = tab === 'dayBook' ? dayLoading : entriesLoading;
-  const rows = tab === 'dayBook' ? (dayBook?.entries ?? []) : rangeErrorKey ? [] : entries;
+  const loading = tab === 'dayBook' ? dayLoading : entriesState === 'loading';
+  const rows = tab === 'dayBook' ? (dayBook?.entries ?? []) : entriesReady ? entries : [];
 
   const empty = loading ? (
     <ActivityIndicator style={styles.loader} color={accent.base} />
   ) : tab === 'dayBook' ? (
     dayBook ? (
-      <Text style={styles.empty}>{t('ledger.dayBook.empty', { date: formatLedgerDate(date, true) })}</Text>
+      <Text style={styles.empty}>{t('ledger.dayBook.empty', { date: formatLedgerDate(date, t, true) })}</Text>
     ) : null
-  ) : !rangeErrorKey && !entriesError ? (
+  ) : entriesReady ? (
     <Text style={styles.empty}>{t('ledger.entries.empty')}</Text>
   ) : null;
 
   const footer =
     tab === 'dayBook' ? (
       dayBook?.entriesTruncated ? <Text style={styles.note}>{t('ledger.dayBook.truncated')}</Text> : null
-    ) : hasNext && !rangeErrorKey && !entriesLoading ? (
+    ) : hasNext && entriesReady ? (
       <Pressable
         style={[styles.loadMore, loadingMore && styles.disabled]}
         onPress={handleLoadMore}
         disabled={loadingMore}
         accessibilityRole="button"
+        accessibilityLabel={t('ledger.entries.loadMore')}
       >
         {loadingMore ? (
           <ActivityIndicator color={accent.base} size="small" />

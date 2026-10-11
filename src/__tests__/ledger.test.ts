@@ -19,6 +19,7 @@ import {
   categoryOptions,
   customRangeError,
   displayNumber,
+  entriesView,
   entryChips,
   entryLabel,
   financialYearOf,
@@ -137,6 +138,7 @@ describe('enum lists', () => {
       'ledger.reverse.receiptCancelled',
       'ledger.reverse.voucherCancelled',
       'ledger.reverse.cannotUndo',
+      ...Array.from({ length: 12 }, (_, i) => `ledger.monthsShort.${i + 1}`),
     ];
     // One per value of each of the six enums, plus the six plural filter labels.
     expect(LEDGER_LABEL_KEYS).toHaveLength(6 + 7 + 7 + 4 + 2 + 3 + 6);
@@ -300,9 +302,16 @@ describe('amounts and numbers', () => {
     expect(displayNumber({ receiptNumber: null, voucherNumber: 'PV1' })).toBe('PV1');
     expect(displayNumber({ receiptNumber: 'R1', voucherNumber: 'PV1' })).toBe('R1');
     expect(displayNumber({ receiptNumber: null, voucherNumber: null })).toBeNull();
-    expect(numberLabelKey({ receiptNumber: 'R1', voucherNumber: null })).toBe('ledger.detail.receiptNumber');
-    expect(numberLabelKey({ receiptNumber: null, voucherNumber: 'PV1' })).toBe('ledger.detail.voucherNumber');
-    expect(numberLabelKey({ receiptNumber: null, voucherNumber: null })).toBe('ledger.detail.receiptNumber');
+  });
+
+  it('calls the number a receipt for money in and a voucher for money out', () => {
+    const label = (receiptNumber: string | null, voucherNumber: string | null, direction: 'INFLOW' | 'OUTFLOW') =>
+      numberLabelKey({ receiptNumber, voucherNumber, direction });
+    expect(label('R1', null, 'INFLOW')).toBe('ledger.detail.receiptNumber');
+    expect(label(null, 'PV1', 'OUTFLOW')).toBe('ledger.detail.voucherNumber');
+    // No number (an old row, or a reversal row): by direction.
+    expect(label(null, null, 'INFLOW')).toBe('ledger.detail.receiptNumber');
+    expect(label(null, null, 'OUTFLOW')).toBe('ledger.detail.voucherNumber');
   });
 
   it('signs money out as negative', () => {
@@ -325,6 +334,21 @@ describe('amounts and numbers', () => {
     expect(formatSignedRupees(0)).toBe('₹0.00');
   });
 
+  it('shows totals and rows only once they were loaded for the filter on screen', () => {
+    const view = (over: Partial<Parameters<typeof entriesView>[0]> = {}) =>
+      entriesView({ filterKey: '?from=b', loadedKey: '?from=b', rangeInvalid: false, failed: false, ...over });
+    // Loaded for this filter: shown, whichever tab was open when the load finished.
+    expect(view()).toBe('ready');
+    // First visit to the tab: nothing loaded yet, so a spinner rather than "No entries match".
+    expect(view({ loadedKey: null })).toBe('loading');
+    // A new period, category or method: the old filter's totals are not shown under the new chips.
+    expect(view({ loadedKey: '?from=a' })).toBe('loading');
+    expect(view({ failed: true })).toBe('error');
+    expect(view({ failed: true, loadedKey: null })).toBe('error');
+    expect(view({ rangeInvalid: true })).toBe('invalidRange');
+    expect(view({ rangeInvalid: true, failed: true })).toBe('invalidRange');
+  });
+
   it('adds a page without repeating rows already shown', () => {
     const a = { id: 'a' };
     const b = { id: 'b' };
@@ -343,11 +367,17 @@ describe('dates', () => {
     expect(shiftIsoDate('2026-03-01', -1)).toBe('2026-02-28');
   });
 
-  it('formats a date as "d MMM", with the year when asked', () => {
-    expect(formatLedgerDate('2026-10-11')).toBe('11 Oct');
-    expect(formatLedgerDate('2026-04-01', true)).toBe('1 Apr 2026');
-    expect(formatLedgerDate('')).toBe('');
-    expect(formatLedgerDate(null)).toBe('');
+  it('formats a date as "d MMM", with the year when asked, the month in the app language', () => {
+    expect(formatLedgerDate('2026-10-11', tEn)).toBe('11 Oct');
+    expect(formatLedgerDate('2026-04-01', tEn, true)).toBe('1 Apr 2026');
+    expect(formatLedgerDate('2026-01-05', tEn)).toBe('5 Jan');
+    expect(formatLedgerDate('2026-12-31', tEn)).toBe('31 Dec');
+    expect(formatLedgerDate('2026-10-11', tHi, true)).toBe(`11 ${hi.ledger.monthsShort['10']} 2026`);
+    expect(formatLedgerDate('2026-10-11', tHi)).not.toMatch(/Oct/);
+    expect(formatLedgerDate('', tEn)).toBe('');
+    expect(formatLedgerDate(null, tEn)).toBe('');
+    expect(formatLedgerDate('2026-13-01', tEn)).toBe('');
+    expect(formatLedgerDate('2026-00-01', tEn)).toBe('');
   });
 
   it('treats an all-zero bucket as empty', () => {
