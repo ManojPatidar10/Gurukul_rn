@@ -1,12 +1,20 @@
+import { ApiError } from '../api/client';
 import type { FreeTeacher, TimetableOverride, UncoveredPeriod } from '../api/timetable';
 import {
   coverCount,
+  freshLists,
   groupUncoveredByTeacher,
+  noRoomMeansRegular,
+  overrideKindVariant,
   overrideSummary,
   overrideUpdateFromExisting,
+  reloadAfterFailedWrite,
   sortFreeTeachers,
   uncoveredAction,
+  uncoveredOverrideKind,
 } from '../utils/substitutions';
+
+jest.mock('../api/authStorage', () => ({ setStoredSession: jest.fn(() => Promise.resolve()) }));
 
 const free = (name: string, periodsThatDay: number, teachesSection: boolean): FreeTeacher => ({
   teacherId: name.toLowerCase(),
@@ -171,5 +179,78 @@ describe('overrideUpdateFromExisting', () => {
         reason: '   ',
       })
     ).toEqual({ substituteTeacherId: 'amit', subjectId: 'sci', roomId: 'lab-1', reason: null });
+  });
+});
+
+describe('uncoveredOverrideKind', () => {
+  const substitute = override({ id: 'sub', kind: 'SUBSTITUTE' });
+  const extra = override({ id: 'extra', kind: 'EXTRA', originalTeacherId: null, originalTeacherName: null });
+
+  it('is null for a weekly period that has no change yet', () => {
+    expect(uncoveredOverrideKind(uncovered('Ravi', 1), [substitute, extra])).toBeNull();
+  });
+
+  it("uses the change's own kind, so an extra class isn't called a substitution", () => {
+    expect(uncoveredOverrideKind(uncovered('Ravi', 1, { overrideId: 'sub' }), [substitute, extra])).toBe('SUBSTITUTE');
+    expect(uncoveredOverrideKind(uncovered('Ravi', 1, { overrideId: 'extra' }), [substitute, extra])).toBe('EXTRA');
+  });
+
+  it("doesn't guess when the change isn't in the day's list", () => {
+    expect(uncoveredOverrideKind(uncovered('Ravi', 1, { overrideId: 'gone' }), [substitute])).toBeNull();
+    expect(uncoveredOverrideKind(uncovered('Ravi', 1, { overrideId: 'sub' }), null)).toBeNull();
+  });
+});
+
+describe('overrideKindVariant', () => {
+  it('colours each kind of change', () => {
+    expect(overrideKindVariant('CANCELLED')).toBe('error');
+    expect(overrideKindVariant('EXTRA')).toBe('success');
+    expect(overrideKindVariant('SUBSTITUTE')).toBe('warning');
+  });
+});
+
+describe('noRoomMeansRegular', () => {
+  it('keeps the regular room only for a substitution; an extra class has none', () => {
+    expect(noRoomMeansRegular('SUBSTITUTE')).toBe(true);
+    expect(noRoomMeansRegular('EXTRA')).toBe(false);
+    expect(noRoomMeansRegular('CANCELLED')).toBe(false);
+  });
+});
+
+describe('freshLists', () => {
+  it('shows nothing before the first load', () => {
+    expect(freshLists(null, '2026-10-14', null)).toEqual({ day: false, teacher: false });
+  });
+
+  it('shows the lists loaded for the date and teacher picked', () => {
+    expect(freshLists({ date: '2026-10-14', teacherId: null }, '2026-10-14', null)).toEqual({ day: true, teacher: true });
+    expect(freshLists({ date: '2026-10-14', teacherId: 'ravi' }, '2026-10-14', 'ravi')).toEqual({ day: true, teacher: true });
+  });
+
+  it("hides every list once another date is picked, until that date's lists arrive", () => {
+    expect(freshLists({ date: '2026-10-14', teacherId: 'ravi' }, '2026-10-15', 'ravi')).toEqual({ day: false, teacher: false });
+  });
+
+  it("keeps the day's lists but not the old teacher's periods when another teacher is picked", () => {
+    expect(freshLists({ date: '2026-10-14', teacherId: 'ravi' }, '2026-10-14', 'sunita')).toEqual({ day: true, teacher: false });
+    expect(freshLists({ date: '2026-10-14', teacherId: null }, '2026-10-14', 'sunita')).toEqual({ day: true, teacher: false });
+  });
+});
+
+describe('reloadAfterFailedWrite', () => {
+  it('reloads when the period already has a change', () => {
+    const exists = new ApiError('This period already has a change.', 409, 'TIMETABLE_OVERRIDE_EXISTS', { overrideId: 'o1' });
+    expect(reloadAfterFailedWrite(exists)).toBe(true);
+  });
+
+  it('reloads when the change is gone', () => {
+    expect(reloadAfterFailedWrite(new ApiError('Not found', 404, 'NOT_FOUND'))).toBe(true);
+  });
+
+  it('keeps the lists for a clash or any other error', () => {
+    expect(reloadAfterFailedWrite(new ApiError('Busy', 409, 'TIMETABLE_CLASH', []))).toBe(false);
+    expect(reloadAfterFailedWrite(new ApiError('Bad', 400, 'TIMETABLE_INVALID', { rule: 'PAST_DATE' }))).toBe(false);
+    expect(reloadAfterFailedWrite(new Error('Network'))).toBe(false);
+    expect(reloadAfterFailedWrite(null)).toBe(false);
   });
 });

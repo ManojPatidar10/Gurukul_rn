@@ -1878,6 +1878,8 @@
       "assignSubjects": "Assign subjects",
       "pickTitle": "{{day}}, period {{n}}",
       "clearCell": "Leave free",
+      "clearConfirm": "Leave {{day}} period {{n}} free?",
+      "clearConfirmBody": "Its subject, teacher and room come off the weekly timetable straight away.",
       "save": "Save timetable",
       "saved": "Timetable saved.",
       "unsaved": "Unsaved changes",

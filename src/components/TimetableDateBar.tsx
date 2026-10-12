@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { colors, radius, spacing } from '../theme/colors';
-import { addDaysIso, formatIsoDate, todayIso } from '../utils/timetable';
+import { addDaysIso, formatIsoDate, pickedDate, todayIso } from '../utils/timetable';
 import { parseIsoDate, toIsoDate } from './DatePickerField';
 
 interface Props {
@@ -61,9 +61,11 @@ export function TimetableDateBar({ value, onChange, showWeek = false, minimumDat
           value={parseIsoDate(value ?? today)}
           mode="date"
           minimumDate={minimumDate ? parseIsoDate(minimumDate) : undefined}
-          onChange={(_, date) => {
+          onChange={(event, date) => {
             setPicking(false);
-            if (date) onChange(toIsoDate(date));
+            // Cancelling still calls this on Android, with the date it opened on.
+            const picked = pickedDate(event, date);
+            if (picked) onChange(toIsoDate(picked));
           }}
         />
       )}

@@ -30,9 +30,18 @@ import { TimetableDayTabs } from '../../components/TimetableDayTabs';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
+import { useOnReturn } from '../../hooks/useOnReturn';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { cellEditMode, cellsToSlotRequests, defaultDay, slotKey, slotsToCells, type CellAssignment } from '../../utils/timetable';
+import {
+  cellEditMode,
+  cellsToSlotRequests,
+  clearCellAction,
+  defaultDay,
+  slotKey,
+  slotsToCells,
+  type CellAssignment,
+} from '../../utils/timetable';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -122,21 +131,21 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
 
   useEffect(load, [load]);
 
-  // Coming back from the bell schedule, subject assignments or rooms: reload, unless there are unsaved edits.
+  // Coming back from the bell schedule, subject assignments or rooms: reload, unless there are
+  // unsaved edits. Those are kept, and only the rooms are refreshed, so one just added can be picked.
   const dirtyRef = useRef(dirty);
   useEffect(() => {
     dirtyRef.current = dirty;
   }, [dirty]);
-  useEffect(() => {
-    let first = true;
-    return navigation.addListener('focus', () => {
-      if (first) {
-        first = false;
-        return;
-      }
-      if (!dirtyRef.current) load();
-    });
-  }, [load, navigation]);
+  useOnReturn(() => {
+    if (!dirtyRef.current) {
+      load();
+      return;
+    }
+    listRooms(schoolId, true)
+      .then(setRooms)
+      .catch(() => {});
+  });
 
   const assignmentByKey = useMemo(() => {
     const map = new Map<string, SubjectAssignment>();
@@ -257,16 +266,30 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
     }
   };
 
-  const clearSheet = async (current: CellSheet) => {
+  const clearSheet = (current: CellSheet) => {
     if (!classSection) return;
-    if (mode === 'draft') {
+    const action = clearCellAction(mode, !!cells[slotKey(day, current.period.periodNumber)]);
+    if (action === 'draft') {
       setDraftCell(current.period, null);
       return;
     }
-    if (!cells[slotKey(day, current.period.periodNumber)]) {
+    if (action === 'close') {
       setSheet(null);
       return;
     }
+    // Deleted on the server straight away, with no undo: ask first.
+    Alert.alert(
+      t('timetable.editor.clearConfirm', { day: dayName(day), n: current.period.periodNumber }),
+      t('timetable.editor.clearConfirmBody'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('timetable.editor.clearCell'), style: 'destructive', onPress: () => clearSaved(current) },
+      ]
+    );
+  };
+
+  const clearSaved = async (current: CellSheet) => {
+    if (!classSection) return;
     setSheetSaving(true);
     setSheetError(null);
     setSheetClashes([]);

@@ -277,6 +277,25 @@ export function cellEditMode(dirty: boolean): 'immediate' | 'draft' {
   return dirty ? 'draft' : 'immediate';
 }
 
+/**
+ * What "Leave free" does. In a draft it just edits the draft (nothing is lost until "Save
+ * timetable"). Otherwise it deletes the saved period on the server straight away, so it asks
+ * first; on a period that is already free there is nothing to clear and the sheet just closes.
+ */
+export function clearCellAction(mode: 'immediate' | 'draft', hasSavedPeriod: boolean): 'draft' | 'confirm' | 'close' {
+  if (mode === 'draft') return 'draft';
+  return hasSavedPeriod ? 'confirm' : 'close';
+}
+
+/**
+ * The date a date picker's change event chose, or null when it was cancelled. On Android a
+ * dismissed picker still calls onChange, with the value it opened on, so the date alone can't
+ * tell a pick from a cancel.
+ */
+export function pickedDate(event: { type: string }, date: Date | undefined): Date | null {
+  return event.type === 'set' && date ? date : null;
+}
+
 /** How to word one refused period: which line, its values, and the date for a one-day clash. */
 export interface ClashDescription {
   key: 'timetable.editor.clashLine' | 'timetable.editor.clashRoom' | 'timetable.editor.clashAbsent';

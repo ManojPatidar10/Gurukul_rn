@@ -1,5 +1,5 @@
 import type { Room } from '../api/rooms';
-import { roomFormToRequest, roomPickerOptions, roomToForm, splitRooms, validateRoomForm } from '../utils/rooms';
+import { roomFormToRequest, roomPickerOptions, roomToForm, showInUseSwitch, splitRooms, validateRoomForm } from '../utils/rooms';
 
 const room = (id: string, name: string, active = true, capacity: number | null = null): Room => ({ id, name, active, capacity });
 
@@ -62,5 +62,16 @@ describe('splitRooms / roomPickerOptions', () => {
     expect(roomPickerOptions(rooms, 'c').map((r) => r.id)).toEqual(['a', 'b', 'd', 'c']);
     expect(roomPickerOptions(rooms, 'gone').map((r) => r.id)).toEqual(['a', 'b', 'd']);
     expect(roomPickerOptions([], null)).toEqual([]);
+  });
+});
+
+describe('showInUseSwitch', () => {
+  it('shows the In use switch only to put a room back in use', () => {
+    expect(showInUseSwitch(room('a', 'Lab 1', false))).toBe(true);
+  });
+
+  it('hides it for a room in use (taking one out asks first) and for a new room', () => {
+    expect(showInUseSwitch(room('a', 'Lab 1', true))).toBe(false);
+    expect(showInUseSwitch(null)).toBe(false);
   });
 });

@@ -1,4 +1,12 @@
-import type { FreeTeacher, OverrideKind, OverrideUpdateRequest, TimetableOverride, UncoveredPeriod } from '../api/timetable';
+import { ApiError } from '../api/client';
+import {
+  overrideExistsFromError,
+  type FreeTeacher,
+  type OverrideKind,
+  type OverrideUpdateRequest,
+  type TimetableOverride,
+  type UncoveredPeriod,
+} from '../api/timetable';
 
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' });
 
@@ -100,4 +108,58 @@ export function overrideUpdateFromExisting(
     roomId: change.roomId,
     reason: change.reason?.trim() ? change.reason.trim() : null,
   };
+}
+
+/**
+ * The kind of change an uncovered row already has (its substitute is now away): SUBSTITUTE, or
+ * EXTRA for an extra class. Null for a weekly period with no change yet, or when that change isn't
+ * in the day's list, so the row never claims a kind it doesn't know.
+ */
+export function uncoveredOverrideKind(
+  entry: Pick<UncoveredPeriod, 'overrideId'>,
+  overrides: TimetableOverride[] | null
+): OverrideKind | null {
+  if (!entry.overrideId) return null;
+  return overrides?.find((o) => o.id === entry.overrideId)?.kind ?? null;
+}
+
+/** The chip colour for a kind of change. */
+export function overrideKindVariant(kind: OverrideKind): 'error' | 'success' | 'warning' {
+  if (kind === 'CANCELLED') return 'error';
+  if (kind === 'EXTRA') return 'success';
+  return 'warning';
+}
+
+/**
+ * Whether "no room" on a change means the period's regular room. True for a substitution (its room
+ * is the change's own, else the weekly one); an extra class has no weekly period, so it has no room.
+ */
+export function noRoomMeansRegular(kind: OverrideKind): boolean {
+  return kind === 'SUBSTITUTE';
+}
+
+/** The date (and teacher) the Substitutions lists on screen were loaded for. */
+export interface LoadedFor {
+  date: string;
+  teacherId: string | null;
+}
+
+/**
+ * Which loaded lists still belong to what is picked. After the date changes, the old date's rows
+ * must not stay on screen: their buttons act on the date now picked, so "Find substitute" on a
+ * stale row would change a different period. `day` covers "Needs a substitute" and "Changes on
+ * this day"; `teacher` covers the picked teacher's periods.
+ */
+export function freshLists(loaded: LoadedFor | null, date: string, teacherId: string | null): { day: boolean; teacher: boolean } {
+  const day = loaded !== null && loaded.date === date;
+  return { day, teacher: day && loaded.teacherId === teacherId };
+}
+
+/**
+ * Whether a failed change means the lists on screen are out of date, so they should be reloaded:
+ * the period already has a change (409 TIMETABLE_OVERRIDE_EXISTS, made by someone else or missing
+ * from a stale list), or the change is gone (404, already undone).
+ */
+export function reloadAfterFailedWrite(e: unknown): boolean {
+  return overrideExistsFromError(e) !== null || (e instanceof ApiError && e.status === 404);
 }

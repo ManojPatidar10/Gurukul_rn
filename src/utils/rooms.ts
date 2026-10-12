@@ -35,6 +35,14 @@ export function validateRoomForm(form: RoomForm): RoomFormError | null {
   return null;
 }
 
+/**
+ * The edit form's In use switch is only for putting a room back in use. Taking one out of use goes
+ * through "Stop using this room", which asks first; a switch on a room in use would skip that.
+ */
+export function showInUseSwitch(room: Room | null): boolean {
+  return room !== null && !room.active;
+}
+
 /** The request for a valid form. A new room is always in use, so `active` is only sent on a save. */
 export function roomFormToRequest(form: RoomForm, isNew: boolean): RoomRequest {
   const capacity = form.capacity.trim();

@@ -6,6 +6,7 @@ import {
   addMinutes,
   cellEditMode,
   cellsToSlotRequests,
+  clearCellAction,
   dateViewSlots,
   defaultDay,
   describeClash,
@@ -15,6 +16,7 @@ import {
   nextPeriodRow,
   normalizeTime,
   periodRowsToRequest,
+  pickedDate,
   slotBadge,
   slotKey,
   slotsByPeriodForDate,
@@ -317,6 +319,38 @@ describe('cellEditMode', () => {
   it('saves each period straight away unless a whole-week draft is open', () => {
     expect(cellEditMode(false)).toBe('immediate');
     expect(cellEditMode(true)).toBe('draft');
+  });
+});
+
+describe('clearCellAction', () => {
+  it('asks before deleting a saved period straight away', () => {
+    expect(clearCellAction('immediate', true)).toBe('confirm');
+  });
+
+  it('just closes the sheet when the period is already free', () => {
+    expect(clearCellAction('immediate', false)).toBe('close');
+  });
+
+  it('edits the draft without asking, since nothing is lost until "Save timetable"', () => {
+    expect(clearCellAction('draft', true)).toBe('draft');
+    expect(clearCellAction('draft', false)).toBe('draft');
+  });
+});
+
+describe('pickedDate', () => {
+  const date = new Date(2026, 9, 14);
+
+  it('takes the date when one was set', () => {
+    expect(pickedDate({ type: 'set' }, date)).toBe(date);
+  });
+
+  it('ignores a cancelled picker, which on Android still reports the date it opened on', () => {
+    expect(pickedDate({ type: 'dismissed' }, date)).toBeNull();
+    expect(pickedDate({ type: 'neutralButtonPressed' }, date)).toBeNull();
+  });
+
+  it('ignores a set event with no date', () => {
+    expect(pickedDate({ type: 'set' }, undefined)).toBeNull();
   });
 });
 

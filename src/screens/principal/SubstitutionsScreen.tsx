@@ -15,6 +15,7 @@ import {
   listOverrides,
   updateOverride,
   type FreeTeacher,
+  type OverrideKind,
   type Timetable,
   type TimetableClash,
   type TimetableOverride,
@@ -34,14 +35,21 @@ import { TimetableDateBar } from '../../components/TimetableDateBar';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
+import { useOnReturn } from '../../hooks/useOnReturn';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
+  freshLists,
   groupUncoveredByTeacher,
+  noRoomMeansRegular,
+  overrideKindVariant,
   overrideSummary,
   overrideUpdateFromExisting,
+  reloadAfterFailedWrite,
   sortFreeTeachers,
   uncoveredAction,
+  uncoveredOverrideKind,
+  type LoadedFor,
 } from '../../utils/substitutions';
 import { formatIsoDate, isIsoDate, isPastIso, slotBadge, todayIso } from '../../utils/timetable';
 
@@ -56,6 +64,8 @@ interface CoverTarget {
   /** Set when changing the substitute of a cover that already exists. */
   overrideId: string | null;
   override: TimetableOverride | null;
+  /** SUBSTITUTE for a new cover; an existing change keeps its own kind (it can be an extra class). */
+  kind: OverrideKind;
 }
 
 const isTeaching = (employee: Employee) => employee.employeeType !== 'NON_TEACHING';
@@ -81,6 +91,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [teacher, setTeacher] = useState<Employee | null>(null);
   const [teacherDay, setTeacherDay] = useState<Timetable | null>(null);
+  const [loadedFor, setLoadedFor] = useState<LoadedFor | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +115,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
         setUncovered(uncoveredRows);
         setOverrides(overrideRows);
         setTeacherDay(day);
+        setLoadedFor({ date, teacherId: teacher?.id ?? null });
         setError(null);
       })
       .catch((e) => {
@@ -118,28 +130,30 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
     load();
   }, [load]);
 
-  useEffect(() => {
-    // With rooms out of use, so a change that already has one keeps showing it (pickers hide the rest).
-    listRooms(schoolId, true)
-      .then(setRooms)
-      .catch(() => setRooms([]));
-  }, [schoolId]);
+  // With rooms out of use, so a change that already has one keeps showing it (pickers hide the rest).
+  // A failed reload keeps the rooms already shown.
+  const loadRooms = useCallback(
+    () =>
+      listRooms(schoolId, true)
+        .then(setRooms)
+        .catch(() => {}),
+    [schoolId]
+  );
 
-  // Back from staff attendance: someone may have just been marked absent.
   useEffect(() => {
-    let first = true;
-    return navigation.addListener('focus', () => {
-      if (first) {
-        first = false;
-        return;
-      }
-      load();
-    });
-  }, [load, navigation]);
+    loadRooms();
+  }, [loadRooms]);
+
+  // Back from staff attendance (someone may have just been marked absent) or from Rooms (one may
+  // have just been added for the Find substitute sheet).
+  useOnReturn(() => {
+    load();
+    loadRooms();
+  });
 
   const refresh = () => {
     setRefreshing(true);
-    load().finally(() => setRefreshing(false));
+    Promise.all([load(), loadRooms()]).finally(() => setRefreshing(false));
   };
 
   const afterWrite = async () => {
@@ -147,6 +161,19 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
     setError(null);
     showToast(t('timetable.subs.saved'), 'success');
     await load();
+  };
+
+  /**
+   * A refused change. The Undo buttons can sit far below the error box at the top, so the message
+   * is also shown as a toast. When the lists are out of date (the period already has a change, or
+   * the change is gone) they are reloaded first, so the change the message talks about is on show.
+   */
+  const writeFailed = async (e: unknown) => {
+    if (reloadAfterFailedWrite(e)) await load();
+    const message = getErrorMessage(e);
+    setClashes(clashesFromError(e) ?? []);
+    setError(message);
+    showToast(message, 'error');
   };
 
   const periodLabel = (periodNumber: number, startTime?: string | null) =>
@@ -164,8 +191,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
             await createOverride(schoolId, { date, sectionId, periodNumber, kind: 'CANCELLED' });
             await afterWrite();
           } catch (e) {
-            setClashes(clashesFromError(e) ?? []);
-            setError(getErrorMessage(e));
+            await writeFailed(e);
           } finally {
             setBusy(false);
           }
@@ -186,8 +212,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
             await afterWrite();
           } catch (e) {
             // Refused when the regular teacher or room is now busy elsewhere then.
-            setClashes(clashesFromError(e) ?? []);
-            setError(getErrorMessage(e));
+            await writeFailed(e);
           } finally {
             setBusy(false);
           }
@@ -195,14 +220,26 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
       },
     ]);
 
-  const coverFromUncovered = (entry: UncoveredPeriod): CoverTarget => ({
-    sectionId: entry.sectionId,
-    sectionLabel: sectionLabel(entry),
-    periodNumber: entry.periodNumber,
-    subjectName: entry.subjectName,
-    overrideId: uncoveredAction(entry) === 'edit' ? entry.overrideId : null,
-    override: entry.overrideId ? (overrides?.find((o) => o.id === entry.overrideId) ?? null) : null,
-  });
+  // Only the lists loaded for the date (and teacher) now picked are shown: a stale row's buttons
+  // would act on the new date. While the new date loads, the spinner shows instead.
+  const fresh = freshLists(loadedFor, date, teacher?.id ?? null);
+  const uncoveredShown = fresh.day ? uncovered : null;
+  const overridesShown = fresh.day ? overrides : null;
+  const teacherDayShown = fresh.teacher ? teacherDay : null;
+  const locked = busy || loading;
+
+  const coverFromUncovered = (entry: UncoveredPeriod): CoverTarget => {
+    const existing = entry.overrideId ? (overridesShown?.find((o) => o.id === entry.overrideId) ?? null) : null;
+    return {
+      sectionId: entry.sectionId,
+      sectionLabel: sectionLabel(entry),
+      periodNumber: entry.periodNumber,
+      subjectName: entry.subjectName,
+      overrideId: uncoveredAction(entry) === 'edit' ? entry.overrideId : null,
+      override: existing,
+      kind: existing?.kind ?? 'SUBSTITUTE',
+    };
+  };
 
   const coverFromSlot = (slot: TimetableSlot): CoverTarget => ({
     sectionId: slot.sectionId,
@@ -211,11 +248,12 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
     subjectName: slot.subjectName,
     overrideId: null,
     override: null,
+    kind: 'SUBSTITUTE',
   });
 
-  const groups = groupUncoveredByTeacher(uncovered ?? []);
-  const teacherSlots = [...(teacherDay?.slots ?? [])].sort((a, b) => a.periodNumber - b.periodNumber);
-  const teacherPeriodStart = (n: number) => teacherDay?.periods.find((p) => p.periodNumber === n)?.startTime ?? null;
+  const groups = groupUncoveredByTeacher(uncoveredShown ?? []);
+  const teacherSlots = [...(teacherDayShown?.slots ?? [])].sort((a, b) => a.periodNumber - b.periodNumber);
+  const teacherPeriodStart = (n: number) => teacherDayShown?.periods.find((p) => p.periodNumber === n)?.startTime ?? null;
 
   return (
     <View style={styles.root}>
@@ -235,7 +273,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
             <Text style={styles.link}>{t('timetable.subs.markLeave')}</Text>
           </Pressable>
         )}
-        {uncovered !== null && groups.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
+        {uncoveredShown !== null && groups.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
         {groups.map((group) => (
           <View key={group.teacherId} style={styles.card}>
             <View style={styles.cardHeader}>
@@ -245,38 +283,42 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                 variant={group.attendanceStatus === 'ABSENT' ? 'error' : 'warning'}
               />
             </View>
-            {group.periods.map((entry) => (
-              <View key={`${entry.sectionId}-${entry.periodNumber}`} style={styles.periodRow}>
-                <Text style={styles.periodTitle}>
-                  {periodLabel(entry.periodNumber, entry.startTime)} · {sectionLabel(entry)}
-                </Text>
-                <Text style={styles.periodMeta}>
-                  {[entry.subjectName, entry.roomName ? t('timetable.room', { name: entry.roomName }) : null].filter(Boolean).join(' · ')}
-                </Text>
-                {!!entry.overrideId && (
-                  <View style={styles.chipRow}>
-                    <StatusChip label={t('timetable.subs.kind.SUBSTITUTE')} variant="warning" />
-                  </View>
-                )}
-                {!past && (
-                  <View style={styles.actions}>
-                    <ActionButton
-                      label={t('timetable.subs.findSubstitute')}
-                      disabled={busy}
-                      onPress={() => setTarget(coverFromUncovered(entry))}
-                    />
-                    {uncoveredAction(entry) === 'create' && (
+            {group.periods.map((entry) => {
+              // A change whose substitute is now away: a substitution or an extra class.
+              const kind = uncoveredOverrideKind(entry, overridesShown);
+              return (
+                <View key={`${entry.sectionId}-${entry.periodNumber}`} style={styles.periodRow}>
+                  <Text style={styles.periodTitle}>
+                    {periodLabel(entry.periodNumber, entry.startTime)} · {sectionLabel(entry)}
+                  </Text>
+                  <Text style={styles.periodMeta}>
+                    {[entry.subjectName, entry.roomName ? t('timetable.room', { name: entry.roomName }) : null].filter(Boolean).join(' · ')}
+                  </Text>
+                  {kind && (
+                    <View style={styles.chipRow}>
+                      <StatusChip label={t(`timetable.subs.kind.${kind}`)} variant={overrideKindVariant(kind)} />
+                    </View>
+                  )}
+                  {!past && (
+                    <View style={styles.actions}>
                       <ActionButton
-                        label={t('timetable.subs.cancelPeriod')}
-                        danger
-                        disabled={busy}
-                        onPress={() => confirmCancel(entry.sectionId, sectionLabel(entry), entry.periodNumber)}
+                        label={t('timetable.subs.findSubstitute')}
+                        disabled={locked}
+                        onPress={() => setTarget(coverFromUncovered(entry))}
                       />
-                    )}
-                  </View>
-                )}
-              </View>
-            ))}
+                      {uncoveredAction(entry) === 'create' && (
+                        <ActionButton
+                          label={t('timetable.subs.cancelPeriod')}
+                          danger
+                          disabled={locked}
+                          onPress={() => confirmCancel(entry.sectionId, sectionLabel(entry), entry.periodNumber)}
+                        />
+                      )}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
         ))}
 
@@ -292,13 +334,13 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
             setTeacher(employee);
           }}
         />
-        {teacher && teacherDay && (
+        {teacher && teacherDayShown && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{teacher.name}</Text>
-            {teacherDay.schoolDay === false ? (
+            {teacherDayShown.schoolDay === false ? (
               <Text style={styles.empty}>
                 {t('timetable.date.noSchool', { date: dateLabel })}
-                {teacherDay.holidayName ? ` ${t('timetable.date.holiday', { name: teacherDay.holidayName })}` : ''}
+                {teacherDayShown.holidayName ? ` ${t('timetable.date.holiday', { name: teacherDayShown.holidayName })}` : ''}
               </Text>
             ) : teacherSlots.length === 0 ? (
               <Text style={styles.empty}>{t('timetable.my.nothingToday')}</Text>
@@ -331,20 +373,20 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                           <ActionButton
                             label={t('timetable.subs.undo')}
                             danger
-                            disabled={busy}
+                            disabled={locked}
                             onPress={() => slot.overrideId && confirmUndo(slot.overrideId)}
                           />
                         ) : (
                           <>
                             <ActionButton
                               label={t('timetable.subs.findSubstitute')}
-                              disabled={busy}
+                              disabled={locked}
                               onPress={() => setTarget(coverFromSlot(slot))}
                             />
                             <ActionButton
                               label={t('timetable.subs.cancelPeriod')}
                               danger
-                              disabled={busy}
+                              disabled={locked}
                               onPress={() => confirmCancel(slot.sectionId, sectionLabel(slot), slot.periodNumber)}
                             />
                           </>
@@ -360,8 +402,8 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
 
         {/* Changes on this day */}
         <Text style={styles.sectionTitle}>{t('timetable.subs.changes')}</Text>
-        {overrides !== null && overrides.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noChanges')}</Text>}
-        {overrides?.map((o) => {
+        {overridesShown !== null && overridesShown.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noChanges')}</Text>}
+        {overridesShown?.map((o) => {
           const summary = overrideSummary(o);
           const who =
             summary.kind === 'SUBSTITUTE' ? `${summary.from ?? ''} → ${summary.to ?? ''}` : (summary.from ?? summary.to ?? '');
@@ -371,10 +413,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                 <Text style={styles.periodTitle}>
                   {periodLabel(o.periodNumber, o.startTime)} · {sectionLabel(o)}
                 </Text>
-                <StatusChip
-                  label={t(`timetable.subs.kind.${o.kind}`)}
-                  variant={o.kind === 'CANCELLED' ? 'error' : o.kind === 'EXTRA' ? 'success' : 'warning'}
-                />
+                <StatusChip label={t(`timetable.subs.kind.${o.kind}`)} variant={overrideKindVariant(o.kind)} />
               </View>
               {!!summary.subject && <Text style={styles.periodMeta}>{summary.subject}</Text>}
               {!!who && <Text style={styles.periodMeta}>{who}</Text>}
@@ -382,8 +421,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
               {!!o.reason && <Text style={styles.reason}>{o.reason}</Text>}
               {!past && !!o.id && (
                 <View style={styles.actions}>
-                  <ActionButton label={t('timetable.subs.undo')} danger disabled={busy} onPress={() => o.id && confirmUndo(o.id)} />
-
+                  <ActionButton label={t('timetable.subs.undo')} danger disabled={locked} onPress={() => o.id && confirmUndo(o.id)} />
                 </View>
               )}
             </View>
@@ -395,12 +433,18 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
         <CoverSheet
           schoolId={schoolId}
           date={date}
+          dateLabel={dateLabel}
           target={target}
           rooms={rooms}
           onClose={() => setTarget(null)}
           onSaved={() => {
             setTarget(null);
             afterWrite();
+          }}
+          onStale={(e) => {
+            // The period already has a change (or it is gone): close, and show the lists as they are now.
+            setTarget(null);
+            writeFailed(e);
           }}
           onManageRooms={() => {
             setTarget(null);
@@ -428,15 +472,19 @@ function ActionButton({ label, onPress, danger, disabled }: { label: string; onP
 interface CoverSheetProps {
   schoolId: string;
   date: string;
+  /** The date as shown, so the admin can see which day the change is for. */
+  dateLabel: string;
   target: CoverTarget;
   rooms: Room[];
   onClose: () => void;
   onSaved: () => void;
+  /** The save failed because the screen's lists are out of date (see reloadAfterFailedWrite). */
+  onStale: (e: unknown) => void;
   onManageRooms: () => void;
 }
 
 /** "Find substitute": the teachers free in that period, a room, a reason, and Save. */
-function CoverSheet({ schoolId, date, target, rooms, onClose, onSaved, onManageRooms }: CoverSheetProps) {
+function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved, onStale, onManageRooms }: CoverSheetProps) {
   const { t } = useTranslation();
   const sheetBottom = useBottomInset(spacing.lg);
   const [teachers, setTeachers] = useState<FreeTeacher[] | null>(null);
@@ -487,6 +535,10 @@ function CoverSheet({ schoolId, date, target, rooms, onClose, onSaved, onManageR
       }
       onSaved();
     } catch (e) {
+      if (reloadAfterFailedWrite(e)) {
+        onStale(e);
+        return;
+      }
       const found = clashesFromError(e);
       if (found) {
         // Someone else's change got there first: show why, and who is free now.
@@ -511,7 +563,9 @@ function CoverSheet({ schoolId, date, target, rooms, onClose, onSaved, onManageR
           <ScrollView keyboardShouldPersistTaps="handled">
             <Text style={styles.sheetTitle}>{t('timetable.subs.findSubstitute')}</Text>
             <Text style={styles.sheetSubtitle}>
-              {[target.sectionLabel, t('timetable.periodN', { n: target.periodNumber }), target.subjectName].filter(Boolean).join(' · ')}
+              {[dateLabel, target.sectionLabel, t('timetable.periodN', { n: target.periodNumber }), target.subjectName]
+                .filter(Boolean)
+                .join(' · ')}
             </Text>
 
             <Text style={styles.fieldLabel}>{t('timetable.subs.freeTeachers', { n: target.periodNumber })}</Text>
@@ -547,7 +601,7 @@ function CoverSheet({ schoolId, date, target, rooms, onClose, onSaved, onManageR
               rooms={rooms}
               selectedId={roomId}
               onSelect={setRoomId}
-              noneLabel={t('timetable.subs.sameRoom')}
+              noneLabel={noRoomMeansRegular(target.kind) ? t('timetable.subs.sameRoom') : undefined}
               onManageRooms={onManageRooms}
             />
 

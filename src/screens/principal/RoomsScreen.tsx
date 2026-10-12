@@ -20,6 +20,7 @@ import {
   ROOM_NAME_MAX,
   roomFormToRequest,
   roomToForm,
+  showInUseSwitch,
   splitRooms,
   validateRoomForm,
   type RoomForm,
@@ -187,7 +188,8 @@ export function RoomsScreen({ navigation }: Props) {
                   keyboardType="number-pad"
                   maxLength={4}
                 />
-                {editing.room && (
+                {/* Only to put a room back in use: taking one out asks first, below. */}
+                {showInUseSwitch(editing.room) && (
                   <View style={styles.switchRow}>
                     <Text style={styles.switchText}>{t('timetable.rooms.active')}</Text>
                     <Switch
