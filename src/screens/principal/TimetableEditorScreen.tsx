@@ -1,56 +1,97 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { listRooms, type Room } from '../../api/rooms';
 import { listSectionSubjects } from '../../api/sectionSubjects';
 import {
   clashesFromError,
+  clearTimetableCell,
   getSectionTimetable,
+  notAssignedFromError,
   saveSectionTimetable,
+  setTimetableCell,
   type DayOfWeek,
   type Period,
+  type Timetable,
   type TimetableClash,
+  type TimetableSlot,
 } from '../../api/timetable';
 import type { ClassSection, SubjectAssignment } from '../../api/types';
+import { ClashList } from '../../components/ClashList';
 import ClassSectionPicker from '../../components/ClassSectionPicker';
+import EmployeePicker from '../../components/EmployeePicker';
+import { RoomPicker } from '../../components/RoomPicker';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import SubjectPicker from '../../components/SubjectPicker';
 import { TimetableDayTabs } from '../../components/TimetableDayTabs';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
-import { cellsToSlotRequests, defaultDay, slotKey, slotsToCells, type CellAssignment } from '../../utils/timetable';
+import { cellEditMode, cellsToSlotRequests, defaultDay, slotKey, slotsToCells, type CellAssignment } from '../../utils/timetable';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TimetableEditor'>;
 
-const assignmentKey = (a: CellAssignment) => `${a.subjectId}|${a.teacherId}`;
+const assignmentKey = (a: { subjectId: string; teacherId: string }) => `${a.subjectId}|${a.teacherId}`;
+
+/** The period being edited in the bottom sheet, and what's picked for it so far. */
+interface CellSheet {
+  period: Period;
+  subjectId: string | null;
+  teacherId: string | null;
+  roomId: string | null;
+  /** Showing the subject and teacher pickers, for a pair the class doesn't have yet. */
+  other: boolean;
+  /** Names of a pair picked through the pickers, for the "Also assign?" question. */
+  subjectName?: string;
+  teacherName?: string;
+}
 
 /**
- * Admin-only weekly timetable editor for one class-section: day tabs, one row per period, tap a
- * row to pick one of the section's subject+teacher assignments. Save sends the whole week; the
- * server rejects clashes (a teacher already teaching elsewhere then) and they're listed here.
+ * Admin-only weekly timetable editor for one class-section: day tabs, one row per period. Tapping
+ * a row opens a sheet to pick one of the section's subject+teacher assignments (or any teacher and
+ * subject - the app then offers to assign them) and a room. "Save this period" saves just that
+ * period straight away; the server refuses clashes (the teacher or room is busy elsewhere then)
+ * and they're listed in the sheet. After "Copy this day to every day" the edits are a draft
+ * instead, and "Save timetable" sends the whole week.
  */
 export function TimetableEditorScreen({ route, navigation }: Props) {
   const sheetBottom = useBottomInset(spacing.lg);
   const { t } = useTranslation();
   const schoolId = useSchoolId();
+  const { showToast } = useToast();
   const [classSection, setClassSection] = useState<ClassSection | null>(route.params?.classSection ?? null);
   const [days, setDays] = useState<DayOfWeek[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [assignments, setAssignments] = useState<SubjectAssignment[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [slots, setSlots] = useState<TimetableSlot[]>([]);
   const [cells, setCells] = useState<Record<string, CellAssignment>>({});
   const [day, setDay] = useState<DayOfWeek>('MONDAY');
-  const [picking, setPicking] = useState<Period | null>(null);
+  const [sheet, setSheet] = useState<CellSheet | null>(null);
+  const [sheetSaving, setSheetSaving] = useState(false);
+  const [sheetError, setSheetError] = useState<string | null>(null);
+  const [sheetClashes, setSheetClashes] = useState<TimetableClash[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clashes, setClashes] = useState<TimetableClash[]>([]);
   const [success, setSuccess] = useState(false);
+  const mode = cellEditMode(dirty);
+
+  const applyTimetable = (tt: Timetable) => {
+    setDays(tt.days);
+    setPeriods(tt.periods);
+    setSlots(tt.slots);
+    setCells(slotsToCells(tt.slots));
+  };
 
   const load = useCallback(() => {
     if (!classSection) return;
@@ -58,12 +99,20 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
     setError(null);
     setClashes([]);
     setSuccess(false);
-    Promise.all([getSectionTimetable(schoolId, classSection.id), listSectionSubjects(schoolId, classSection.id)])
-      .then(([tt, subjects]) => {
+    Promise.all([
+      getSectionTimetable(schoolId, classSection.id),
+      listSectionSubjects(schoolId, classSection.id),
+      // Rooms are optional: the editor works without them. Rooms out of use come too, so a period
+      // that already has one keeps showing it (the picker hides them otherwise).
+      listRooms(schoolId, true).catch(() => [] as Room[]),
+    ])
+      .then(([tt, subjects, roomList]) => {
         setDays(tt.days);
         setPeriods(tt.periods);
+        setSlots(tt.slots);
         setCells(slotsToCells(tt.slots));
         setAssignments(subjects);
+        setRooms(roomList);
         setDay((current) => (tt.days.includes(current) ? current : defaultDay(tt.days)));
         setDirty(false);
       })
@@ -73,7 +122,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
 
   useEffect(load, [load]);
 
-  // Coming back from the bell schedule or subject assignments: reload, unless there are unsaved edits.
+  // Coming back from the bell schedule, subject assignments or rooms: reload, unless there are unsaved edits.
   const dirtyRef = useRef(dirty);
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -95,12 +144,31 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
     return map;
   }, [assignments]);
 
+  // Names for every subject+teacher pair on show: the saved periods (which may use a pair that's no
+  // longer assigned) and the class's assignments.
+  const pairNames = useMemo(() => {
+    const map = new Map<string, { subjectName: string; teacherName: string }>();
+    for (const s of slots) map.set(assignmentKey(s), { subjectName: s.subjectName, teacherName: s.teacherName });
+    for (const a of assignments) map.set(assignmentKey(a), { subjectName: a.subjectName, teacherName: a.teacherName });
+    return map;
+  }, [slots, assignments]);
+
+  const roomNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of slots) if (s.roomId && s.roomName) map.set(s.roomId, s.roomName);
+    for (const r of rooms) map.set(r.id, r.name);
+    return map;
+  }, [slots, rooms]);
+
   const clashKeys = useMemo(() => new Set(clashes.map((c) => slotKey(c.dayOfWeek, c.periodNumber))), [clashes]);
 
   const teachablePeriods = periods.filter((p) => !p.breakPeriod);
   const filledToday = teachablePeriods.filter((p) => cells[slotKey(day, p.periodNumber)]).length;
 
-  const setCell = (period: Period, value: CellAssignment | null) => {
+  const dayName = (d: DayOfWeek) => t(`timetable.days.${d}`);
+
+  /** Draft mode only: changes the local week, saved later with "Save timetable". */
+  const setDraftCell = (period: Period, value: CellAssignment | null) => {
     const key = slotKey(day, period.periodNumber);
     setCells((prev) => {
       const next = { ...prev };
@@ -111,7 +179,107 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
     setClashes((prev) => prev.filter((c) => slotKey(c.dayOfWeek, c.periodNumber) !== key));
     setDirty(true);
     setSuccess(false);
-    setPicking(null);
+    setSheet(null);
+  };
+
+  const openSheet = (period: Period) => {
+    const cell = cells[slotKey(day, period.periodNumber)];
+    const names = cell ? pairNames.get(assignmentKey(cell)) : undefined;
+    setSheet({
+      period,
+      subjectId: cell?.subjectId ?? null,
+      teacherId: cell?.teacherId ?? null,
+      roomId: cell?.roomId ?? null,
+      other: !!cell && !assignmentByKey.has(assignmentKey(cell)) && mode === 'immediate',
+      subjectName: names?.subjectName,
+      teacherName: names?.teacherName,
+    });
+    setSheetError(null);
+    setSheetClashes([]);
+  };
+
+  const closeSheet = () => {
+    if (!sheetSaving) setSheet(null);
+  };
+
+  const saveSheet = async (current: CellSheet, assignIfMissing = false) => {
+    if (!classSection) return;
+    if (!current.subjectId || !current.teacherId) {
+      setSheetError(t('timetable.editor.pickBoth'));
+      return;
+    }
+    const value: CellAssignment = { subjectId: current.subjectId, teacherId: current.teacherId, roomId: current.roomId };
+    if (mode === 'draft') {
+      setDraftCell(current.period, value);
+      return;
+    }
+    setSheetSaving(true);
+    setSheetError(null);
+    setSheetClashes([]);
+    try {
+      const result = await setTimetableCell(schoolId, classSection.id, day, current.period.periodNumber, {
+        subjectId: value.subjectId,
+        teacherId: value.teacherId,
+        roomId: value.roomId ?? null,
+        assignIfMissing,
+      });
+      applyTimetable(result.timetable);
+      if (result.assignmentCreated) {
+        listSectionSubjects(schoolId, classSection.id)
+          .then(setAssignments)
+          .catch(() => {});
+      }
+      setClashes([]);
+      setSheet(null);
+      showToast(t('timetable.editor.cellSaved'), 'success');
+    } catch (e) {
+      const notAssigned = notAssignedFromError(e);
+      if (notAssigned && !assignIfMissing) {
+        // Saving would otherwise work (the server checks clashes first), so offer to assign them.
+        Alert.alert(
+          t('timetable.editor.assignTitle'),
+          t('timetable.editor.assignBody', {
+            teacher: notAssigned.teacherName || current.teacherName || '',
+            subject: notAssigned.subjectName || current.subjectName || '',
+          }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('timetable.editor.assignYes'), onPress: () => saveSheet(current, true) },
+          ]
+        );
+        return;
+      }
+      const found = clashesFromError(e);
+      if (found) setSheetClashes(found);
+      setSheetError(getErrorMessage(e));
+    } finally {
+      setSheetSaving(false);
+    }
+  };
+
+  const clearSheet = async (current: CellSheet) => {
+    if (!classSection) return;
+    if (mode === 'draft') {
+      setDraftCell(current.period, null);
+      return;
+    }
+    if (!cells[slotKey(day, current.period.periodNumber)]) {
+      setSheet(null);
+      return;
+    }
+    setSheetSaving(true);
+    setSheetError(null);
+    setSheetClashes([]);
+    try {
+      const result = await clearTimetableCell(schoolId, classSection.id, day, current.period.periodNumber);
+      applyTimetable(result.timetable);
+      setSheet(null);
+      showToast(t('timetable.editor.cellCleared'), 'success');
+    } catch (e) {
+      setSheetError(getErrorMessage(e));
+    } finally {
+      setSheetSaving(false);
+    }
   };
 
   const copyDayToAll = () => {
@@ -140,6 +308,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
     setSuccess(false);
     try {
       const saved = await saveSectionTimetable(schoolId, classSection.id, cellsToSlotRequests(cells, days, periods));
+      setSlots(saved.slots);
       setCells(slotsToCells(saved.slots));
       setDirty(false);
       setSuccess(true);
@@ -152,7 +321,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
     }
   };
 
-  const dayName = (d: DayOfWeek) => t(`timetable.days.${d}`);
+  const currentSheetKey = sheet ? assignmentKey({ subjectId: sheet.subjectId ?? '', teacherId: sheet.teacherId ?? '' }) : '';
 
   return (
     <View style={styles.root}>
@@ -171,6 +340,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
               onSelect={(cs) => {
                 setClassSection(cs);
                 setCells({});
+                setSlots([]);
                 setDirty(false);
               }}
             />
@@ -180,21 +350,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         {!loading && error && <ErrorNotice message={error} />}
-        {!loading && clashes.length > 0 && (
-          <View style={styles.clashBox}>
-            <Text style={styles.clashTitle}>{t('timetable.editor.clashTitle')}</Text>
-            {clashes.map((c) => (
-              <Text key={`${c.dayOfWeek}-${c.periodNumber}-${c.teacherId}`} style={styles.clashLine}>
-                {t('timetable.editor.clashLine', {
-                  day: dayName(c.dayOfWeek),
-                  n: c.periodNumber,
-                  teacher: c.teacherName,
-                  section: c.conflictingSectionLabel,
-                })}
-              </Text>
-            ))}
-          </View>
-        )}
+        {!loading && <ClashList clashes={clashes} title={t('timetable.editor.clashTitle')} />}
 
         {!loading && classSection && periods.length === 0 && !error && (
           <View style={styles.notice}>
@@ -214,7 +370,7 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {!loading && classSection && periods.length > 0 && assignments.length > 0 && (
+        {!loading && classSection && periods.length > 0 && (
           <>
             <TimetableDayTabs days={days} selected={day} onSelect={setDay} />
             <View style={styles.dayMeta}>
@@ -230,13 +386,14 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
 
             {periods.map((period) => {
               const cell = cells[slotKey(day, period.periodNumber)];
-              const assignment = cell ? assignmentByKey.get(assignmentKey(cell)) : undefined;
+              const names = cell ? pairNames.get(assignmentKey(cell)) : undefined;
+              const roomName = cell?.roomId ? roomNames.get(cell.roomId) : undefined;
               const clashing = clashKeys.has(slotKey(day, period.periodNumber));
               return (
                 <Pressable
                   key={period.periodNumber}
                   disabled={period.breakPeriod}
-                  onPress={() => setPicking(period)}
+                  onPress={() => openSheet(period)}
                   style={[styles.row, period.breakPeriod && styles.breakRow, clashing && styles.clashRow]}
                 >
                   <View style={styles.timeCol}>
@@ -246,10 +403,11 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
                   <View style={styles.bodyCol}>
                     {period.breakPeriod ? (
                       <Text style={styles.breakText}>{period.label ?? t('timetable.break')}</Text>
-                    ) : assignment ? (
+                    ) : cell ? (
                       <>
-                        <Text style={styles.subject}>{assignment.subjectName}</Text>
-                        <Text style={styles.detail}>{assignment.teacherName}</Text>
+                        <Text style={styles.subject}>{names?.subjectName ?? t('common.emptyValue')}</Text>
+                        <Text style={styles.detail}>{names?.teacherName ?? t('common.emptyValue')}</Text>
+                        {!!roomName && <Text style={styles.room}>{t('timetable.room', { name: roomName })}</Text>}
                       </>
                     ) : (
                       <Text style={styles.free}>{t('timetable.free')}</Text>
@@ -260,48 +418,109 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
               );
             })}
 
-            {dirty && <Text style={styles.unsaved}>{t('timetable.editor.unsaved')}</Text>}
-            {success && <Text style={styles.success}>{t('timetable.editor.saved')}</Text>}
-            <Pressable
-              style={[styles.saveButton, (saving || !dirty) && styles.disabled]}
-              onPress={handleSave}
-              disabled={saving || !dirty}
-            >
-              {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveText}>{t('timetable.editor.save')}</Text>}
-            </Pressable>
+            {mode === 'draft' ? (
+              <>
+                <Text style={styles.unsaved}>{t('timetable.editor.unsaved')}</Text>
+                <Pressable style={[styles.saveButton, saving && styles.disabled]} onPress={handleSave} disabled={saving}>
+                  {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveText}>{t('timetable.editor.save')}</Text>}
+                </Pressable>
+              </>
+            ) : (
+              <>
+                {success && <Text style={styles.success}>{t('timetable.editor.saved')}</Text>}
+                <Text style={styles.hint}>{t('timetable.editor.immediateHint')}</Text>
+              </>
+            )}
           </>
         )}
       </ScreenContainer>
 
-      <Modal visible={!!picking} transparent animationType="slide" onRequestClose={() => setPicking(null)}>
-        <Pressable style={styles.backdrop} onPress={() => setPicking(null)}>
+      <Modal visible={!!sheet} transparent animationType="slide" onRequestClose={closeSheet}>
+        <Pressable style={styles.backdrop} onPress={closeSheet}>
           <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={() => {}}>
-            {picking && (
-              <>
+            {sheet && (
+              <ScrollView keyboardShouldPersistTaps="handled">
                 <Text style={styles.sheetTitle}>
-                  {t('timetable.editor.pickTitle', { day: dayName(day), n: picking.periodNumber })}
+                  {t('timetable.editor.pickTitle', { day: dayName(day), n: sheet.period.periodNumber })}
                 </Text>
-                <FlatList
-                  data={assignments}
-                  keyExtractor={(a) => assignmentKey(a)}
-                  renderItem={({ item }) => {
-                    const current = cells[slotKey(day, picking.periodNumber)];
-                    const selected = !!current && assignmentKey(current) === assignmentKey(item);
-                    return (
-                      <Pressable
-                        style={[styles.option, selected && styles.optionSelected]}
-                        onPress={() => setCell(picking, { subjectId: item.subjectId, teacherId: item.teacherId })}
-                      >
-                        <Text style={styles.optionTitle}>{item.subjectName}</Text>
-                        <Text style={styles.optionDetail}>{item.teacherName}</Text>
-                      </Pressable>
-                    );
+
+                {assignments.map((item) => {
+                  const selected = !sheet.other && currentSheetKey === assignmentKey(item);
+                  return (
+                    <Pressable
+                      key={assignmentKey(item)}
+                      style={[styles.option, selected && styles.optionSelected]}
+                      onPress={() =>
+                        setSheet({
+                          ...sheet,
+                          subjectId: item.subjectId,
+                          teacherId: item.teacherId,
+                          subjectName: item.subjectName,
+                          teacherName: item.teacherName,
+                          other: false,
+                        })
+                      }
+                    >
+                      <Text style={styles.optionTitle}>{item.subjectName}</Text>
+                      <Text style={styles.optionDetail}>{item.teacherName}</Text>
+                    </Pressable>
+                  );
+                })}
+
+                {/* A pair the class doesn't have yet can't go into a whole-week draft (the week save
+                    only takes assigned pairs), so it's offered only when saving one period. */}
+                {mode === 'immediate' &&
+                  (sheet.other ? (
+                    <View style={styles.otherBox}>
+                      <Text style={styles.fieldLabel}>{t('timetable.editor.subject')}</Text>
+                      <SubjectPicker
+                        schoolId={schoolId}
+                        selectedId={sheet.subjectId}
+                        onSelect={(subject) => setSheet({ ...sheet, subjectId: subject.id, subjectName: subject.name })}
+                      />
+                      <Text style={styles.fieldLabel}>{t('timetable.editor.teacher')}</Text>
+                      <EmployeePicker
+                        schoolId={schoolId}
+                        selectedId={sheet.teacherId}
+                        filter={(employee) => employee.employeeType !== 'NON_TEACHING'}
+                        onSelect={(employee) => setSheet({ ...sheet, teacherId: employee.id, teacherName: employee.name })}
+                      />
+                    </View>
+                  ) : (
+                    <Pressable style={styles.otherLink} onPress={() => setSheet({ ...sheet, other: true })}>
+                      <Text style={styles.linkText}>{t('timetable.editor.otherTeacher')}</Text>
+                    </Pressable>
+                  ))}
+
+                <Text style={[styles.fieldLabel, styles.roomLabel]}>{t('timetable.editor.room')}</Text>
+                <RoomPicker
+                  rooms={rooms}
+                  selectedId={sheet.roomId}
+                  onSelect={(roomId) => setSheet({ ...sheet, roomId })}
+                  onManageRooms={() => {
+                    setSheet(null);
+                    navigation.navigate('Rooms');
                   }}
                 />
-                <Pressable style={styles.clearOption} onPress={() => setCell(picking, null)}>
+
+                {sheetError && <ErrorNotice message={sheetError} />}
+                <ClashList clashes={sheetClashes} />
+
+                <Pressable
+                  style={[styles.saveButton, styles.sheetSave, sheetSaving && styles.disabled]}
+                  onPress={() => saveSheet(sheet)}
+                  disabled={sheetSaving}
+                >
+                  {sheetSaving ? (
+                    <ActivityIndicator color={colors.white} />
+                  ) : (
+                    <Text style={styles.saveText}>{t('timetable.editor.saveCell')}</Text>
+                  )}
+                </Pressable>
+                <Pressable style={styles.clearOption} onPress={() => clearSheet(sheet)} disabled={sheetSaving}>
                   <Text style={styles.clearText}>{t('timetable.editor.clearCell')}</Text>
                 </Pressable>
-              </>
+              </ScrollView>
             )}
           </Pressable>
         </Pressable>
@@ -314,16 +533,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   pickerWrap: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.xs, fontWeight: '600' },
+  roomLabel: { marginTop: spacing.md },
   loading: { marginTop: spacing.xl },
-  error: { color: colors.error, marginBottom: spacing.md },
-  clashBox: {
-    backgroundColor: '#FDECEC',
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  clashTitle: { color: colors.error, fontWeight: '700', marginBottom: spacing.xs },
-  clashLine: { color: colors.textPrimary, fontSize: 13, marginTop: 2 },
   notice: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -363,11 +574,13 @@ const styles = StyleSheet.create({
   bodyCol: { flex: 1, paddingHorizontal: spacing.sm },
   subject: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   detail: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  room: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   free: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic' },
   breakText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
   chevron: { fontSize: 22, color: colors.textMuted },
   unsaved: { color: colors.warning, fontSize: 13, marginTop: spacing.sm },
   success: { color: colors.success, fontWeight: '600', marginTop: spacing.sm },
+  hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm, marginBottom: spacing.xl },
   saveButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
@@ -377,6 +590,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     ...softShadow,
   },
+  sheetSave: { marginBottom: 0 },
   disabled: { opacity: 0.5 },
   saveText: { color: colors.white, fontWeight: '700' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
@@ -385,7 +599,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     padding: spacing.lg,
-    maxHeight: '70%',
+    maxHeight: '85%',
   },
   sheetTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
   option: {
@@ -398,6 +612,8 @@ const styles = StyleSheet.create({
   optionSelected: { backgroundColor: colors.primaryLight },
   optionTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   optionDetail: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  clearOption: { paddingVertical: spacing.md, alignItems: 'center', marginTop: spacing.sm },
+  otherLink: { paddingVertical: spacing.sm },
+  otherBox: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  clearOption: { paddingVertical: spacing.md, alignItems: 'center', marginTop: spacing.xs },
   clearText: { color: colors.error, fontWeight: '700' },
 });

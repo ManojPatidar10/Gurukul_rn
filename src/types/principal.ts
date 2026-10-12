@@ -42,6 +42,8 @@ export type FeatureId =
   | 'myTimetable'
   | 'timetableEditor'
   | 'bellSchedule'
+  | 'substitutions'
+  | 'rooms'
   | 'schoolLocation'
   | 'attendance'
   | 'vendorsExpenses'
@@ -219,8 +221,17 @@ export type PrincipalStackParamList = {
   AdmissionsList: undefined;
   AdmissionDetail: { admissionId: string };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
-  /** No params: the caller's own timetable. classSection: that section's. student: a parent's child. */
-  MyTimetable: { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'> } | undefined;
+  /**
+   * No params: the caller's own timetable. classSection: that section's. student: a parent's child.
+   * teacher: any teacher's (admin only). date: open on that date (YYYY-MM-DD) rather than today.
+   */
+  MyTimetable:
+    | { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'>; date?: string; teacher?: { id: string; name: string } }
+    | undefined;
   TimetableEditor: { classSection?: ClassSection } | undefined;
   PeriodSetup: undefined;
+  /** Admin: cover periods for a date (YYYY-MM-DD; today when left out). */
+  Substitutions: { date?: string } | undefined;
+  /** Admin: the school's classrooms and labs. */
+  Rooms: undefined;
 };

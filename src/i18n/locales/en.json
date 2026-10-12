@@ -228,6 +228,14 @@
       "holidays": {
         "title": "Holidays & festivals",
         "description": "School holidays and festival greetings"
+      },
+      "substitutions": {
+        "title": "Substitutions",
+        "description": "Give an absent teacher's periods to someone else"
+      },
+      "rooms": {
+        "title": "Rooms",
+        "description": "Classrooms and labs for the timetable"
       }
     },
     "adminCopy": {
@@ -253,6 +261,11 @@
         "title": "My Fees",
         "description": "Your fee dues"
       }
+    },
+    "cover": {
+      "needed_one": "{{count}} period needs a substitute today",
+      "needed_other": "{{count}} periods need a substitute today",
+      "arrange": "Arrange substitutions"
     }
   },
   "academicHelper": {
@@ -328,7 +341,8 @@
       "joinDate": "Join date",
       "bankAccount": "Bank account",
       "contactPhone": "Contact phone",
-      "salaryHistory": "Salary history"
+      "salaryHistory": "Salary history",
+      "timetable": "Timetable"
     },
     "form": {
       "titleEdit": "Edit employee",
@@ -1860,7 +1874,7 @@
       "title": "Timetables",
       "subtitle": "Weekly timetable per class",
       "pickSection": "Choose a class-section",
-      "noAssignments": "No subjects are assigned to this class yet. Assign subjects and teachers first; only those can be scheduled.",
+      "noAssignments": "No subjects are assigned to this class yet. Assign subjects and teachers, or tap a period and choose \"Another teacher or subject…\".",
       "assignSubjects": "Assign subjects",
       "pickTitle": "{{day}}, period {{n}}",
       "clearCell": "Leave free",
@@ -1870,7 +1884,24 @@
       "clashTitle": "These periods clash with other classes:",
       "clashLine": "{{day}} period {{n}}: {{teacher}} is teaching {{section}}",
       "copyToAll": "Copy this day to every day",
-      "filled": "{{count}} of {{total}} periods filled"
+      "filled": "{{count}} of {{total}} periods filled",
+      "room": "Room",
+      "noRoom": "No room",
+      "manageRooms": "Manage rooms",
+      "otherTeacher": "Another teacher or subject…",
+      "subject": "Subject",
+      "teacher": "Teacher",
+      "pickBoth": "Pick a subject and a teacher.",
+      "saveCell": "Save this period",
+      "cellSaved": "Period saved.",
+      "cellCleared": "Period cleared.",
+      "immediateHint": "Tap a period to change it. Each change is saved straight away.",
+      "assignTitle": "Assign teacher to this class?",
+      "assignBody": "{{teacher}} doesn't teach {{subject}} in this class yet. Also assign them to teach {{subject}} here? They will also be able to add marks for it.",
+      "assignYes": "Assign and save",
+      "clashRoom": "{{day}} period {{n}}: room {{room}} is used by {{section}}",
+      "clashAbsent": "{{day}} period {{n}}: {{teacher}} is marked absent",
+      "clashOnDate": "On {{date}}: {{line}}"
     },
     "periods": {
       "title": "Bell Schedule",
@@ -1892,6 +1923,82 @@
         "endBeforeStart": "Period {{n}} must end after it starts.",
         "overlap": "Period {{n}} starts before period {{previous}} ends."
       }
+    },
+    "room": "Room {{name}}",
+    "date": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "week": "Week",
+      "pick": "Pick a date",
+      "noSchool": "No school on {{date}}.",
+      "holiday": "Holiday: {{name}}"
+    },
+    "badge": {
+      "substitute": "Substitute for {{teacher}}",
+      "covering": "You're covering for {{teacher}}",
+      "takenBy": "Taken by {{teacher}}",
+      "cancelled": "Cancelled",
+      "extra": "Extra class"
+    },
+    "rooms": {
+      "title": "Rooms",
+      "subtitle": "Classrooms and labs",
+      "add": "+ Add room",
+      "newTitle": "New room",
+      "edit": "Edit room",
+      "name": "Room name",
+      "capacity": "Seats (optional)",
+      "seats_one": "{{count}} seat",
+      "seats_other": "{{count}} seats",
+      "active": "In use",
+      "inactive": "Not in use",
+      "save": "Save room",
+      "saved": "Room saved.",
+      "remove": "Stop using this room",
+      "removeTitle": "Stop using {{name}}?",
+      "removeBody": "It stays on the periods that already have it, but can't be picked for new ones.",
+      "removed": "Room taken out of use.",
+      "empty": "No rooms yet. Add your classrooms and labs to put them on the timetable.",
+      "nameRequired": "Enter a room name.",
+      "nameTooLong": "A room name can be at most {{max}} characters.",
+      "badCapacity": "Seats must be a number from 1 to 1000."
+    },
+    "subs": {
+      "title": "Substitutions",
+      "subtitle": "Cover periods when a teacher is away",
+      "needsCover": "Needs a substitute",
+      "noneUncovered": "Every period of absent teachers is covered.",
+      "markLeave": "Mark who is on leave today",
+      "leaveHint": "Teachers marked Absent or Half day in staff attendance show here.",
+      "anyTeacher": "Another teacher's periods",
+      "anyTeacherHint": "Pick a teacher to see their periods on this day.",
+      "findSubstitute": "Find substitute",
+      "cancelPeriod": "Cancel this period",
+      "cancelTitle": "Cancel this period?",
+      "cancelBody": "{{class}}, period {{n}} won't happen on {{date}}. The teacher and students will be told.",
+      "freeTeachers": "Free in period {{n}}",
+      "noFreeTeachers": "No teacher is free in this period.",
+      "periodsThatDay_one": "{{count}} period that day",
+      "periodsThatDay_other": "{{count}} periods that day",
+      "teachesClass": "Teaches this class",
+      "halfDay": "Half day",
+      "absent": "Absent",
+      "sameRoom": "Same room",
+      "reason": "Reason (optional)",
+      "pickTeacherFirst": "Pick a teacher first.",
+      "save": "Save",
+      "undo": "Undo",
+      "undoTitle": "Undo this change?",
+      "undoBody": "The period goes back to the regular timetable. The teachers and students will be told.",
+      "changes": "Changes on this day",
+      "noChanges": "No changes on this day.",
+      "kind": {
+        "SUBSTITUTE": "Substitute",
+        "CANCELLED": "Cancelled",
+        "EXTRA": "Extra class"
+      },
+      "saved": "Saved. The teachers and students have been told.",
+      "pastDate": "Past days can't be changed."
     }
   },
   "reportCardPdf": {
@@ -2707,7 +2814,9 @@
       "FEE_ADJUSTMENT_DUPLICATE": "This adjustment was added to the bill a moment ago, so it wasn't added again.",
       "FEE_TOTAL_BELOW_PAID": "This would make the fee less than what has already been paid.",
       "FEE_CATEGORY_CODE_EXISTS": "A fee category with this code already exists.",
-      "FEE_STRUCTURE_EXISTS": "This class already has a fee structure for this academic year. Edit that one instead."
+      "FEE_STRUCTURE_EXISTS": "This class already has a fee structure for this academic year. Edit that one instead.",
+      "ROOM_NAME_TAKEN": "A room with this name already exists.",
+      "TIMETABLE_OVERRIDE_EXISTS": "This period already has a change on this date. Undo or edit that change instead."
     }
   },
   "sectionHub": {

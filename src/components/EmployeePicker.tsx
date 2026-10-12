@@ -12,9 +12,11 @@ interface Props {
   schoolId: string;
   selectedId: string | null;
   onSelect: (employee: Employee) => void;
+  /** Narrows the list further (it already hides inactive staff), e.g. to teaching staff only. */
+  filter?: (employee: Employee) => boolean;
 }
 
-export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props) {
+export default function EmployeePicker({ schoolId, selectedId, onSelect, filter }: Props) {
   const { t } = useTranslation();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,13 +68,15 @@ export default function EmployeePicker({ schoolId, selectedId, onSelect }: Props
 
   if (loading) return <ActivityIndicator style={styles.loading} />;
 
+  const shown = filter ? employees.filter(filter) : employees;
+
   return (
     <View>
-      {employees.length === 0 && !showCreate && (
+      {shown.length === 0 && !showCreate && (
         <Text style={styles.empty}>{t('employees.picker.empty')}</Text>
       )}
       <View style={styles.chips}>
-        {employees.map((emp) => (
+        {shown.map((emp) => (
           <Pressable
             key={emp.id}
             onPress={() => onSelect(emp)}

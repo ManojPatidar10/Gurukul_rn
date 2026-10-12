@@ -89,6 +89,8 @@ export type AccentKey =
   | 'myTimetable'
   | 'timetableEditor'
   | 'bellSchedule'
+  | 'substitutions'
+  | 'rooms'
   | 'schoolLogo'
   | 'schoolLocation'
   | 'attendance'
@@ -138,6 +140,8 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   myTimetable: { base: '#0E7490', light: '#DDF2F7' },
   timetableEditor: { base: '#0E7490', light: '#DDF2F7' },
   bellSchedule: { base: '#475569', light: '#E7EAEE' },
+  substitutions: { base: '#C2410C', light: '#FFEDD5' },
+  rooms: { base: '#0F766E', light: '#DBF0EC' },
   schoolLogo: { base: '#7C3AED', light: '#EDE9FE' },
   schoolLocation: { base: '#0F766E', light: '#CCFBF1' },
   idCards: { base: '#0E7490', light: '#CFFAFE' },

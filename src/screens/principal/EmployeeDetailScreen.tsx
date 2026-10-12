@@ -175,6 +175,14 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
             >
               <Text style={styles.actionText}>Attendance</Text>
             </Pressable>
+            {employee.employeeType !== 'NON_TEACHING' && (
+              <Pressable
+                style={styles.actionButton}
+                onPress={() => navigation.navigate('MyTimetable', { teacher: { id: employee.id, name: employee.name } })}
+              >
+                <Text style={styles.actionText}>{t('employees.detail.timetable')}</Text>
+              </Pressable>
+            )}
             <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
               <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>
             </Pressable>
