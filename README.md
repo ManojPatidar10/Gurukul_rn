@@ -71,8 +71,26 @@ GitHub Actions workflows in `.github/workflows/`:
 | `ci.yml` | Push / PR to `main`, `develop` | Lint, typecheck, and test |
 | `android-build.yml` | Push to `main`, manual | Build Android release APK |
 | `ios-build.yml` | Push to `main`, manual | Build iOS simulator binary |
+| `eas-update.yml` | Push to `main`, manual | Publish the latest JavaScript for Expo Go (channel `main`) |
+| `eas-preview.yml` | Push to `main`, manual | Keep the installable Android preview APK on expo.dev up to date |
 
 Build artifacts are available under **Actions → workflow run → Artifacts**.
+
+### Try the latest app without the Play Store
+
+- **Expo Go (any phone, signed in to an Expo account with access to the project):** open
+  `exp://u.expo.dev/f610c224-f96d-4706-a22c-38f27170b00c?channel-name=main&runtime-version=exposdk:57.0.0`.
+  It always loads the newest version from `main`.
+- **Android preview APK:** install the newest **preview** build from
+  https://expo.dev/accounts/yashcodes105/projects/gurukul-rn/builds once. After that the app updates
+  itself: every merge to `main` publishes to the `preview` update branch, and the app picks it up on
+  the next launch (the update applies on the launch after that). When native code changes, the
+  `eas-preview.yml` workflow builds a new APK automatically (the runtime version is a fingerprint of
+  the native code, `APP_VARIANT=preview` in `app.config.js`), and you install that one once.
+  It is signed with a different key from the Play Store app, so uninstall the Play Store version first.
+- **One-time setup** (before the workflow can build): someone signed in to an Expo account with access
+  to the project runs `npx eas-cli build --profile preview --platform android` once from this repo and
+  answers "yes" to generating a new Android keystore, so EAS stores the signing key.
 
 ## Project structure
 
