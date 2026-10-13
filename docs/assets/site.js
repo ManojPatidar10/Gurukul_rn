@@ -1,4 +1,5 @@
-// Smart Gurukul marketing site: mobile nav + demo / website-services request form. No dependencies.
+// Smart Gurukul marketing site: mobile nav, first-touch attribution, demo / website-services request
+// form. No dependencies, no analytics or third-party scripts.
 (function () {
   var header = document.querySelector('.site-header');
   var menuBtn = document.querySelector('.menu-btn');
@@ -11,6 +12,39 @@
 
   var year = document.getElementById('year');
   if (year) year.textContent = String(new Date().getFullYear());
+
+  // First touch of this visit (sessionStorage, so it ends with the tab): the page the visitor landed on,
+  // the site that sent them (host name only) and any campaign tag. It is sent only with a demo or
+  // website request, inside the existing sourcePage field (see privacy.html).
+  var FIRST_KEY = 'sg_first';
+  var first = null;
+  try { first = JSON.parse(sessionStorage.getItem(FIRST_KEY) || 'null'); } catch (e) { first = null; }
+  if (!first || typeof first !== 'object') {
+    first = { land: location.pathname };
+    try {
+      var refHost = document.referrer ? new URL(document.referrer).hostname : '';
+      if (refHost && !/(^|\.)smartgurukul\.org$/i.test(refHost)) first.ref = refHost;
+    } catch (e) { /* no or unreadable referrer */ }
+    try {
+      var params = new URLSearchParams(location.search);
+      ['utm_source', 'utm_medium', 'utm_campaign'].forEach(function (k) {
+        var v = (params.get(k) || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+        if (v) first[k] = v;
+      });
+    } catch (e) { /* old browser */ }
+    try { sessionStorage.setItem(FIRST_KEY, JSON.stringify(first)); } catch (e) { /* storage blocked */ }
+  }
+
+  /** "<this page> | land=<first page> | ref=<referrer host> | utm=<source>/<medium>/<campaign>", empty parts
+   *  left out, cut to the backend's 200-character limit on sourcePage. */
+  function sourcePage() {
+    var parts = [location.pathname];
+    if (first.land) parts.push('land=' + first.land);
+    if (first.ref) parts.push('ref=' + first.ref);
+    var utm = [first.utm_source || '', first.utm_medium || '', first.utm_campaign || ''].join('/').replace(/\/+$/, '');
+    if (utm) parts.push('utm=' + utm);
+    return parts.join(' | ').slice(0, 200);
+  }
 
   var form = document.getElementById('demo-form');
   if (!form) return;
@@ -92,7 +126,7 @@
       services: picked.length ? picked : null,
       budget: val('budget'),
       message: val('message'),
-      sourcePage: location.pathname,
+      sourcePage: sourcePage(),
       website: f.website.value
     };
     submit.disabled = true;
