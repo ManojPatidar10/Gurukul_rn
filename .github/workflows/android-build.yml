@@ -32,6 +32,20 @@ jobs:
       - name: Prebuild Android
         run: npx expo prebuild --platform android --no-install
 
+      # Prebuild's gradle.properties caps the Gradle JVM at 2 GB heap / 512 MB metaspace. Since the
+      # dependencies added on 2026-10-11 the release build outgrows that: the daemon logs
+      # "OutOfMemoryError: Metaspace" and then hangs until the job times out. Give it more room
+      # (the runner has 7 GB), and keep the Kotlin daemon from competing for the same memory.
+      - name: Give Gradle more memory
+        working-directory: android
+        run: |
+          sed -i '/^org.gradle.jvmargs=/d; /^kotlin.daemon.jvmargs=/d' gradle.properties
+          {
+            echo 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1536m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8'
+            echo 'kotlin.daemon.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=768m'
+          } >> gradle.properties
+          grep -E '^(org.gradle|kotlin.daemon).jvmargs=' gradle.properties
+
       - name: Build release APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleRelease
