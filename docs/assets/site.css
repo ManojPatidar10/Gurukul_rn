@@ -26,7 +26,7 @@
   color-scheme: light;
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scroll-padding-top: 80px; } /* #anchor jumps clear the sticky header */
 body { margin: 0; background: #fff; color: var(--sg-ink-900); font: 18px/1.6 var(--sg-font-body); overflow-x: hidden; }
 img { max-width: 100%; height: auto; display: block; }
 a { color: var(--sg-violet-600); text-underline-offset: 3px; }
@@ -73,9 +73,12 @@ p { margin: 0 0 1em; }
 .lang:hover { border-color: var(--sg-violet-600); color: var(--sg-violet-600); }
 .menu-btn { display: none; margin-left: auto; background: none; border: 1px solid var(--sg-line); color: var(--sg-ink-900); border-radius: 10px; width: 44px; height: 44px; cursor: pointer; }
 .menu-btn svg { margin: auto; }
-/* 981-1199px: seven links, the language switch and the demo button only fit with tighter spacing and
-   without the Games link (it stays in the footer, the mobile menu and wider screens). */
-@media (min-width: 981px) and (max-width: 1199px) {
+/* 980-1199px: seven links, the language switch and the demo button only fit with tighter spacing and
+   without the Games link (it stays in the footer, the mobile menu and wider screens). This range
+   overlaps the mobile rule at exactly 980px on purpose: with min-width 981px, a fractional width
+   (browser zoom, 125%/150% display scaling) between 980 and 981 matched neither rule and showed the
+   full desktop nav. The mobile rule comes later and wins at 980px. */
+@media (min-width: 980px) and (max-width: 1199.98px) {
   .nav { gap: 14px; }
   .nav-links a { padding: 10px 8px; font-size: .9rem; }
   .nav-links .nav-wide { display: none; }
@@ -88,6 +91,8 @@ p { margin: 0 0 1em; }
   .site-header.open .nav-links { display: flex; flex-direction: column; align-items: stretch; width: 100%; order: 3; margin: 8px 0 0; }
   .site-header.open .nav-cta { display: flex; width: 100%; order: 4; padding-bottom: 8px; }
   .site-header.open .nav-cta .btn { flex: 1; }
+  .nav-links .nav-wide { display: list-item; }
+  .nav-links a { padding: 10px 12px; font-size: .95rem; }
   .brand img { height: 34px; }
 }
 
@@ -212,6 +217,12 @@ table.compare { width: 100%; border-collapse: collapse; min-width: 620px; }
 .compare td.us { background: var(--sg-violet-50); font-weight: 600; }
 .compare tr:last-child td, .compare tr:last-child th { border-bottom: 0; }
 .yes { color: var(--sg-success); font-weight: 800; } .no { color: var(--sg-ink-400); } .soon { color: var(--sg-marigold-700); font-weight: 700; }
+/* Phones: all three columns fit, so the Smart Gurukul column is on screen without a sideways swipe. */
+@media (max-width: 640px) {
+  table.compare { min-width: 0; table-layout: fixed; }
+  .compare th, .compare td { padding: 10px 8px; font-size: .88rem; line-height: 1.4; overflow-wrap: break-word; hyphens: auto; }
+  .compare th[scope="row"], .compare thead th:first-child { width: 36%; }
+}
 
 /* Steps */
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; list-style: none; padding: 0; margin: 0; counter-reset: s; }

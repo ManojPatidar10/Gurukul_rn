@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mukta:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="../assets/site.css?v=0ef39762">
+<link rel="stylesheet" href="../assets/site.css?v=51205e76">
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -180,7 +180,7 @@
      "name": "स्कूल को कितना दायरा रखना चाहिए?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "पहले से 100 मीटर का दायरा होता है, सेव की गई जगह से। बड़े कैंपस इसे 700 मीटर तक बढ़ा सकते हैं।"
+      "text": "डिफ़ॉल्ट दायरा सेव की गई जगह से 100 मीटर है। बड़े कैंपस इसे 700 मीटर तक बढ़ा सकते हैं।"
      }
     },
     {
@@ -213,7 +213,7 @@
       <img src="../assets/brand/lockup-hindi.svg" width="144" height="40" alt="स्मार्ट गुरुकुल">
     </a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <ul class="nav-links"><li><a href="../ai-for-schools.html">AI</a></li><li class="nav-wide"><a href="../gamified-learning.html">गेम्स</a></li><li><a href="gps-attendance.html" aria-current="page">हाज़िरी</a></li><li><a href="../school-fee-management.html">फ़ीस</a></li><li><a href="../school-timetable-app.html">टाइमटेबल</a></li><li><a href="../parent-app.html">पैरेंट ऐप</a></li><li><a href="../compare.html">तुलना</a></li></ul>
+    <ul class="nav-links"><li><a href="../ai-for-schools.html" hreflang="en">AI</a></li><li class="nav-wide"><a href="../gamified-learning.html" hreflang="en">गेम्स</a></li><li><a href="gps-attendance.html" aria-current="page">हाज़िरी</a></li><li><a href="../school-fee-management.html" hreflang="en">फ़ीस</a></li><li><a href="../school-timetable-app.html" hreflang="en">टाइमटेबल</a></li><li><a href="../parent-app.html" hreflang="en">पैरेंट ऐप</a></li><li><a href="../compare.html" hreflang="en">तुलना</a></li></ul>
     <div class="nav-cta">
       <a class="lang" href="../gps-attendance.html" hreflang="en" lang="en">English</a>
       <a class="btn btn-primary btn-sm" href="./#demo">डेमो बुक करें</a>
@@ -233,7 +233,7 @@
 
 <section style="padding-bottom:0">
   <div class="wrap">
-    <div class="answer"><p><strong>संक्षेप में:</strong> स्कूल एक बार अपनी लोकेशन और दायरा (रेडियस) सेव करता है, जो पहले से 100 मीटर होता है। जब शिक्षक ऐप में <em>मेरी उपस्थिति दर्ज करें</em> पर टैप करते हैं, तो फ़ोन अपनी GPS लोकेशन भेजता है और स्कूल से दूरी की जाँच <strong>फ़ोन नहीं, हमारा सर्वर</strong> करता है। शिक्षक स्कूल में हैं तो हाज़िरी लग जाती है। ज़्यादा दूर हैं तो चेक-इन नहीं होता, और ऐप बताता है कि वे कितनी दूर हैं। जिन फ़ोनों में नकली GPS ऐप, डेवलपर ऑप्शन, रूट या क्लोनर ऐप हो, उनसे भी चेक-इन नहीं होता।</p></div>
+    <div class="answer"><p><strong>संक्षेप में:</strong> स्कूल एक बार अपनी लोकेशन और दायरा (रेडियस) सेव करता है, जो डिफ़ॉल्ट रूप से 100 मीटर होता है। जब शिक्षक ऐप में <em>मेरी उपस्थिति दर्ज करें</em> पर टैप करते हैं, तो फ़ोन अपनी GPS लोकेशन भेजता है और स्कूल से दूरी की जाँच <strong>फ़ोन नहीं, हमारा सर्वर</strong> करता है। शिक्षक स्कूल में हैं तो हाज़िरी लग जाती है। ज़्यादा दूर हैं तो चेक-इन नहीं होता, और ऐप बताता है कि वे कितनी दूर हैं। जिन फ़ोनों में नकली GPS ऐप, डेवलपर ऑप्शन, रूट या क्लोनर ऐप हो, उनसे भी चेक-इन नहीं होता।</p></div>
   </div>
 </section>
 
@@ -271,14 +271,14 @@
 <section>
   <div class="wrap prose">
     <h2>छात्रों की हाज़िरी भी</h2>
-    <p>क्लास टीचर रोज़ ऐप में छात्रों की हाज़िरी लगाते हैं: उपस्थित, अनुपस्थित, लेट या आधा दिन। हर दिन उपस्थित रहने पर छात्रों को XP मिलते हैं और उनकी स्ट्रीक बनी रहती है। इसी तरह हाज़िरी <a href="../gamified-learning.html">गेमिफ़ाइड लर्निंग</a> से जुड़ती है।</p>
+    <p>क्लास टीचर रोज़ ऐप में छात्रों की हाज़िरी लगाते हैं: उपस्थित, अनुपस्थित, लेट या आधा दिन। हर दिन उपस्थित रहने पर छात्रों को XP मिलते हैं और उनकी स्ट्रीक बनी रहती है। इसी तरह हाज़िरी <a href="../gamified-learning.html" hreflang="en">गेमिफ़ाइड लर्निंग</a> से जुड़ती है।</p>
     <ul>
       <li><strong>सेक्शन के हिसाब से रिकॉर्ड</strong> क्लास टीचर और प्रिंसिपल के लिए।</li>
-      <li><strong>हर छात्र का कैलेंडर</strong>, जो छात्र को और <a href="../parent-app.html">पैरेंट ऐप</a> में उनके अभिभावकों को दिखता है।</li>
+      <li><strong>हर छात्र का कैलेंडर</strong>, जो छात्र को और <a href="../parent-app.html" hreflang="en">पैरेंट ऐप</a> में उनके अभिभावकों को दिखता है।</li>
       <li><strong>हाज़िरी एक्सपोर्ट</strong>, रिकॉर्ड और निरीक्षण के लिए।</li>
     </ul>
     <h2>शिक्षक छुट्टी पर हों तो उनकी कक्षाएँ कौन लेगा?</h2>
-    <p>जब किसी शिक्षक को अनुपस्थित या आधा दिन मार्क किया जाता है, तो उनके पीरियड टाइमटेबल में “सब्स्टिट्यूट चाहिए” के रूप में दिखते हैं, साथ में यह भी कि उस समय कौन-से शिक्षक ख़ाली हैं। देखिए <a href="../school-timetable-app.html">टाइमटेबल में सब्स्टिट्यूशन</a> कैसे होता है।</p>
+    <p>जब किसी शिक्षक को अनुपस्थित या आधा दिन मार्क किया जाता है, तो उनके पीरियड टाइमटेबल में “सब्स्टिट्यूट चाहिए” के रूप में दिखते हैं, साथ में यह भी कि उस समय कौन-से शिक्षक ख़ाली हैं। देखिए <a href="../school-timetable-app.html" hreflang="en">टाइमटेबल में सब्स्टिट्यूशन</a> कैसे होता है।</p>
   </div>
 </section>
 
@@ -288,7 +288,7 @@
     <div class="faq">
       <details class="qa"><summary>शिक्षकों की GPS हाज़िरी कैसे काम करती है?</summary><p>स्कूल अपनी लोकेशन और दायरा सेव करता है। शिक्षक स्कूल पहुँचकर “मेरी उपस्थिति दर्ज करें” पर टैप करते हैं, फ़ोन अपनी GPS लोकेशन भेजता है, और हमारा सर्वर स्कूल से दूरी जाँचता है। शिक्षक स्कूल में हैं तो हाज़िरी लग जाती है; ज़्यादा दूर हैं तो चेक-इन नहीं होता।</p></details>
       <details class="qa"><summary>क्या शिक्षक अपनी लोकेशन नकली बना सकते हैं?</summary><p>अगर फ़ोन नकली (मॉक) लोकेशन बताए, उसमें डेवलपर ऑप्शन चालू हों, फ़ोन रूटेड या जेलब्रोकन हो, या स्मार्ट गुरुकुल किसी क्लोनर ऐप के अंदर चल रहा हो, तो ऐप चेक-इन नहीं होने देता। हमारा सर्वर पुरानी लोकेशन और स्कूल के दायरे से बाहर की लोकेशन भी नहीं मानता। ये संकेत फ़ोन से आते हैं, इसलिए कोई भी GPS सिस्टम फ़िंगरप्रिंट मशीन जितना पक्का नहीं हो सकता, लेकिन नकली GPS की आम तरकीबें रोक दी जाती हैं।</p></details>
-      <details class="qa"><summary>स्कूल को कितना दायरा रखना चाहिए?</summary><p>पहले से 100 मीटर का दायरा होता है, सेव की गई जगह से। बड़े कैंपस इसे 700 मीटर तक बढ़ा सकते हैं।</p></details>
+      <details class="qa"><summary>स्कूल को कितना दायरा रखना चाहिए?</summary><p>डिफ़ॉल्ट दायरा सेव की गई जगह से 100 मीटर है। बड़े कैंपस इसे 700 मीटर तक बढ़ा सकते हैं।</p></details>
       <details class="qa"><summary>अगर किसी शिक्षक का चेक-इन न हो तो क्या करें?</summary><p>ऐप वजह बताता है। कोई नकली GPS ऐप हो तो बंद कीजिए, डेवलपर ऑप्शन बंद कीजिए, स्मार्ट गुरुकुल को क्लोनर ऐप की बजाय सीधे खोलिए, और स्कूल में फिर से कोशिश कीजिए। एडमिन भी शिक्षक की हाज़िरी लगा सकते हैं।</p></details>
       <details class="qa"><summary>क्या हमें बायोमेट्रिक मशीन चाहिए?</summary><p>नहीं। GPS चेक-इन शिक्षकों के अपने फ़ोन से होता है, इसलिए कोई मशीन ख़रीदनी या ठीक करवानी नहीं पड़ती।</p></details>
     </div>
@@ -300,9 +300,18 @@
     <h2 style="font-size:1.5rem">और जानें</h2>
     <div class="related">
       <a href="./">स्मार्ट गुरुकुल हिंदी में<span>पूरा स्कूल, एक ऐप पर जुड़ा</span></a>
-      <a href="../school-timetable-app.html">टाइमटेबल<span>छुट्टी पर गए शिक्षकों के लिए सब्स्टिट्यूट (अंग्रेज़ी में)</span></a>
-      <a href="../parent-app.html">पैरेंट ऐप<span>हाज़िरी, फ़ीस, रिपोर्ट कार्ड और बस (अंग्रेज़ी में)</span></a>
-      <a href="../compare.html">तुलना<span>दूसरे स्कूल सॉफ़्टवेयर से तुलना (अंग्रेज़ी में)</span></a>
+      <a href="../school-timetable-app.html" hreflang="en">टाइमटेबल<span>छुट्टी पर गए शिक्षकों के लिए सब्स्टिट्यूट (अंग्रेज़ी में)</span></a>
+      <a href="../parent-app.html" hreflang="en">पैरेंट ऐप<span>हाज़िरी, फ़ीस, रिपोर्ट कार्ड और बस (अंग्रेज़ी में)</span></a>
+      <a href="../compare.html" hreflang="en">तुलना<span>दूसरे स्कूल सॉफ़्टवेयर से तुलना (अंग्रेज़ी में)</span></a>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="cta-band">
+      <div><h2>एक महीना मुफ़्त आज़माएँ</h2><p>हम आपका छात्र रजिस्टर इम्पोर्ट करते हैं और आपके स्टाफ़ को ट्रेनिंग देते हैं। एक महीने के असली इस्तेमाल के बाद आप फ़ैसला करें।</p></div>
+      <a class="btn btn-gold" href="./#demo">मुफ़्त डेमो बुक करें</a>
     </div>
   </div>
 </section>
@@ -318,24 +327,24 @@
       <div>
         <p class="foot-title">प्रोडक्ट</p>
         <ul>
-          <li><a href="../ai-for-schools.html">स्कूलों के लिए AI</a></li>
-          <li><a href="../ai-question-paper-generator.html">AI से प्रश्न पत्र</a></li>
-          <li><a href="../gamified-learning.html">गेमिफ़ाइड लर्निंग</a></li>
+          <li><a href="../ai-for-schools.html" hreflang="en">स्कूलों के लिए AI</a></li>
+          <li><a href="../ai-question-paper-generator.html" hreflang="en">AI से प्रश्न पत्र</a></li>
+          <li><a href="../gamified-learning.html" hreflang="en">गेमिफ़ाइड लर्निंग</a></li>
           <li><a href="gps-attendance.html">GPS हाज़िरी</a></li>
-          <li><a href="../school-timetable-app.html">टाइमटेबल और सब्स्टिट्यूशन</a></li>
-          <li><a href="../school-fee-management.html">फ़ीस और पेरोल</a></li>
-          <li><a href="../school-bus-tracking.html">स्कूल बस ट्रैकिंग</a></li>
-          <li><a href="../parent-app.html">पैरेंट ऐप</a></li>
-          <li><a href="../website-services.html">स्कूल वेबसाइट</a></li>
+          <li><a href="../school-timetable-app.html" hreflang="en">टाइमटेबल और सब्स्टिट्यूशन</a></li>
+          <li><a href="../school-fee-management.html" hreflang="en">फ़ीस और पेरोल</a></li>
+          <li><a href="../school-bus-tracking.html" hreflang="en">स्कूल बस ट्रैकिंग</a></li>
+          <li><a href="../parent-app.html" hreflang="en">पैरेंट ऐप</a></li>
+          <li><a href="../website-services.html" hreflang="en">स्कूल वेबसाइट</a></li>
         </ul>
       </div>
       <div>
         <p class="foot-title">तुलना करें</p>
         <ul>
-          <li><a href="../compare.html">दूसरे सॉफ़्टवेयर से तुलना</a></li>
+          <li><a href="../compare.html" hreflang="en">दूसरे सॉफ़्टवेयर से तुलना</a></li>
           <li><a href="./#faq">सवाल-जवाब</a></li>
-          <li><a href="../" lang="en">English</a></li>
-          <li><a href="../onboarding-toolkit.html" lang="en">School onboarding toolkit</a></li>
+          <li><a href="../" hreflang="en" lang="en">English</a></li>
+          <li><a href="../onboarding-toolkit.html" hreflang="en" lang="en">School onboarding toolkit</a></li>
         </ul>
       </div>
       <div>
@@ -343,7 +352,7 @@
         <ul>
           <li><a href="https://www.instagram.com/smartgurukul.app" rel="noopener" target="_blank">Instagram @smartgurukul.app</a></li>
           <li><a href="./#demo">मुफ़्त डेमो बुक करें</a></li>
-          <li><a href="../privacy.html">प्राइवेसी पॉलिसी</a></li>
+          <li><a href="../privacy.html" hreflang="en">प्राइवेसी पॉलिसी</a></li>
         </ul>
       </div>
     </div>
