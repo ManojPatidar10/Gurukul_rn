@@ -1,5 +1,5 @@
 import { getMyChildren } from '../api/parents';
-import { notificationTarget } from '../utils/notificationRouting';
+import { isTargetShowing, notificationTarget } from '../utils/notificationRouting';
 import { openNotificationTarget } from '../utils/openNotificationTarget';
 
 jest.mock('../api/parents', () => ({ getMyChildren: jest.fn() }));
@@ -124,6 +124,16 @@ describe('notificationTarget', () => {
     expect(notificationTarget({ type: 'TIMETABLE_CHANGE', date: 20261014 }, 'TEACHER')).toEqual({ screen: 'MyTimetable' });
   });
 
+  it('opens the helpdesk chat for a waiting bot proposal, for admins only', () => {
+    const ready = { type: 'BOT_ACTION_READY', conversationId: 'c1', actionId: 'a1' };
+    expect(notificationTarget(ready, 'ADMIN')).toEqual({ screen: 'HelpdeskBot' });
+    // Only the admin who asked is sent it; any other role's tap just opens the app.
+    for (const role of ['TEACHER', 'STUDENT', 'PARENT', 'DRIVER']) {
+      expect(notificationTarget(ready, role)).toBeNull();
+    }
+    expect(notificationTarget({ type: 'BOT_ACTION_READY' }, 'ADMIN')).toEqual({ screen: 'HelpdeskBot' });
+  });
+
   it('drops a report-card term that is not a string', () => {
     expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', term: 2, studentId: 's1' }, 'PARENT')).toEqual({
       screen: 'ReportCard',
@@ -133,6 +143,32 @@ describe('notificationTarget', () => {
       screen: 'ReportCard',
       studentId: 's1',
     });
+  });
+});
+
+describe('isTargetShowing', () => {
+  const helpdesk = { screen: 'HelpdeskBot' } as const;
+
+  it('leaves the helpdesk chat alone when it is already open', () => {
+    const botChat = { name: 'ConversationThread', params: { conversationId: 'c1', title: 'Helpdesk', isBot: true } };
+    expect(isTargetShowing(helpdesk, botChat)).toBe(true);
+    // Still finding the conversation: navigating again would stack a second one.
+    expect(isTargetShowing(helpdesk, { name: 'HelpdeskBot' })).toBe(true);
+  });
+
+  it('opens the helpdesk chat from anywhere else, a human chat included', () => {
+    expect(isTargetShowing(helpdesk, { name: 'ConversationThread', params: { conversationId: 'c2', title: 'Ravi' } })).toBe(
+      false
+    );
+    expect(isTargetShowing(helpdesk, { name: 'ConversationThread' })).toBe(false);
+    expect(isTargetShowing(helpdesk, { name: 'Dashboard' })).toBe(false);
+    expect(isTargetShowing(helpdesk, undefined)).toBe(false);
+  });
+
+  it('never skips other targets', () => {
+    const botChat = { name: 'ConversationThread', params: { isBot: true } };
+    expect(isTargetShowing({ screen: 'ConversationsList' }, botChat)).toBe(false);
+    expect(isTargetShowing({ screen: 'MyTimetable' }, { name: 'MyTimetable' })).toBe(false);
   });
 });
 
@@ -202,6 +238,13 @@ describe('openNotificationTarget', () => {
     await openNotificationTarget('school1', { screen: 'MyTimetable' }, navigate);
     expect(navigate).toHaveBeenNthCalledWith(1, 'MyTimetable', { date: '2026-10-14' });
     expect(navigate).toHaveBeenNthCalledWith(2, 'MyTimetable', undefined);
+    expect(mockedGetMyChildren).not.toHaveBeenCalled();
+  });
+
+  it('opens the helpdesk chat without looking up children', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'HelpdeskBot' }, navigate);
+    expect(navigate).toHaveBeenCalledWith('HelpdeskBot');
     expect(mockedGetMyChildren).not.toHaveBeenCalled();
   });
 

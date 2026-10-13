@@ -277,7 +277,68 @@
     "emptyTeacher": "पढ़ाने के बारे में कुछ भी पूछें — पाठ योजना के विचार, स्पष्टीकरण, प्रश्नोत्तरी, या कक्षा प्रबंधन के सुझाव।"
   },
   "helpdeskBot": {
-    "title": "हेल्पडेस्क बॉट"
+    "title": "हेल्पडेस्क बॉट",
+    "typing": "हेल्पडेस्क लिख रहा है…",
+    "card": {
+      "title_one": "टाइमटेबल में 1 बदलाव",
+      "title_other": "टाइमटेबल में {{count}} बदलाव",
+      "status": {
+        "waiting": "आपकी मंज़ूरी का इंतज़ार",
+        "saved": "सेव हो गया",
+        "failed": "सेव नहीं हो सका",
+        "cancelled": "रद्द किया गया",
+        "expired": "समय निकल गया",
+        "replaced": "नए प्रस्ताव से बदला गया"
+      },
+      "confirm": "पक्का करें",
+      "cancel": "रद्द करें",
+      "confirmTitle_one": "यह बदलाव सेव करें?",
+      "confirmTitle_other": "{{count}} बदलाव सेव करें?",
+      "confirmBody": "टाइमटेबल ऊपर दिखाए अनुसार बदल जाएगा। तारीख़ वाले बदलावों की सूचना टीचर और विद्यार्थियों को जाएगी।",
+      "confirmAssigns_one": "इससे 1 टीचर को एक क्लास का एक्सेस भी मिलेगा।",
+      "confirmAssigns_other": "इससे {{count}} टीचरों को क्लास का एक्सेस भी मिलेगा।",
+      "confirmReason": "टीचर यह कारण देखेंगे: {{reason}}",
+      "save": "सेव करें",
+      "notNow": "अभी नहीं",
+      "expiresIn": "{{minutes}} मिनट में समय खत्म",
+      "failedReason": "सेव नहीं हो सका: {{reason}}",
+      "reason": "कारण (संबंधित टीचर यह देखेंगे): {{reason}}",
+      "room": "कमरा: {{room}}",
+      "noLogin": "ऐप लॉगिन नहीं है, सूचना नहीं जाएगी",
+      "assigns": "{{teacher}} को {{class}} में {{subject}} भी दिया जाएगा: वे अंक डाल सकेंगे और इस क्लास के विद्यार्थियों और अभिभावकों को मैसेज या कॉल कर सकेंगे।",
+      "notPending": {
+        "EXECUTED": "यह बदलाव पहले ही सेव हो चुका है।",
+        "CANCELLED": "यह बदलाव रद्द हो चुका है, कुछ सेव नहीं हुआ।",
+        "EXPIRED": "इस बदलाव का समय निकल गया, कुछ सेव नहीं हुआ। बॉट से फिर पूछें।",
+        "SUPERSEDED": "इसकी जगह नया प्रस्ताव आ गया है।",
+        "FAILED": "यह बदलाव सेव नहीं हो सका।"
+      }
+    },
+    "item": {
+      "substitute": "{{when}}, {{class}}: {{original}} की जगह {{teacher}} {{subject}} पढ़ाएंगे",
+      "replacing": "{{when}}, {{class}}: {{original}} की जगह अब {{teacher}} {{subject}} पढ़ाएंगे ({{regular}} की जगह)",
+      "cancel": "{{when}}, {{class}}: {{subject}} की क्लास नहीं होगी",
+      "extra": "{{when}}, {{class}}: {{teacher}} {{subject}} की अतिरिक्त क्लास लेंगे",
+      "undo": "{{when}}, {{class}}: रोज़ का टाइमटेबल चलेगा",
+      "undoExtra": "{{when}}, {{class}}: अतिरिक्त क्लास हटा दी जाएगी",
+      "set": "{{when}}, {{class}}: {{teacher}} {{subject}} पढ़ाएंगे (पहले: {{before}})",
+      "clear": "{{when}}, {{class}}: खाली पीरियड (पहले: {{before}})",
+      "subjectWithTeacher": "{{teacher}} की {{subject}}",
+      "whenDate": "{{date}}, पीरियड {{n}}",
+      "whenWeekly": "हर {{day}}, पीरियड {{n}}",
+      "times": "({{start}}-{{end}})",
+      "ended": "(खत्म हो चुका)",
+      "wasFree": "खाली"
+    },
+    "days": {
+      "MONDAY": "सोमवार",
+      "TUESDAY": "मंगलवार",
+      "WEDNESDAY": "बुधवार",
+      "THURSDAY": "गुरुवार",
+      "FRIDAY": "शुक्रवार",
+      "SATURDAY": "शनिवार",
+      "SUNDAY": "रविवार"
+    }
   },
   "students": {
     "list": {
@@ -2257,6 +2318,17 @@
     "markAllRead": "सभी पढ़ा हुआ करें",
     "loadMore": "और देखें"
   },
+  "chat": {
+    "messagePlaceholder": "संदेश लिखें...",
+    "send": "भेजें",
+    "attachTitle": "अटैचमेंट जोड़ें",
+    "attachPhoto": "फ़ोटो",
+    "attachPdf": "PDF दस्तावेज़",
+    "permissionTitle": "अनुमति चाहिए",
+    "photoPermission": "फ़ोटो जोड़ने के लिए फ़ोटो लाइब्रेरी की अनुमति दें।",
+    "fileTooLarge": "यह फ़ाइल बहुत बड़ी है - अटैचमेंट 10 MB तक ही भेजा जा सकता है।",
+    "attachment": "अटैचमेंट"
+  },
   "newConversation": {
     "classTeacherOf": "कक्षा अध्यापक {{section}}",
     "admin": "प्रशासक",
@@ -2818,7 +2890,9 @@
       "FEE_CATEGORY_CODE_EXISTS": "इस कोड वाली फीस श्रेणी पहले से मौजूद है।",
       "FEE_STRUCTURE_EXISTS": "इस कक्षा की इस शैक्षणिक वर्ष की फीस संरचना पहले से है। उसी को बदलें।",
       "ROOM_NAME_TAKEN": "इस नाम का कमरा पहले से है।",
-      "TIMETABLE_OVERRIDE_EXISTS": "इस तारीख को इस पीरियड में पहले से बदलाव है। उसे वापस लें या उसी को बदलें।"
+      "TIMETABLE_OVERRIDE_EXISTS": "इस तारीख को इस पीरियड में पहले से बदलाव है। उसे वापस लें या उसी को बदलें।",
+      "BOT_ACTION_NOT_PENDING": "यह बदलाव अब पक्का नहीं किया जा सकता।",
+      "BOT_ACTION_NOT_YOURS": "इस बदलाव को सिर्फ़ पूछने वाला ही पक्का कर सकता है।"
     }
   },
   "sectionHub": {

@@ -34,7 +34,11 @@ export function HelpdeskBotScreen({ navigation }: Props) {
     getOrCreateBotConversation(schoolId)
       .then((conversation) => {
         if (cancelled) return;
-        navigation.replace('ConversationThread', { conversationId: conversation.id, title: t('helpdeskBot.title') });
+        navigation.replace('ConversationThread', {
+          conversationId: conversation.id,
+          title: t('helpdeskBot.title'),
+          isBot: true,
+        });
       })
       .catch((e) => {
         if (!cancelled) setError(e instanceof ApiError ? getErrorMessage(e) : getErrorMessage(e));
