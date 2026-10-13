@@ -1,7 +1,7 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 
 import { BASE_URL, ensureFreshAccessToken, getAuthToken } from './client';
-import { createSubscriptionRegistry } from './subscriptionRegistry';
+import { createSubscriptionRegistry, type AddOptions } from './subscriptionRegistry';
 import type { Announcement, ChatUpdateFrame, Message } from './types';
 
 const WS_URL = BASE_URL.replace(/^http/, 'ws') + '/ws/websocket';
@@ -23,8 +23,10 @@ export function ensureClient(schoolId: string): Promise<Client> {
   if (connecting) return connecting;
 
   connecting = new Promise((resolve, reject) => {
-    // Whether this client has connected before, so a later connect is reported as a reconnect.
-    let connectedBefore = false;
+    // Whether the next connect is reported as a reconnect: this client connected before (frames sent
+    // while it was down are lost), or an attempt failed (stompjs keeps retrying, and a screen that
+    // loaded its history meanwhile missed whatever came before the subscriptions went through).
+    let reportNextConnect = false;
     const next = new Client({
       brokerURL: WS_URL,
       // Runs before the first connect and every automatic reconnect, so a reconnect after the
@@ -43,7 +45,7 @@ export function ensureClient(schoolId: string): Promise<Client> {
       onConnect: () => {
         connecting = null;
         registry.resubscribeAll(next);
-        if (connectedBefore) {
+        if (reportNextConnect) {
           // Frames sent while the socket was down are lost; listeners refetch what they show.
           reconnectListeners.forEach((listener) => {
             try {
@@ -53,15 +55,22 @@ export function ensureClient(schoolId: string): Promise<Client> {
             }
           });
         }
-        connectedBefore = true;
+        reportNextConnect = true;
         resolve(next);
       },
       onStompError: (frame) => {
         connecting = null;
+        reportNextConnect = true;
+        // The server ends the session after an ERROR frame. If it refused a guarded destination (an
+        // older server and /updates, see subscribeToConversationUpdates), subscribing it again on the
+        // reconnect would fail the same way every 3 s, so it is forgotten; its screen checks the
+        // server again and subscribes anew.
+        registry.dropGuarded();
         reject(new Error(frame.headers['message'] ?? 'STOMP error'));
       },
       onWebSocketError: (event) => {
         connecting = null;
+        reportNextConnect = true;
         reject(event as unknown as Error);
       },
     });
@@ -72,9 +81,9 @@ export function ensureClient(schoolId: string): Promise<Client> {
 }
 
 /**
- * Calls `listener` after every reconnect of the shared socket (not its first connect), once the
- * kept subscriptions are back. Use it to refetch whatever may have been sent while it was down.
- * Returns a function that stops the calls.
+ * Calls `listener` after every reconnect of the shared socket, and after the first connect that
+ * follows a failed attempt, once the kept subscriptions are back. Use it to refetch whatever may
+ * have been sent while it was down. Returns a function that stops the calls.
  */
 export function onReconnect(listener: () => void): () => void {
   reconnectListeners.add(listener);
@@ -83,53 +92,77 @@ export function onReconnect(listener: () => void): () => void {
   };
 }
 
+export interface SubscribeOptions extends AddOptions {
+  /**
+   * The socket's connect attempt failed. The subscription stays: stompjs keeps retrying, and the
+   * connect that succeeds subscribes it (and is reported to onReconnect listeners).
+   */
+  onError?: (error: unknown) => void;
+}
+
 /**
  * Subscribes through the registry: now when the socket is connected, otherwise on its next
- * connect, and again after every reconnect, until the returned function is called.
+ * connect, and again after every reconnect, until the returned function is called. It is kept even
+ * when the first connect attempt fails, which is reported to `onError`.
  */
-async function subscribeKept(
+function subscribeKept(
   schoolId: string,
   destination: string,
-  onFrame: (frame: IMessage) => void
-): Promise<() => void> {
-  const activeClient = await ensureClient(schoolId);
-  return registry.add(destination, onFrame, activeClient);
+  onFrame: (frame: IMessage) => void,
+  { onError, ...options }: SubscribeOptions = {}
+): () => void {
+  // First, so `client` is the one whose next connect subscribes everything kept.
+  ensureClient(schoolId).catch((error: unknown) => onError?.(error));
+  return registry.add(destination, onFrame, client, options);
 }
 
 export function subscribeToConversation(
   schoolId: string,
   conversationId: string,
-  onMessage: (message: Message) => void
-): Promise<() => void> {
-  return subscribeKept(schoolId, `/topic/conversations/${conversationId}`, (frame) => {
-    onMessage(JSON.parse(frame.body) as Message);
-  });
+  onMessage: (message: Message) => void,
+  options?: SubscribeOptions
+): () => void {
+  return subscribeKept(
+    schoolId,
+    `/topic/conversations/${conversationId}`,
+    (frame) => {
+      onMessage(JSON.parse(frame.body) as Message);
+    },
+    options
+  );
 }
 
 /**
  * Updates to messages already sent in a conversation - today, a helpdesk-bot card changing state
  * (saved, cancelled, expired, replaced). Only a server with bot actions knows this destination; an
- * older one refuses it with an ERROR frame that can end the socket, so callers subscribe only once
- * they've seen a message with the `action` key (see supportsBotActions). Unknown frame types and
- * unreadable frames are ignored.
+ * older one refuses it with an ERROR frame that ends the socket, so callers subscribe only once
+ * they've seen a message with the `action` key (see supportsBotActions). It is guarded: a STOMP
+ * ERROR forgets it and calls `onDropped` (the server may have been rolled back), and the caller
+ * checks again before subscribing anew. Unknown frame types and unreadable frames are ignored.
  */
 export function subscribeToConversationUpdates(
   schoolId: string,
   conversationId: string,
-  onFrame: (frame: ChatUpdateFrame) => void
-): Promise<() => void> {
-  return subscribeKept(schoolId, `/topic/conversations/${conversationId}/updates`, (frame) => {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(frame.body);
-    } catch {
-      return;
-    }
-    if (!parsed || typeof parsed !== 'object') return;
-    const update = parsed as Partial<ChatUpdateFrame>;
-    if (update.type !== 'MESSAGE_UPDATED' || !update.message || typeof update.message.id !== 'string') return;
-    onFrame(update as ChatUpdateFrame);
-  });
+  onFrame: (frame: ChatUpdateFrame) => void,
+  options?: Omit<SubscribeOptions, 'guarded'>
+): () => void {
+  return subscribeKept(
+    schoolId,
+    `/topic/conversations/${conversationId}/updates`,
+    (frame) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(frame.body);
+      } catch {
+        return;
+      }
+      if (!parsed || typeof parsed !== 'object') return;
+      const update = parsed as Partial<ChatUpdateFrame>;
+      if (update.type !== 'MESSAGE_UPDATED' || !update.message || typeof update.message.id !== 'string') return;
+      onFrame(update as ChatUpdateFrame);
+    },
+    { ...options, guarded: true }
+  );
 }
 
 export interface SendMessageAttachment {
@@ -154,39 +187,49 @@ export async function sendMessage(
 function subscribeToDestination(
   schoolId: string,
   destination: string,
-  onAnnouncement: (announcement: Announcement) => void
-): Promise<() => void> {
-  return subscribeKept(schoolId, destination, (frame) => {
-    onAnnouncement(JSON.parse(frame.body) as Announcement);
-  });
+  onAnnouncement: (announcement: Announcement) => void,
+  options?: SubscribeOptions
+): () => void {
+  return subscribeKept(
+    schoolId,
+    destination,
+    (frame) => {
+      onAnnouncement(JSON.parse(frame.body) as Announcement);
+    },
+    options
+  );
 }
 
 export function subscribeToSchoolAnnouncements(
   schoolId: string,
-  onAnnouncement: (announcement: Announcement) => void
-): Promise<() => void> {
-  return subscribeToDestination(schoolId, `/topic/schools/${schoolId}/announcements`, onAnnouncement);
+  onAnnouncement: (announcement: Announcement) => void,
+  options?: SubscribeOptions
+): () => void {
+  return subscribeToDestination(schoolId, `/topic/schools/${schoolId}/announcements`, onAnnouncement, options);
 }
 
 export function subscribeToSectionAnnouncements(
   schoolId: string,
   sectionId: string,
-  onAnnouncement: (announcement: Announcement) => void
-): Promise<() => void> {
-  return subscribeToDestination(schoolId, `/topic/sections/${sectionId}/announcements`, onAnnouncement);
+  onAnnouncement: (announcement: Announcement) => void,
+  options?: SubscribeOptions
+): () => void {
+  return subscribeToDestination(schoolId, `/topic/sections/${sectionId}/announcements`, onAnnouncement, options);
 }
 
 /** className must have spaces replaced with underscores per the backend contract ("Grade 6" -> "Grade_6"). */
 export function subscribeToGradeAnnouncements(
   schoolId: string,
   className: string,
-  onAnnouncement: (announcement: Announcement) => void
-): Promise<() => void> {
+  onAnnouncement: (announcement: Announcement) => void,
+  options?: SubscribeOptions
+): () => void {
   const encodedClassName = className.replace(/ /g, '_');
   return subscribeToDestination(
     schoolId,
     `/topic/schools/${schoolId}/classes/${encodedClassName}/announcements`,
-    onAnnouncement
+    onAnnouncement,
+    options
   );
 }
 

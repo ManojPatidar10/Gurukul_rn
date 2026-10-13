@@ -48,16 +48,17 @@ import {
   BOT_TYPING_TIMEOUT_MS,
   NOT_TYPING,
   applyActionUpdate,
-  isTyping,
   mergeHistoryPage,
   newMessages,
   onIncoming,
+  onTypingTimeout,
   startTyping,
   supportsBotActions,
   upsertMessage,
   visibleContent,
   type TypingState,
 } from '../../utils/chatMessages';
+import { singleFlightWithTrailing } from '../../utils/singleFlight';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ConversationThread'>;
 
@@ -101,7 +102,8 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
   const decidingRef = useRef(false);
   const confirmAlertOpenRef = useRef(false);
-  const refetchingRef = useRef(false);
+  // The updates subscription was dropped by a STOMP ERROR, so its next subscribe is a recovery.
+  const updatesDroppedRef = useRef(false);
 
   const commit = useCallback((next: Message[]) => {
     if (next === messagesRef.current) return;
@@ -153,22 +155,19 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
 
   /**
    * Fetches the newest history page again and merges it in: whatever arrived while the socket was
-   * down (a bot reply, a card's new state, a follow-up) then still shows. Best effort - the next
-   * reconnect or return to the app tries again.
+   * down (a bot reply, a card's new state, a follow-up) then still shows. One request at a time,
+   * but a call during one (the reconnect a few seconds after the resume refetch started) runs
+   * another when it ends, so it is never just dropped. Best effort - the next reconnect or return
+   * to the app tries again.
    */
+  const [refetchFlight] = useState(singleFlightWithTrailing);
   const refetchLatest = useCallback(() => {
-    if (refetchingRef.current) return;
-    refetchingRef.current = true;
-    getConversationMessages(schoolId, conversationId)
-      .then((history) => ingest(history.messages ?? []))
-      .catch(() => {})
-      .finally(() => {
-        refetchingRef.current = false;
-      });
-  }, [schoolId, conversationId, ingest]);
+    refetchFlight(() =>
+      getConversationMessages(schoolId, conversationId).then((history) => ingest(history.messages ?? []))
+    );
+  }, [refetchFlight, schoolId, conversationId, ingest]);
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
     let cancelled = false;
 
     getConversationMessages(schoolId, conversationId)
@@ -182,46 +181,63 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         if (!cancelled) setLoading(false);
       });
 
-    subscribeToConversation(schoolId, conversationId, (message) => {
-      if (!cancelled) ingest([message]);
-    })
-      .then((unsub) => {
-        if (cancelled) unsub();
-        else unsubscribe = unsub;
-      })
-      .catch((e) => {
-        if (!cancelled) setError(getErrorMessage(e));
-      });
+    // Kept even when the socket's first connect fails: stompjs retries, and the connect that works
+    // subscribes it and refetches (onReconnect below).
+    const unsubscribe = subscribeToConversation(
+      schoolId,
+      conversationId,
+      (message) => {
+        if (!cancelled) ingest([message]);
+      },
+      {
+        onError: (e) => {
+          if (!cancelled) setError(getErrorMessage(e));
+        },
+      }
+    );
 
     return () => {
       cancelled = true;
-      unsubscribe?.();
+      unsubscribe();
     };
   }, [schoolId, conversationId, ingest]);
 
   // Card updates (saved, cancelled, expired, replaced) come on their own destination, which only a
-  // server with bot actions has - an older one would refuse it and could end the socket - so it's
+  // server with bot actions has - an older one would refuse it and end the socket - so it's
   // subscribed only in the helpdesk chat, once a message shows the server knows bot actions.
+  // Without live updates a card still catches up on the next refetch.
   useEffect(() => {
     if (!isBot || !actionsSupported) return;
-    let unsubscribe: (() => void) | undefined;
     let cancelled = false;
-    subscribeToConversationUpdates(schoolId, conversationId, (frame) => {
-      if (cancelled) return;
-      commit(upsertMessage(messagesRef.current, frame.message));
-      if (frame.message.action) noteActions([frame.message.action]);
-    })
-      .then((unsub) => {
-        if (cancelled) unsub();
-        else unsubscribe = unsub;
-      })
-      // Without live updates a card still catches up on the next refetch.
-      .catch(() => {});
+    const unsubscribe = subscribeToConversationUpdates(
+      schoolId,
+      conversationId,
+      (frame) => {
+        if (cancelled) return;
+        commit(upsertMessage(messagesRef.current, frame.message));
+        if (frame.message.action) noteActions([frame.message.action]);
+      },
+      {
+        // A STOMP ERROR dropped it - the server may have been rolled back to a build that refuses
+        // it. Check again as on the first load: the refetch after the reconnect subscribes it again
+        // only if its messages still have the `action` key.
+        onDropped: () => {
+          if (cancelled) return;
+          updatesDroppedRef.current = true;
+          setActionsSupported(false);
+        },
+      }
+    );
+    if (updatesDroppedRef.current) {
+      // Back after a drop: fetch what changed while it wasn't subscribed.
+      updatesDroppedRef.current = false;
+      refetchLatest();
+    }
     return () => {
       cancelled = true;
-      unsubscribe?.();
+      unsubscribe();
     };
-  }, [isBot, actionsSupported, schoolId, conversationId, commit, noteActions]);
+  }, [isBot, actionsSupported, schoolId, conversationId, commit, noteActions, refetchLatest]);
 
   // After the socket reconnects, or the app comes back to the foreground, frames sent meanwhile are
   // lost: fetch the newest page again.
@@ -240,10 +256,12 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   // so look for it then.
   useEffect(() => {
     if (typing.since === null) return;
-    const left = BOT_TYPING_TIMEOUT_MS - (Date.now() - typing.since);
+    const armedSince = typing.since;
+    const left = BOT_TYPING_TIMEOUT_MS - (Date.now() - armedSince);
     const timer = setTimeout(
       () => {
-        setTyping((current) => (isTyping(current, Date.now()) ? current : NOT_TYPING));
+        // Ends it without reading the clock again (see onTypingTimeout); a newer send re-arms.
+        setTyping((current) => onTypingTimeout(current, armedSince));
         refetchLatest();
       },
       Math.max(0, left)
@@ -276,7 +294,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     // The presign must declare the exact byte count S3 will receive - the picker's own figure can be missing.
     const fileSizeBytes = await pickedFileSize(uri, reportedSizeBytes);
     if (fileSizeBytes > MAX_ATTACHMENT_BYTES) {
-      setError('That file is too large - attachments are limited to 10MB.');
+      setError(t('chat.fileTooLarge'));
       return;
     }
     setUploading(true);
@@ -306,7 +324,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const handlePickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'Allow photo library access to attach an image.');
+      Alert.alert(t('chat.permissionTitle'), t('chat.photoPermission'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -332,7 +350,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
 
   const handleCopy = async (content: string) => {
     await Clipboard.setStringAsync(content);
-    showToast('Copied to clipboard', 'success');
+    showToast(t('common.copied'), 'success');
   };
 
   /** Best effort after a lost connection: the confirm may still have gone through. */
@@ -416,10 +434,10 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const showTyping = isBot && typing.since !== null;
 
   const handleAttach = () => {
-    Alert.alert('Add attachment', undefined, [
-      { text: 'Photo', onPress: handlePickImage },
-      { text: 'PDF document', onPress: handlePickDocument },
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('chat.attachTitle'), undefined, [
+      { text: t('chat.attachPhoto'), onPress: handlePickImage },
+      { text: t('chat.attachPdf'), onPress: handlePickDocument },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   };
 
@@ -432,35 +450,38 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     const action = fromBot ? (item.action ?? null) : null;
     return (
       <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
-        <Pressable
-          onLongPress={() => text && handleCopy(text)}
+        <View
           style={[
             styles.bubble,
             isMine ? styles.bubbleMine : fromBot ? styles.bubbleBot : styles.bubbleTheirs,
             action && styles.bubbleWithCard,
           ]}
         >
-          {item.attachmentUrl && isImage && (
-            <Pressable onPress={() => Linking.openURL(item.attachmentUrl!)}>
-              <Image source={{ uri: item.attachmentUrl }} style={styles.attachmentImage} resizeMode="cover" />
-            </Pressable>
-          )}
-          {item.attachmentUrl && !isImage && (
-            <Pressable style={styles.fileChip} onPress={() => Linking.openURL(item.attachmentUrl!)}>
-              <FontAwesome5 name="file-pdf" size={16} color={isMine ? colors.white : colors.primary} />
-              <Text style={[styles.fileChipText, isMine && styles.bubbleTextMine]} numberOfLines={1}>
-                {item.attachmentFileName ?? 'Attachment'}
+          {/* The card stays outside the long-press area: a Pressable is one accessibility element,
+              so VoiceOver couldn't reach Confirm and Cancel inside it. */}
+          <Pressable onLongPress={() => text && handleCopy(text)}>
+            {item.attachmentUrl && isImage && (
+              <Pressable onPress={() => Linking.openURL(item.attachmentUrl!)}>
+                <Image source={{ uri: item.attachmentUrl }} style={styles.attachmentImage} resizeMode="cover" />
+              </Pressable>
+            )}
+            {item.attachmentUrl && !isImage && (
+              <Pressable style={styles.fileChip} onPress={() => Linking.openURL(item.attachmentUrl!)}>
+                <FontAwesome5 name="file-pdf" size={16} color={isMine ? colors.white : colors.primary} />
+                <Text style={[styles.fileChipText, isMine && styles.bubbleTextMine]} numberOfLines={1}>
+                  {item.attachmentFileName ?? t('chat.attachment')}
+                </Text>
+              </Pressable>
+            )}
+            {text ? (
+              <Text
+                selectable
+                style={[styles.bubbleText, isMine && styles.bubbleTextMine, item.attachmentUrl && styles.bubbleTextWithAttachment]}
+              >
+                {text}
               </Text>
-            </Pressable>
-          )}
-          {text ? (
-            <Text
-              selectable
-              style={[styles.bubbleText, isMine && styles.bubbleTextMine, item.attachmentUrl && styles.bubbleTextWithAttachment]}
-            >
-              {text}
-            </Text>
-          ) : null}
+            ) : null}
+          </Pressable>
           {action ? (
             <BotActionCard
               action={action}
@@ -472,7 +493,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
               onCancel={handleCancelAction}
             />
           ) : null}
-        </Pressable>
+        </View>
       </View>
     );
   };
@@ -506,14 +527,14 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         </Pressable>
         <TextInput
           style={styles.input}
-          placeholder="Message..."
+          placeholder={t('chat.messagePlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={draft}
           onChangeText={setDraft}
           multiline
         />
         <Pressable style={styles.sendButton} onPress={handleSend} disabled={uploading || sending}>
-          {sending ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.sendButtonText}>Send</Text>}
+          {sending ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.sendButtonText}>{t('chat.send')}</Text>}
         </Pressable>
       </View>
     </KeyboardAvoidingView>

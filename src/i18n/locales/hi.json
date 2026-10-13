@@ -2318,6 +2318,17 @@
     "markAllRead": "सभी पढ़ा हुआ करें",
     "loadMore": "और देखें"
   },
+  "chat": {
+    "messagePlaceholder": "संदेश लिखें...",
+    "send": "भेजें",
+    "attachTitle": "अटैचमेंट जोड़ें",
+    "attachPhoto": "फ़ोटो",
+    "attachPdf": "PDF दस्तावेज़",
+    "permissionTitle": "अनुमति चाहिए",
+    "photoPermission": "फ़ोटो जोड़ने के लिए फ़ोटो लाइब्रेरी की अनुमति दें।",
+    "fileTooLarge": "यह फ़ाइल बहुत बड़ी है - अटैचमेंट 10 MB तक ही भेजा जा सकता है।",
+    "attachment": "अटैचमेंट"
+  },
   "newConversation": {
     "classTeacherOf": "कक्षा अध्यापक {{section}}",
     "admin": "प्रशासक",

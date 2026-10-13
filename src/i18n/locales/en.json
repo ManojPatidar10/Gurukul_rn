@@ -2318,6 +2318,17 @@
     "markAllRead": "Mark all read",
     "loadMore": "Load more"
   },
+  "chat": {
+    "messagePlaceholder": "Message...",
+    "send": "Send",
+    "attachTitle": "Add attachment",
+    "attachPhoto": "Photo",
+    "attachPdf": "PDF document",
+    "permissionTitle": "Permission needed",
+    "photoPermission": "Allow photo library access to attach an image.",
+    "fileTooLarge": "That file is too large - attachments are limited to 10 MB.",
+    "attachment": "Attachment"
+  },
   "newConversation": {
     "classTeacherOf": "Class teacher {{section}}",
     "admin": "Admin",

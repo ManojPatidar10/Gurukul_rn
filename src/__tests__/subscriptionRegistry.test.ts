@@ -86,16 +86,79 @@ describe('createSubscriptionRegistry', () => {
     expect([...offline.live.keys()]).toEqual(['/topic/conversations/c1']);
   });
 
-  it('keeps one entry per destination, and an older unsubscribe leaves a newer one alone', () => {
+  it('shares one subscription between callbacks for the same destination, until the last one goes', () => {
     const registry = createSubscriptionRegistry();
     const conn = fakeClient();
     const got: string[] = [];
-    const stopOld = registry.add('/topic/conversations/c1', () => got.push('old'), conn.client);
-    registry.add('/topic/conversations/c1', () => got.push('new'), conn.client);
+    // Two screens for the same conversation (a push tap stacked a second copy of the chat).
+    const stopOld = registry.add('/topic/conversations/c1', (frame) => got.push(`old:${frame.body}`), conn.client);
+    const stopNew = registry.add('/topic/conversations/c1', (frame) => got.push(`new:${frame.body}`), conn.client);
+    expect(conn.calls()).toBe(1);
+    conn.deliver('/topic/conversations/c1', 'a');
+    expect(got).toEqual(['old:a', 'new:a']);
+
+    // The newer screen closes: the older one still gets frames, and nothing was unsubscribed.
+    stopNew();
+    stopNew();
+    conn.deliver('/topic/conversations/c1', 'b');
+    expect(got).toEqual(['old:a', 'new:a', 'old:b']);
+    expect(conn.unsubscribed).toEqual([]);
+
+    // ...and after a reconnect, one subscription again delivers to it.
+    const second = fakeClient();
+    registry.resubscribeAll(second.client);
+    expect(second.calls()).toBe(1);
+    second.deliver('/topic/conversations/c1', 'c');
+    expect(got).toEqual(['old:a', 'new:a', 'old:b', 'old:c']);
+
     stopOld();
-    conn.deliver('/topic/conversations/c1', 'x');
-    expect(got).toEqual(['new']);
+    expect(second.unsubscribed).toEqual(['/topic/conversations/c1']);
+    expect(registry.destinations()).toEqual([]);
+  });
+
+  it('gives a frame to every callback even when one throws, then rethrows', () => {
+    const registry = createSubscriptionRegistry();
+    const conn = fakeClient();
+    const got: string[] = [];
+    registry.add(
+      '/topic/conversations/c1',
+      () => {
+        throw new SyntaxError('bad JSON');
+      },
+      conn.client
+    );
+    registry.add('/topic/conversations/c1', (frame) => got.push(frame.body), conn.client);
+    expect(() => conn.deliver('/topic/conversations/c1', 'x')).toThrow('bad JSON');
+    expect(got).toEqual(['x']);
+  });
+
+  it('drops guarded destinations on request, tells their owners, and does not send them again', () => {
+    const registry = createSubscriptionRegistry();
+    const conn = fakeClient();
+    const dropped: string[] = [];
+    registry.add('/topic/conversations/c1', () => {}, conn.client);
+    const stopUpdates = registry.add('/topic/conversations/c1/updates', () => {}, conn.client, {
+      guarded: true,
+      onDropped: () => dropped.push('updates'),
+    });
+
+    // An older server refused /updates with an ERROR frame.
+    expect(registry.dropGuarded()).toEqual(['/topic/conversations/c1/updates']);
+    expect(dropped).toEqual(['updates']);
     expect(registry.destinations()).toEqual(['/topic/conversations/c1']);
+
+    const next = fakeClient();
+    registry.resubscribeAll(next.client);
+    expect([...next.live.keys()]).toEqual(['/topic/conversations/c1']);
+
+    // The owner's own unsubscribe afterwards is a no-op, and a second drop finds nothing.
+    expect(() => stopUpdates()).not.toThrow();
+    expect(registry.dropGuarded()).toEqual([]);
+    expect(dropped).toEqual(['updates']);
+
+    // Subscribing again later (the owner re-checked the server) works as usual.
+    registry.add('/topic/conversations/c1/updates', () => {}, next.client, { guarded: true });
+    expect([...next.live.keys()].sort()).toEqual(['/topic/conversations/c1', '/topic/conversations/c1/updates']);
   });
 
   it('survives a handle or a client that throws because the connection is gone', () => {
