@@ -8,6 +8,8 @@ on:
 jobs:
   build-ios:
     runs-on: macos-latest
+    # A healthy build takes ~21 min; fail fast instead of hanging for the 6 h default.
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v7
