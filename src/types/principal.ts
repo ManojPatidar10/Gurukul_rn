@@ -173,7 +173,8 @@ export type PrincipalStackParamList = {
   IdCardSheets: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
-  ConversationThread: { conversationId: string; title: string };
+  /** `isBot`: the helpdesk bot's chat (cards, "typing…"), set by HelpdeskBotScreen. */
+  ConversationThread: { conversationId: string; title: string; isBot?: boolean };
   Announcements: undefined;
   Notifications: undefined;
   HelpdeskBot: undefined;
