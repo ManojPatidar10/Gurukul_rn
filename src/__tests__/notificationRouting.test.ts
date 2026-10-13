@@ -134,6 +134,16 @@ describe('notificationTarget', () => {
     expect(notificationTarget({ type: 'BOT_ACTION_READY' }, 'ADMIN')).toEqual({ screen: 'HelpdeskBot' });
   });
 
+  it("opens the AI misuse log when someone's AI help was paused, for admins only", () => {
+    const paused = { type: 'AI_MISUSE_PAUSED', pauseId: '9d1c2b3a-0000-4000-8000-000000000001' };
+    expect(notificationTarget(paused, 'ADMIN')).toEqual({ screen: 'AiMisuseLog' });
+    // The push names no one, and only admins have the log: any other role's tap just opens the app.
+    for (const role of ['TEACHER', 'STUDENT', 'PARENT', 'DRIVER']) {
+      expect(notificationTarget(paused, role)).toBeNull();
+    }
+    expect(notificationTarget({ type: 'AI_MISUSE_PAUSED' }, 'ADMIN')).toEqual({ screen: 'AiMisuseLog' });
+  });
+
   it('drops a report-card term that is not a string', () => {
     expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', term: 2, studentId: 's1' }, 'PARENT')).toEqual({
       screen: 'ReportCard',
@@ -245,6 +255,13 @@ describe('openNotificationTarget', () => {
     const navigate = jest.fn();
     await openNotificationTarget('school1', { screen: 'HelpdeskBot' }, navigate);
     expect(navigate).toHaveBeenCalledWith('HelpdeskBot');
+    expect(mockedGetMyChildren).not.toHaveBeenCalled();
+  });
+
+  it('opens the AI misuse log without looking up children', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'AiMisuseLog' }, navigate);
+    expect(navigate).toHaveBeenCalledWith('AiMisuseLog');
     expect(mockedGetMyChildren).not.toHaveBeenCalled();
   });
 

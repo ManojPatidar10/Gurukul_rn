@@ -16,6 +16,7 @@ import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocatio
 import { StaffAttendanceScreen } from '../screens/principal/StaffAttendanceScreen';
 import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAttendanceHistoryScreen';
 import { ActivityLogScreen } from '../screens/principal/ActivityLogScreen';
+import { AiMisuseLogScreen } from '../screens/principal/AiMisuseLogScreen';
 import { AttendanceDevicesScreen } from '../screens/principal/AttendanceDevicesScreen';
 import { AttendanceExportScreen } from '../screens/principal/AttendanceExportScreen';
 import { SchoolLogoSettingsScreen } from '../screens/principal/SchoolLogoSettingsScreen';
@@ -202,6 +203,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="EmployeeAttendanceHistory" component={EmployeeAttendanceHistoryScreen} />
         <Stack.Screen name="AttendanceDevices" component={AttendanceDevicesScreen} />
         <Stack.Screen name="ActivityLog" component={ActivityLogScreen} />
+        <Stack.Screen name="AiMisuseLog" component={AiMisuseLogScreen} />
         <Stack.Screen name="AttendanceExport" component={AttendanceExportScreen} />
         <Stack.Screen name="SchoolLogoSettings" component={SchoolLogoSettingsScreen} />
         <Stack.Screen name="IdCard" component={IdCardScreen} />

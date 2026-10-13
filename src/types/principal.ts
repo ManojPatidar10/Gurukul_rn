@@ -36,6 +36,7 @@ export type FeatureId =
   | 'registrationInbox'
   | 'attendanceDevices'
   | 'activityLog'
+  | 'aiMisuseLog'
   | 'attendanceExport'
   | 'admissions'
   | 'idCards'
@@ -166,6 +167,8 @@ export type PrincipalStackParamList = {
   EmployeeAttendanceHistory: { employee: Pick<Employee, 'id' | 'name'> };
   AttendanceDevices: undefined;
   ActivityLog: undefined;
+  /** Admin: refused AI messages, who is paused now (and lifting a pause), and the bot's data lookups. */
+  AiMisuseLog: undefined;
   AttendanceExport: undefined;
   SchoolLogoSettings: undefined;
   /** `mode: 'edit'` shows only the details form (opened from Profile's Edit button). */

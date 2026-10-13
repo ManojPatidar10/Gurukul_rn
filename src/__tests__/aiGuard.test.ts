@@ -1,0 +1,271 @@
+import type { AiStatus } from '../api/ai';
+import en from '../i18n/locales/en.json';
+import hi from '../i18n/locales/hi.json';
+import {
+  AI_CATEGORIES,
+  AI_LOOKUP_OUTCOMES,
+  AI_TOOLS,
+  AI_VERDICTS,
+  categoryLabelKey,
+  featureLabelKey,
+  historyForRequest,
+  isPaused,
+  msUntilUnpaused,
+  noticeKind,
+  outcomeLabelKey,
+  pausedUntilFromError,
+  pausedUntilFromMessage,
+  pausedUntilFromReply,
+  pausedUntilFromStatus,
+  pausedUntilLabel,
+  rangeForDays,
+  roleLabelKey,
+  scopeSummary,
+  toolFallbackLabel,
+  toolLabelKey,
+  verdictLabelKey,
+  type AiChatEntry,
+} from '../utils/aiGuard';
+
+type Tree = { [key: string]: string | Tree };
+
+function lookup(tree: Tree, key: string): unknown {
+  return key.split('.').reduce<unknown>((node, part) => (node && typeof node === 'object' ? (node as Tree)[part] : undefined), tree);
+}
+
+/** Spaces as plain spaces: newer ICU puts a narrow no-break space before AM/PM. */
+const plain = (text: string) => text.replace(/\s/g, ' ');
+
+const NOW = Date.parse('2026-10-13T09:45:00Z'); // 3:15 PM in India
+const IN_AN_HOUR = '2026-10-13T10:45:00Z'; // 4:15 PM in India
+
+const STUDY_REPLY = 'Photosynthesis is how plants make food from sunlight.';
+const REFUSAL =
+  "Sorry, I can only help with school work, like your studies, teaching or your school's information. Please ask me something about that.";
+const WELLBEING =
+  "I'm sorry you're feeling this way. Please talk to a parent, a teacher or another adult you trust today. In India you can also call Childline on 1098, any time.";
+
+describe('historyForRequest', () => {
+  const entry = (id: string, role: 'user' | 'assistant', content: string, refused?: boolean): AiChatEntry => ({
+    id,
+    role,
+    content,
+    ...(refused === undefined ? {} : { refused, excludeFromHistory: refused }),
+  });
+
+  it('sends answered exchanges as role and content only', () => {
+    const messages = [entry('1', 'user', 'What is photosynthesis?'), entry('2', 'assistant', STUDY_REPLY, false), entry('3', 'user', 'Give an example')];
+    expect(historyForRequest(messages)).toEqual([
+      { role: 'user', content: 'What is photosynthesis?' },
+      { role: 'assistant', content: STUDY_REPLY },
+      { role: 'user', content: 'Give an example' },
+    ]);
+  });
+
+  it('drops a refused reply together with the question before it', () => {
+    const messages = [
+      entry('1', 'user', 'What is photosynthesis?'),
+      entry('2', 'assistant', STUDY_REPLY),
+      entry('3', 'user', 'Tell me a joke'),
+      entry('4', 'assistant', REFUSAL, true),
+      entry('5', 'user', 'Give an example of photosynthesis'),
+    ];
+    expect(historyForRequest(messages)).toEqual([
+      { role: 'user', content: 'What is photosynthesis?' },
+      { role: 'assistant', content: STUDY_REPLY },
+      { role: 'user', content: 'Give an example of photosynthesis' },
+    ]);
+  });
+
+  it('drops every refused pair, including one at the very start', () => {
+    const messages = [
+      entry('1', 'user', 'Tell me a joke'),
+      entry('2', 'assistant', REFUSAL, true),
+      entry('3', 'user', 'Write a love letter'),
+      entry('4', 'assistant', REFUSAL, true),
+      entry('5', 'user', 'Explain fractions'),
+    ];
+    expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'Explain fractions' }]);
+  });
+
+  it('keeps a supportive reply (refused: false) like any answer', () => {
+    const messages = [
+      entry('1', 'user', 'I feel very stressed about my exams'),
+      entry('2', 'assistant', WELLBEING, false),
+      entry('3', 'user', 'How do I make a study timetable?'),
+    ];
+    expect(historyForRequest(messages)).toHaveLength(3);
+    expect(historyForRequest(messages)[1]).toEqual({ role: 'assistant', content: WELLBEING });
+  });
+
+  it('honours excludeFromHistory on its own', () => {
+    const messages: AiChatEntry[] = [
+      { id: '1', role: 'user', content: 'Tell me a joke' },
+      { id: '2', role: 'assistant', content: REFUSAL, excludeFromHistory: true },
+      { id: '3', role: 'user', content: 'hi' },
+    ];
+    expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'hi' }]);
+  });
+});
+
+describe('the paused state', () => {
+  it('is paused only while pausedUntil is ahead of now', () => {
+    expect(isPaused(IN_AN_HOUR, NOW)).toBe(true);
+    expect(isPaused(IN_AN_HOUR, Date.parse(IN_AN_HOUR))).toBe(false);
+    expect(isPaused(IN_AN_HOUR, Date.parse(IN_AN_HOUR) + 1)).toBe(false);
+    expect(isPaused(null, NOW)).toBe(false);
+    expect(isPaused(undefined, NOW)).toBe(false);
+    expect(isPaused('not a time', NOW)).toBe(false);
+  });
+
+  it('counts down to the end of the pause', () => {
+    expect(msUntilUnpaused(IN_AN_HOUR, NOW)).toBe(60 * 60 * 1000);
+    expect(msUntilUnpaused(IN_AN_HOUR, Date.parse(IN_AN_HOUR) + 5)).toBe(0);
+    expect(msUntilUnpaused(null, NOW)).toBe(0);
+  });
+
+  it("enters it from the Academic Helper reply that starts a pause (the 5th refusal itself)", () => {
+    expect(pausedUntilFromReply({ notice: { kind: 'PAUSED', pausedUntil: IN_AN_HOUR } })).toBe(IN_AN_HOUR);
+    // Every other refusal, an answer, and an older server's reply don't.
+    expect(pausedUntilFromReply({ notice: { kind: 'REFUSED', pausedUntil: null } })).toBeNull();
+    expect(pausedUntilFromReply({ notice: null })).toBeNull();
+    expect(pausedUntilFromReply({})).toBeNull();
+    expect(pausedUntilFromReply(null)).toBeNull();
+  });
+
+  it("enters it from a live bot message's aiNotice, never from REST history", () => {
+    expect(pausedUntilFromMessage({ aiNotice: { kind: 'PAUSED', pausedUntil: IN_AN_HOUR } })).toBe(IN_AN_HOUR);
+    expect(pausedUntilFromMessage({ aiNotice: { kind: 'REFUSED', pausedUntil: null } })).toBeNull();
+    expect(pausedUntilFromMessage({ aiNotice: null })).toBeNull();
+    expect(pausedUntilFromMessage({})).toBeNull();
+  });
+
+  it('enters it from a 429 AI_PAUSED and nothing else', () => {
+    expect(pausedUntilFromError({ status: 429, errorCode: 'AI_PAUSED', data: { pausedUntil: IN_AN_HOUR } })).toBe(IN_AN_HOUR);
+    expect(pausedUntilFromError({ status: 429, errorCode: 'AI_PAUSED' })).toBeNull();
+    expect(pausedUntilFromError({ status: 429, errorCode: 'AI_RATE_LIMITED', data: { pausedUntil: IN_AN_HOUR } })).toBeNull();
+    expect(pausedUntilFromError(new Error('offline'))).toBeNull();
+    expect(pausedUntilFromError(undefined)).toBeNull();
+  });
+
+  it('reads the pause from GET /ai/status while it lasts', () => {
+    const status: AiStatus = {
+      paused: true,
+      pausedUntil: IN_AN_HOUR,
+      assistantEnabled: true,
+      botEnabled: true,
+      refusalsInWindow: 5,
+      pauseThreshold: 5,
+      pauseMinutes: 60,
+    };
+    expect(pausedUntilFromStatus(status, NOW)).toBe(IN_AN_HOUR);
+    expect(pausedUntilFromStatus(status, Date.parse(IN_AN_HOUR) + 1000)).toBeNull();
+    expect(pausedUntilFromStatus({ ...status, paused: false, pausedUntil: null }, NOW)).toBeNull();
+    expect(pausedUntilFromStatus(null, NOW)).toBeNull();
+  });
+
+  it('reads an unknown notice kind from a newer server as a refusal', () => {
+    expect(noticeKind('PAUSED')).toBe('PAUSED');
+    expect(noticeKind('SCHOOL_LIMIT')).toBe('SCHOOL_LIMIT');
+    expect(noticeKind('SOMETHING_NEW')).toBe('REFUSED');
+    expect(noticeKind(undefined)).toBe('REFUSED');
+  });
+});
+
+describe('pausedUntilLabel', () => {
+  const now = new Date(NOW);
+
+  it('shows the time in India for a phone in India', () => {
+    expect(plain(pausedUntilLabel(IN_AN_HOUR, 'en', { now, timeZone: 'Asia/Kolkata' }))).toBe('4:15 PM');
+  });
+
+  it("shows the phone's own local time elsewhere", () => {
+    expect(plain(pausedUntilLabel(IN_AN_HOUR, 'en', { now, timeZone: 'UTC' }))).toBe('10:45 AM');
+    expect(plain(pausedUntilLabel(IN_AN_HOUR, 'en', { now, timeZone: 'America/New_York' }))).toBe('6:45 AM');
+  });
+
+  it('adds the day for a pause that runs past midnight', () => {
+    const lateNight = new Date('2026-10-13T18:00:00Z'); // 11:30 PM in India
+    const label = plain(pausedUntilLabel('2026-10-13T19:00:00Z', 'en', { now: lateNight, timeZone: 'Asia/Kolkata' }));
+    expect(label).toBe('Oct 14, 12:30 AM');
+    expect(plain(pausedUntilLabel('2026-10-13T19:00:00Z', 'en-IN', { now: lateNight, timeZone: 'Asia/Kolkata' }))).toMatch(
+      /^14 Oct, 12:30 (am|AM)$/
+    );
+  });
+
+  it('is empty for something that is not a time', () => {
+    expect(pausedUntilLabel('soon', 'en')).toBe('');
+  });
+});
+
+describe('rangeForDays', () => {
+  it('covers the given number of days ending today', () => {
+    expect(rangeForDays(1, '2026-10-13')).toEqual({ from: '2026-10-13', to: '2026-10-13' });
+    expect(rangeForDays(7, '2026-10-13')).toEqual({ from: '2026-10-07', to: '2026-10-13' });
+    expect(rangeForDays(30, '2026-03-01')).toEqual({ from: '2026-01-31', to: '2026-03-01' });
+    expect(rangeForDays(365, '2026-10-13')).toEqual({ from: '2025-10-14', to: '2026-10-13' });
+  });
+});
+
+describe('misuse log labels', () => {
+  const expectKeyInBoth = (key: string) => {
+    expect({ key, en: typeof lookup(en as unknown as Tree, key) }).toEqual({ key, en: 'string' });
+    expect({ key, hi: typeof lookup(hi as unknown as Tree, key) }).toEqual({ key, hi: 'string' });
+  };
+
+  it('has words for every category the guard can record, server-only ones included', () => {
+    expect(AI_CATEGORIES).toContain('refusal_cyber');
+    expect(AI_CATEGORIES).toContain('refusal_bio');
+    for (const category of AI_CATEGORIES) expectKeyInBoth(categoryLabelKey(category));
+    // camelCase in the translations: "unsafe_other" would read as half of an i18next plural pair.
+    expect(categoryLabelKey('unsafe_other')).toBe('aiMisuse.categories.unsafeOther');
+    expect(categoryLabelKey('refusal_cyber')).toBe('aiMisuse.categories.refusalCyber');
+    expect(categoryLabelKey('study')).toBe('aiMisuse.categories.study');
+    expect(toolLabelKey('get_class_marks')).toBe('aiMisuse.tools.getClassMarks');
+  });
+
+  it('shows an unknown category as "Other"', () => {
+    expect(categoryLabelKey('brand_new_category')).toBe('aiMisuse.categories.other');
+    expect(categoryLabelKey(null)).toBe('aiMisuse.categories.other');
+    expect(en.aiMisuse.categories.other).toBe('Other');
+  });
+
+  it('has words for every verdict, tool, outcome, role and feature', () => {
+    for (const verdict of AI_VERDICTS) expectKeyInBoth(verdictLabelKey(verdict));
+    expectKeyInBoth(verdictLabelKey('NEW_VERDICT'));
+    for (const tool of AI_TOOLS) expectKeyInBoth(toolLabelKey(tool)!);
+    for (const outcome of AI_LOOKUP_OUTCOMES) expectKeyInBoth(outcomeLabelKey(outcome)!);
+    for (const role of ['STUDENT', 'TEACHER', 'PARENT', 'ADMIN']) expectKeyInBoth(roleLabelKey(role)!);
+    for (const feature of ['BOT', 'ASSISTANT']) expectKeyInBoth(featureLabelKey(feature)!);
+  });
+
+  it('falls back to readable text for a tool, role or feature added later', () => {
+    expect(toolLabelKey('get_class_homework')).toBeNull();
+    expect(toolFallbackLabel('get_class_homework')).toBe('Get class homework');
+    expect(roleLabelKey('DRIVER')).toBeNull();
+    expect(featureLabelKey('QUIZ')).toBeNull();
+    expect(outcomeLabelKey('PARTIAL')).toBeNull();
+  });
+});
+
+describe('scopeSummary', () => {
+  it('puts what was asked for on one line, without ids', () => {
+    expect(
+      scopeSummary({ class: '7 A', sectionId: '7f3c0c1e-0000-4000-8000-000000000001', from: '2026-09-14', to: '2026-10-13' })
+    ).toBe('class: 7 A · from: 2026-09-14 · to: 2026-10-13');
+  });
+
+  it('spells out nested filters and skips empty values', () => {
+    expect(
+      scopeSummary({ entity: 'marks', metric: 'averagePercentage', filters: { className: '7', section: 'A', term: null } })
+    ).toBe('entity: marks · metric: averagePercentage · filters: className=7, section=A');
+    expect(scopeSummary({ class: '8 B', subject: '', assessmentId: 'x', belowPercent: 40, listAll: false })).toBe(
+      'class: 8 B · belowPercent: 40 · listAll: false'
+    );
+  });
+
+  it('is empty for a scope the server could not read back', () => {
+    expect(scopeSummary({})).toBe('');
+    expect(scopeSummary(null)).toBe('');
+  });
+});

@@ -129,6 +129,8 @@ export function questionsForBank(
   return questions.filter((q) => selected.includes(q.number) && isBankEligible(q) && !savedToBank.includes(q.number));
 }
 
+const DAILY_LIMIT_CODES = new Set(['AI_USER_DAILY_LIMIT', 'AI_SCHOOL_DAILY_LIMIT']);
+
 function retryAfterSeconds(data: unknown): number | null {
   if (!isObject(data)) return null;
   const seconds = data.retryAfterSeconds;
@@ -139,10 +141,12 @@ function retryAfterSeconds(data: unknown): number | null {
  * What to tell the teacher when a generation fails. A used-up hourly quota (429) says how long to
  * wait; the generator's 503 AI_UNAVAILABLE messages are written to be shown ("try fewer questions",
  * "took too long to write"), so they are passed through instead of the generic "server unavailable".
+ * The daily limits (429 AI_USER_DAILY_LIMIT / AI_SCHOOL_DAILY_LIMIT) are worded by getErrorMessage,
+ * in the app's language.
  */
 export function quizGenErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
-    if (error.status === 429) {
+    if (error.status === 429 && !DAILY_LIMIT_CODES.has(error.errorCode ?? '')) {
       const seconds = retryAfterSeconds(error.data);
       if (seconds !== null) {
         return i18n.t('teacherTools.generator.errors.rateLimited', { minutes: Math.max(1, Math.ceil(seconds / 60)) });
