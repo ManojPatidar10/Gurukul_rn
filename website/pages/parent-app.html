@@ -1,36 +1,45 @@
 <!--meta {
   "path": "parent-app.html",
   "crumb": "Parent app",
-  "title": "School Parent App — Attendance, Fees & Report Card | Smart Gurukul",
-  "description": "Parents see their child's attendance, fees and report card in the Smart Gurukul app, in Hindi or English. All children on one login, with a one-time code to sign in.",
+  "title": "School Parent App: Attendance, Fees, Bus | Smart Gurukul",
+  "description": "Parents see attendance, fees and receipts, report cards, timetable and the school bus, chat with teachers and get absence and fee alerts, in Hindi or English.",
   "priority": "0.8"
 } -->
 <section class="page-hero">
   <div class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Smart Gurukul</a> › Parent app</nav>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="./">Smart Gurukul</a> › Parent app</nav>
     <p class="eyebrow">For parents</p>
-    <h1>Your child’s attendance, fees and report card, now on your phone</h1>
-    <p class="lead" lang="hi" style="font-weight:700">बच्चे की हाज़िरी, फ़ीस और रिपोर्ट कार्ड, अब फ़ोन पर।</p>
-    <p class="lead">Parents see it all in the Smart Gurukul app, in Hindi or English, without waiting for the next PTM.</p>
-    <div class="hero-actions" style="margin-top:26px"><a class="btn btn-gold" href="index.html#demo">Book a free demo for your school</a></div>
+    <h1>Everything about your child’s school day, on your phone</h1>
+    <p class="lead" lang="hi" style="font-weight:700">हाज़िरी, फ़ीस, रिपोर्ट कार्ड, स्कूल बस और शिक्षकों से बात — सब फ़ोन पर।</p>
+    <p class="lead">Parents use the same Smart Gurukul app with a parent login, in Hindi or English, without waiting for the next PTM.</p>
+    <div class="hero-actions" style="margin-top:26px"><a class="btn btn-gold" href="./#demo">Book a free demo</a></div>
   </div>
 </section>
 
 <section style="padding-bottom:0">
   <div class="wrap">
-    <div class="answer"><p><strong>In short:</strong> parents use the same Smart Gurukul app with a parent login. They see their child’s <strong>attendance</strong>, <strong>fees</strong> and <strong>report card</strong>, in Hindi or English. All their children at the school appear on one login, and they sign in with a one-time code on their phone.</p></div>
+    <div class="answer"><p><strong>In short:</strong> parents see their child’s <strong>attendance</strong>, <strong>fee bills and receipts</strong>, <strong>report card</strong> (with a PDF to download), class <strong>timetable</strong>, upcoming tests and digital ID card. When the school runs its buses on Smart Gurukul, they also see the <strong>school bus</strong> live while their child is on it. They can <strong>chat with their child’s teachers</strong> and the school office, read school announcements, and get alerts when their child is marked absent or a fee is due. All their children at the school are on one login. Fees are paid at the school; online payment in the app isn’t available yet.</p></div>
   </div>
 </section>
 
-<section>
+<section aria-labelledby="see-title">
   <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">In the app</p>
+      <h2 id="see-title">What do parents see in the app?</h2>
+      <p class="lead">Their own child’s school day: what the class teacher marked, what’s due, what the school published and where the bus is.</p>
+    </div>
     <div class="cards">
       <div class="card"><span class="emoji">📅</span><h3>Daily attendance</h3><p>Each day marked present, absent, late or half-day, with a monthly calendar.</p></div>
-      <div class="card"><span class="emoji">💳</span><h3>Fees and dues</h3><p>What’s due and what’s paid, so there are no surprises at the fee counter.</p></div>
-      <div class="card"><span class="emoji">📄</span><h3>Report card</h3><p>Results appear once the school publishes them, term by term.</p></div>
+      <div class="card"><span class="emoji">🔔</span><h3>Absence alerts</h3><p>A notification when the class teacher saves the register with your child marked absent.</p></div>
+      <div class="card"><span class="emoji">💳</span><h3>Fees, receipts and reminders</h3><p>Every bill, what’s paid and what’s due, a PDF receipt for each payment, and a reminder before the due date.</p></div>
+      <div class="card"><span class="emoji">📄</span><h3>Report card and PDF</h3><p>Results appear once the school publishes them, with a PDF to download and keep.</p></div>
+      <div class="card"><span class="emoji">🗓️</span><h3>Timetable and upcoming tests</h3><p>The class timetable, including changes for a particular day, and the tests coming up.</p></div>
+      <div class="card"><span class="emoji">🚌</span><h3>School bus, live</h3><p>If the school runs its buses on Smart Gurukul, see the bus live while your child is on it. <a href="school-bus-tracking.html">How bus tracking works</a></p></div>
+      <div class="card"><span class="emoji">💬</span><h3>Chat with teachers, and announcements</h3><p>Message your child’s teachers and the school office, and read the school’s announcements.</p></div>
+      <div class="card"><span class="emoji">🪪</span><h3>Digital ID card</h3><p>Your child’s school ID card, in the app.</p></div>
       <div class="card"><span class="emoji">👨‍👩‍👧‍👦</span><h3>All children, one login</h3><p>Brothers and sisters at the same school show up together.</p></div>
       <div class="card"><span class="emoji">🗣️</span><h3>Hindi or English</h3><p>Switch the whole app to Hindi in one tap.</p></div>
-      <div class="card"><span class="emoji">🔑</span><h3>Simple sign-in</h3><p>A one-time code on the parent’s phone. No password to remember.</p></div>
     </div>
   </div>
 </section>
@@ -39,8 +48,14 @@
   <div class="wrap prose">
     <p class="eyebrow">For the school</p>
     <h2>Fewer calls to the office</h2>
-    <p>When parents can check attendance, dues and results themselves, the office spends less time answering the same questions on the phone. Parents register themselves and link to their child, and the school approves them, so nobody types parent accounts in by hand.</p>
-    <p><strong style="color:#fff">Also for parents:</strong> chat with teachers, alerts for absences and fee due dates, and a PDF report card to download.</p>
+    <p>When parents can check attendance, dues, receipts and results themselves, the office spends less time answering the same questions on the phone. If the school has a parent’s mobile number on the child’s record, the parent signs in with a code sent on WhatsApp. Other parents register with their child’s registration number and the school approves them.</p>
+  </div>
+</section>
+
+<section style="padding:clamp(40px,6vw,64px) 0" aria-labelledby="parent-title">
+  <div class="wrap prose">
+    <h2 id="parent-title">Are you a parent?</h2>
+    <p>Smart Gurukul is set up by your child’s school, which sends you the invite. If your school doesn’t use it yet, share this page with them.</p>
   </div>
 </section>
 
@@ -48,10 +63,13 @@
   <div class="wrap">
     <div class="section-head center"><p class="eyebrow">FAQ</p><h2>Parent app: common questions</h2></div>
     <div class="faq">
-      <details class="qa"><summary>Is there a separate app for parents?</summary><p>No. Parents use the same Smart Gurukul app and sign in with a parent login. It shows their child’s attendance, fees and report card.</p></details>
-      <details class="qa"><summary>Can one parent see more than one child?</summary><p>Yes. All of a parent’s children at the school appear on one login.</p></details>
-      <details class="qa"><summary>How do parents sign in?</summary><p>With their mobile number and a one-time code. A parent first links to their child using details the school already has, and the school approves the request.</p></details>
-      <details class="qa"><summary>Can parents chat with teachers in the app?</summary><p>Parents can chat with their child’s teachers and the school office in the app, and get alerts when their child is absent or a fee is due. Parents see fees and dues in the app; fees are paid at the school as today.</p></details>
+      <details class="qa"><summary>Is there a separate app for parents?</summary><p>No. Parents use the same Smart Gurukul app and sign in with a parent login. It shows their child’s attendance, fees and receipts, report card, timetable, upcoming tests and ID card, the school bus if the school uses it, and chat with teachers.</p></details>
+      <details class="qa"><summary>Can one parent see more than one child?</summary><p>Yes. All of a parent’s children at the school appear on one login, and the parent can switch between them.</p></details>
+      <details class="qa"><summary>How do parents sign in?</summary><p>If the school has the parent’s mobile number on the child’s record, the parent signs in with a one-time code sent on WhatsApp, and every child on that number appears. Other parents register with their child’s registration number and the school approves them.</p></details>
+      <details class="qa"><summary>Can parents chat with teachers?</summary><p>Yes. Parents can chat with their child’s teachers and the school office in the app, and read the school’s announcements.</p></details>
+      <details class="qa"><summary>Will I be told if my child is absent?</summary><p>Yes. When the class teacher saves the register with your child marked absent, you get a notification on your phone.</p></details>
+      <details class="qa"><summary>Can parents pay fees in the app?</summary><p>Not yet. Parents see their bills, dues and receipts in the app and get reminders, and fees are paid at the school as today. Each payment then shows in the app with its receipt.</p></details>
+      <details class="qa"><summary>Can parents track the school bus?</summary><p>Yes, if the school runs its buses on Smart Gurukul. Parents see the bus live on a map while their child is on it, and get an app notification and a WhatsApp message when their child boards, reaches school and is dropped off.</p></details>
     </div>
   </div>
 </section>
@@ -60,9 +78,9 @@
   <div class="wrap">
     <h2 style="font-size:1.5rem">Explore more</h2>
     <div class="related">
+      <a href="school-bus-tracking.html">School bus tracking<span>Live bus and WhatsApp alerts for families</span></a>
+      <a href="school-fee-management.html">Fee management<span>Bills, receipts and reminders</span></a>
       <a href="gps-attendance.html">GPS attendance<span>How attendance is recorded</span></a>
-      <a href="money-features.html">Fees &amp; payroll<span>How the money side works</span></a>
-      <a href="gamified-learning.html">Gamified learning<span>What students see</span></a>
     </div>
   </div>
 </section>
