@@ -1,13 +1,21 @@
-import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs';
+import { Client, type IMessage } from '@stomp/stompjs';
 
 import { BASE_URL, ensureFreshAccessToken, getAuthToken } from './client';
-import type { Announcement, Message } from './types';
+import { createSubscriptionRegistry } from './subscriptionRegistry';
+import type { Announcement, ChatUpdateFrame, Message } from './types';
 
 const WS_URL = BASE_URL.replace(/^http/, 'ws') + '/ws/websocket';
 
 let client: Client | null = null;
 let connecting: Promise<Client> | null = null;
-const subscriptions = new Map<string, StompSubscription>();
+/**
+ * Every destination subscribed through this file, with its callback. stompjs forgets subscriptions
+ * when the socket drops (Android drops it whenever the app is in the background) and reconnects on
+ * its own, so onConnect subscribes all of them again - otherwise no frame would arrive until the
+ * screen was reopened.
+ */
+const registry = createSubscriptionRegistry();
+const reconnectListeners = new Set<() => void>();
 
 /** Exported so callSocket.ts can share this one connection instead of opening a second WebSocket. */
 export function ensureClient(schoolId: string): Promise<Client> {
@@ -15,6 +23,8 @@ export function ensureClient(schoolId: string): Promise<Client> {
   if (connecting) return connecting;
 
   connecting = new Promise((resolve, reject) => {
+    // Whether this client has connected before, so a later connect is reported as a reconnect.
+    let connectedBefore = false;
     const next = new Client({
       brokerURL: WS_URL,
       // Runs before the first connect and every automatic reconnect, so a reconnect after the
@@ -32,6 +42,18 @@ export function ensureClient(schoolId: string): Promise<Client> {
       reconnectDelay: 3000,
       onConnect: () => {
         connecting = null;
+        registry.resubscribeAll(next);
+        if (connectedBefore) {
+          // Frames sent while the socket was down are lost; listeners refetch what they show.
+          reconnectListeners.forEach((listener) => {
+            try {
+              listener();
+            } catch {
+              // One screen's refetch failing mustn't stop the others.
+            }
+          });
+        }
+        connectedBefore = true;
         resolve(next);
       },
       onStompError: (frame) => {
@@ -49,24 +71,65 @@ export function ensureClient(schoolId: string): Promise<Client> {
   return connecting;
 }
 
-export async function subscribeToConversation(
+/**
+ * Calls `listener` after every reconnect of the shared socket (not its first connect), once the
+ * kept subscriptions are back. Use it to refetch whatever may have been sent while it was down.
+ * Returns a function that stops the calls.
+ */
+export function onReconnect(listener: () => void): () => void {
+  reconnectListeners.add(listener);
+  return () => {
+    reconnectListeners.delete(listener);
+  };
+}
+
+/**
+ * Subscribes through the registry: now when the socket is connected, otherwise on its next
+ * connect, and again after every reconnect, until the returned function is called.
+ */
+async function subscribeKept(
+  schoolId: string,
+  destination: string,
+  onFrame: (frame: IMessage) => void
+): Promise<() => void> {
+  const activeClient = await ensureClient(schoolId);
+  return registry.add(destination, onFrame, activeClient);
+}
+
+export function subscribeToConversation(
   schoolId: string,
   conversationId: string,
   onMessage: (message: Message) => void
 ): Promise<() => void> {
-  const activeClient = await ensureClient(schoolId);
-  const destination = `/topic/conversations/${conversationId}`;
-
-  subscriptions.get(destination)?.unsubscribe();
-  const subscription = activeClient.subscribe(destination, (frame: IMessage) => {
+  return subscribeKept(schoolId, `/topic/conversations/${conversationId}`, (frame) => {
     onMessage(JSON.parse(frame.body) as Message);
   });
-  subscriptions.set(destination, subscription);
+}
 
-  return () => {
-    subscription.unsubscribe();
-    subscriptions.delete(destination);
-  };
+/**
+ * Updates to messages already sent in a conversation - today, a helpdesk-bot card changing state
+ * (saved, cancelled, expired, replaced). Only a server with bot actions knows this destination; an
+ * older one refuses it with an ERROR frame that can end the socket, so callers subscribe only once
+ * they've seen a message with the `action` key (see supportsBotActions). Unknown frame types and
+ * unreadable frames are ignored.
+ */
+export function subscribeToConversationUpdates(
+  schoolId: string,
+  conversationId: string,
+  onFrame: (frame: ChatUpdateFrame) => void
+): Promise<() => void> {
+  return subscribeKept(schoolId, `/topic/conversations/${conversationId}/updates`, (frame) => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(frame.body);
+    } catch {
+      return;
+    }
+    if (!parsed || typeof parsed !== 'object') return;
+    const update = parsed as Partial<ChatUpdateFrame>;
+    if (update.type !== 'MESSAGE_UPDATED' || !update.message || typeof update.message.id !== 'string') return;
+    onFrame(update as ChatUpdateFrame);
+  });
 }
 
 export interface SendMessageAttachment {
@@ -88,23 +151,14 @@ export async function sendMessage(
   });
 }
 
-async function subscribeToDestination(
+function subscribeToDestination(
   schoolId: string,
   destination: string,
   onAnnouncement: (announcement: Announcement) => void
 ): Promise<() => void> {
-  const activeClient = await ensureClient(schoolId);
-
-  subscriptions.get(destination)?.unsubscribe();
-  const subscription = activeClient.subscribe(destination, (frame: IMessage) => {
+  return subscribeKept(schoolId, destination, (frame) => {
     onAnnouncement(JSON.parse(frame.body) as Announcement);
   });
-  subscriptions.set(destination, subscription);
-
-  return () => {
-    subscription.unsubscribe();
-    subscriptions.delete(destination);
-  };
 }
 
 export function subscribeToSchoolAnnouncements(
@@ -137,8 +191,7 @@ export function subscribeToGradeAnnouncements(
 }
 
 export function disconnectChatSocket() {
-  subscriptions.forEach((sub) => sub.unsubscribe());
-  subscriptions.clear();
+  registry.clear();
   client?.deactivate();
   client = null;
 }

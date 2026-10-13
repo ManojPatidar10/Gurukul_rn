@@ -1,3 +1,5 @@
+import type { DayOfWeek } from './timetable';
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T | null;
@@ -1447,18 +1449,106 @@ export interface CreateConversationRequest {
   otherPartyOwnerId: string;
 }
 
-export type SenderKind = 'USER' | 'BOT';
+/** The server sends HUMAN for a person's message and BOT for the helpdesk bot's. */
+export type SenderKind = 'HUMAN' | 'BOT';
+
+/** Effective status of a helpdesk-bot proposal: a PENDING one past its expiry is sent as EXPIRED. */
+export type BotActionStatus = 'PENDING' | 'EXECUTED' | 'FAILED' | 'CANCELLED' | 'EXPIRED' | 'SUPERSEDED';
+export type BotActionItemKind = 'SUBSTITUTE' | 'CANCEL' | 'EXTRA' | 'UNDO' | 'SET' | 'CLEAR';
+
+/** One period as a card shows it, before or after a proposed change. Strings are server-cleaned. */
+export interface BotCellState {
+  subjectName: string | null;
+  teacherName: string | null;
+  /** Set only when another employee shares this teacher's name: their designation and classes. */
+  teacherDetail: string | null;
+  /** Set only on `after` of SUBSTITUTE and EXTRA; false means "no app login - won't be notified". */
+  teacherHasLogin: boolean | null;
+  roomName: string | null;
+}
+
+/** One change of a bot proposal, in execution order. Built by the server from validated data. */
+export interface BotActionItem {
+  index: number;
+  kind: BotActionItemKind | string;
+  /** A SUBSTITUTE or EXTRA that updates the change already on that period. */
+  replacesExisting: boolean;
+  /** UNDO only: the kind being undone (SUBSTITUTE, CANCELLED or EXTRA). */
+  undoesKind: string | null;
+  /** YYYY-MM-DD for the dated kinds; null for SET and CLEAR. */
+  date: string | null;
+  dayOfWeek: DayOfWeek;
+  periodNumber: number;
+  periodLabel: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  /** "Grade 7 - A", with the year added when the school has two sections with that label. */
+  classLabel: string;
+  /** A dated change for a period that is already over today. */
+  periodEnded: boolean;
+  before: BotCellState | null;
+  after: BotCellState | null;
+  regularTeacherName: string | null;
+  /** SET only: the teacher also gets assigned to the class, which gives them access to it. */
+  assignsTeacher: boolean;
+  /** One English sentence from the server - the fallback for anything the app can't format. */
+  summary: string;
+}
+
+/** A proposal the helpdesk bot made for an admin to confirm (the card under a bot message). */
+export interface BotAction {
+  id: string;
+  messageId: string;
+  conversationId: string;
+  code: string;
+  type: string;
+  status: BotActionStatus | string;
+  changeCount: number;
+  /** English, e.g. "3 timetable changes"; the app shows its own translated title. */
+  title: string;
+  items: BotActionItem[];
+  /** Written by the bot, cleaned by the server, and shown to the teachers involved. */
+  reason: string | null;
+  requestedByOwnerType: OwnerType;
+  requestedByOwnerId: string;
+  createdAt: string;
+  expiresAt: string;
+  decidedAt: string | null;
+  failureCode: string | null;
+  failureReason: string | null;
+  /** The exact plain-text suffix the server appended to the message's content, for older apps. */
+  footer: string;
+  /** Grows on every stored change; the higher one wins when frames race. */
+  version: number;
+  /** The server clock when this was sent, to correct the phone's clock for the countdown. */
+  serverTime: string;
+}
 
 export interface Message {
   id: string;
   senderKind: SenderKind;
   senderOwnerType: OwnerType | null;
   senderOwnerId: string | null;
-  content: string;
+  content: string | null;
   sentAt: string;
   attachmentUrl: string | null;
   attachmentContentType: string | null;
   attachmentFileName: string | null;
+  /**
+   * A bot proposal's card. A server with bot actions always sends this key (null when there is no
+   * card); an older server leaves it out, which is how the app knows not to subscribe to updates.
+   */
+  action?: BotAction | null;
+}
+
+/** A frame on /topic/conversations/{id}/updates. Unknown types are ignored. */
+export interface ChatUpdateFrame {
+  type: 'MESSAGE_UPDATED' | string;
+  message: Message;
 }
 
 export interface MessageHistoryResponse {

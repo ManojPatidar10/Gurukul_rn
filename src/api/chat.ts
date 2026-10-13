@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   Announcement,
+  BotAction,
   ChatContact,
   Conversation,
   CreateAnnouncementRequest,
@@ -29,6 +30,25 @@ export function createConversation(schoolId: string, req: CreateConversationRequ
 /** Gets (or creates, on first use) the caller's own private Helpdesk BOT conversation. */
 export function getOrCreateBotConversation(schoolId: string) {
   return api.post<Conversation>('/api/v1/chat/bot/conversation', {}, schoolId);
+}
+
+/**
+ * Saves a helpdesk-bot proposal (admin only, and only the admin who asked). The answer is the
+ * action as it is now: EXECUTED, or FAILED with a reason - nothing is saved then. A proposal that
+ * isn't waiting any more is a 409 BOT_ACTION_NOT_PENDING whose `data` is the current action.
+ */
+export function confirmBotAction(schoolId: string, actionId: string) {
+  return api.post<BotAction>(`/api/v1/chat/bot/actions/${actionId}/confirm`, undefined, schoolId);
+}
+
+/** Cancels a waiting helpdesk-bot proposal; nothing is saved. Same errors as confirmBotAction. */
+export function cancelBotAction(schoolId: string, actionId: string) {
+  return api.post<BotAction>(`/api/v1/chat/bot/actions/${actionId}/cancel`, undefined, schoolId);
+}
+
+/** A helpdesk-bot proposal as it is now, to refresh a card after a lost connection. */
+export function getBotAction(schoolId: string, actionId: string) {
+  return api.get<BotAction>(`/api/v1/chat/bot/actions/${actionId}`, schoolId);
 }
 
 export function getConversationMessages(schoolId: string, conversationId: string, page = 0) {
