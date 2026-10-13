@@ -4,7 +4,8 @@ name: EAS Update (Expo Go)
 # with access to the project can open the latest app from anywhere - no laptop or dev server needed:
 #   exp://u.expo.dev/f610c224-f96d-4706-a22c-38f27170b00c?channel-name=main
 # EXPO_GO_UPDATE=1 makes app.config.js use the sdkVersion runtime (exposdk:<SDK>), the only one
-# Expo Go opens. Release builds use their own channels and the appVersion runtime, so they never
+# Expo Go opens. Other builds use their own channels and runtimes (the preview APK: channel "preview",
+# fingerprint runtime, published by eas-preview.yml; store builds: appVersion), so they never
 # receive these updates. Needs the EXPO_TOKEN repository secret (an Expo access token with access
 # to the project).
 on:
