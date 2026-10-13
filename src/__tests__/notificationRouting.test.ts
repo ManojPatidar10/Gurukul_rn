@@ -1,5 +1,5 @@
 import { getMyChildren } from '../api/parents';
-import { notificationTarget } from '../utils/notificationRouting';
+import { isTargetShowing, notificationTarget } from '../utils/notificationRouting';
 import { openNotificationTarget } from '../utils/openNotificationTarget';
 
 jest.mock('../api/parents', () => ({ getMyChildren: jest.fn() }));
@@ -143,6 +143,32 @@ describe('notificationTarget', () => {
       screen: 'ReportCard',
       studentId: 's1',
     });
+  });
+});
+
+describe('isTargetShowing', () => {
+  const helpdesk = { screen: 'HelpdeskBot' } as const;
+
+  it('leaves the helpdesk chat alone when it is already open', () => {
+    const botChat = { name: 'ConversationThread', params: { conversationId: 'c1', title: 'Helpdesk', isBot: true } };
+    expect(isTargetShowing(helpdesk, botChat)).toBe(true);
+    // Still finding the conversation: navigating again would stack a second one.
+    expect(isTargetShowing(helpdesk, { name: 'HelpdeskBot' })).toBe(true);
+  });
+
+  it('opens the helpdesk chat from anywhere else, a human chat included', () => {
+    expect(isTargetShowing(helpdesk, { name: 'ConversationThread', params: { conversationId: 'c2', title: 'Ravi' } })).toBe(
+      false
+    );
+    expect(isTargetShowing(helpdesk, { name: 'ConversationThread' })).toBe(false);
+    expect(isTargetShowing(helpdesk, { name: 'Dashboard' })).toBe(false);
+    expect(isTargetShowing(helpdesk, undefined)).toBe(false);
+  });
+
+  it('never skips other targets', () => {
+    const botChat = { name: 'ConversationThread', params: { isBot: true } };
+    expect(isTargetShowing({ screen: 'ConversationsList' }, botChat)).toBe(false);
+    expect(isTargetShowing({ screen: 'MyTimetable' }, { name: 'MyTimetable' })).toBe(false);
   });
 });
 

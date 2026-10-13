@@ -10,7 +10,7 @@ import { FEATURE_FLAGS } from '../config/featureFlags';
 import i18n from '../i18n';
 import { navigationRef } from '../navigation/navigationRef';
 import { getPushStatus, refreshPushPermission, setPushRegisterHandler, updatePushStatus } from '../push/pushStatus';
-import { notificationTarget } from '../utils/notificationRouting';
+import { isTargetShowing, notificationTarget } from '../utils/notificationRouting';
 import { openNotificationTarget } from '../utils/openNotificationTarget';
 
 Notifications.setNotificationHandler({
@@ -234,9 +234,10 @@ export function usePushNotifications(schoolId: string | null, session: Session |
         // parent's Announcements screen (staff and students have none, so it just opens the app);
         // BUS_TRIP opens the family's bus map, or an admin's transport screen; SALARY_PAID opens
         // the staff member's payslip; BOT_ACTION_READY (a helpdesk-bot timetable proposal waiting
-        // for the admin who asked) opens the helpdesk chat with its card.
+        // for the admin who asked) opens the helpdesk chat with its card, unless that chat is
+        // already open (see isTargetShowing).
         const target = notificationTarget(data, session.role);
-        if (target) {
+        if (target && !isTargetShowing(target, navigationRef.getCurrentRoute())) {
           openNotificationTarget(session.schoolId, target, navigationRef.navigate).catch(() => {});
         }
       }
