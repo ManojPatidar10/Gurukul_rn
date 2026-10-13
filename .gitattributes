@@ -1,0 +1,4 @@
+# The website build (website/build.py) writes docs/ with LF line endings. Checking docs/ and website/
+# out with LF too means a rebuild on Windows (core.autocrlf=true) leaves git status clean.
+docs/** text=auto eol=lf
+website/** text=auto eol=lf
