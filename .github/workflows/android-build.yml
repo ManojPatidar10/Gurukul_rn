@@ -32,41 +32,33 @@ jobs:
       - name: Prebuild Android
         run: npx expo prebuild --platform android --no-install
 
-      # Prebuild's gradle.properties caps the Gradle JVM at 2 GB heap / 512 MB metaspace. Since the
-      # dependencies added on 2026-10-11 the release build outgrows that: the daemon logs
+      # Prebuild's gradle.properties caps the Gradle JVM at 2 GB heap / 512 MB metaspace. Since
+      # expo-updates was added on 2026-10-11 the release build outgrows that: the daemon logs
       # "OutOfMemoryError: Metaspace" and then hangs until the job times out. Give it more room
-      # (the runner has 7 GB), and keep the Kotlin daemon from competing for the same memory.
+      # (ubuntu-latest has 16 GB for public repos), and keep the Kotlin daemon from competing for
+      # the same memory.
+      #
+      # Prebuild writes gradle.properties WITHOUT a trailing newline: its last line is a property a
+      # config plugin appended (expo.inlineModules.watchedDirectories=[]). A plain `echo >>` glues
+      # the first new setting onto that line, so the setting is silently dropped and the property
+      # becomes "[]org.gradle.jvmargs=...". expo-autolinking then fails to JSON.parse it and Gradle
+      # stops with "Process 'command 'node'' finished with non-zero exit value 1". Hence the leading
+      # newline and the check that each setting is a line of its own.
       - name: Give Gradle more memory
         working-directory: android
         run: |
-          echo "DEBUG: end of gradle.properties as written by prebuild (cat -A, \$ marks a newline):"
-          tail -n 4 gradle.properties | cat -A; echo; echo "DEBUG: last byte:"; tail -c 1 gradle.properties | od -c
-          sed -i '/^org.gradle.jvmargs=/d; /^kotlin.daemon.jvmargs=/d' gradle.properties
-          {
-            echo 'org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1536m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8'
-            echo 'kotlin.daemon.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=768m'
-          } >> gradle.properties
-          grep -E '^(org.gradle|kotlin.daemon).jvmargs=' gradle.properties
-          echo "DEBUG: end of gradle.properties after the append:"; tail -n 4 gradle.properties | cat -A
+          GRADLE_JVMARGS='org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1536m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8'
+          KOTLIN_JVMARGS='kotlin.daemon.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=768m'
+          sed -i '/^org\.gradle\.jvmargs=/d; /^kotlin\.daemon\.jvmargs=/d' gradle.properties
+          printf '\n%s\n%s\n' "$GRADLE_JVMARGS" "$KOTLIN_JVMARGS" >> gradle.properties
+          for line in "$GRADLE_JVMARGS" "$KOTLIN_JVMARGS"; do
+            grep -qxF "$line" gradle.properties || { echo "::error::gradle.properties is missing the line: $line"; exit 1; }
+          done
+          grep -nE 'jvmargs=|^expo\.inlineModules\.' gradle.properties
 
       - name: Build release APK
         working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleRelease --stacktrace --info
-
-      # DEBUG (temporary): Gradle's providers.exec swallows the node command's stderr. Re-run the
-      # inline-modules command that expo-autolinking runs in projectsEvaluated, with the same
-      # arguments, so the real error is visible.
-      - name: "DEBUG: re-run expo-autolinking mirror-kotlin-inline-modules"
-        if: failure()
-        working-directory: android
-        run: |
-          WATCHED="$(sed -n 's/^expo\.inlineModules\.watchedDirectories=//p' gradle.properties)"
-          printf 'expo.inlineModules.watchedDirectories value Gradle passes to node: <%s>\n' "$WATCHED"
-          node --version
-          node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking mirror-kotlin-inline-modules \
-            --kotlin-files-mirror-directory "$GITHUB_WORKSPACE/node_modules/expo/android/src/main/java/inline/modules" \
-            --inline-modules-list-directory "$GITHUB_WORKSPACE/node_modules/expo/android/build/inline/modules" \
-            --watched-directories-serialized "$WATCHED"
+        run: chmod +x gradlew && ./gradlew assembleRelease --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
