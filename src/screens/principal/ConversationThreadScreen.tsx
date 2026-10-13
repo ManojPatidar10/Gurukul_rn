@@ -47,7 +47,7 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage, isRetryable } from '../../api/errorMessage';
 import { pickedFileSize, putToPresignedUrl } from '../../api/presignedUpload';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { pausedUntilFromMessage } from '../../utils/aiGuard';
+import { messageSaysOff, pausedUntilFromMessage } from '../../utils/aiGuard';
 import { confirmAlertBody, isBotAction, notPendingMessage } from '../../utils/botActions';
 import {
   BOT_TYPING_TIMEOUT_MS,
@@ -112,7 +112,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   // The helpdesk bot answers school work only: after repeated refusals the user's AI help is
   // paused for a while (the composer locks until then), and the bot can be switched off. Human
   // chats make no AI status requests.
-  const { pausedUntil, botEnabled, enterPaused } = useAiStatus(schoolId, isBot);
+  const { pausedUntil, botEnabled, enterPaused, refresh: refreshAiStatus } = useAiStatus(schoolId, isBot);
   const aiPaused = isBot && pausedUntil !== null;
   const [recordsOpen, setRecordsOpen] = useState(false);
 
@@ -178,6 +178,18 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     );
   }, [refetchFlight, schoolId, conversationId, ingest]);
 
+  /**
+   * Catches up on frames that may have been missed (a reconnect, "typing…" giving up, the updates
+   * subscription coming back): the newest messages, and in the helpdesk chat the AI status too. A
+   * reply that paused the user, or says the bot is off, carries that only on its live frame - REST
+   * history has no aiNotice - so without this the composer would stay open under a "paused" bubble.
+   * (Returning to the app already reads the status in useAiStatus.)
+   */
+  const catchUp = useCallback(() => {
+    refetchLatest();
+    if (isBot) refreshAiStatus();
+  }, [refetchLatest, isBot, refreshAiStatus]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -203,6 +215,9 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         // The bot's refusal that starts a pause (and its reply to a paused user) says until when.
         // Only live frames carry it; REST history never does.
         if (isBot) enterPaused(pausedUntilFromMessage(message));
+        // "Turned off" since this chat opened (that takes a server restart): read the status again
+        // so the "off" banner shows.
+        if (isBot && messageSaysOff(message)) refreshAiStatus();
       },
       {
         onError: (e) => {
@@ -215,7 +230,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       cancelled = true;
       unsubscribe();
     };
-  }, [schoolId, conversationId, ingest, isBot, enterPaused]);
+  }, [schoolId, conversationId, ingest, isBot, enterPaused, refreshAiStatus]);
 
   // Card updates (saved, cancelled, expired, replaced) come on their own destination, which only a
   // server with bot actions has - an older one would refuse it and end the socket - so it's
@@ -246,18 +261,19 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     if (updatesDroppedRef.current) {
       // Back after a drop: fetch what changed while it wasn't subscribed.
       updatesDroppedRef.current = false;
-      refetchLatest();
+      catchUp();
     }
     return () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [isBot, actionsSupported, schoolId, conversationId, commit, noteActions, refetchLatest]);
+  }, [isBot, actionsSupported, schoolId, conversationId, commit, noteActions, catchUp]);
 
   // After the socket reconnects, or the app comes back to the foreground, frames sent meanwhile are
-  // lost: fetch the newest page again.
+  // lost: fetch the newest page again (and, after a reconnect, the AI status - useAiStatus reads it
+  // itself on returning to the app).
   useEffect(() => {
-    const offReconnect = onReconnect(refetchLatest);
+    const offReconnect = onReconnect(catchUp);
     const appStateSubscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') refetchLatest();
     });
@@ -265,7 +281,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       offReconnect();
       appStateSubscription.remove();
     };
-  }, [refetchLatest]);
+  }, [catchUp, refetchLatest]);
 
   // "typing…" gives up after 90 s; the reply may still have been sent while the socket was down,
   // so look for it then.
@@ -277,12 +293,12 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       () => {
         // Ends it without reading the clock again (see onTypingTimeout); a newer send re-arms.
         setTyping((current) => onTypingTimeout(current, armedSince));
-        refetchLatest();
+        catchUp();
       },
       Math.max(0, left)
     );
     return () => clearTimeout(timer);
-  }, [typing, refetchLatest]);
+  }, [typing, catchUp]);
 
   useEffect(() => {
     const last = messages[messages.length - 1];

@@ -28,7 +28,13 @@ import { useAiStatus } from '../../hooks/useAiStatus';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
-import { historyForRequest, pausedUntilFromError, pausedUntilFromReply, type AiChatEntry } from '../../utils/aiGuard';
+import {
+  errorMaySayOff,
+  historyForRequest,
+  pausedUntilFromError,
+  pausedUntilFromReply,
+  type AiChatEntry,
+} from '../../utils/aiGuard';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'AcademicHelper'>;
 
@@ -60,7 +66,7 @@ export function AcademicHelperScreen({ navigation }: Props) {
   const [sending, setSending] = useState(false);
   const [recordsOpen, setRecordsOpen] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
-  const { pausedUntil, assistantEnabled, enterPaused } = useAiStatus(schoolId);
+  const { pausedUntil, assistantEnabled, enterPaused, refresh: refreshAiStatus } = useAiStatus(schoolId);
   const locked = pausedUntil !== null || !assistantEnabled;
 
   // Presentation only - it just picks the empty-state wording. The actual behaviour is decided
@@ -93,15 +99,16 @@ export function AcademicHelperScreen({ navigation }: Props) {
       // The refusal that starts a pause says so itself: lock now, not on the next send.
       enterPaused(pausedUntilFromReply(response));
     } catch (e) {
-      const pausedTill = pausedUntilFromError(e);
-      if (pausedTill) {
-        // Paused (from another device, or the status hadn't caught up): the banner says until when.
-        enterPaused(pausedTill);
-      } else {
+      // Paused (from another device, or the status hadn't caught up): the banner says until when.
+      // A pause that has already ended by this phone's clock shows no banner, so it gets the toast.
+      if (!enterPaused(pausedUntilFromError(e))) {
         // getErrorMessage words the server's codes (limits, too long) in the app's language, and
         // keeps the server's own text where it says something specific.
         showToast(getErrorMessage(e), 'error');
       }
+      // "Turned off" since the screen opened (that takes a server restart): read the status again,
+      // so the "off" banner shows and the composer locks instead of every send failing.
+      if (errorMaySayOff(e)) refreshAiStatus();
       // Drop the unanswered question back into the input so a retry doesn't mean retyping it.
       setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
       setInput(question);

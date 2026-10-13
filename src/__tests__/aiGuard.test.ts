@@ -4,15 +4,21 @@ import hi from '../i18n/locales/hi.json';
 import {
   AI_CATEGORIES,
   AI_LOOKUP_OUTCOMES,
+  AI_SCOPE_KEYS,
   AI_TOOLS,
   AI_VERDICTS,
   categoryLabelKey,
+  errorMaySayOff,
   featureLabelKey,
   historyForRequest,
+  isMissingEndpoint,
   isPaused,
+  messageSaysOff,
+  misuseLogView,
   msUntilUnpaused,
   noticeKind,
   outcomeLabelKey,
+  pauseAfterStatus,
   pausedUntilFromError,
   pausedUntilFromMessage,
   pausedUntilFromReply,
@@ -20,10 +26,12 @@ import {
   pausedUntilLabel,
   rangeForDays,
   roleLabelKey,
+  scopeKeyLabelKey,
   scopeSummary,
   toolFallbackLabel,
   toolLabelKey,
   verdictLabelKey,
+  watchPauseEnd,
   type AiChatEntry,
 } from '../utils/aiGuard';
 
@@ -167,8 +175,139 @@ describe('the paused state', () => {
   it('reads an unknown notice kind from a newer server as a refusal', () => {
     expect(noticeKind('PAUSED')).toBe('PAUSED');
     expect(noticeKind('SCHOOL_LIMIT')).toBe('SCHOOL_LIMIT');
+    expect(noticeKind('OFF')).toBe('OFF');
     expect(noticeKind('SOMETHING_NEW')).toBe('REFUSED');
     expect(noticeKind(undefined)).toBe('REFUSED');
+  });
+});
+
+describe('noticing the AI was switched off', () => {
+  it("reads a live bot message's OFF notice, and nothing else, as off", () => {
+    expect(messageSaysOff({ aiNotice: { kind: 'OFF', pausedUntil: null } })).toBe(true);
+    expect(messageSaysOff({ aiNotice: { kind: 'REFUSED', pausedUntil: null } })).toBe(false);
+    expect(messageSaysOff({ aiNotice: { kind: 'PAUSED', pausedUntil: IN_AN_HOUR } })).toBe(false);
+    // An unknown kind reads as a refusal, not as off; REST history has no notice at all.
+    expect(messageSaysOff({ aiNotice: { kind: 'SOMETHING_NEW' as never, pausedUntil: null } })).toBe(false);
+    expect(messageSaysOff({ aiNotice: null })).toBe(false);
+    expect(messageSaysOff({})).toBe(false);
+    expect(messageSaysOff(null)).toBe(false);
+  });
+
+  it("takes the Academic Helper's 503 AI_UNAVAILABLE as a reason to read the status again", () => {
+    expect(errorMaySayOff({ status: 503, errorCode: 'AI_UNAVAILABLE', message: 'The Academic Helper is turned off right now.' })).toBe(
+      true
+    );
+    expect(errorMaySayOff({ status: 429, errorCode: 'AI_PAUSED' })).toBe(false);
+    expect(errorMaySayOff({ status: 503 })).toBe(false);
+    expect(errorMaySayOff(new Error('offline'))).toBe(false);
+    expect(errorMaySayOff(undefined)).toBe(false);
+  });
+});
+
+describe('pauseAfterStatus', () => {
+  const LATER = '2026-10-13T11:00:00Z';
+  const EARLIER = '2026-10-13T10:30:00Z';
+
+  it("takes the server's word for a request sent after the pause was entered", () => {
+    expect(pauseAfterStatus(IN_AN_HOUR, null, false, NOW)).toBeNull(); // lifted by an admin
+    expect(pauseAfterStatus(IN_AN_HOUR, EARLIER, false, NOW)).toBe(EARLIER);
+    expect(pauseAfterStatus(null, IN_AN_HOUR, false, NOW)).toBe(IN_AN_HOUR);
+    expect(pauseAfterStatus(null, null, false, NOW)).toBeNull();
+  });
+
+  it('never lets an answer to a request sent before the pause began end or shorten it', () => {
+    // GET /ai/status went out on focus, reached the server before the 5th refusal paused the user,
+    // and came back after the reply that locked the composer.
+    expect(pauseAfterStatus(IN_AN_HOUR, null, true, NOW)).toBe(IN_AN_HOUR);
+    expect(pauseAfterStatus(IN_AN_HOUR, EARLIER, true, NOW)).toBe(IN_AN_HOUR);
+    expect(pauseAfterStatus(IN_AN_HOUR, IN_AN_HOUR, true, NOW)).toBe(IN_AN_HOUR);
+    // It can still make it longer.
+    expect(pauseAfterStatus(IN_AN_HOUR, LATER, true, NOW)).toBe(LATER);
+  });
+
+  it('has nothing to protect once the pause on show is over', () => {
+    const after = Date.parse(IN_AN_HOUR) + 1000;
+    expect(pauseAfterStatus(IN_AN_HOUR, null, true, after)).toBeNull();
+    expect(pauseAfterStatus(null, null, true, NOW)).toBeNull();
+    expect(pauseAfterStatus(null, IN_AN_HOUR, true, NOW)).toBe(IN_AN_HOUR);
+  });
+});
+
+describe('watchPauseEnd', () => {
+  const START = Date.parse('2026-10-13T09:45:00Z');
+  const UNTIL = '2026-10-13T10:45:00Z'; // an hour after START
+  const HOUR = 60 * 60 * 1000;
+  let offsetMs = 0;
+  // The server-corrected clock: the device clock (faked) plus the offset from the Date headers.
+  const serverClock = () => Date.now() + offsetMs;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(START);
+    offsetMs = 0;
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('ends the pause when it runs out', () => {
+    const onEnd = jest.fn();
+    watchPauseEnd(UNTIL, serverClock, onEnd);
+    jest.advanceTimersByTime(HOUR - 1);
+    expect(onEnd).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(HOUR);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('still ends it when the clock offset drops while waiting (it wakes "early")', () => {
+    const onEnd = jest.fn();
+    watchPauseEnd(UNTIL, serverClock, onEnd);
+    // A status re-read mid-pause: the whole-second Date header puts the offset 700 ms lower.
+    offsetMs = -700;
+    jest.advanceTimersByTime(HOUR);
+    expect(onEnd).not.toHaveBeenCalled(); // 700 ms left by the server's clock
+    jest.advanceTimersByTime(699);
+    expect(onEnd).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('still ends it when the device clock is set back during the pause', () => {
+    const onEnd = jest.fn();
+    watchPauseEnd(UNTIL, serverClock, onEnd);
+    jest.advanceTimersByTime(HOUR / 2);
+    jest.setSystemTime(Date.now() - 5000); // e.g. an NTP correction
+    jest.advanceTimersByTime(HOUR / 2);
+    expect(onEnd).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(5000);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits out a pause longer than the longest timer', () => {
+    const onEnd = jest.fn();
+    watchPauseEnd(UNTIL, serverClock, onEnd, 10 * 60 * 1000);
+    jest.advanceTimersByTime(HOUR - 1);
+    expect(onEnd).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('ends a pause that is already over on the next tick, not inside the call', () => {
+    const onEnd = jest.fn();
+    watchPauseEnd('2026-10-13T09:00:00Z', serverClock, onEnd);
+    expect(onEnd).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(0);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing once cancelled, also after waking early', () => {
+    const onEnd = jest.fn();
+    const cancel = watchPauseEnd(UNTIL, serverClock, onEnd);
+    offsetMs = -700;
+    jest.advanceTimersByTime(HOUR); // woke early and waits again
+    cancel();
+    jest.advanceTimersByTime(HOUR);
+    expect(onEnd).not.toHaveBeenCalled();
   });
 });
 
@@ -267,5 +406,68 @@ describe('scopeSummary', () => {
   it('is empty for a scope the server could not read back', () => {
     expect(scopeSummary({})).toBe('');
     expect(scopeSummary(null)).toBe('');
+  });
+
+  it("words the keys in the app's language, and shows an unknown key as it is", () => {
+    const labelIn = (locale: Tree) => (key: string) => {
+      const labelKey = scopeKeyLabelKey(key);
+      return labelKey ? String(lookup(locale, labelKey)) : key;
+    };
+    const scope = { class: '7 A', sectionId: 'x', from: '2026-09-14', to: '2026-10-13', newKey: 'y' };
+    expect(scopeSummary(scope, labelIn(en as unknown as Tree))).toBe(
+      'Class: 7 A · From: 2026-09-14 · To: 2026-10-13 · newKey: y'
+    );
+    expect(scopeSummary(scope, labelIn(hi as unknown as Tree))).toBe(
+      'कक्षा: 7 A · से: 2026-09-14 · तक: 2026-10-13 · newKey: y'
+    );
+    // Nested keys go through the same words (a metric's own field names stay as they are).
+    expect(scopeSummary({ entity: 'marks', filters: { className: '7', status: 'PAID' } }, labelIn(en as unknown as Tree))).toBe(
+      'Data: marks · Filters: className=7, Status=PAID'
+    );
+  });
+
+  it('has words for every scope key the server records', () => {
+    for (const key of AI_SCOPE_KEYS) {
+      const labelKey = scopeKeyLabelKey(key)!;
+      expect({ key, en: typeof lookup(en as unknown as Tree, labelKey) }).toEqual({ key, en: 'string' });
+      expect({ key, hi: typeof lookup(hi as unknown as Tree, labelKey) }).toEqual({ key, hi: 'string' });
+    }
+    expect(scopeKeyLabelKey('sectionId')).toBeNull();
+    expect(scopeKeyLabelKey(undefined)).toBeNull();
+  });
+});
+
+describe('misuseLogView', () => {
+  const REFUSED_7 = 'refused|7||';
+  const REFUSED_30 = 'refused|30||';
+  const RAVI = 'refused|7|STUDENT|ravi';
+
+  it('shows the rows only once they were loaded for exactly this tab, range and person', () => {
+    expect(misuseLogView(REFUSED_7, REFUSED_7, null)).toBe('list');
+    expect(misuseLogView(REFUSED_7, null, null)).toBe('loading');
+    // A new chip or name: a spinner, not the previous query's rows under the new filter.
+    expect(misuseLogView(REFUSED_30, REFUSED_7, null)).toBe('loading');
+    expect(misuseLogView(RAVI, REFUSED_7, null)).toBe('loading');
+  });
+
+  it("shows a failed first load as a failure, never as an empty 'nothing refused' list", () => {
+    expect(misuseLogView(REFUSED_7, null, { key: REFUSED_7, unavailable: false })).toBe('error');
+    expect(misuseLogView(REFUSED_30, REFUSED_7, { key: REFUSED_30, unavailable: false })).toBe('error');
+    // A server without the log (404, e.g. after a rollback) says so.
+    expect(misuseLogView(REFUSED_7, null, { key: REFUSED_7, unavailable: true })).toBe('unavailable');
+    // A failure for another query doesn't count.
+    expect(misuseLogView(REFUSED_30, REFUSED_7, { key: REFUSED_7, unavailable: false })).toBe('loading');
+  });
+
+  it("keeps the rows on show when a refresh of the same query fails", () => {
+    expect(misuseLogView(REFUSED_7, REFUSED_7, { key: REFUSED_7, unavailable: false })).toBe('list');
+  });
+
+  it('takes a 404 as a server without the log', () => {
+    expect(isMissingEndpoint({ status: 404, message: 'Resource not found: api/v1/ai/misuse' })).toBe(true);
+    expect(isMissingEndpoint({ status: 403 })).toBe(false);
+    expect(isMissingEndpoint({ status: 500 })).toBe(false);
+    expect(isMissingEndpoint(new Error('offline'))).toBe(false);
+    expect(isMissingEndpoint(null)).toBe(false);
   });
 });

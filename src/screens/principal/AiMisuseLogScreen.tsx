@@ -23,9 +23,10 @@ import {
   type AiMisuseEvent,
   type AiPause,
 } from '../../api/aiMisuse';
-import { ApiError } from '../../api/client';
+import { ApiError, serverNow } from '../../api/client';
 import { getErrorMessage } from '../../api/errorMessage';
 import type { OwnerType } from '../../api/types';
+import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
@@ -37,15 +38,19 @@ import {
   MISUSE_RANGES,
   categoryLabelKey,
   featureLabelKey,
+  isMissingEndpoint,
+  misuseLogView,
   outcomeLabelKey,
   pausedUntilLabel,
   rangeForDays,
   roleLabelKey,
+  scopeKeyLabelKey,
   scopeSummary,
   toolFallbackLabel,
   toolLabelKey,
   verdictLabelKey,
   type AiRangeDays,
+  type MisuseLogFailure,
 } from '../../utils/aiGuard';
 import { formatExpenseTime } from '../../utils/expenses';
 import { todayIst } from '../../utils/feeBills';
@@ -61,6 +66,10 @@ interface Person {
   name: string;
 }
 
+interface Failure extends MisuseLogFailure {
+  message: string;
+}
+
 const PAGE_SIZE = 50;
 const accent = accents.aiMisuseLog;
 
@@ -70,15 +79,28 @@ const accent = accents.aiMisuseLog;
  * audits), and every school-data lookup the bot made for someone. All admin-only on the server
  * too. Tapping a name narrows the refused messages and lookups to that person.
  */
-export function AiMisuseLogScreen({ navigation }: Props) {
+export function AiMisuseLogScreen({ navigation, route }: Props) {
   const { t, i18n } = useTranslation();
   const schoolId = useSchoolId();
   const { showToast } = useToast();
   const listBottom = useBottomInset();
 
-  const [tab, setTab] = useState<Tab>('refused');
+  // Opened from an AI_MISUSE_PAUSED push or alert: "Paused now" shows who.
+  const pushedPauseId = route.params?.pauseId;
+  const [tab, setTab] = useState<Tab>(pushedPauseId ? 'paused' : 'refused');
   const [days, setDays] = useState<AiRangeDays>(7);
   const [person, setPerson] = useState<Person | null>(null);
+  // Another such push while the log is open only changes the params (the screen is already on
+  // show): switch to "Paused now" and load it again, so the new pause is there.
+  const [shownPauseId, setShownPauseId] = useState(pushedPauseId);
+  const [reloads, setReloads] = useState(0);
+  if (pushedPauseId !== shownPauseId) {
+    setShownPauseId(pushedPauseId);
+    if (pushedPauseId) {
+      setTab('paused');
+      setReloads((n) => n + 1);
+    }
+  }
 
   const [refused, setRefused] = useState<AiMisuseEvent[]>([]);
   const [pauses, setPauses] = useState<AiPause[]>([]);
@@ -88,6 +110,9 @@ export function AiMisuseLogScreen({ navigation }: Props) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [liftingId, setLiftingId] = useState<string | null>(null);
+  // Set synchronously, so a double tap can't open two confirms or send two lifts.
+  const liftingRef = useRef(false);
+  const liftConfirmOpenRef = useRef(false);
   // Bumped on every first-page load, so an answer for an older tab, range or person is dropped.
   const generation = useRef(0);
 
@@ -96,7 +121,8 @@ export function AiMisuseLogScreen({ navigation }: Props) {
 
   const fetchPage = useCallback(
     async (pageNo: number) => {
-      const range = rangeForDays(effectiveDays, todayIst());
+      // "Today" by the server's clock, not by a phone whose clock is off near midnight.
+      const range = rangeForDays(effectiveDays, todayIst(new Date(serverNow())));
       const owner = person ? { ownerType: person.ownerType, ownerId: person.ownerId } : {};
       if (tab === 'refused') {
         const res = await listAiMisuse(schoolId, { ...range, ...owner, page: pageNo, size: PAGE_SIZE });
@@ -119,6 +145,14 @@ export function AiMisuseLogScreen({ navigation }: Props) {
     setHasNext(loaded.hasNext);
   }, []);
 
+  // What is on show. The rows are only shown once the first page for exactly this has arrived; a
+  // failed load shows why instead (see misuseLogView), never an empty list or another filter's rows.
+  const queryKey = [tab, effectiveDays, person?.ownerType ?? '', person?.ownerId ?? ''].join('|');
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [failure, setFailure] = useState<Failure | null>(null);
+  const view = misuseLogView(queryKey, loadedKey, failure);
+  const loading = view !== 'list';
+
   const loadFirstPage = useCallback(() => {
     generation.current += 1;
     const mine = generation.current;
@@ -127,30 +161,27 @@ export function AiMisuseLogScreen({ navigation }: Props) {
         if (mine !== generation.current) return;
         apply(loaded, false);
         setPage(0);
+        setLoadedKey(queryKey);
+        setFailure(null);
       })
       .catch((e) => {
-        if (mine === generation.current) showToast(getErrorMessage(e), 'error');
+        if (mine !== generation.current) return;
+        setFailure({ key: queryKey, unavailable: isMissingEndpoint(e), message: getErrorMessage(e) });
       });
-  }, [fetchPage, apply, showToast]);
-
-  // What is on show; the list is loading until its first page for exactly this has arrived.
-  const queryKey = [tab, effectiveDays, person?.ownerType ?? '', person?.ownerId ?? ''].join('|');
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const loading = loadedKey !== queryKey;
+  }, [fetchPage, apply, queryKey]);
 
   useEffect(() => {
-    let active = true;
-    loadFirstPage().finally(() => {
-      if (active) setLoadedKey(queryKey);
-    });
-    return () => {
-      active = false;
-    };
-  }, [loadFirstPage, queryKey]);
+    loadFirstPage();
+  }, [loadFirstPage, reloads]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     loadFirstPage().finally(() => setRefreshing(false));
+  };
+
+  const handleRetry = () => {
+    setFailure(null);
+    loadFirstPage();
   };
 
   const handleLoadMore = () => {
@@ -169,6 +200,12 @@ export function AiMisuseLogScreen({ navigation }: Props) {
 
   const displayName = (name: string | null) => name ?? t('aiMisuse.unknownPerson');
 
+  // A lookup's scope keys in the app's language; one added after this build shows as it is.
+  const scopeKeyLabel = (key: string) => {
+    const labelKey = scopeKeyLabelKey(key);
+    return labelKey ? t(labelKey) : key;
+  };
+
   const roleText = (role: string, classLabel?: string | null) => {
     const key = roleLabelKey(role);
     return [key ? t(key) : role, classLabel].filter(Boolean).join(' · ');
@@ -180,6 +217,8 @@ export function AiMisuseLogScreen({ navigation }: Props) {
   };
 
   const lift = (pause: AiPause) => {
+    if (liftingRef.current) return;
+    liftingRef.current = true;
     setLiftingId(pause.id);
     liftAiPause(schoolId, pause.id)
       .then(() => {
@@ -195,15 +234,33 @@ export function AiMisuseLogScreen({ navigation }: Props) {
           showToast(getErrorMessage(e), 'error');
         }
       })
-      .finally(() => setLiftingId(null));
+      .finally(() => {
+        liftingRef.current = false;
+        setLiftingId(null);
+      });
   };
 
   const confirmLift = (pause: AiPause) => {
-    if (liftingId) return;
-    Alert.alert(t('aiMisuse.liftTitle'), t('aiMisuse.liftBody', { name: displayName(pause.name) }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('aiMisuse.lift'), onPress: () => lift(pause) },
-    ]);
+    if (liftingRef.current || liftConfirmOpenRef.current) return;
+    liftConfirmOpenRef.current = true;
+    const close = () => {
+      liftConfirmOpenRef.current = false;
+    };
+    Alert.alert(
+      t('aiMisuse.liftTitle'),
+      t('aiMisuse.liftBody', { name: displayName(pause.name) }),
+      [
+        { text: t('common.cancel'), style: 'cancel', onPress: close },
+        {
+          text: t('aiMisuse.lift'),
+          onPress: () => {
+            close();
+            lift(pause);
+          },
+        },
+      ],
+      { cancelable: true, onDismiss: close }
+    );
   };
 
   // A person's name: tapping it shows only their rows (from the Paused tab, their refused messages).
@@ -257,6 +314,9 @@ export function AiMisuseLogScreen({ navigation }: Props) {
           onPress={() => confirmLift(item)}
           disabled={liftingId !== null}
           accessibilityRole="button"
+          // Names whose pause, so the buttons on a list of several can be told apart.
+          accessibilityLabel={lifting ? t('aiMisuse.lifting') : t('aiMisuse.liftFor', { name: displayName(item.name) })}
+          accessibilityState={{ disabled: liftingId !== null, busy: lifting }}
         >
           {lifting ? (
             <ActivityIndicator size="small" color={colors.white} />
@@ -271,7 +331,7 @@ export function AiMisuseLogScreen({ navigation }: Props) {
   const renderLookup = ({ item }: { item: AiDataAccessEntry }) => {
     const toolKey = toolLabelKey(item.tool);
     const outcomeKey = outcomeLabelKey(item.outcome);
-    const scope = scopeSummary(item.scope);
+    const scope = scopeSummary(item.scope, scopeKeyLabel);
     return (
       <View style={styles.row}>
         <View style={styles.rowHeader}>
@@ -356,7 +416,9 @@ export function AiMisuseLogScreen({ navigation }: Props) {
               style={styles.personChip}
               onPress={() => setPerson(null)}
               accessibilityRole="button"
-              accessibilityLabel={t('aiMisuse.clearPersonFilter')}
+              // Reads who the list is narrowed to; the hint says what tapping does.
+              accessibilityLabel={t('aiMisuse.personFilter', { name: person.name })}
+              accessibilityHint={t('aiMisuse.clearPersonFilter')}
             >
               <Text style={styles.personChipText} numberOfLines={1}>
                 {t('aiMisuse.personFilter', { name: person.name })}
@@ -368,8 +430,22 @@ export function AiMisuseLogScreen({ navigation }: Props) {
           )
         ) : null}
 
-        {loading ? (
+        {view === 'list' && failure?.key === queryKey ? (
+          // A refresh failed: the rows already loaded for this stay on show, with why.
+          <ErrorNotice message={failure.message} />
+        ) : null}
+
+        {view === 'loading' ? (
           <ActivityIndicator style={styles.loader} color={accent.base} />
+        ) : view === 'unavailable' ? (
+          <Text style={styles.empty}>{t('aiMisuse.unavailable')}</Text>
+        ) : view === 'error' ? (
+          <View>
+            <ErrorNotice message={failure?.message ?? t('errors.generic')} />
+            <Pressable onPress={handleRetry} accessibilityRole="button" hitSlop={8} style={styles.retryButton}>
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
+            </Pressable>
+          </View>
         ) : tab === 'refused' ? (
           <FlatList
             data={refused}
@@ -477,4 +553,6 @@ const styles = StyleSheet.create({
   },
   liftText: { color: colors.white, fontWeight: '700' },
   disabled: { opacity: 0.5 },
+  retryButton: { alignSelf: 'center', paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+  retryText: { color: accent.base, fontWeight: '700' },
 });

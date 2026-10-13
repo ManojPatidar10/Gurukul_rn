@@ -21,6 +21,10 @@ export async function openNotificationTarget(schoolId: string, target: Notificat
     navigate('MyTimetable', target.date ? { date: target.date } : undefined);
     return;
   }
+  if (target.screen === 'AiMisuseLog') {
+    navigate('AiMisuseLog', target.pauseId ? { pauseId: target.pauseId } : undefined);
+    return;
+  }
   if (!('studentId' in target)) {
     navigate(target.screen);
     return;

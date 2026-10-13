@@ -16,7 +16,7 @@ export type NotificationTarget =
   | { screen: 'PayslipDetail'; payrollLineId: string }
   | { screen: 'MyTimetable'; date?: string }
   | { screen: 'HelpdeskBot' }
-  | { screen: 'AiMisuseLog' };
+  | { screen: 'AiMisuseLog'; pauseId?: string };
 
 export function notificationTarget(
   data: Record<string, unknown> | null | undefined,
@@ -73,8 +73,12 @@ export function notificationTarget(
     case 'AI_MISUSE_PAUSED':
       // Someone's AI help was paused after repeated messages that weren't about school work. Sent
       // to the school's admins only; it opens the AI misuse log. The push names no one (a lock
-      // screen isn't private) - the log does.
-      return role === 'ADMIN' ? { screen: 'AiMisuseLog' } : null;
+      // screen isn't private) - the log does. The pause's id opens it on "Paused now", and reloads
+      // it when it's already open.
+      if (role !== 'ADMIN') return null;
+      return typeof data.pauseId === 'string' && data.pauseId
+        ? { screen: 'AiMisuseLog', pauseId: data.pauseId }
+        : { screen: 'AiMisuseLog' };
     default:
       return null;
   }

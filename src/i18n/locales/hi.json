@@ -391,6 +391,7 @@
     "refusalCount_other": "{{count}} मना किए गए संदेशों के बाद",
     "lift": "रोक हटाएँ",
     "lifting": "हटा रहे हैं…",
+    "liftFor": "{{name}} की रोक हटाएँ",
     "liftTitle": "रोक हटाएँ?",
     "liftBody": "{{name}} की रोक हटाएँ? वे तुरंत फिर से AI मदद ले सकेंगे।",
     "lifted": "रोक हटा दी गई।",
@@ -472,7 +473,31 @@
       "NOT_IN_SCOPE": "उनकी कक्षा नहीं",
       "CLARIFY": "स्पष्ट करने को कहा",
       "ERROR": "विफल"
-    }
+    },
+    "scopeKeys": {
+      "class": "कक्षा",
+      "date": "तारीख",
+      "from": "से",
+      "to": "तक",
+      "day": "दिन",
+      "period": "पीरियड",
+      "teacher": "शिक्षक",
+      "subject": "विषय",
+      "room": "कमरा",
+      "term": "टर्म",
+      "assessment": "परीक्षा",
+      "academicYear": "शैक्षणिक वर्ष",
+      "status": "स्थिति",
+      "belowPercent": "इससे कम %",
+      "listAll": "पूरी सूची",
+      "entity": "डेटा",
+      "metric": "माप",
+      "filters": "फ़िल्टर",
+      "slots": "पीरियड",
+      "changes": "बदलाव",
+      "reason": "कारण"
+    },
+    "unavailable": "AI दुरुपयोग लॉग के लिए सर्वर अपडेट ज़रूरी है। कृपया बाद में फिर से कोशिश करें।"
   },
   "students": {
     "list": {

@@ -56,6 +56,25 @@ export function noticeKind(kind: unknown): AiNoticeKind {
   return NOTICE_KINDS.includes(kind as AiNoticeKind) ? (kind as AiNoticeKind) : 'REFUSED';
 }
 
+/**
+ * A live helpdesk-bot message saying the bot is turned off (`aiNotice.kind = "OFF"`). Switching it
+ * off takes a server restart, so a chat opened before that still shows it as on: the screen reads
+ * GET /ai/status again to show the "off" banner.
+ */
+export function messageSaysOff(message: { aiNotice?: AiNotice | null } | null | undefined): boolean {
+  const notice = message?.aiNotice;
+  return notice !== null && notice !== undefined && noticeKind(notice.kind) === 'OFF';
+}
+
+/**
+ * An Academic Helper error that may mean the feature was switched off since the screen opened (503
+ * AI_UNAVAILABLE, which a provider failure also gives), so the status is worth reading again.
+ * Duck-typed so this file needs no API client.
+ */
+export function errorMaySayOff(error: unknown): boolean {
+  return !!error && typeof error === 'object' && (error as { errorCode?: unknown }).errorCode === 'AI_UNAVAILABLE';
+}
+
 /** The value as an ISO instant, or null when it isn't one. */
 function instant(value: unknown): string | null {
   return typeof value === 'string' && value !== '' && !Number.isNaN(Date.parse(value)) ? value : null;
@@ -102,6 +121,56 @@ export function msUntilUnpaused(pausedUntil: string | null | undefined, nowMs: n
 export function pausedUntilFromStatus(status: AiStatus | null | undefined, nowMs: number): string | null {
   if (!status?.paused) return null;
   return isPaused(status.pausedUntil, nowMs) ? status.pausedUntil : null;
+}
+
+/**
+ * The pause to show after a GET /ai/status answer. The status is the server's word, except for a
+ * request that started before the screen entered its current pause (from a reply's notice or a 429):
+ * the server may have answered it before that pause began, so it can lengthen the pause but never
+ * end or shorten it. The next status read settles it.
+ */
+export function pauseAfterStatus(
+  current: string | null,
+  fromStatus: string | null,
+  startedBeforePause: boolean,
+  nowMs: number
+): string | null {
+  if (!startedBeforePause || !isPaused(current, nowMs)) return fromStatus;
+  // Only a later end than the one on show.
+  const later = fromStatus !== null && Date.parse(fromStatus) > Date.parse(current!);
+  return later ? fromStatus : current;
+}
+
+// setTimeout misbehaves past ~24.8 days; a pause is an hour, so this only guards odd data.
+const MAX_TIMER_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Calls `onEnd` once `now()` has passed `pausedUntil`, and returns a function that cancels it.
+ *
+ * `now` is the server-corrected clock, whose offset is re-read from every response's Date header
+ * (whole seconds, so it moves by up to about a second) and which a device clock change also moves.
+ * So a timer can wake while the pause still has a little left: it then waits again for what is left,
+ * instead of giving up and leaving the composer locked after the pause has ended. A pause longer than
+ * the longest timer is waited out the same way.
+ */
+export function watchPauseEnd(
+  pausedUntil: string,
+  now: () => number,
+  onEnd: () => void,
+  maxTimerMs: number = MAX_TIMER_MS
+): () => void {
+  const delay = () => Math.min(msUntilUnpaused(pausedUntil, now()), maxTimerMs);
+  const wake = () => {
+    const left = delay();
+    if (left > 0) {
+      timer = setTimeout(wake, left);
+      return;
+    }
+    onEnd();
+  };
+  // Always through a timer, even when it has already ended, so onEnd never runs inside the caller.
+  let timer = setTimeout(wake, delay());
+  return () => clearTimeout(timer);
 }
 
 /**
@@ -248,17 +317,50 @@ export function toolFallbackLabel(tool: string): string {
   return words ? words.charAt(0).toUpperCase() + words.slice(1) : tool;
 }
 
-function scopeValue(value: unknown): string | null {
+/**
+ * The keys a lookup's scope can have: the class tools' own audit keys and the other tools' input
+ * names (the server records those as they are). Each has words in `aiMisuse.scopeKeys`.
+ */
+export const AI_SCOPE_KEYS = [
+  'class',
+  'date',
+  'from',
+  'to',
+  'day',
+  'period',
+  'teacher',
+  'subject',
+  'room',
+  'term',
+  'assessment',
+  'academicYear',
+  'status',
+  'belowPercent',
+  'listAll',
+  'entity',
+  'metric',
+  'filters',
+  'slots',
+  'changes',
+  'reason',
+] as const;
+
+/** The translation key for a scope key, or null for one this app doesn't know (shown as it is). */
+export function scopeKeyLabelKey(key: unknown): string | null {
+  return has(AI_SCOPE_KEYS, key) ? `aiMisuse.scopeKeys.${key}` : null;
+}
+
+function scopeValue(value: unknown, label: (key: string) => string): string | null {
   if (value === null || value === undefined || value === '') return null;
   if (Array.isArray(value)) {
-    const parts = value.map(scopeValue).filter((v): v is string => v !== null);
+    const parts = value.map((item) => scopeValue(item, label)).filter((v): v is string => v !== null);
     return parts.length > 0 ? parts.join(', ') : null;
   }
   if (typeof value === 'object') {
     const parts = Object.entries(value as Record<string, unknown>)
       .map(([key, inner]) => {
-        const text = scopeValue(inner);
-        return text === null ? null : `${key}=${text}`;
+        const text = scopeValue(inner, label);
+        return text === null ? null : `${label(key)}=${text}`;
       })
       .filter((v): v is string => v !== null);
     return parts.length > 0 ? parts.join(', ') : null;
@@ -267,18 +369,53 @@ function scopeValue(value: unknown): string | null {
 }
 
 /**
- * What a lookup asked for, on one line: "class: 7 A · from: 2026-09-14 · to: 2026-10-13". Ids
- * (sectionId, assessmentId) are left out - the class and title next to them say the same for a
- * person. Nested filters read "filters: className=7, section=A".
+ * What a lookup asked for, on one line: "Class: 7 A · From: 2026-09-14 · To: 2026-10-13", each key
+ * worded by `label` (the screen passes the translated words; the raw key without it). Ids (sectionId,
+ * assessmentId) are left out - the class and title next to them say the same for a person. Nested
+ * filters read "Filters: className=7, section=A".
  */
-export function scopeSummary(scope: Record<string, unknown> | null | undefined): string {
+export function scopeSummary(
+  scope: Record<string, unknown> | null | undefined,
+  label: (key: string) => string = (key) => key
+): string {
   if (!scope || typeof scope !== 'object') return '';
   return Object.entries(scope)
     .filter(([key]) => !/Id$/.test(key))
     .map(([key, value]) => {
-      const text = scopeValue(value);
-      return text === null ? null : `${key}: ${text}`;
+      const text = scopeValue(value, label);
+      return text === null ? null : `${label(key)}: ${text}`;
     })
     .filter((v): v is string => v !== null)
     .join(' · ');
+}
+
+/** What the log shows for one tab, range and person: their rows, a spinner, or why it couldn't. */
+export type MisuseLogView = 'list' | 'loading' | 'error' | 'unavailable';
+
+/** A first-page load that failed, for the query it was for. */
+export interface MisuseLogFailure {
+  key: string;
+  /** The server has no such log (404: a server from before it, e.g. after a rollback). */
+  unavailable: boolean;
+}
+
+/**
+ * The rows on show are only ever the ones loaded for exactly `queryKey`: a failed load for it shows
+ * the failure (never an empty "nothing refused" list, nor the previous filter's rows under the new
+ * chip), and anything else shows the spinner until its first page arrives. Once its rows are there,
+ * a failed refresh leaves them on show.
+ */
+export function misuseLogView(
+  queryKey: string,
+  loadedKey: string | null,
+  failure: MisuseLogFailure | null
+): MisuseLogView {
+  if (loadedKey === queryKey) return 'list';
+  if (failure?.key === queryKey) return failure.unavailable ? 'unavailable' : 'error';
+  return 'loading';
+}
+
+/** A 404 from a list endpoint: the server doesn't have it. Duck-typed so this file needs no API client. */
+export function isMissingEndpoint(error: unknown): boolean {
+  return !!error && typeof error === 'object' && (error as { status?: unknown }).status === 404;
 }

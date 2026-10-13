@@ -391,6 +391,7 @@
     "refusalCount_other": "After {{count}} refused messages",
     "lift": "Lift pause",
     "lifting": "Lifting…",
+    "liftFor": "Lift pause for {{name}}",
     "liftTitle": "Lift pause?",
     "liftBody": "Lift the pause for {{name}}? They can use AI help again right away.",
     "lifted": "Pause lifted.",
@@ -472,7 +473,31 @@
       "NOT_IN_SCOPE": "Not their class",
       "CLARIFY": "Asked to clarify",
       "ERROR": "Failed"
-    }
+    },
+    "scopeKeys": {
+      "class": "Class",
+      "date": "Date",
+      "from": "From",
+      "to": "To",
+      "day": "Day",
+      "period": "Period",
+      "teacher": "Teacher",
+      "subject": "Subject",
+      "room": "Room",
+      "term": "Term",
+      "assessment": "Assessment",
+      "academicYear": "Academic year",
+      "status": "Status",
+      "belowPercent": "Below %",
+      "listAll": "Full list",
+      "entity": "Data",
+      "metric": "Measure",
+      "filters": "Filters",
+      "slots": "Periods",
+      "changes": "Changes",
+      "reason": "Reason"
+    },
+    "unavailable": "The AI misuse log needs a server update. Please try again later."
   },
   "students": {
     "list": {
