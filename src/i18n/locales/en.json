@@ -277,7 +277,68 @@
     "emptyTeacher": "Ask me anything about teaching — lesson ideas, explanations, quiz questions, or classroom tips."
   },
   "helpdeskBot": {
-    "title": "Helpdesk Bot"
+    "title": "Helpdesk Bot",
+    "typing": "Helpdesk is typing…",
+    "card": {
+      "title_one": "1 timetable change",
+      "title_other": "{{count}} timetable changes",
+      "status": {
+        "waiting": "Waiting for you",
+        "saved": "Saved",
+        "failed": "Couldn't save",
+        "cancelled": "Cancelled",
+        "expired": "Expired",
+        "replaced": "Replaced by a newer one"
+      },
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "confirmTitle_one": "Save this change?",
+      "confirmTitle_other": "Save {{count}} changes?",
+      "confirmBody": "The timetable will change as shown. Teachers and students affected by date changes get a notification.",
+      "confirmAssigns_one": "This also gives 1 teacher access to a class.",
+      "confirmAssigns_other": "This also gives {{count}} teachers access to a class.",
+      "confirmReason": "Reason the teachers will see: {{reason}}",
+      "save": "Save",
+      "notNow": "Not now",
+      "expiresIn": "Expires in {{minutes}} min",
+      "failedReason": "Couldn't save: {{reason}}",
+      "reason": "Reason (the teachers involved will see this): {{reason}}",
+      "room": "Room: {{room}}",
+      "noLogin": "no app login - won't be notified",
+      "assigns": "Also assigns {{teacher}} to teach {{subject}} in {{class}}: they can add marks and message or call this class's students and parents.",
+      "notPending": {
+        "EXECUTED": "This change is already saved.",
+        "CANCELLED": "This change was cancelled. Nothing was saved.",
+        "EXPIRED": "This change expired - nothing was saved. Ask the bot again.",
+        "SUPERSEDED": "A newer proposal replaced this one.",
+        "FAILED": "This change couldn't be saved."
+      }
+    },
+    "item": {
+      "substitute": "{{when}}, {{class}}: {{teacher}} takes {{subject}} instead of {{original}}",
+      "replacing": "{{when}}, {{class}}: {{teacher}} takes {{subject}} instead of {{original}} (covering for {{regular}})",
+      "cancel": "{{when}}, {{class}}: no {{subject}} class",
+      "extra": "{{when}}, {{class}}: extra {{subject}} class with {{teacher}}",
+      "undo": "{{when}}, {{class}}: back to the regular timetable",
+      "undoExtra": "{{when}}, {{class}}: the extra class is removed",
+      "set": "{{when}}, {{class}}: {{subject}} with {{teacher}} (was {{before}})",
+      "clear": "{{when}}, {{class}}: free period (was {{before}})",
+      "subjectWithTeacher": "{{subject}} with {{teacher}}",
+      "whenDate": "{{date}}, period {{n}}",
+      "whenWeekly": "Every {{day}}, period {{n}}",
+      "times": "({{start}}-{{end}})",
+      "ended": "(already over)",
+      "wasFree": "free"
+    },
+    "days": {
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday",
+      "SUNDAY": "Sunday"
+    }
   },
   "students": {
     "list": {
@@ -2818,7 +2879,9 @@
       "FEE_CATEGORY_CODE_EXISTS": "A fee category with this code already exists.",
       "FEE_STRUCTURE_EXISTS": "This class already has a fee structure for this academic year. Edit that one instead.",
       "ROOM_NAME_TAKEN": "A room with this name already exists.",
-      "TIMETABLE_OVERRIDE_EXISTS": "This period already has a change on this date. Undo or edit that change instead."
+      "TIMETABLE_OVERRIDE_EXISTS": "This period already has a change on this date. Undo or edit that change instead.",
+      "BOT_ACTION_NOT_PENDING": "This change can't be confirmed any more.",
+      "BOT_ACTION_NOT_YOURS": "Only the person who asked can confirm this change."
     }
   },
   "sectionHub": {
