@@ -8,6 +8,7 @@ import {
   botActionChipVariant,
   botActionExpiresIn,
   botActionFailureText,
+  botActionInlineError,
   botActionNotes,
   botActionTitle,
   clientDeadlineMs,
@@ -159,6 +160,22 @@ describe('botActionCardState', () => {
     );
     expect(botActionExpiresIn(fresh, tHi)).toBe(fill(hi.helpdeskBot.card.expiresIn, { minutes: 15 }));
     expect(botActionExpiresIn(botActionCardState(action({ status: 'EXECUTED' }), ADMIN, SERVER_MS, SERVER_MS), tEn)).toBeNull();
+  });
+});
+
+describe('botActionInlineError', () => {
+  it('shows a confirm error only while the card still waits', () => {
+    const waiting = botActionCardState(action(), ADMIN, SERVER_MS, SERVER_MS);
+    expect(botActionInlineError(waiting, 'No internet connection')).toBe('No internet connection');
+    expect(botActionInlineError(waiting, null)).toBeNull();
+    // The refresh after a lost answer found it saved: "Saved" alone, not "Saved" over an error.
+    for (const status of ['EXECUTED', 'FAILED', 'CANCELLED', 'EXPIRED', 'SUPERSEDED']) {
+      const decided = botActionCardState(action({ status }), ADMIN, SERVER_MS, SERVER_MS);
+      expect(botActionInlineError(decided, 'No internet connection')).toBeNull();
+    }
+    // Ran out by the phone's clock while the error showed.
+    const expired = botActionCardState(action(), ADMIN, SERVER_MS + 15 * MIN, SERVER_MS);
+    expect(botActionInlineError(expired, 'The request timed out')).toBeNull();
   });
 });
 

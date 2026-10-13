@@ -10,6 +10,7 @@ import {
   botActionChipVariant,
   botActionExpiresIn,
   botActionFailureText,
+  botActionInlineError,
   botActionNotes,
   botActionTitle,
   formatBotActionItem,
@@ -28,7 +29,7 @@ interface BotActionCardProps {
   receivedAtMs: number;
   /** The button whose request is running, if any; both buttons are disabled meanwhile. */
   busy: 'confirm' | 'cancel' | null;
-  /** The last confirm or cancel error for this card, shown under it. */
+  /** The last confirm or cancel error for this card, shown under it while it still waits. */
   error: string | null;
   onConfirm: (action: BotAction) => void;
   onCancel: (action: BotAction) => void;
@@ -57,7 +58,10 @@ export function BotActionCard({ action, viewer, receivedAtMs, busy, error, onCon
   const notes = botActionNotes(action, t);
   const failure = botActionFailureText(action, t);
   const expiresIn = botActionExpiresIn(state, t);
+  const inlineError = botActionInlineError(state, error);
   const isBusy = busy !== null;
+  const confirmLabel = t('helpdeskBot.card.confirm');
+  const cancelLabel = t('helpdeskBot.card.cancel');
 
   return (
     <View style={styles.card}>
@@ -83,7 +87,7 @@ export function BotActionCard({ action, viewer, receivedAtMs, busy, error, onCon
       ))}
       {failure ? <Text style={styles.failure}>{failure}</Text> : null}
       {expiresIn ? <Text style={styles.expires}>{expiresIn}</Text> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {inlineError ? <Text style={styles.error}>{inlineError}</Text> : null}
       {state.canAct ? (
         <View style={styles.buttons}>
           <Pressable
@@ -91,11 +95,14 @@ export function BotActionCard({ action, viewer, receivedAtMs, busy, error, onCon
             onPress={() => onCancel(action)}
             disabled={isBusy}
             accessibilityRole="button"
+            // Named even while the spinner replaces its text, and announced as busy meanwhile.
+            accessibilityLabel={cancelLabel}
+            accessibilityState={{ disabled: isBusy, busy: busy === 'cancel' }}
           >
             {busy === 'cancel' ? (
               <ActivityIndicator color={colors.primary} size="small" />
             ) : (
-              <Text style={styles.cancelText}>{t('helpdeskBot.card.cancel')}</Text>
+              <Text style={styles.cancelText}>{cancelLabel}</Text>
             )}
           </Pressable>
           <Pressable
@@ -103,11 +110,13 @@ export function BotActionCard({ action, viewer, receivedAtMs, busy, error, onCon
             onPress={() => onConfirm(action)}
             disabled={isBusy}
             accessibilityRole="button"
+            accessibilityLabel={confirmLabel}
+            accessibilityState={{ disabled: isBusy, busy: busy === 'confirm' }}
           >
             {busy === 'confirm' ? (
               <ActivityIndicator color={colors.white} size="small" />
             ) : (
-              <Text style={styles.confirmText}>{t('helpdeskBot.card.confirm')}</Text>
+              <Text style={styles.confirmText}>{confirmLabel}</Text>
             )}
           </Pressable>
         </View>

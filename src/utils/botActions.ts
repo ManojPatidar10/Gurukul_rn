@@ -103,6 +103,16 @@ export function botActionExpiresIn(state: BotActionCardState, t: TFunction): str
   return t('helpdeskBot.card.expiresIn', { minutes: Math.max(1, Math.ceil(state.msLeft / 60_000)) });
 }
 
+/**
+ * The confirm or cancel error to show under a card: only while the card still waits. Once it shows
+ * Saved, Cancelled, Expired or Replaced (the refresh after a lost answer found the confirm went
+ * through, say), its status says what happened, and an old "no connection" under it would only
+ * leave the admin unsure whether the change was saved.
+ */
+export function botActionInlineError(state: Pick<BotActionCardState, 'status'>, error: string | null | undefined): string | null {
+  return state.status === 'PENDING' && error ? error : null;
+}
+
 /** "Couldn't save: <reason>" for a FAILED card with a reason. */
 export function botActionFailureText(action: BotAction, t: TFunction): string | null {
   if (action.status !== 'FAILED' || !action.failureReason) return null;
