@@ -23,6 +23,10 @@ Meta keys:
 - service: true adds the Service node (website-services). llms: "optional" lists the page under
   "## Optional" in llms.txt. priority: the sitemap priority.
 
+Every indexable product page (software pages without a form) gets the "Try it free for a month" demo
+band before the footer, unless its body already has a .cta-band. On Hindi pages, links to English
+pages get hreflang="en".
+
 Pages in docs/ that are NOT built here: deck.html (build_deck.py), film.html, onboarding-toolkit.html
 (hand-written), robots.txt, site.webmanifest, CNAME, favicon.ico, the IndexNow key file and assets/.
 """
@@ -122,7 +126,12 @@ SERVICE = {
     "serviceType": "School website design and development",
     "provider": {"@id": f"{SITE}/#org"},
     "areaServed": {"@type": "Country", "name": "India"},
-    "availableLanguage": ["en", "hi"],
+    # availableLanguage isn't a Service property; it belongs on the ServiceChannel.
+    "availableChannel": {
+        "@type": "ServiceChannel",
+        "serviceUrl": f"{SITE}/website-services.html",
+        "availableLanguage": ["en", "hi"],
+    },
 }
 
 OG_IMAGE_ALT = {
@@ -139,19 +148,19 @@ LLMS_FACTS = """# Smart Gurukul
 Key facts:
 - Brand: Smart Gurukul (स्मार्ट गुरुकुल). Website: https://smartgurukul.org. Contact: the demo request form at https://smartgurukul.org/#demo. Instagram: @smartgurukul.app.
 - Who it is for: private CBSE and State Board schools in India of any size. Each school, or each branch of a group, runs as its own account.
-- Attendance: class teachers mark student attendance (present, absent, late, half-day); parents get an alert when their child is marked absent. Teachers check in by GPS from their own phone; the distance to the school's saved location is checked on the server (100 m radius by default, up to 700 m), and check-ins from phones with a fake-GPS app, Developer options, root/jailbreak or a cloner app are refused. No biometric hardware is needed.
+- Attendance: class teachers mark student attendance (present, absent, late, half-day); parents with a parent account get an alert when their child is marked absent. Teachers check in by GPS from their own phone; the distance to the school's saved location is checked on the server (100 m radius by default, up to 700 m), and check-ins from phones with a fake-GPS app, Developer options, root/jailbreak or a cloner app are refused. No biometric hardware is needed.
 - Timetable: bell schedule (including Saturday), weekly timetables with rooms, one-period date changes (substitute, cancel, extra period), a list of periods that need a substitute based on staff attendance, free teachers per period, and notifications to the affected teachers and students. Admins can make changes by chatting with the AI helpdesk and confirming them. There is no automatic timetable generation.
 - Fees: admin-set fee structures per class, bills for a whole section, due dates, concessions, waivers, late fees and corrections, payments recorded by the school (cash, cheque, UPI or bank-transfer reference) with numbered PDF receipts, reversals for mistakes, bounced cheques and refunds, and fee-due reminders to parents. Online fee payment is not available.
 - Payroll and expenses: salary structures, monthly payroll runs and payslips in the app (no PF/ESI/TDS); vendors and expenses with approvals (no self-approval); one ledger with a day book and fund summary.
 - Exams and report cards: the school's own grading scale and terms, marks entered by each class's teachers, report cards published to a section, PDF report cards, and alerts to students and parents on publish.
 - School bus: the driver's phone shares the bus location during a trip (no GPS device); the driver marks boarding and drop-off; families get app and WhatsApp alerts and see the bus live while their child is on it. No route planning.
-- Parents: the same app with a parent login: attendance, fees and receipts, report card, timetable, upcoming tests, ID card, the school bus, announcements and chat with their child's teachers. All children on one login. Sign-in by one-time code on WhatsApp.
+- Parents: the same app. They see attendance, fees and receipts with fee-due reminders, report card, timetable, upcoming tests, ID card and the school bus. Two ways to sign in, both tied to the mobile number on the child's record: a one-time code on WhatsApp signs in on the child's own account (switching between all children on that number), or a parent account (the child's registration number and that number, then a username and password once the school approves it). A parent account adds absence alerts, school announcements and chat with the child's teachers and the school office.
 - AI: an AI helpdesk assistant (users ask about their own attendance, fees and timetable; admins also about school-wide figures, through a fixed set of checked, school-scoped lookups rather than free-form database queries); Academic Helper (students are taught the method rather than given answers); and an AI question paper generator for teachers (up to 30 questions, MCQ, true/false, one-word, numeric, short and long answer; shared as a PDF with or without the answer key; MCQs can go to the quiz bank). AI output is a draft for teachers to check.
 - Games: one XP score from attendance, assessment results, quiz wins and teacher-awarded participation; streaks, weekly leagues (Bronze up to Gurukul Master), House Wars, live Battle Room quizzes and 1v1 Gurukul Arena. Quiz questions are written by teachers or drafted with AI and reviewed by teachers.
 - Also included: chat and announcements, school events with RSVP, admissions tracked by stage, student and staff ID cards with a QR code, attendance export, activity log.
 - Languages: the app works in English and Hindi.
 - Getting started: free 1-month pilot. The Smart Gurukul team imports the school's student register and trains staff. Pricing is shared after a demo.
-- Not available: online fee payment, homework, SMS, hostel, library, statutory payroll (PF/ESI/TDS), full accounting (trial balance, balance sheet), automatic timetable generation, bus route planning, video calls."""
+- Not available: online fee payment, homework, SMS, hostel, library, statutory payroll (PF/ESI/TDS), full accounting (trial balance, balance sheet), automatic timetable generation, bus route planning."""
 
 # Header nav: (English page, English label, Hindi label). On Hindi pages a link goes to the Hindi
 # version of the page when one exists (see HI_OF), otherwise to the English page.
@@ -235,8 +244,13 @@ def page_date(path):
 
 
 def asset_version(rel_path):
-    """First 8 hex characters of the SHA-1 of the file's bytes, so the URL changes only when the file does."""
-    return hashlib.sha1((OUT / rel_path).read_bytes()).hexdigest()[:8]
+    """First 8 hex characters of the SHA-1 of the file's bytes, so the URL changes only when the file does.
+
+    Line endings are normalised to LF first: a Windows checkout (core.autocrlf=true) has CRLF copies of
+    site.css/site.js, and hashing those raw would change every page's ?v= although nothing changed.
+    """
+    data = (OUT / rel_path).read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha1(data).hexdigest()[:8]
 
 
 def header(meta):
@@ -432,6 +446,50 @@ def head(meta, body):
 {ld}
 </script>
 </head>"""
+
+
+PILOT_BAND = {
+    "en": ("Try it free for a month",
+           "We import your register and train your staff. You decide after a month of real use.",
+           "Book a free demo"),
+    "hi": ("एक महीना मुफ़्त आज़माएँ",
+           "हम आपका छात्र रजिस्टर इम्पोर्ट करते हैं और आपके स्टाफ़ को ट्रेनिंग देते हैं। एक महीने के असली इस्तेमाल के बाद आप फ़ैसला करें।",
+           "मुफ़्त डेमो बुक करें"),
+}
+
+
+def pilot_band(meta, body):
+    """The demo CTA plus the free 1-month pilot (a brand rule for every CTA), for product pages that
+    don't already end in one. Pages with the demo form, noindex pages and non-product pages are skipped."""
+    if meta.get("has_form") or meta.get("noindex") or not meta.get("software", True) or "cta-band" in body:
+        return ""
+    hi = meta.get("lang") == "hi"
+    title, line, button = PILOT_BAND["hi" if hi else "en"]
+    href = rel(meta["path"], ("hi/index.html" if hi else "index.html") + "#demo")
+    return f"""
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="cta-band">
+      <div><h2>{title}</h2><p>{line}</p></div>
+      <a class="btn btn-gold" href="{href}">{button}</a>
+    </div>
+  </div>
+</section>"""
+
+
+def mark_english_links(path, doc):
+    """On a Hindi page, add hreflang="en" to every link that goes to an English page, so the language
+    change is announced (the visible "(अंग्रेज़ी में)" cue is in the page copy where it fits)."""
+    def mark(m):
+        tag, url = m.group(0), m.group(1)
+        if "hreflang=" in tag:
+            return tag
+        hit = resolve(path, html.unescape(url))
+        if hit is None or hit[0].startswith("hi/") or not hit[0].endswith(".html"):
+            return tag
+        return tag.replace(f'href="{url}"', f'href="{url}" hreflang="en"', 1)
+    return re.sub(r'<a\b[^>]*?\shref="([^"]*)"[^>]*>', mark, doc)
 
 
 def redirect_page(old, new):
@@ -656,9 +714,11 @@ def build():
                           f'{"मुफ़्त डेमो बुक करें" if hi else "Book a free demo"}</a></div>')
         doc = (head(meta, body)
                + f'\n<body class="{"has-mobile-cta" if mobile_cta else ""}">\n'
-               + header(meta) + '\n<main id="main">\n' + body.strip() + "\n</main>\n"
+               + header(meta) + '\n<main id="main">\n' + body.strip() + pilot_band(meta, body) + "\n</main>\n"
                + footer(meta) + "\n" + mobile_cta
                + f'\n<script src="{rel(meta["path"], "assets/site.js")}?v={ASSET_VERSION["assets/site.js"]}" defer></script>\n</body>\n</html>\n')
+        if meta.get("lang") == "hi":
+            doc = mark_english_links(meta["path"], doc)
         out = OUT / meta["path"]
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(doc, encoding="utf-8", newline="\n")
