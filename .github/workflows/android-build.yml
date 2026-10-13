@@ -8,6 +8,8 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    # A healthy release build takes ~18 min; one hung in Gradle for 3 h on 2026-10-13 (default limit is 6 h).
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v7
