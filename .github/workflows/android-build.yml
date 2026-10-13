@@ -32,9 +32,33 @@ jobs:
       - name: Prebuild Android
         run: npx expo prebuild --platform android --no-install
 
+      # Prebuild's gradle.properties caps the Gradle JVM at 2 GB heap / 512 MB metaspace. Since
+      # expo-updates was added on 2026-10-11 the release build outgrows that: the daemon logs
+      # "OutOfMemoryError: Metaspace" and then hangs until the job times out. Give it more room
+      # (ubuntu-latest has 16 GB for public repos), and keep the Kotlin daemon from competing for
+      # the same memory.
+      #
+      # Prebuild writes gradle.properties WITHOUT a trailing newline: its last line is a property a
+      # config plugin appended (expo.inlineModules.watchedDirectories=[]). A plain `echo >>` glues
+      # the first new setting onto that line, so the setting is silently dropped and the property
+      # becomes "[]org.gradle.jvmargs=...". expo-autolinking then fails to JSON.parse it and Gradle
+      # stops with "Process 'command 'node'' finished with non-zero exit value 1". Hence the leading
+      # newline and the check that each setting is a line of its own.
+      - name: Give Gradle more memory
+        working-directory: android
+        run: |
+          GRADLE_JVMARGS='org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1536m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8'
+          KOTLIN_JVMARGS='kotlin.daemon.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=768m'
+          sed -i '/^org\.gradle\.jvmargs=/d; /^kotlin\.daemon\.jvmargs=/d' gradle.properties
+          printf '\n%s\n%s\n' "$GRADLE_JVMARGS" "$KOTLIN_JVMARGS" >> gradle.properties
+          for line in "$GRADLE_JVMARGS" "$KOTLIN_JVMARGS"; do
+            grep -qxF "$line" gradle.properties || { echo "::error::gradle.properties is missing the line: $line"; exit 1; }
+          done
+          grep -nE 'jvmargs=|^expo\.inlineModules\.' gradle.properties
+
       - name: Build release APK
         working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleRelease
+        run: chmod +x gradlew && ./gradlew assembleRelease --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
