@@ -5,9 +5,12 @@ import {
   applyActionUpdate,
   compareMessages,
   isTyping,
+  keptAttachmentUrl,
   mergeHistoryPage,
   newMessages,
   onIncoming,
+  onTypingTimeout,
+  presignedUrlExpiresAt,
   startTyping,
   supportsBotActions,
   upsertMessage,
@@ -68,6 +71,14 @@ function botMsg(id: string, sentAt: string, extra: Partial<Message> = {}): Messa
 
 const ids = (list: Message[]) => list.map((m) => m.id);
 
+/** A link like the server's S3 presigner makes: signed at `amzDate`, valid for an hour. */
+function s3Url(amzDate: string, signature: string, key = 'a.jpg') {
+  return (
+    `https://bucket.s3.ap-south-1.amazonaws.com/chat-attachments/s1/c1/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256` +
+    `&X-Amz-Date=${amzDate}&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=${signature}`
+  );
+}
+
 describe('upsertMessage', () => {
   it('inserts new messages in time order, whatever order they arrive in', () => {
     let list: Message[] = [];
@@ -78,7 +89,7 @@ describe('upsertMessage', () => {
   });
 
   it('orders by the instant, not the text, when fractions of a second differ', () => {
-    const list = [msg('late', '2026-10-13T05:10:00.500Z')].reduce(upsertMessage, [msg('early', '2026-10-13T05:10:00Z')]);
+    const list = upsertMessage([msg('early', '2026-10-13T05:10:00Z')], msg('late', '2026-10-13T05:10:00.500Z'));
     expect(ids(list)).toEqual(['early', 'late']);
     // The same moment: by id, so every device shows one order.
     expect(compareMessages(msg('x', '2026-10-13T05:10:00Z'), msg('y', '2026-10-13T05:10:00Z'))).toBeLessThan(0);
@@ -96,6 +107,21 @@ describe('upsertMessage', () => {
     expect(ids(next)).toEqual(['a', 'b']);
     expect(next[0].attachmentUrl).toBe('https://new');
     expect(list[0].attachmentUrl).toBe('https://old');
+  });
+
+  it("keeps a still-valid attachment link when a refetch brings a newly signed one, so images don't reload", () => {
+    const signedAt = Date.parse('2026-10-13T05:00:00Z');
+    const shown = s3Url('20261013T050000Z', 'sig1');
+    const list = [msg('a', '2026-10-13T05:09:00Z', { attachmentUrl: shown, attachmentContentType: 'image/jpeg' })];
+    const resigned = msg('a', '2026-10-13T05:09:00Z', {
+      attachmentUrl: s3Url('20261013T052000Z', 'sig2'),
+      attachmentContentType: 'image/jpeg',
+    });
+    // Twenty minutes in: nothing changed but the signature, so the same list comes back.
+    expect(upsertMessage(list, resigned, signedAt + 20 * 60_000)).toBe(list);
+    expect(mergeHistoryPage(list, [resigned], signedAt + 20 * 60_000)).toBe(list);
+    // Under ten minutes left: the new link is taken, so the file still opens.
+    expect(upsertMessage(list, resigned, signedAt + 51 * 60_000)[0].attachmentUrl).toBe(resigned.attachmentUrl);
   });
 
   it('never lets a lower card version overwrite a higher one', () => {
@@ -124,6 +150,31 @@ describe('upsertMessage', () => {
     expect(_a).toBeNull();
     const list = upsertMessage([old as Message], { ...(old as Message), content: 'edited' });
     expect('action' in list[0]).toBe(false);
+  });
+});
+
+describe('attachment links', () => {
+  const signedAt = Date.parse('2026-10-13T05:00:00Z');
+
+  it('reads when an S3 presigned link expires', () => {
+    expect(presignedUrlExpiresAt(s3Url('20261013T050000Z', 'sig'))).toBe(signedAt + 3600 * 1000);
+    expect(presignedUrlExpiresAt('https://bucket.s3.amazonaws.com/a.jpg')).toBeNull();
+    expect(presignedUrlExpiresAt('https://bucket.s3.amazonaws.com/a.jpg?X-Amz-Date=yesterday&X-Amz-Expires=60')).toBeNull();
+  });
+
+  it('keeps the shown link for the same file while it has time left, and takes a new file or a fresh link', () => {
+    const shown = s3Url('20261013T050000Z', 'sig1');
+    const resigned = s3Url('20261013T053000Z', 'sig2');
+    expect(keptAttachmentUrl(shown, resigned, signedAt + 49 * 60_000)).toBe(shown);
+    expect(keptAttachmentUrl(shown, resigned, signedAt + 50 * 60_000)).toBe(resigned);
+    expect(keptAttachmentUrl(shown, resigned, signedAt + 2 * 3600_000)).toBe(resigned);
+    // Another object key is another file.
+    const other = s3Url('20261013T050000Z', 'sig1', 'b.pdf');
+    expect(keptAttachmentUrl(shown, other, signedAt)).toBe(other);
+    // A link that doesn't say when it expires is kept for the same file.
+    expect(keptAttachmentUrl('https://cdn.example/a.jpg?v=1', 'https://cdn.example/a.jpg?v=2', signedAt)).toBe(
+      'https://cdn.example/a.jpg?v=1'
+    );
   });
 });
 
@@ -247,5 +298,19 @@ describe('typing indicator', () => {
     expect(BOT_TYPING_TIMEOUT_MS).toBe(90_000);
     expect(isTyping(state, sentAt + 89_999)).toBe(true);
     expect(isTyping(state, sentAt + 90_000)).toBe(false);
+  });
+
+  it('ends when its timer fires, even 1 ms early or after the clock moved back', () => {
+    const state = startTyping(sentAt);
+    // The timer armed for this send fired while the clock reads 89 999 ms (or less) after it.
+    expect(isTyping(state, sentAt + 89_999)).toBe(true);
+    expect(onTypingTimeout(state, sentAt)).toBe(NOT_TYPING);
+  });
+
+  it("doesn't end a newer send's typing from an older send's timer", () => {
+    const newer = startTyping(sentAt + 5000);
+    expect(onTypingTimeout(newer, sentAt)).toBe(newer);
+    expect(onTypingTimeout(NOT_TYPING, sentAt)).toBe(NOT_TYPING);
+    expect(onTypingTimeout(NOT_TYPING, null)).toBe(NOT_TYPING);
   });
 });

@@ -45,12 +45,45 @@ function insertSorted(list: Message[], msg: Message): Message[] {
   return [...list.slice(0, at), msg, ...list.slice(at)];
 }
 
+/** When an S3 presigned link stops working (its X-Amz-Date plus X-Amz-Expires), or null if it doesn't say. */
+export function presignedUrlExpiresAt(url: string): number | null {
+  const signed = /[?&]X-Amz-Date=(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z(?:&|$)/.exec(url);
+  const expires = /[?&]X-Amz-Expires=(\d+)(?:&|$)/.exec(url);
+  if (!signed || !expires) return null;
+  const [, year, month, day, hour, minute, second] = signed;
+  const signedAt = Date.parse(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+  if (Number.isNaN(signedAt)) return null;
+  return signedAt + Number(expires[1]) * 1000;
+}
+
+/** A kept attachment link is swapped for the newly signed one when it has less than this left. */
+export const ATTACHMENT_URL_REFRESH_MARGIN_MS = 10 * 60_000;
+
+/**
+ * The attachment link a message keeps when it arrives again (a frame, a refetch). The server signs
+ * a new S3 link on every read, so each refetch brings a different URL for the same file; taking it
+ * would make every image in the list download again and flicker. The link already shown is kept
+ * while it points at the same file and has more than ATTACHMENT_URL_REFRESH_MARGIN_MS left (or
+ * doesn't say when it expires); otherwise the new one is taken, so a chat left open for an hour
+ * still opens its files.
+ */
+export function keptAttachmentUrl(existing: string, incoming: string, nowMs: number): string {
+  if (existing === incoming) return existing;
+  const sameFile = existing.split('?')[0] === incoming.split('?')[0];
+  if (!sameFile) return incoming;
+  const expiresAt = presignedUrlExpiresAt(existing);
+  if (expiresAt !== null && expiresAt - nowMs <= ATTACHMENT_URL_REFRESH_MARGIN_MS) return incoming;
+  return existing;
+}
+
 /**
  * Adds `msg` to a list sorted oldest first, or merges it into the message with the same id. When
- * both carry a card, the higher `version` is kept. Returns the same list when nothing changed (an
- * identical duplicate frame), so React doesn't re-render for it.
+ * both carry a card, the higher `version` is kept, and a still-valid attachment link is kept (see
+ * keptAttachmentUrl; `nowMs` is the time it's judged at). Returns the same list when nothing
+ * changed (an identical duplicate frame, or a refetch with only newly signed links), so React
+ * doesn't re-render for it.
  */
-export function upsertMessage(list: Message[], msg: Message): Message[] {
+export function upsertMessage(list: Message[], msg: Message, nowMs: number = Date.now()): Message[] {
   const index = list.findIndex((m) => m.id === msg.id);
   if (index < 0) return insertSorted(list, msg);
 
@@ -59,6 +92,9 @@ export function upsertMessage(list: Message[], msg: Message): Message[] {
   // Only when one of them has the key: an added `action: undefined` would make an older server's
   // message look like a newer server's (see supportsBotActions).
   if ('action' in existing || 'action' in msg) merged.action = newerAction(existing.action, msg.action);
+  if (existing.attachmentUrl && msg.attachmentUrl) {
+    merged.attachmentUrl = keptAttachmentUrl(existing.attachmentUrl, msg.attachmentUrl, nowMs);
+  }
   if (sameMessage(existing, merged)) return list;
 
   const without = [...list.slice(0, index), ...list.slice(index + 1)];
@@ -82,8 +118,8 @@ export function applyActionUpdate(list: Message[], action: BotAction): Message[]
 }
 
 /** Every message of a history page, merged in by id (used for the first load and every refetch). */
-export function mergeHistoryPage(list: Message[], page: Message[]): Message[] {
-  return page.reduce(upsertMessage, list);
+export function mergeHistoryPage(list: Message[], page: Message[], nowMs: number = Date.now()): Message[] {
+  return page.reduce((merged, msg) => upsertMessage(merged, msg, nowMs), list);
 }
 
 /** The messages of `page` that `list` doesn't have yet. */
@@ -142,4 +178,14 @@ export function onIncoming(state: TypingState, msg: Message): TypingState {
 /** Whether "typing…" shows now: something was sent, no bot message came, and it hasn't timed out. */
 export function isTyping(state: TypingState, now: number, timeoutMs: number = BOT_TYPING_TIMEOUT_MS): boolean {
   return state.since !== null && now - state.since < timeoutMs;
+}
+
+/**
+ * The 90 s timer armed for the send at `armedSince` fired: "typing…" ends, unless a newer send
+ * restarted it (that send armed its own timer). It doesn't read the clock again, so a timer that
+ * fires a millisecond early, or a phone clock moved back meanwhile, can't leave "typing…" showing
+ * with no timer left to end it.
+ */
+export function onTypingTimeout(state: TypingState, armedSince: number | null): TypingState {
+  return state.since !== null && state.since === armedSince ? NOT_TYPING : state;
 }
