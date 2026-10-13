@@ -51,6 +51,7 @@ const SECTIONS: Record<HubSection, HubItem[]> = {
   reports: [
     { key: 'attendanceExport', accentKey: 'attendanceExport', icon: 'file-excel', copyKey: 'dashboard.features.attendanceExport', navigate: (n) => n.navigate('AttendanceExport') },
     { key: 'activityLog', accentKey: 'activityLog', icon: 'history', copyKey: 'dashboard.features.activityLog', navigate: (n) => n.navigate('ActivityLog') },
+    { key: 'aiMisuseLog', accentKey: 'aiMisuseLog', icon: 'user-shield', copyKey: 'dashboard.features.aiMisuseLog', navigate: (n) => n.navigate('AiMisuseLog') },
   ],
 };
 

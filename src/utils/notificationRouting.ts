@@ -15,7 +15,8 @@ export type NotificationTarget =
   | { screen: 'ReportCard'; studentId: string; term?: string; sectionId?: string }
   | { screen: 'PayslipDetail'; payrollLineId: string }
   | { screen: 'MyTimetable'; date?: string }
-  | { screen: 'HelpdeskBot' };
+  | { screen: 'HelpdeskBot' }
+  | { screen: 'AiMisuseLog'; pauseId?: string };
 
 export function notificationTarget(
   data: Record<string, unknown> | null | undefined,
@@ -69,6 +70,15 @@ export function notificationTarget(
       // A timetable proposal the helpdesk bot finished after a long turn, waiting for the admin who
       // asked to confirm it: open their helpdesk chat, where the card is. Only admins get it.
       return role === 'ADMIN' ? { screen: 'HelpdeskBot' } : null;
+    case 'AI_MISUSE_PAUSED':
+      // Someone's AI help was paused after repeated messages that weren't about school work. Sent
+      // to the school's admins only; it opens the AI misuse log. The push names no one (a lock
+      // screen isn't private) - the log does. The pause's id opens it on "Paused now", and reloads
+      // it when it's already open.
+      if (role !== 'ADMIN') return null;
+      return typeof data.pauseId === 'string' && data.pauseId
+        ? { screen: 'AiMisuseLog', pauseId: data.pauseId }
+        : { screen: 'AiMisuseLog' };
     default:
       return null;
   }

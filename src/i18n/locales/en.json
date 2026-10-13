@@ -169,6 +169,10 @@
         "title": "Activity Log",
         "description": "Who changed what, and when"
       },
+      "aiMisuseLog": {
+        "title": "AI Misuse Log",
+        "description": "Refused AI messages, pauses and data lookups"
+      },
       "attendanceExport": {
         "title": "Export Attendance",
         "description": "Download student or staff attendance as a spreadsheet"
@@ -339,6 +343,161 @@
       "SATURDAY": "Saturday",
       "SUNDAY": "Sunday"
     }
+  },
+  "ai": {
+    "notice": "For school work only. Misuse is recorded and shared with your school.",
+    "noticeHint": "Shows what was recorded about you",
+    "paused": "AI help is paused until {{time}}.",
+    "pausedReason": "It was paused after repeated messages that weren't about school work.",
+    "off": "AI help is turned off right now. Please try again later.",
+    "refusedHint": "Not answered. This message isn't sent again with your next question.",
+    "features": {
+      "BOT": "Helpdesk bot",
+      "ASSISTANT": "Academic Helper"
+    },
+    "myRecords": {
+      "title": "What was recorded about me",
+      "intro": "Your messages from the last 30 days that weren't about school work. Your school can see these.",
+      "empty": "Nothing has been recorded about you.",
+      "notCounted": "Not counted toward a pause",
+      "close": "Close"
+    }
+  },
+  "aiMisuse": {
+    "title": "AI Misuse Log",
+    "intro": "Messages the AI refused because they weren't about school work, who is paused now, and the school data the helpdesk bot looked up for each person.",
+    "tabs": {
+      "refused": "Refused",
+      "paused": "Paused now",
+      "lookups": "Data lookups"
+    },
+    "ranges": {
+      "d1": "Today",
+      "d7": "7 days",
+      "d30": "30 days",
+      "d90": "90 days",
+      "d365": "1 year"
+    },
+    "filterHint": "Tap a name to see only that person.",
+    "personFilter": "Only {{name}}",
+    "clearPersonFilter": "Show everyone",
+    "unknownPerson": "Former user",
+    "notCounted": "Not counted",
+    "refusedEmpty": "No refused messages in this period.",
+    "pausedEmpty": "Nobody is paused right now.",
+    "lookupsEmpty": "No data lookups in this period.",
+    "pausedUntil": "Paused until {{time}}",
+    "refusalCount_one": "After {{count}} refused message",
+    "refusalCount_other": "After {{count}} refused messages",
+    "lift": "Lift pause",
+    "lifting": "Lifting…",
+    "liftFor": "Lift pause for {{name}}",
+    "liftTitle": "Lift pause?",
+    "liftBody": "Lift the pause for {{name}}? They can use AI help again right away.",
+    "lifted": "Pause lifted.",
+    "rows_one": "{{count}} row",
+    "rows_other": "{{count}} rows",
+    "roles": {
+      "STUDENT": "Student",
+      "TEACHER": "Teacher",
+      "PARENT": "Parent",
+      "ADMIN": "Admin"
+    },
+    "verdicts": {
+      "OFF_TOPIC": "Not school work",
+      "OTHERS_DATA": "Someone else's data",
+      "PROMPT_ATTACK": "Tried to change the rules",
+      "UNSAFE": "Unsafe",
+      "MODEL_REFUSAL": "Blocked by safety check",
+      "unknown": "Refused"
+    },
+    "categories": {
+      "study": "Studies",
+      "teaching": "Teaching",
+      "schoolInfo": "School information",
+      "schoolData": "School data",
+      "schoolAdmin": "School administration",
+      "timetable": "Timetable",
+      "greeting": "Greeting",
+      "followUp": "Follow-up",
+      "wellbeing": "Wellbeing",
+      "otherSchool": "Other school work",
+      "entertainment": "Entertainment",
+      "chitChat": "Chit-chat",
+      "newsPolitics": "News and politics",
+      "religionDebate": "Religious debate",
+      "shopping": "Shopping",
+      "travel": "Travel",
+      "moneyAdvice": "Money advice",
+      "healthDiagnosis": "Medical advice",
+      "outsideWriting": "Writing for outside school",
+      "dating": "Dating and romance",
+      "gamingCheats": "Game cheats",
+      "cheating": "Cheating in a test",
+      "other": "Other",
+      "othersRecords": "Another person's records",
+      "othersContact": "Others' contact details or passwords",
+      "promptInjection": "Tried to inject instructions",
+      "jailbreak": "Tried to remove the rules",
+      "promptExtraction": "Asked for the AI's instructions",
+      "adult": "Adult content",
+      "weapons": "Weapons",
+      "substances": "Drugs, alcohol or vaping",
+      "violence": "Violence",
+      "harassment": "Harassment or bullying",
+      "hacking": "Hacking",
+      "fraud": "Forgery or fraud",
+      "unsafeOther": "Other unsafe request",
+      "refusalCyber": "Harmful computer request",
+      "refusalBio": "Harmful biology request"
+    },
+    "tools": {
+      "getMyAttendance": "Own attendance",
+      "getMyFeeStatus": "Own fee status",
+      "getMySubjects": "Own subjects",
+      "getMyTimetable": "Own timetable",
+      "getMyTeachingAssignments": "Own teaching assignments",
+      "getClassAttendance": "Class attendance",
+      "getClassMarks": "Class marks",
+      "getClassFeeStatus": "Class fee status",
+      "querySchoolMetric": "School figures",
+      "getTimetable": "Timetable",
+      "listUncoveredPeriods": "Periods needing cover",
+      "findFreeTeachers": "Free teachers",
+      "listTimetableChanges": "Timetable changes",
+      "listRooms": "Rooms",
+      "proposeTimetableChanges": "Proposed timetable changes"
+    },
+    "outcomes": {
+      "OK": "Shown",
+      "NOT_IN_SCOPE": "Not their class",
+      "CLARIFY": "Asked to clarify",
+      "ERROR": "Failed"
+    },
+    "scopeKeys": {
+      "class": "Class",
+      "date": "Date",
+      "from": "From",
+      "to": "To",
+      "day": "Day",
+      "period": "Period",
+      "teacher": "Teacher",
+      "subject": "Subject",
+      "room": "Room",
+      "term": "Term",
+      "assessment": "Assessment",
+      "academicYear": "Academic year",
+      "status": "Status",
+      "belowPercent": "Below %",
+      "listAll": "Full list",
+      "entity": "Data",
+      "metric": "Measure",
+      "filters": "Filters",
+      "slots": "Periods",
+      "changes": "Changes",
+      "reason": "Reason"
+    },
+    "unavailable": "The AI misuse log needs a server update. Please try again later."
   },
   "students": {
     "list": {
@@ -2892,7 +3051,13 @@
       "ROOM_NAME_TAKEN": "A room with this name already exists.",
       "TIMETABLE_OVERRIDE_EXISTS": "This period already has a change on this date. Undo or edit that change instead.",
       "BOT_ACTION_NOT_PENDING": "This change can't be confirmed any more.",
-      "BOT_ACTION_NOT_YOURS": "Only the person who asked can confirm this change."
+      "BOT_ACTION_NOT_YOURS": "Only the person who asked can confirm this change.",
+      "AI_PAUSED": "Your AI help is paused until {{time}} because of repeated messages that weren't about school work.",
+      "AI_USER_DAILY_LIMIT": "You've used your AI help for today. It will be back after midnight.",
+      "AI_SCHOOL_DAILY_LIMIT": "Your school has used today's AI limit. AI help will be back after midnight.",
+      "AI_MESSAGE_TOO_LONG": "Your message is too long. Please keep it under {{max}} characters.",
+      "AI_PAUSE_NOT_ACTIVE": "This pause has already ended.",
+      "AI_UNAVAILABLE": "AI help isn't available right now. Please try again in a few minutes."
     }
   },
   "sectionHub": {
@@ -2914,7 +3079,7 @@
     },
     "reports": {
       "title": "Reports",
-      "subtitle": "Exports and audit history"
+      "subtitle": "Exports, audit history and AI misuse"
     }
   },
   "profile": {

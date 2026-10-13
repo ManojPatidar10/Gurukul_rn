@@ -235,7 +235,8 @@ export function usePushNotifications(schoolId: string | null, session: Session |
         // BUS_TRIP opens the family's bus map, or an admin's transport screen; SALARY_PAID opens
         // the staff member's payslip; BOT_ACTION_READY (a helpdesk-bot timetable proposal waiting
         // for the admin who asked) opens the helpdesk chat with its card, unless that chat is
-        // already open (see isTargetShowing).
+        // already open (see isTargetShowing); AI_MISUSE_PAUSED (someone's AI help was paused) opens
+        // an admin's AI misuse log.
         const target = notificationTarget(data, session.role);
         if (target && !isTargetShowing(target, navigationRef.getCurrentRoute())) {
           openNotificationTarget(session.schoolId, target, navigationRef.navigate).catch(() => {});

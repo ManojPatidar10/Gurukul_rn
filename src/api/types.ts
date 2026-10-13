@@ -1543,7 +1543,34 @@ export interface Message {
    * card); an older server leaves it out, which is how the app knows not to subscribe to updates.
    */
   action?: BotAction | null;
+  /**
+   * Set only on the live broadcast of a helpdesk-bot guard reply (a refusal, a pause, a limit...).
+   * REST history always has null (it isn't stored), and older servers leave the key out.
+   */
+  aiNotice?: AiNotice | null;
 }
+
+/**
+ * Why a fixed AI guard reply was sent instead of an answer. Unknown kinds from a newer server are
+ * treated like 'REFUSED' (see noticeKind in src/utils/aiGuard.ts).
+ */
+export type AiNoticeKind = 'REFUSED' | 'PAUSED' | 'SCHOOL_LIMIT' | 'USER_LIMIT' | 'TOO_LONG' | 'CHECK_FAILED' | 'OFF';
+
+/**
+ * `pausedUntil` non-null means the user's AI help is now paused until then: the reply that starts a
+ * pause (the 5th refused message) has kind 'PAUSED' and carries it, so the app locks the composer
+ * on that reply itself rather than on the next send.
+ */
+export interface AiNotice {
+  kind: AiNoticeKind;
+  pausedUntil: string | null;
+}
+
+/** BOT = the helpdesk bot, ASSISTANT = the Academic Helper. */
+export type AiFeature = 'BOT' | 'ASSISTANT';
+
+/** Why the AI guard refused a message. MODEL_REFUSAL: the model's own safety check (cyber/bio). */
+export type AiVerdict = 'OFF_TOPIC' | 'OTHERS_DATA' | 'PROMPT_ATTACK' | 'UNSAFE' | 'MODEL_REFUSAL';
 
 /** A frame on /topic/conversations/{id}/updates. Unknown types are ignored. */
 export interface ChatUpdateFrame {

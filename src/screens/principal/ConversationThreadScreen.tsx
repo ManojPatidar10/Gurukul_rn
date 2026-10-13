@@ -33,16 +33,21 @@ import { onReconnect, sendMessage, subscribeToConversation, subscribeToConversat
 import { ApiError } from '../../api/client';
 import type { BotAction, Message } from '../../api/types';
 import { markConversationRead } from '../../api/unreadStore';
+import { AiMyRecordsSheet } from '../../components/AiMyRecordsSheet';
+import { AiNoticeBar } from '../../components/AiNoticeBar';
+import { AiPausedBanner } from '../../components/AiPausedBanner';
 import { BotActionCard } from '../../components/BotActionCard';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
+import { useAiStatus } from '../../hooks/useAiStatus';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage, isRetryable } from '../../api/errorMessage';
 import { pickedFileSize, putToPresignedUrl } from '../../api/presignedUpload';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { messageSaysOff, pausedUntilFromMessage } from '../../utils/aiGuard';
 import { confirmAlertBody, isBotAction, notPendingMessage } from '../../utils/botActions';
 import {
   BOT_TYPING_TIMEOUT_MS,
@@ -104,6 +109,12 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   const confirmAlertOpenRef = useRef(false);
   // The updates subscription was dropped by a STOMP ERROR, so its next subscribe is a recovery.
   const updatesDroppedRef = useRef(false);
+  // The helpdesk bot answers school work only: after repeated refusals the user's AI help is
+  // paused for a while (the composer locks until then), and the bot can be switched off. Human
+  // chats make no AI status requests.
+  const { pausedUntil, botEnabled, enterPaused, refresh: refreshAiStatus } = useAiStatus(schoolId, isBot);
+  const aiPaused = isBot && pausedUntil !== null;
+  const [recordsOpen, setRecordsOpen] = useState(false);
 
   const commit = useCallback((next: Message[]) => {
     if (next === messagesRef.current) return;
@@ -167,6 +178,18 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     );
   }, [refetchFlight, schoolId, conversationId, ingest]);
 
+  /**
+   * Catches up on frames that may have been missed (a reconnect, "typing…" giving up, the updates
+   * subscription coming back): the newest messages, and in the helpdesk chat the AI status too. A
+   * reply that paused the user, or says the bot is off, carries that only on its live frame - REST
+   * history has no aiNotice - so without this the composer would stay open under a "paused" bubble.
+   * (Returning to the app already reads the status in useAiStatus.)
+   */
+  const catchUp = useCallback(() => {
+    refetchLatest();
+    if (isBot) refreshAiStatus();
+  }, [refetchLatest, isBot, refreshAiStatus]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -187,7 +210,14 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       schoolId,
       conversationId,
       (message) => {
-        if (!cancelled) ingest([message]);
+        if (cancelled) return;
+        ingest([message]);
+        // The bot's refusal that starts a pause (and its reply to a paused user) says until when.
+        // Only live frames carry it; REST history never does.
+        if (isBot) enterPaused(pausedUntilFromMessage(message));
+        // "Turned off" since this chat opened (that takes a server restart): read the status again
+        // so the "off" banner shows.
+        if (isBot && messageSaysOff(message)) refreshAiStatus();
       },
       {
         onError: (e) => {
@@ -200,7 +230,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       cancelled = true;
       unsubscribe();
     };
-  }, [schoolId, conversationId, ingest]);
+  }, [schoolId, conversationId, ingest, isBot, enterPaused, refreshAiStatus]);
 
   // Card updates (saved, cancelled, expired, replaced) come on their own destination, which only a
   // server with bot actions has - an older one would refuse it and end the socket - so it's
@@ -231,18 +261,19 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
     if (updatesDroppedRef.current) {
       // Back after a drop: fetch what changed while it wasn't subscribed.
       updatesDroppedRef.current = false;
-      refetchLatest();
+      catchUp();
     }
     return () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [isBot, actionsSupported, schoolId, conversationId, commit, noteActions, refetchLatest]);
+  }, [isBot, actionsSupported, schoolId, conversationId, commit, noteActions, catchUp]);
 
   // After the socket reconnects, or the app comes back to the foreground, frames sent meanwhile are
-  // lost: fetch the newest page again.
+  // lost: fetch the newest page again (and, after a reconnect, the AI status - useAiStatus reads it
+  // itself on returning to the app).
   useEffect(() => {
-    const offReconnect = onReconnect(refetchLatest);
+    const offReconnect = onReconnect(catchUp);
     const appStateSubscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') refetchLatest();
     });
@@ -250,7 +281,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       offReconnect();
       appStateSubscription.remove();
     };
-  }, [refetchLatest]);
+  }, [catchUp, refetchLatest]);
 
   // "typing…" gives up after 90 s; the reply may still have been sent while the socket was down,
   // so look for it then.
@@ -262,12 +293,12 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
       () => {
         // Ends it without reading the clock again (see onTypingTimeout); a newer send re-arms.
         setTyping((current) => onTypingTimeout(current, armedSince));
-        refetchLatest();
+        catchUp();
       },
       Math.max(0, left)
     );
     return () => clearTimeout(timer);
-  }, [typing, refetchLatest]);
+  }, [typing, catchUp]);
 
   useEffect(() => {
     const last = messages[messages.length - 1];
@@ -276,7 +307,7 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
 
   const handleSend = async () => {
     const content = draft.trim();
-    if (!content || sending) return;
+    if (!content || sending || aiPaused) return;
     setDraft('');
     setSending(true);
     if (isBot) setTyping(startTyping(Date.now()));
@@ -501,6 +532,12 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScreenHeader title={title} onBack={() => navigation.goBack()} />
+      {isBot ? (
+        <>
+          <AiNoticeBar onPress={() => setRecordsOpen(true)} />
+          <AiMyRecordsSheet schoolId={schoolId} visible={recordsOpen} onClose={() => setRecordsOpen(false)} />
+        </>
+      ) : null}
       {loading ? (
         <ActivityIndicator style={styles.loading} color={colors.primary} />
       ) : (
@@ -517,8 +554,17 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
         />
       )}
       {error && <ErrorNotice message={error} />}
+      {isBot && pausedUntil ? (
+        <AiPausedBanner kind="paused" pausedUntil={pausedUntil} />
+      ) : isBot && !botEnabled ? (
+        <AiPausedBanner kind="off" />
+      ) : null}
       <View style={[styles.inputRow, { paddingBottom: composerBottomPadding }]}>
-        <Pressable style={styles.attachButton} onPress={handleAttach} disabled={uploading}>
+        <Pressable
+          style={[styles.attachButton, aiPaused && styles.composerLocked]}
+          onPress={handleAttach}
+          disabled={uploading || aiPaused}
+        >
           {uploading ? (
             <ActivityIndicator color={colors.primary} size="small" />
           ) : (
@@ -526,14 +572,19 @@ export function ConversationThreadScreen({ route, navigation }: Props) {
           )}
         </Pressable>
         <TextInput
-          style={styles.input}
+          style={[styles.input, aiPaused && styles.composerLocked]}
           placeholder={t('chat.messagePlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={draft}
           onChangeText={setDraft}
+          editable={!aiPaused}
           multiline
         />
-        <Pressable style={styles.sendButton} onPress={handleSend} disabled={uploading || sending}>
+        <Pressable
+          style={[styles.sendButton, aiPaused && styles.composerLocked]}
+          onPress={handleSend}
+          disabled={uploading || sending || aiPaused}
+        >
           {sending ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.sendButtonText}>{t('chat.send')}</Text>}
         </Pressable>
       </View>
@@ -616,4 +667,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonText: { color: colors.white, fontWeight: '700' },
+  composerLocked: { opacity: 0.5 },
 });
