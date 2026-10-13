@@ -17,6 +17,10 @@ export async function openNotificationTarget(schoolId: string, target: Notificat
     navigate('PayslipDetail', { payrollLineId: target.payrollLineId });
     return;
   }
+  if (target.screen === 'MyTimetable') {
+    navigate('MyTimetable', target.date ? { date: target.date } : undefined);
+    return;
+  }
   if (!('studentId' in target)) {
     navigate(target.screen);
     return;

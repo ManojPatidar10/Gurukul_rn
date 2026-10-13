@@ -1,3 +1,5 @@
+import { isIsoDate } from './timetable';
+
 /**
  * Where tapping a notification should take the user, from the push's data payload - shared by the
  * push tap handler (usePushNotifications) and the in-app Alerts inbox, which stores the same payload.
@@ -11,7 +13,8 @@ export type NotificationTarget =
   | { screen: 'MyFees' }
   | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string }
   | { screen: 'ReportCard'; studentId: string; term?: string; sectionId?: string }
-  | { screen: 'PayslipDetail'; payrollLineId: string };
+  | { screen: 'PayslipDetail'; payrollLineId: string }
+  | { screen: 'MyTimetable'; date?: string };
 
 export function notificationTarget(
   data: Record<string, unknown> | null | undefined,
@@ -55,6 +58,12 @@ export function notificationTarget(
       // Goes to the employee whose salary was paid. Only staff on the principal navigator have a
       // payslip screen; a driver's tap just opens the app.
       return (role === 'TEACHER' || role === 'ADMIN') && payrollLineId ? { screen: 'PayslipDetail', payrollLineId } : null;
+    case 'TIMETABLE_CHANGE':
+      // A substitution, cancellation or extra class: the substitute, the original teacher and the
+      // class's students are told. It opens their timetable on that date. Parents aren't pushed;
+      // an admin gets it only as one of the teachers.
+      if (role !== 'TEACHER' && role !== 'ADMIN' && role !== 'STUDENT') return null;
+      return { screen: 'MyTimetable', ...(isIsoDate(data.date) ? { date: data.date } : {}) };
     default:
       return null;
   }

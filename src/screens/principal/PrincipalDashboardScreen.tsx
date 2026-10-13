@@ -8,6 +8,7 @@ import { getClassSection, listClassSections } from '../../api/classSections';
 import { getEmployee, isActiveEmployee, listAllEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
 import { getStudent, listStudents } from '../../api/students';
+import { getUncoveredPeriods } from '../../api/timetable';
 import type { ClassSection, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
@@ -19,8 +20,10 @@ import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
-import { colors, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { FeatureAction, FeatureId, HubSection, PrincipalStackParamList } from '../../types/principal';
+import { coverCount } from '../../utils/substitutions';
+import { todayIso } from '../../utils/timetable';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard'>;
 
@@ -42,6 +45,8 @@ const ADMIN_ONLY_FEATURES: FeatureId[] = [
   'attendanceExport',
   'timetableEditor',
   'bellSchedule',
+  'substitutions',
+  'rooms',
   'schoolLocation',
   'idCards',
   'admissions',
@@ -140,6 +145,8 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   myTimetable: 'MyTimetable',
   timetableEditor: 'TimetableEditor',
   bellSchedule: 'PeriodSetup',
+  substitutions: 'Substitutions',
+  rooms: 'Rooms',
   schoolLocation: 'SchoolLocationSettings',
   idCards: 'IdCardSheets',
   attendance: 'SectionHub',
@@ -223,6 +230,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [myHomeroomSection, setMyHomeroomSection] = useState<ClassSection | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
   const [loadingCounts, setLoadingCounts] = useState(true);
+  // Periods that need a substitute today; null until loaded, or when it couldn't be (plain label then).
+  const [coverNeeded, setCoverNeeded] = useState<number | null>(null);
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
@@ -245,6 +254,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'myTimetable', title: t('dashboard.features.myTimetable.title'), icon: 'clock', description: t('dashboard.features.myTimetable.description') },
     { id: 'timetableEditor', title: t('dashboard.features.timetableEditor.title'), icon: 'table', description: t('dashboard.features.timetableEditor.description') },
     { id: 'bellSchedule', title: t('dashboard.features.bellSchedule.title'), icon: 'bell', description: t('dashboard.features.bellSchedule.description') },
+    { id: 'substitutions', title: t('dashboard.features.substitutions.title'), icon: 'user-clock', description: t('dashboard.features.substitutions.description') },
+    { id: 'rooms', title: t('dashboard.features.rooms.title'), icon: 'door-open', description: t('dashboard.features.rooms.description') },
     { id: 'gradingScale', title: t('dashboard.features.gradingScale.title'), icon: 'sliders-h', description: t('dashboard.features.gradingScale.description') },
     { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
     { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
@@ -348,6 +359,9 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
           .catch(() => setCounts((prev) => ({ ...prev, vendors: null }))),
       ]).finally(() => setLoadingCounts(false));
+      getUncoveredPeriods(schoolId, todayIso())
+        .then((rows) => setCoverNeeded(coverCount(rows)))
+        .catch(() => setCoverNeeded(null));
     };
     const unsubscribe = navigation.addListener('focus', load);
     load();
@@ -395,6 +409,25 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
             <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} loading={loadingCounts} />
             <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} loading={loadingCounts} />
           </View>
+        )}
+        {/* The home grid is a fixed 12 tiles, so cover for absent teachers gets its own full-width card. */}
+        {isAdmin && (
+          <Pressable
+            style={[styles.coverCard, !!coverNeeded && styles.coverCardAlert]}
+            onPress={() => navigation.navigate('Substitutions')}
+            accessibilityRole="button"
+          >
+            <View style={[styles.coverIcon, { backgroundColor: accents.substitutions.light }]}>
+              <FontAwesome5 name="user-clock" size={16} color={accents.substitutions.base} />
+            </View>
+            <View style={styles.coverText}>
+              <Text style={styles.coverTitle}>
+                {coverNeeded ? t('dashboard.cover.needed', { count: coverNeeded }) : t('dashboard.cover.arrange')}
+              </Text>
+              <Text style={styles.coverDescription}>{t('dashboard.features.substitutions.description')}</Text>
+            </View>
+            <Text style={styles.coverChevron}>›</Text>
+          </Pressable>
         )}
 
         <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
@@ -486,6 +519,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
+  coverCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    ...softShadow,
+  },
+  coverCardAlert: { borderColor: accents.substitutions.base },
+  coverIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  coverText: { flex: 1 },
+  coverTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  coverDescription: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  coverChevron: { fontSize: 22, color: colors.textMuted, marginLeft: spacing.sm },
   sectionTitle: {
     fontSize: 17,
     fontWeight: '800',

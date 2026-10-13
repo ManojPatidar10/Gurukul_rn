@@ -97,6 +97,33 @@ describe('notificationTarget', () => {
     expect(notificationTarget({ type: 'SALARY_PAID', payrollLineId: 7 }, 'ADMIN')).toBeNull();
   });
 
+  it('opens the timetable on the date of a timetable change for teachers, admins and students', () => {
+    const change = {
+      type: 'TIMETABLE_CHANGE',
+      sectionId: 'sec1',
+      date: '2026-10-14',
+      periodNumber: '3',
+      overrideId: 'o1',
+      action: 'CREATED',
+    };
+    for (const role of ['TEACHER', 'ADMIN', 'STUDENT']) {
+      expect(notificationTarget(change, role)).toEqual({ screen: 'MyTimetable', date: '2026-10-14' });
+    }
+  });
+
+  it('sends parents and drivers nowhere for a timetable change', () => {
+    const change = { type: 'TIMETABLE_CHANGE', sectionId: 'sec1', date: '2026-10-14' };
+    expect(notificationTarget(change, 'PARENT')).toBeNull();
+    expect(notificationTarget(change, 'DRIVER')).toBeNull();
+  });
+
+  it('opens the timetable without a date when the date is missing or malformed', () => {
+    expect(notificationTarget({ type: 'TIMETABLE_CHANGE' }, 'TEACHER')).toEqual({ screen: 'MyTimetable' });
+    expect(notificationTarget({ type: 'TIMETABLE_CHANGE', date: '14/10/2026' }, 'STUDENT')).toEqual({ screen: 'MyTimetable' });
+    expect(notificationTarget({ type: 'TIMETABLE_CHANGE', date: '2026-02-30' }, 'ADMIN')).toEqual({ screen: 'MyTimetable' });
+    expect(notificationTarget({ type: 'TIMETABLE_CHANGE', date: 20261014 }, 'TEACHER')).toEqual({ screen: 'MyTimetable' });
+  });
+
   it('drops a report-card term that is not a string', () => {
     expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', term: 2, studentId: 's1' }, 'PARENT')).toEqual({
       screen: 'ReportCard',
@@ -166,6 +193,15 @@ describe('openNotificationTarget', () => {
     const navigate = jest.fn();
     await openNotificationTarget('school1', { screen: 'Announcements' }, navigate);
     expect(navigate).toHaveBeenCalledWith('Announcements');
+    expect(mockedGetMyChildren).not.toHaveBeenCalled();
+  });
+
+  it('opens the timetable on the change date, without looking up children', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'MyTimetable', date: '2026-10-14' }, navigate);
+    await openNotificationTarget('school1', { screen: 'MyTimetable' }, navigate);
+    expect(navigate).toHaveBeenNthCalledWith(1, 'MyTimetable', { date: '2026-10-14' });
+    expect(navigate).toHaveBeenNthCalledWith(2, 'MyTimetable', undefined);
     expect(mockedGetMyChildren).not.toHaveBeenCalled();
   });
 
