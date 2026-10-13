@@ -25,6 +25,7 @@ import {
   pausedUntilFromStatus,
   pausedUntilLabel,
   rangeForDays,
+  replyLeavesHistory,
   roleLabelKey,
   scopeKeyLabelKey,
   scopeSummary,
@@ -96,7 +97,7 @@ describe('historyForRequest', () => {
     expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'Explain fractions' }]);
   });
 
-  it('keeps a supportive reply (refused: false) like any answer', () => {
+  it('keeps a supportive reply an older server left unmarked (refused: false, no excludeFromHistory)', () => {
     const messages = [
       entry('1', 'user', 'I feel very stressed about my exams'),
       entry('2', 'assistant', WELLBEING, false),
@@ -106,6 +107,21 @@ describe('historyForRequest', () => {
     expect(historyForRequest(messages)[1]).toEqual({ role: 'assistant', content: WELLBEING });
   });
 
+  it('drops a supportive reply the server marks (refused: false, excludeFromHistory: true) with its message', () => {
+    const messages: AiChatEntry[] = [
+      entry('1', 'user', 'What is photosynthesis?'),
+      entry('2', 'assistant', STUDY_REPLY, false),
+      { id: '3', role: 'user', content: 'I feel like nobody cares about me' },
+      { id: '4', role: 'assistant', content: WELLBEING, refused: false, excludeFromHistory: true },
+      { id: '5', role: 'user', content: 'How do I make a study timetable?' },
+    ];
+    expect(historyForRequest(messages)).toEqual([
+      { role: 'user', content: 'What is photosynthesis?' },
+      { role: 'assistant', content: STUDY_REPLY },
+      { role: 'user', content: 'How do I make a study timetable?' },
+    ]);
+  });
+
   it('honours excludeFromHistory on its own', () => {
     const messages: AiChatEntry[] = [
       { id: '1', role: 'user', content: 'Tell me a joke' },
@@ -113,6 +129,46 @@ describe('historyForRequest', () => {
       { id: '3', role: 'user', content: 'hi' },
     ];
     expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'hi' }]);
+  });
+});
+
+describe('replyLeavesHistory', () => {
+  it('leaves out every reply the server marks, refused or not', () => {
+    expect(replyLeavesHistory({ refused: true, excludeFromHistory: true })).toBe(true);
+    // The supportive reply: a normal bubble, still not re-sent.
+    expect(replyLeavesHistory({ refused: false, excludeFromHistory: true })).toBe(true);
+  });
+
+  it('keeps a model answer', () => {
+    expect(replyLeavesHistory({ refused: false, excludeFromHistory: false })).toBe(false);
+  });
+
+  it('falls back to refused alone on an older server without the field', () => {
+    expect(replyLeavesHistory({ refused: true })).toBe(true);
+    expect(replyLeavesHistory({ refused: false })).toBe(false);
+    expect(replyLeavesHistory({})).toBe(false);
+    expect(replyLeavesHistory(null)).toBe(false);
+    expect(replyLeavesHistory(undefined)).toBe(false);
+  });
+
+  it('still drops a refusal even if a server marked it excludeFromHistory: false', () => {
+    expect(replyLeavesHistory({ refused: true, excludeFromHistory: false })).toBe(true);
+  });
+
+  it('feeds historyForRequest: a marked supportive exchange is not re-sent', () => {
+    const response = { reply: WELLBEING, model: null, refused: false, excludeFromHistory: true };
+    const messages: AiChatEntry[] = [
+      { id: '1', role: 'user', content: 'Everything is too much' },
+      {
+        id: '2',
+        role: 'assistant',
+        content: response.reply,
+        refused: response.refused,
+        excludeFromHistory: replyLeavesHistory(response),
+      },
+      { id: '3', role: 'user', content: 'Explain fractions' },
+    ];
+    expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'Explain fractions' }]);
   });
 });
 

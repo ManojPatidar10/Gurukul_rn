@@ -16,15 +16,31 @@ export interface AiChatEntry extends AiChatMessage {
   id: string;
   /** A fixed server text with no model answer in it (shown muted, with an info icon). */
   refused?: boolean;
-  /** Left out of what is sent next time, together with the user message right before it. */
+  /**
+   * Left out of what is sent next time, together with the user message right before it. Set on a
+   * refusal and on a supportive reply the server marks (which isn't `refused`, so it isn't muted).
+   */
   excludeFromHistory?: boolean;
 }
 
 /**
- * The turns to send with the next question: every exchange except the ones the server refused.
- * A refused reply is dropped together with the user message right before it, so a refused question
- * isn't asked again inside the history (the server drops such pairs too, for older app builds).
- * A supportive reply (`refused: false`) is an answer like any other and stays.
+ * Whether an Academic Helper reply is left out of the next request's history: any refusal, and any
+ * reply the server marks `excludeFromHistory` (every fixed text, including the supportive wellbeing
+ * reply, which comes back `refused: false`). An older server doesn't send the field, so there only
+ * `refused` decides, as before.
+ */
+export function replyLeavesHistory(
+  response: { refused?: boolean | null; excludeFromHistory?: boolean | null } | null | undefined,
+): boolean {
+  return response?.refused === true || response?.excludeFromHistory === true;
+}
+
+/**
+ * The turns to send with the next question: every exchange except the ones marked
+ * `excludeFromHistory` or `refused` (see {@link replyLeavesHistory}). Such a reply is dropped
+ * together with the user message right before it, so a refused or distressed message isn't sent
+ * again inside the history (the server drops such pairs too, for older app builds). A model answer
+ * stays, and so does a supportive reply from an older server, which doesn't mark it.
  */
 export function historyForRequest(messages: AiChatEntry[]): AiChatMessage[] {
   const out: AiChatMessage[] = [];

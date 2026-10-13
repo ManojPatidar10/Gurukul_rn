@@ -33,6 +33,7 @@ import {
   historyForRequest,
   pausedUntilFromError,
   pausedUntilFromReply,
+  replyLeavesHistory,
   type AiChatEntry,
 } from '../../utils/aiGuard';
 
@@ -89,12 +90,20 @@ export function AcademicHelperScreen({ navigation }: Props) {
     setSending(true);
 
     try {
-      // Refused exchanges stay on screen but aren't sent again.
+      // Refused and supportive exchanges stay on screen but aren't sent again.
       const response = await askAi(schoolId, historyForRequest(conversation));
+      // `refused` only picks the muted styling; a supportive reply is a normal bubble that is still
+      // left out of the history when the server marks it.
       const refused = response.refused === true;
       setMessages((prev) => [
         ...prev,
-        { id: `${Date.now()}-a`, role: 'assistant', content: response.reply, refused, excludeFromHistory: refused },
+        {
+          id: `${Date.now()}-a`,
+          role: 'assistant',
+          content: response.reply,
+          refused,
+          excludeFromHistory: replyLeavesHistory(response),
+        },
       ]);
       // The refusal that starts a pause says so itself: lock now, not on the next send.
       enterPaused(pausedUntilFromReply(response));

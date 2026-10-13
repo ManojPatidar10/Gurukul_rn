@@ -21,6 +21,13 @@ export interface AiChatResponse {
    * older servers.
    */
   refused?: boolean;
+  /**
+   * True on every fixed server text: each refusal and each supportive (wellbeing) reply, which comes
+   * back `refused: false` so it's shown as a normal bubble. False on a model answer. The app leaves
+   * such a reply, and the user message right before it, out of the history it sends next time.
+   * Absent on older servers (then only `refused` decides).
+   */
+  excludeFromHistory?: boolean;
   /** Set with `refused` (and on a supportive reply to a paused user); `pausedUntil` set = now paused. */
   notice?: AiNotice | null;
 }
