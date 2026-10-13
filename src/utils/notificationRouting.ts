@@ -14,7 +14,8 @@ export type NotificationTarget =
   | { screen: 'AttendanceHistory' | 'ChildFees'; studentId: string }
   | { screen: 'ReportCard'; studentId: string; term?: string; sectionId?: string }
   | { screen: 'PayslipDetail'; payrollLineId: string }
-  | { screen: 'MyTimetable'; date?: string };
+  | { screen: 'MyTimetable'; date?: string }
+  | { screen: 'HelpdeskBot' };
 
 export function notificationTarget(
   data: Record<string, unknown> | null | undefined,
@@ -64,6 +65,10 @@ export function notificationTarget(
       // an admin gets it only as one of the teachers.
       if (role !== 'TEACHER' && role !== 'ADMIN' && role !== 'STUDENT') return null;
       return { screen: 'MyTimetable', ...(isIsoDate(data.date) ? { date: data.date } : {}) };
+    case 'BOT_ACTION_READY':
+      // A timetable proposal the helpdesk bot finished after a long turn, waiting for the admin who
+      // asked to confirm it: open their helpdesk chat, where the card is. Only admins get it.
+      return role === 'ADMIN' ? { screen: 'HelpdeskBot' } : null;
     default:
       return null;
   }

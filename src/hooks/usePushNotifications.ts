@@ -233,7 +233,8 @@ export function usePushNotifications(schoolId: string | null, session: Session |
         // when no parent is linked, opens My Fees); ANNOUNCEMENT opens the
         // parent's Announcements screen (staff and students have none, so it just opens the app);
         // BUS_TRIP opens the family's bus map, or an admin's transport screen; SALARY_PAID opens
-        // the staff member's payslip.
+        // the staff member's payslip; BOT_ACTION_READY (a helpdesk-bot timetable proposal waiting
+        // for the admin who asked) opens the helpdesk chat with its card.
         const target = notificationTarget(data, session.role);
         if (target) {
           openNotificationTarget(session.schoolId, target, navigationRef.navigate).catch(() => {});

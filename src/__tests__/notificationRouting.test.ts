@@ -124,6 +124,16 @@ describe('notificationTarget', () => {
     expect(notificationTarget({ type: 'TIMETABLE_CHANGE', date: 20261014 }, 'TEACHER')).toEqual({ screen: 'MyTimetable' });
   });
 
+  it('opens the helpdesk chat for a waiting bot proposal, for admins only', () => {
+    const ready = { type: 'BOT_ACTION_READY', conversationId: 'c1', actionId: 'a1' };
+    expect(notificationTarget(ready, 'ADMIN')).toEqual({ screen: 'HelpdeskBot' });
+    // Only the admin who asked is sent it; any other role's tap just opens the app.
+    for (const role of ['TEACHER', 'STUDENT', 'PARENT', 'DRIVER']) {
+      expect(notificationTarget(ready, role)).toBeNull();
+    }
+    expect(notificationTarget({ type: 'BOT_ACTION_READY' }, 'ADMIN')).toEqual({ screen: 'HelpdeskBot' });
+  });
+
   it('drops a report-card term that is not a string', () => {
     expect(notificationTarget({ type: 'REPORT_CARD_PUBLISHED', term: 2, studentId: 's1' }, 'PARENT')).toEqual({
       screen: 'ReportCard',
@@ -202,6 +212,13 @@ describe('openNotificationTarget', () => {
     await openNotificationTarget('school1', { screen: 'MyTimetable' }, navigate);
     expect(navigate).toHaveBeenNthCalledWith(1, 'MyTimetable', { date: '2026-10-14' });
     expect(navigate).toHaveBeenNthCalledWith(2, 'MyTimetable', undefined);
+    expect(mockedGetMyChildren).not.toHaveBeenCalled();
+  });
+
+  it('opens the helpdesk chat without looking up children', async () => {
+    const navigate = jest.fn();
+    await openNotificationTarget('school1', { screen: 'HelpdeskBot' }, navigate);
+    expect(navigate).toHaveBeenCalledWith('HelpdeskBot');
     expect(mockedGetMyChildren).not.toHaveBeenCalled();
   });
 
