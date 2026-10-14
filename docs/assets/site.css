@@ -45,6 +45,8 @@ p { margin: 0 0 1em; }
 .eyebrow { display: inline-block; font: 600 .76rem/1 var(--sg-font-display); letter-spacing: .12em; text-transform: uppercase; color: var(--sg-violet-600); margin-bottom: 14px; }
 .violet .eyebrow, .hero .eyebrow, .page-hero .eyebrow { color: var(--sg-marigold-500); }
 .lead { font-size: clamp(1.08rem, 1.8vw, 1.28rem); color: var(--sg-ink-600); max-width: 62ch; }
+/* An app label quoted in the copy: <span class="ui">, checked against the app's own strings by build.py */
+.ui { font-weight: 600; }
 .violet .lead, .hero .lead, .page-hero .lead { color: rgba(255, 255, 255, .88); }
 .center { text-align: center; margin-inline: auto; }
 .center .lead { margin-inline: auto; }
