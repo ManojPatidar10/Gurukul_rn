@@ -41,6 +41,10 @@ export function replyLeavesHistory(
  * together with the user message right before it, so a refused or distressed message isn't sent
  * again inside the history (the server drops such pairs too, for older app builds). A model answer
  * stays, and so does a supportive reply from an older server, which doesn't mark it.
+ *
+ * Each kept `content` goes out exactly as stored (the question as sent, the reply as received),
+ * never trimmed or rewritten: the server uses an earlier exchange only when it recognises it as one
+ * it answered for this user in the last 24 hours, and leaves any other out of what the model sees.
  */
 export function historyForRequest(messages: AiChatEntry[]): AiChatMessage[] {
   const out: AiChatMessage[] = [];

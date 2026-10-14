@@ -130,6 +130,55 @@ describe('historyForRequest', () => {
     ];
     expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'hi' }]);
   });
+
+  // The server uses an earlier exchange only when it recognises it as one it answered for this user
+  // (spec helper-server-history): an HMAC of the question as sent and the reply as received. A
+  // trimmed, re-wrapped or otherwise rewritten copy is left out of what the model sees.
+  it('re-sends every kept content byte-identical, exactly as typed or received', () => {
+    const longReply = 'Q. Explain fractions.\nA. A fraction is part of a whole, like 3/4.\n'.repeat(400).slice(0, 20_000);
+    expect(longReply).toHaveLength(20_000);
+    const contents: [role: 'user' | 'assistant', content: string][] = [
+      ['user', 'Explain fractions'],
+      ['assistant', '  \n\n  Fractions are parts of a whole.  \n\n'],
+      ['user', 'Steps please'],
+      ['assistant', 'Step 1: find a common denominator.\r\nStep 2: add the numerators.\r\n'],
+      ['user', 'And the next part?'],
+      ['assistant', 'Part A\n\n\n\nPart B'],
+      ['user', 'हिंदी में समझाइए: क्‍ष और क्‌ष'],
+      ['assistant', 'भिन्न का अर्थ है पूरे का एक भाग। क्‍ष, ज्‌ञ ​'],
+      ['user', 'Thanks! 👍🏽'],
+      ['assistant', 'Great work! 🎉 Keep going 👨‍👩‍👧 🇮🇳'],
+      ['user', 'Make the full answer key'],
+      ['assistant', longReply],
+      ['user', 'Give an example'],
+    ];
+    const messages: AiChatEntry[] = contents.map(([role, content], i) =>
+      role === 'assistant' ? { id: String(i), role, content, refused: false, excludeFromHistory: false } : { id: String(i), role, content },
+    );
+
+    const sent = historyForRequest(messages);
+    expect(sent).toHaveLength(contents.length);
+    sent.forEach((message, i) => {
+      expect(message.role).toBe(contents[i][0]);
+      expect(message.content).toBe(contents[i][1]);
+    });
+    // What reaches the server after api.post's JSON.stringify and the server's parse.
+    const received = JSON.parse(JSON.stringify({ messages: sent })) as { messages: { content: string }[] };
+    expect(received.messages.map((m) => m.content)).toEqual(contents.map(([, content]) => content));
+  });
+
+  it('re-sends the kept exchanges byte-identical around a dropped refused pair', () => {
+    const reply = '\r\nA fraction has a numerator and a denominator.\n\n\n\n';
+    const messages: AiChatEntry[] = [
+      { id: '1', role: 'user', content: 'What is a fraction?' },
+      { id: '2', role: 'assistant', content: reply, refused: false, excludeFromHistory: false },
+      { id: '3', role: 'user', content: 'Tell me a joke' },
+      { id: '4', role: 'assistant', content: REFUSAL, refused: true, excludeFromHistory: true },
+      { id: '5', role: 'user', content: ' Give an example ' },
+    ];
+    const sent = historyForRequest(messages);
+    expect(sent.map((m) => m.content)).toEqual(['What is a fraction?', reply, ' Give an example ']);
+  });
 });
 
 describe('replyLeavesHistory', () => {
