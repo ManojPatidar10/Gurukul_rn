@@ -21,6 +21,7 @@ import {
   canSend,
   chosenAudience,
   confirmKey,
+  createNoticeSendGuard,
   hasAudience,
   sectionLabel,
   showYears,
@@ -80,9 +81,8 @@ export function AnnouncementComposeScreen({ navigation }: Props) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Set synchronously, so a double tap can't open two confirmations or send two notices.
-  const sendingRef = useRef(false);
-  const confirmOpenRef = useRef(false);
+  // Changes synchronously, so a double tap can't open two confirmations or send two notices.
+  const [guard] = useState(createNoticeSendGuard);
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
@@ -92,7 +92,7 @@ export function AnnouncementComposeScreen({ navigation }: Props) {
   }, []);
 
   // Back stays on the form while the notice is being sent, so the answer reaches it.
-  useHoldWhileSaving(sending, sendingRef, () => showToast(t('announcementCompose.sending'), 'info'));
+  useHoldWhileSaving(sending, guard.inFlight, () => showToast(t('announcementCompose.sending'), 'info'));
 
   const fetchAudiences = useCallback(
     () =>
@@ -151,34 +151,32 @@ export function AnnouncementComposeScreen({ navigation }: Props) {
   };
 
   const send = async (chosen: NoticeAudience) => {
-    if (sendingRef.current) return;
-    sendingRef.current = true;
     setSending(true);
     setError(null);
-    try {
-      await createAnnouncement(schoolId, toCreateRequest(chosen, title, body));
-      Alert.alert(t('announcementCompose.sent'));
-      sendingRef.current = false; // so the hold lets this navigation through
-      // The form stays locked (sending) while it closes, so it can't be sent again on the way out.
-      if (mountedRef.current) navigation.goBack();
-    } catch (e) {
-      // The form is kept as it is; sending it again is safe (the server returns the same notice).
-      sendingRef.current = false;
-      if (mountedRef.current) {
-        setError(getErrorMessage(e));
-        setSending(false);
-      }
+    const result = await guard.send(() => createAnnouncement(schoolId, toCreateRequest(chosen, title, body)));
+    switch (result.status) {
+      case 'busy':
+        return; // the send already in flight answers
+      case 'sent':
+        Alert.alert(t('announcementCompose.sent'));
+        // The guard is clear, so the hold lets this navigation through. The form stays locked
+        // (sending) while it closes, so it can't be sent again on the way out.
+        if (mountedRef.current) navigation.goBack();
+        return;
+      case 'failed':
+        // The form is kept as it is; sending it again is safe (the server returns the same notice).
+        if (mountedRef.current) {
+          setError(getErrorMessage(result.error));
+          setSending(false);
+        }
     }
   };
 
   const handleSend = () => {
-    if (sendingRef.current || confirmOpenRef.current) return;
     if (!audience || !sendable) return;
+    if (!guard.openConfirm()) return; // a confirmation is already open, or the notice is being sent
     const chosen = audience;
-    confirmOpenRef.current = true;
-    const close = () => {
-      confirmOpenRef.current = false;
-    };
+    const close = guard.closeConfirm;
     Alert.alert(
       t('announcementCompose.confirmTitle'),
       `${confirmMessage(chosen)}\n\n${t('announcementCompose.permanentHint')}`,
@@ -192,6 +190,7 @@ export function AnnouncementComposeScreen({ navigation }: Props) {
           },
         },
       ],
+      // Android: Back or a tap outside the dialog closes it through onDismiss.
       { cancelable: true, onDismiss: close }
     );
   };

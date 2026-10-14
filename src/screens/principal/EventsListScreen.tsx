@@ -1,8 +1,8 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getAnnouncementAudiences } from '../../api/chat';
 import { listClassNames } from '../../api/classSections';
@@ -15,9 +15,9 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { noticeEntryVisible } from '../../utils/announcementCompose';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
-import { hasAudience, mayPostNotices } from '../../utils/announcementCompose';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventsList'>;
 
@@ -55,13 +55,13 @@ function statusVariant(status: string | null): 'success' | 'warning' | 'error' |
 }
 
 export function EventsListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
-  const { t } = useTranslation();
   const { session } = useAuth();
   const canCreate = session.ownerType === 'EMPLOYEE';
   // "Post a notice" shows only when the server says this admin or teacher has somewhere to post.
-  const mayPost = mayPostNotices(session.role);
+  const role = session.role;
   const [canPostNotice, setCanPostNotice] = useState(false);
   // Teachers/admin can see events across every grade, so a grade filter helps them browse one at a
   // time. A student's GRADE-scoped events are already limited to their own grade server-side, so
@@ -86,13 +86,10 @@ export function EventsListScreen({ navigation }: Props) {
       .catch((e) => setError(getErrorMessage(e)));
   }, [schoolId, gradeFilter]);
 
+  // Any failure (an older server answers 404) only hides the button; the events list is unaffected.
   const loadNoticeAccess = useCallback(() => {
-    if (!mayPost) return;
-    getAnnouncementAudiences(schoolId)
-      .then((audiences) => setCanPostNotice(hasAudience(audiences)))
-      // Any failure (an older server answers 404) only hides the button; the events list is unaffected.
-      .catch(() => setCanPostNotice(false));
-  }, [schoolId, mayPost]);
+    noticeEntryVisible(role, () => getAnnouncementAudiences(schoolId)).then(setCanPostNotice);
+  }, [schoolId, role]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {

@@ -53,6 +53,24 @@ export function hasAudience(audiences: AnnouncementAudiences | null | undefined)
   return !!audiences && audiences.canPost && audienceKinds(audiences).length > 0;
 }
 
+/**
+ * Whether School Events shows "Post a notice": only for an admin or teacher (anyone else isn't asked,
+ * so nobody gets a 403), and only when the server's audiences answer has somewhere to post. Any
+ * failure - an older server's 404 on the audiences endpoint, no network - hides the button and
+ * resolves false; it never rejects, so it can't reach the events list.
+ */
+export async function noticeEntryVisible(
+  role: UserRole | null | undefined,
+  loadAudiences: () => Promise<AnnouncementAudiences>
+): Promise<boolean> {
+  if (!mayPostNotices(role)) return false;
+  try {
+    return hasAudience(await loadAudiences());
+  } catch {
+    return false;
+  }
+}
+
 const collator = new Intl.Collator(undefined, { numeric: true });
 
 /**
@@ -152,4 +170,54 @@ export function confirmKey(audience: NoticeAudience): NoticeConfirmKey {
     case 'GRADE':
       return 'confirmGrade';
   }
+}
+
+/** How a send ended: `busy` when another send was still in flight, so nothing was sent. */
+export type NoticeSendResult<T> = { status: 'sent'; value: T } | { status: 'failed'; error: unknown } | { status: 'busy' };
+
+/**
+ * Send's double-tap guard: at most one confirmation open and one request in flight, whatever the
+ * taps. Both flags change synchronously, before React re-renders the button as disabled.
+ *
+ * - `openConfirm()` is the tap on Send: true (and the confirmation now counts as open) only when no
+ *   confirmation is open and nothing is being sent.
+ * - Every way the confirmation closes calls `closeConfirm()`: Cancel, the dialog's Send, and on
+ *   Android Back or a tap outside it (`onDismiss`). It is safe to call twice.
+ * - `send(request)` runs `request` unless one is in flight (then `busy`, and nothing is sent). The
+ *   flag is cleared before the result is returned, after success too, so the screen's own
+ *   navigation back passes useHoldWhileSaving, which reads `inFlight`.
+ */
+export interface NoticeSendGuard {
+  readonly inFlight: { current: boolean };
+  openConfirm(): boolean;
+  closeConfirm(): void;
+  send<T>(request: () => Promise<T>): Promise<NoticeSendResult<T>>;
+}
+
+export function createNoticeSendGuard(): NoticeSendGuard {
+  const inFlight = { current: false };
+  let confirmOpen = false;
+  return {
+    inFlight,
+    openConfirm() {
+      if (confirmOpen || inFlight.current) return false;
+      confirmOpen = true;
+      return true;
+    },
+    closeConfirm() {
+      confirmOpen = false;
+    },
+    async send<T>(request: () => Promise<T>): Promise<NoticeSendResult<T>> {
+      if (inFlight.current) return { status: 'busy' };
+      inFlight.current = true;
+      try {
+        const value = await request();
+        inFlight.current = false;
+        return { status: 'sent', value };
+      } catch (error) {
+        inFlight.current = false;
+        return { status: 'failed', error };
+      }
+    },
+  };
 }
