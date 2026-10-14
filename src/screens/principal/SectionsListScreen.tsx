@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listSectionsByClass } from '../../api/classSections';
 import type { ClassSection } from '../../api/types';
@@ -15,6 +16,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionsList'>;
 
 export function SectionsListScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { className } = route.params;
@@ -45,7 +47,7 @@ export function SectionsListScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={className} subtitle="Sections" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={className} subtitle={t('classSection.sections.subtitle')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         {error && <ErrorNotice message={error} />}
         <FlatList
@@ -57,13 +59,13 @@ export function SectionsListScreen({ route, navigation }: Props) {
             loading ? (
               <ActivityIndicator style={styles.loader} color={colors.primary} />
             ) : (
-              <Text style={styles.empty}>{error ? 'Could not load sections.' : 'No sections found.'}</Text>
+              <Text style={styles.empty}>{error ? t('classSection.sections.loadError') : t('classSection.sections.empty')}</Text>
             )
           }
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => navigation.navigate('SectionDetail', { classSection: item })}>
               <View>
-                <Text style={styles.rowName}>Section {item.section}</Text>
+                <Text style={styles.rowName}>{t('classSection.sections.row', { section: item.section })}</Text>
                 <Text style={styles.rowMeta}>{item.academicYear}</Text>
               </View>
               <Text style={styles.chevron}>›</Text>

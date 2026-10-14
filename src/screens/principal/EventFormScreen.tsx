@@ -2,6 +2,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listClassNames } from '../../api/classSections';
 import { createEvent } from '../../api/events';
@@ -16,21 +17,18 @@ import LabeledInput from '../../components/LabeledInput';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { dateLocale } from '../../i18n/dateLocale';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { eventCategoryLabel, eventParticipationLabel, eventScopeLabel } from '../../utils/eventLabels';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventForm'>;
 
 const CATEGORIES: EventCategory[] = ['SPORTS', 'CULTURAL', 'ACADEMIC', 'OTHER'];
 const SCOPES: EventScope[] = ['SCHOOL', 'CLASS', 'GRADE'];
-const PARTICIPATION_TYPES: { key: EventParticipationType; label: string }[] = [
-  { key: 'NONE', label: 'Just an announcement' },
-  { key: 'RSVP', label: 'RSVP (attending?)' },
-  { key: 'REGISTRATION', label: 'Registration form' },
-  { key: 'POLL', label: 'Poll / vote' },
-];
+const PARTICIPATION_TYPES: EventParticipationType[] = ['NONE', 'RSVP', 'REGISTRATION', 'POLL'];
 
 function Chip<T extends string>({ value, selected, onPress, label }: { value: T; selected: boolean; onPress: (v: T) => void; label: string }) {
   return (
@@ -45,6 +43,8 @@ function toDateOnly(date: Date): string {
 }
 
 export function EventFormScreen({ navigation }: Props) {
+  const { t, i18n } = useTranslation();
+  const locale = dateLocale(i18n.language);
   const schoolId = useSchoolId();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -127,20 +127,25 @@ export function EventFormScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Create event" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('events.create')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <LabeledInput label="Title" value={name} onChangeText={setName} placeholder="e.g. Annual Sports Meet" />
         <LabeledInput
-          label="Description"
+          label={t('events.form.name')}
+          value={name}
+          onChangeText={setName}
+          placeholder={t('events.form.namePlaceholder')}
+        />
+        <LabeledInput
+          label={t('events.form.description')}
           value={description}
           onChangeText={setDescription}
           multiline
-          placeholder="What's this event about?"
+          placeholder={t('events.form.descriptionPlaceholder')}
         />
 
-        <Text style={styles.fieldLabel}>Event date</Text>
+        <Text style={styles.fieldLabel}>{t('events.form.eventDate')}</Text>
         <Pressable style={[styles.dateTimeButton, { marginBottom: spacing.md }]} onPress={() => setShowEventDate(true)}>
-          <Text style={styles.dateTimeText}>{eventDate.toLocaleDateString()}</Text>
+          <Text style={styles.dateTimeText}>{eventDate.toLocaleDateString(locale)}</Text>
         </Pressable>
         {showEventDate && (
           <DateTimePicker
@@ -154,19 +159,24 @@ export function EventFormScreen({ navigation }: Props) {
           />
         )}
 
-        <LabeledInput label="Venue" value={venue} onChangeText={setVenue} placeholder="e.g. School Ground" />
+        <LabeledInput
+          label={t('events.form.venue')}
+          value={venue}
+          onChangeText={setVenue}
+          placeholder={t('events.form.venuePlaceholder')}
+        />
 
-        <Text style={styles.fieldLabel}>Category</Text>
+        <Text style={styles.fieldLabel}>{t('events.form.category')}</Text>
         <View style={styles.chips}>
           {CATEGORIES.map((c) => (
-            <Chip key={c} value={c} selected={category === c} onPress={setCategory} label={c} />
+            <Chip key={c} value={c} selected={category === c} onPress={setCategory} label={eventCategoryLabel(c, t)} />
           ))}
         </View>
 
-        <Text style={styles.fieldLabel}>Who is this for?</Text>
+        <Text style={styles.fieldLabel}>{t('events.form.audience')}</Text>
         <View style={styles.chips}>
           {SCOPES.map((s) => (
-            <Chip key={s} value={s} selected={scope === s} onPress={setScope} label={s} />
+            <Chip key={s} value={s} selected={scope === s} onPress={setScope} label={eventScopeLabel(s, t)} />
           ))}
         </View>
         {scope === 'CLASS' && (
@@ -181,19 +191,19 @@ export function EventFormScreen({ navigation }: Props) {
                 {classNames.map((name) => (
                   <Chip key={name} value={name} selected={className === name} onPress={setClassName} label={name} />
                 ))}
-                {classNames.length === 0 && <Text style={styles.empty}>No classes set up yet.</Text>}
+                {classNames.length === 0 && <Text style={styles.empty}>{t('events.form.noClasses')}</Text>}
               </>
             )}
           </View>
         )}
 
-        <Text style={styles.fieldLabel}>Starts</Text>
+        <Text style={styles.fieldLabel}>{t('events.form.starts')}</Text>
         <View style={styles.dateTimeRow}>
           <Pressable style={styles.dateTimeButton} onPress={() => setShowStartDate(true)}>
-            <Text style={styles.dateTimeText}>{startAt.toLocaleDateString()}</Text>
+            <Text style={styles.dateTimeText}>{startAt.toLocaleDateString(locale)}</Text>
           </Pressable>
           <Pressable style={styles.dateTimeButton} onPress={() => setShowStartTime(true)}>
-            <Text style={styles.dateTimeText}>{startAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            <Text style={styles.dateTimeText}>{startAt.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</Text>
           </Pressable>
         </View>
         {showStartDate && (
@@ -226,13 +236,13 @@ export function EventFormScreen({ navigation }: Props) {
           />
         )}
 
-        <Text style={styles.fieldLabel}>Ends</Text>
+        <Text style={styles.fieldLabel}>{t('events.form.ends')}</Text>
         <View style={styles.dateTimeRow}>
           <Pressable style={styles.dateTimeButton} onPress={() => setShowEndDate(true)}>
-            <Text style={styles.dateTimeText}>{endAt.toLocaleDateString()}</Text>
+            <Text style={styles.dateTimeText}>{endAt.toLocaleDateString(locale)}</Text>
           </Pressable>
           <Pressable style={styles.dateTimeButton} onPress={() => setShowEndTime(true)}>
-            <Text style={styles.dateTimeText}>{endAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            <Text style={styles.dateTimeText}>{endAt.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</Text>
           </Pressable>
         </View>
         {showEndDate && (
@@ -265,30 +275,41 @@ export function EventFormScreen({ navigation }: Props) {
           />
         )}
 
-        <Text style={styles.fieldLabel}>Participation</Text>
+        <Text style={styles.fieldLabel}>{t('events.form.participation')}</Text>
         <View style={styles.chips}>
           {PARTICIPATION_TYPES.map((p) => (
-            <Chip key={p.key} value={p.key} selected={participationType === p.key} onPress={setParticipationType} label={p.label} />
+            <Chip
+              key={p}
+              value={p}
+              selected={participationType === p}
+              onPress={setParticipationType}
+              label={eventParticipationLabel(p, t)}
+            />
           ))}
         </View>
 
         {participationType === 'REGISTRATION' && (
           <View style={styles.registrationBuilder}>
-            <Text style={styles.registrationHint}>Add the fields participants need to fill in (e.g. Team Name).</Text>
+            <Text style={styles.registrationHint}>{t('events.form.registrationHint')}</Text>
             {registrationFields.map((f) => (
               <View key={f.key} style={styles.registrationFieldRow}>
                 <Text style={styles.registrationFieldLabel}>{f.label}</Text>
                 <Pressable onPress={() => removeRegistrationField(f.key)}>
-                  <Text style={styles.removeField}>Remove</Text>
+                  <Text style={styles.removeField}>{t('common.remove')}</Text>
                 </Pressable>
               </View>
             ))}
             <View style={styles.addFieldRow}>
               <View style={styles.addFieldInput}>
-                <LabeledInput label="Field label" value={fieldLabel} onChangeText={setFieldLabel} placeholder="e.g. Team Name" />
+                <LabeledInput
+                  label={t('events.form.fieldLabel')}
+                  value={fieldLabel}
+                  onChangeText={setFieldLabel}
+                  placeholder={t('events.form.fieldPlaceholder')}
+                />
               </View>
               <Pressable style={styles.addFieldButton} onPress={addRegistrationField} disabled={!fieldLabel.trim()}>
-                <Text style={styles.addFieldButtonText}>Add</Text>
+                <Text style={styles.addFieldButtonText}>{t('common.add')}</Text>
               </Pressable>
             </View>
           </View>
@@ -301,7 +322,7 @@ export function EventFormScreen({ navigation }: Props) {
           onPress={handleSubmit}
           disabled={!canSubmit || submitting}
         >
-          {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>Create event</Text>}
+          {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>{t('events.create')}</Text>}
         </Pressable>
       </ScreenContainer>
     </View>

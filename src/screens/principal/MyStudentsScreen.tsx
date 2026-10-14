@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listClassSections } from '../../api/classSections';
 import { listSectionSubjects } from '../../api/sectionSubjects';
@@ -19,6 +20,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'MyStudents'>;
 const accent = accents.students;
 
 export function MyStudentsScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -48,7 +50,7 @@ export function MyStudentsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="My Students" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('dashboard.teacherCopy.students.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         {error && <ErrorNotice message={error} />}
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
@@ -60,7 +62,7 @@ export function MyStudentsScreen({ navigation }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
-                {error ? 'Could not load your classes.' : "You aren't assigned to any class yet."}
+                {error ? t('classSection.myStudents.loadError') : t('classSection.myStudents.empty')}
               </Text>
             ) : null
           }

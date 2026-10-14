@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AttendanceTakeBody } from './AttendanceTakeBody';
 import { SectionAttendanceHistoryBody } from './SectionAttendanceHistoryScreen';
@@ -12,6 +13,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'AttendanceTake'>;
 type Tab = 'take' | 'history';
 
 export function SectionAttendanceScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const classSection = route.params.classSection;
   const [tab, setTab] = useState<Tab>('take');
 
@@ -19,15 +21,15 @@ export function SectionAttendanceScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Attendance"
+        subtitle={t('sectionDetail.attendance.title')}
         onBack={() => navigation.goBack()}
       />
       <View style={styles.tabRow}>
         <Pressable style={[styles.tab, tab === 'take' && styles.tabActive]} onPress={() => setTab('take')}>
-          <Text style={[styles.tabText, tab === 'take' && styles.tabTextActive]}>Take Attendance</Text>
+          <Text style={[styles.tabText, tab === 'take' && styles.tabTextActive]}>{t('attendance.section.take')}</Text>
         </Pressable>
         <Pressable style={[styles.tab, tab === 'history' && styles.tabActive]} onPress={() => setTab('history')}>
-          <Text style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>History</Text>
+          <Text style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>{t('attendance.section.history')}</Text>
         </Pressable>
       </View>
 

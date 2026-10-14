@@ -1,7 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import type { AttendanceStatus } from '../api/types';
+import { dateLocale } from '../i18n/dateLocale';
 import { colors, spacing } from '../theme/colors';
+import { attendanceStatusLabel } from '../utils/attendanceLabels';
 import { toIsoDate } from './DatePickerField';
 
 interface MonthAttendanceCalendarProps {
@@ -14,7 +17,16 @@ interface MonthAttendanceCalendarProps {
   maxMonth?: Date;
 }
 
-const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+// The column headers, Sunday first (Date.getDay() order): "S M T W T F S", or "र सो मं बु गु शु श".
+const WEEKDAY_KEYS = [
+  'attendance.calendar.weekdays.sun',
+  'attendance.calendar.weekdays.mon',
+  'attendance.calendar.weekdays.tue',
+  'attendance.calendar.weekdays.wed',
+  'attendance.calendar.weekdays.thu',
+  'attendance.calendar.weekdays.fri',
+  'attendance.calendar.weekdays.sat',
+] as const;
 
 const statusColor: Record<AttendanceStatus, string> = {
   PRESENT: colors.success,
@@ -42,6 +54,7 @@ function sameMonth(a: Date, b: Date) {
 }
 
 export function MonthAttendanceCalendar({ month, onMonthChange, recordsByDate, maxMonth }: MonthAttendanceCalendarProps) {
+  const { t, i18n } = useTranslation();
   const weeks = buildWeeks(month.getFullYear(), month.getMonth());
   const upperBound = maxMonth ?? new Date();
   const atMaxMonth = sameMonth(month, upperBound);
@@ -56,16 +69,18 @@ export function MonthAttendanceCalendar({ month, onMonthChange, recordsByDate, m
         <Pressable style={styles.navButton} onPress={() => shiftMonth(-1)}>
           <Text style={styles.navButtonText}>‹</Text>
         </Pressable>
-        <Text style={styles.monthLabel}>{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</Text>
+        <Text style={styles.monthLabel}>
+          {month.toLocaleDateString(dateLocale(i18n.language), { month: 'long', year: 'numeric' })}
+        </Text>
         <Pressable style={styles.navButton} onPress={() => shiftMonth(1)} disabled={atMaxMonth}>
           <Text style={[styles.navButtonText, atMaxMonth && styles.navButtonDisabled]}>›</Text>
         </Pressable>
       </View>
 
       <View style={styles.weekRow}>
-        {WEEKDAY_LABELS.map((label, i) => (
-          <Text key={i} style={styles.weekdayLabel}>
-            {label}
+        {WEEKDAY_KEYS.map((key) => (
+          <Text key={key} style={styles.weekdayLabel}>
+            {t(key)}
           </Text>
         ))}
       </View>
@@ -90,7 +105,7 @@ export function MonthAttendanceCalendar({ month, onMonthChange, recordsByDate, m
         {(Object.keys(statusColor) as AttendanceStatus[]).map((status) => (
           <View key={status} style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: statusColor[status] }]} />
-            <Text style={styles.legendLabel}>{status.replace('_', ' ')}</Text>
+            <Text style={styles.legendLabel}>{attendanceStatusLabel(status, t)}</Text>
           </View>
         ))}
       </View>

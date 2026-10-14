@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { awardSpotRecognition } from '../../api/houses';
 import { listAllStudents, searchStudents } from '../../api/students';
@@ -21,6 +22,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'AwardRecognition'>
 const SUGGESTED_AMOUNTS = [3, 5, 8, 12];
 
 export function AwardRecognitionScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
@@ -59,10 +61,10 @@ export function AwardRecognitionScreen({ navigation }: Props) {
   if (!selected) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Award recognition" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('games.award.title')} onBack={() => navigation.goBack()} />
         <ScreenContainer padded={false}>
           <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}>
-            <SearchBar value={query} onChangeText={setQuery} placeholder="Search student by name" />
+            <SearchBar value={query} onChangeText={setQuery} placeholder={t('games.award.searchPlaceholder')} />
           </View>
           {loadingStudents ? (
             <ActivityIndicator style={styles.loading} color={colors.primary} />
@@ -81,13 +83,13 @@ export function AwardRecognitionScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Award recognition" onBack={() => setSelected(null)} />
+      <ScreenHeader title={t('games.award.title')} onBack={() => setSelected(null)} />
       <ScreenContainer>
-        <Text style={styles.selectedLabel}>Recognizing</Text>
+        <Text style={styles.selectedLabel}>{t('games.award.recognizing')}</Text>
         <Text style={styles.selectedName}>{selected.name}</Text>
         <Text style={styles.selectedMeta}>{selected.classSectionLabel}</Text>
 
-        <Text style={styles.fieldLabel}>Points</Text>
+        <Text style={styles.fieldLabel}>{t('games.award.points')}</Text>
         <View style={styles.amountRow}>
           {SUGGESTED_AMOUNTS.map((value) => (
             <Pressable
@@ -101,17 +103,17 @@ export function AwardRecognitionScreen({ navigation }: Props) {
         </View>
 
         <LabeledInput
-          label="Reason"
+          label={t('games.award.reason')}
           value={reason}
           onChangeText={setReason}
-          placeholder="e.g. Helped a classmate in lab"
+          placeholder={t('games.award.reasonPlaceholder')}
           multiline
         />
 
         {error && <ErrorNotice message={error} inset />}
 
         <Pressable style={[styles.submit, (!canSubmit || submitting) && styles.submitDisabled]} onPress={handleSubmit} disabled={!canSubmit || submitting}>
-          {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>Award points</Text>}
+          {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitText}>{t('games.award.submit')}</Text>}
         </Pressable>
       </ScreenContainer>
     </View>

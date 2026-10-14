@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getEmployeeAttendanceHistory } from '../../api/staffAttendance';
 import type { AttendanceStatus, EmployeeAttendanceHistory } from '../../api/types';
@@ -13,6 +14,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { attendanceStatusLabel } from '../../utils/attendanceLabels';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EmployeeAttendanceHistory'>;
 type ViewMode = 'calendar' | 'list';
@@ -31,6 +33,7 @@ function monthRange(month: Date) {
 }
 
 export function EmployeeAttendanceHistoryScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const employee = route.params.employee;
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
@@ -71,17 +74,17 @@ export function EmployeeAttendanceHistoryScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={employee.name} subtitle="Attendance history" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={employee.name} subtitle={t('attendance.history.subtitle')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         <View style={styles.tabRow}>
           <Pressable
             style={[styles.tab, viewMode === 'calendar' && styles.tabActive]}
             onPress={() => setViewMode('calendar')}
           >
-            <Text style={[styles.tabText, viewMode === 'calendar' && styles.tabTextActive]}>Calendar</Text>
+            <Text style={[styles.tabText, viewMode === 'calendar' && styles.tabTextActive]}>{t('attendance.history.calendar')}</Text>
           </Pressable>
           <Pressable style={[styles.tab, viewMode === 'list' && styles.tabActive]} onPress={() => setViewMode('list')}>
-            <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>List</Text>
+            <Text style={[styles.tabText, viewMode === 'list' && styles.tabTextActive]}>{t('attendance.history.list')}</Text>
           </Pressable>
         </View>
 
@@ -102,43 +105,43 @@ export function EmployeeAttendanceHistoryScreen({ route, navigation }: Props) {
                 <View style={styles.statRow}>
                   <View style={styles.statCard}>
                     <Text style={styles.statValue}>{percentPresent === null ? '—' : `${percentPresent}%`}</Text>
-                    <Text style={styles.statLabel}>Present rate</Text>
+                    <Text style={styles.statLabel}>{t('attendance.history.presentRate')}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Text style={styles.statValue}>{history.totalRecords}</Text>
-                    <Text style={styles.statLabel}>Total days</Text>
+                    <Text style={styles.statLabel}>{t('attendance.history.totalDays')}</Text>
                   </View>
                 </View>
                 <View style={styles.statRow}>
                   <View style={styles.statCard}>
                     <Text style={[styles.statValue, { color: colors.success }]}>{history.presentCount}</Text>
-                    <Text style={styles.statLabel}>Present</Text>
+                    <Text style={styles.statLabel}>{attendanceStatusLabel('PRESENT', t)}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Text style={[styles.statValue, { color: colors.error }]}>{history.absentCount}</Text>
-                    <Text style={styles.statLabel}>Absent</Text>
+                    <Text style={styles.statLabel}>{attendanceStatusLabel('ABSENT', t)}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Text style={[styles.statValue, { color: colors.warning }]}>{history.lateCount}</Text>
-                    <Text style={styles.statLabel}>Late</Text>
+                    <Text style={styles.statLabel}>{attendanceStatusLabel('LATE', t)}</Text>
                   </View>
                   <View style={styles.statCard}>
                     <Text style={styles.statValue}>{history.halfDayCount}</Text>
-                    <Text style={styles.statLabel}>Half day</Text>
+                    <Text style={styles.statLabel}>{attendanceStatusLabel('HALF_DAY', t)}</Text>
                   </View>
                 </View>
 
-                <Text style={styles.label}>Records</Text>
-                {history.records.length === 0 && <Text style={styles.empty}>No attendance recorded yet.</Text>}
+                <Text style={styles.label}>{t('attendance.history.records')}</Text>
+                {history.records.length === 0 && <Text style={styles.empty}>{t('attendance.history.empty')}</Text>}
                 {history.records.map((record) => (
                   <View key={record.id} style={styles.row}>
                     <View>
                       <Text style={styles.rowDate}>{record.attendanceDate}</Text>
                       {record.remarks ? <Text style={styles.rowRemarks}>{record.remarks}</Text> : null}
-                      {record.selfMarked && <Text style={styles.rowSelfMarked}>📍 Self check-in</Text>}
+                      {record.selfMarked && <Text style={styles.rowSelfMarked}>{t('attendance.history.selfCheckIn')}</Text>}
                     </View>
                     <Text style={[styles.rowStatus, { color: statusColor[record.status] }]}>
-                      {record.status.replace('_', ' ')}
+                      {attendanceStatusLabel(record.status, t)}
                     </Text>
                   </View>
                 ))}

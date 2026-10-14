@@ -173,7 +173,13 @@ export function TransportHubScreen({ navigation }: Props) {
             {editing ? (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>{editing === 'new' ? t('transport.admin.addBus') : t('transport.admin.editBus')}</Text>
-                <LabeledInput label={t('transport.admin.busName')} required value={busName} onChangeText={setBusName} placeholder="Bus 1" />
+                <LabeledInput
+                  label={t('transport.admin.busName')}
+                  required
+                  value={busName}
+                  onChangeText={setBusName}
+                  placeholder={t('transport.admin.busNamePlaceholder')}
+                />
                 <LabeledInput
                   label={t('transport.admin.registration')}
                   value={registration}

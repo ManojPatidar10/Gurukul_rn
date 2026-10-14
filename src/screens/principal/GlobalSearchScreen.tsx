@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { isActiveEmployee, searchEmployees } from '../../api/employees';
 import { searchStudents } from '../../api/students';
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<PrincipalStackParamList, 'GlobalSearch'>;
 type Result = { kind: 'STUDENT'; item: Student } | { kind: 'EMPLOYEE'; item: Employee };
 
 export function GlobalSearchScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query.trim());
@@ -55,15 +57,15 @@ export function GlobalSearchScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Search" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('globalSearch.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
-        <SearchBar value={query} onChangeText={setQuery} placeholder="Search students, staff…" />
+        <SearchBar value={query} onChangeText={setQuery} placeholder={t('globalSearch.placeholder')} />
         {loading && <ActivityIndicator color={colors.primary} />}
         {error && <ErrorNotice message={error} />}
         {!loading && debouncedQuery && results.length === 0 && !error && (
-          <Text style={styles.empty}>No results for &quot;{debouncedQuery}&quot;.</Text>
+          <Text style={styles.empty}>{t('globalSearch.noResults', { query: debouncedQuery })}</Text>
         )}
-        {!debouncedQuery && <Text style={styles.empty}>Start typing to search across students and staff.</Text>}
+        {!debouncedQuery && <Text style={styles.empty}>{t('globalSearch.hint')}</Text>}
         <FlatList
           data={results}
           scrollEnabled={false}
@@ -74,11 +76,13 @@ export function GlobalSearchScreen({ navigation }: Props) {
                 <Text style={styles.rowTitle}>{result.item.name}</Text>
                 <Text style={styles.rowSubtitle}>
                   {result.kind === 'STUDENT'
-                    ? `Student · ${result.item.classSectionLabel}`
-                    : `Staff · ${result.item.designation}`}
+                    ? t('globalSearch.studentRow', { classSection: result.item.classSectionLabel })
+                    : t('globalSearch.staffRow', { designation: result.item.designation })}
                 </Text>
               </View>
-              <Text style={styles.kindBadge}>{result.kind === 'STUDENT' ? 'Student' : 'Staff'}</Text>
+              <Text style={styles.kindBadge}>
+                {result.kind === 'STUDENT' ? t('globalSearch.student') : t('globalSearch.staff')}
+              </Text>
             </Pressable>
           )}
         />

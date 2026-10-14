@@ -76,17 +76,19 @@ export default function RegisterStudentScreen({ schoolId, onBack, onSubmitted }:
             style={[styles.toggleButton, useInviteCode && styles.toggleButtonActive]}
             onPress={() => setUseInviteCode(true)}
           >
-            <Text style={[styles.toggleText, useInviteCode && styles.toggleTextActive]}>Invite code</Text>
+            <Text style={[styles.toggleText, useInviteCode && styles.toggleTextActive]}>
+              {t('registration.student.inviteCode')}
+            </Text>
           </Pressable>
         </View>
 
         {useInviteCode ? (
           <LabeledInput
-            label="Invite code"
+            label={t('registration.student.inviteCode')}
             value={inviteCode}
             onChangeText={setInviteCode}
             autoCapitalize="characters"
-            placeholder="e.g. K7M2QXPZ"
+            placeholder={t('registration.student.inviteCodePlaceholder')}
           />
         ) : (
           <LabeledInput

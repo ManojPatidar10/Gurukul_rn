@@ -106,7 +106,7 @@ export function EmployeesListScreen({ navigation }: Props) {
           <Text style={styles.addButtonText}>{t('employees.list.addButton')}</Text>
         </Pressable>
 
-        <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name" />
+        <SearchBar value={query} onChangeText={setQuery} placeholder={t('employees.list.searchPlaceholder')} />
 
         {(inactiveCount > 0 || showInactive) && (
           <Pressable style={styles.inactiveToggle} onPress={() => setShowInactive((v) => !v)} hitSlop={8}>

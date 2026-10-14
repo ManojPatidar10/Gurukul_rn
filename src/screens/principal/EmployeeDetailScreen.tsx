@@ -173,7 +173,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
               style={styles.actionButton}
               onPress={() => navigation.navigate('EmployeeAttendanceHistory', { employee: { id: employee.id, name: employee.name } })}
             >
-              <Text style={styles.actionText}>Attendance</Text>
+              <Text style={styles.actionText}>{t('employees.detail.attendance')}</Text>
             </Pressable>
             {employee.employeeType !== 'NON_TEACHING' && (
               <Pressable
@@ -184,7 +184,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
               </Pressable>
             )}
             <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
-              <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>
+              <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : t('credentials.set')}</Text>
             </Pressable>
             <Pressable style={styles.actionButton} onPress={() => setShowAttendanceIdentifiers((v) => !v)}>
               <Text style={styles.actionText}>
@@ -202,16 +202,16 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
 
         {isViewerAdmin && showCredentials && (
           <View style={styles.credentialPanel}>
-            <Text style={styles.credentialTitle}>Create teacher login</Text>
+            <Text style={styles.credentialTitle}>{t('employees.detail.createLogin')}</Text>
             {created ? (
               <View>
                 <Text style={styles.success}>
-                  Credential created. Share these with {employee.name} — they won&apos;t be shown again:
+                  {t('credentials.created', { name: employee.name })}
                 </Text>
                 <View style={styles.credentialBox}>
-                  <Text style={styles.credentialLabel}>Username</Text>
+                  <Text style={styles.credentialLabel}>{t('credentials.username')}</Text>
                   <Text style={styles.credentialValue}>{created.username}</Text>
-                  <Text style={[styles.credentialLabel, { marginTop: spacing.sm }]}>Password</Text>
+                  <Text style={[styles.credentialLabel, { marginTop: spacing.sm }]}>{t('credentials.password')}</Text>
                   <Text style={styles.credentialValue}>{created.password}</Text>
                 </View>
                 <Pressable
@@ -221,20 +221,20 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
                     setPassword('');
                   }}
                 >
-                  <Text style={styles.doneLink}>Done</Text>
+                  <Text style={styles.doneLink}>{t('common.done')}</Text>
                 </Pressable>
               </View>
             ) : (
               <>
-                <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
-                <LabeledInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+                <LabeledInput label={t('credentials.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
+                <LabeledInput label={t('credentials.password')} value={password} onChangeText={setPassword} secureTextEntry />
                 {error && <ErrorNotice message={error} />}
                 <Pressable
                   style={[styles.credentialSubmit, (!username || !password || submitting) && styles.disabled]}
                   onPress={handleCreateCredential}
                   disabled={!username || !password || submitting}
                 >
-                  <Text style={styles.credentialSubmitText}>{submitting ? 'Creating…' : 'Create credential'}</Text>
+                  <Text style={styles.credentialSubmitText}>{submitting ? t('common.creating') : t('credentials.create')}</Text>
                 </Pressable>
               </>
             )}

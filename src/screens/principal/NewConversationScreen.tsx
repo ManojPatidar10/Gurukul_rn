@@ -71,8 +71,16 @@ export function NewConversationScreen({ navigation }: Props) {
         const list: Party[] = [
           ...employees
             .filter((e) => e.id !== session.ownerId && isActiveEmployee(e))
-            .map((e) => ({ ownerType: 'EMPLOYEE' as const, ownerId: e.id, name: `${e.name} (Staff)` })),
-          ...visibleStudents.map((s) => ({ ownerType: 'STUDENT' as const, ownerId: s.id, name: `${s.name} (Student)` })),
+            .map((e) => ({
+              ownerType: 'EMPLOYEE' as const,
+              ownerId: e.id,
+              name: t('newConversation.staffName', { name: e.name }),
+            })),
+          ...visibleStudents.map((s) => ({
+            ownerType: 'STUDENT' as const,
+            ownerId: s.id,
+            name: t('newConversation.studentName', { name: s.name }),
+          })),
           // Staff: parents of their own students (an admin: every parent).
           ...parentContacts.map((c) => ({
             ownerType: 'PARENT' as const,
@@ -106,10 +114,14 @@ export function NewConversationScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="New Conversation" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('newConversation.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer padded={false}>
         <View style={styles.searchWrap}>
-          <SearchBar value={query} onChangeText={setQuery} placeholder={isParent ? t('newConversation.searchTeachers') : 'Search staff or classmates by name'} />
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            placeholder={isParent ? t('newConversation.searchTeachers') : t('newConversation.searchPeople')}
+          />
         </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <ErrorNotice message={error} inset />}
@@ -118,7 +130,9 @@ export function NewConversationScreen({ navigation }: Props) {
           scrollEnabled={false}
           keyExtractor={(item) => `${item.ownerType}:${item.ownerId}`}
           ListEmptyComponent={
-            !loading && !error ? <Text style={styles.empty}>{query ? 'No match found.' : 'No one to message yet.'}</Text> : null
+            !loading && !error ? (
+              <Text style={styles.empty}>{query ? t('newConversation.noMatch') : t('newConversation.empty')}</Text>
+            ) : null
           }
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => handleSelect(item)} disabled={creatingId === item.ownerId}>

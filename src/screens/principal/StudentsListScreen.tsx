@@ -138,7 +138,7 @@ export function StudentsListScreen({ navigation }: Props) {
           <Text style={styles.addButtonText}>{t('students.list.addButton')}</Text>
         </Pressable>
 
-        <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name or roll number" />
+        <SearchBar value={query} onChangeText={setQuery} placeholder={t('students.list.searchPlaceholder')} />
 
         {error && <ErrorNotice message={error} />}
 

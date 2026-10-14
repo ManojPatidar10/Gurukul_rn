@@ -1,6 +1,8 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
 import { createSubject, listSubjects } from '../api/subjects';
 import type { Subject } from '../api/types';
 import { useBottomInset } from '../hooks/useBottomInset';
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props) {
+  const { t } = useTranslation();
   const sheetBottom = useBottomInset(spacing.lg);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +70,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
           <ActivityIndicator color={colors.primary} size="small" />
         ) : (
           <Text style={[styles.fieldText, !selected && styles.fieldPlaceholder]}>
-            {selected ? `${selected.name} (${selected.code})` : 'Select subject'}
+            {selected ? `${selected.name} (${selected.code})` : t('subjectPicker.select')}
           </Text>
         )}
         <FontAwesome5 name="chevron-down" size={13} color={colors.textMuted} />
@@ -76,7 +79,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
           <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Select subject</Text>
+            <Text style={styles.sheetTitle}>{t('subjectPicker.select')}</Text>
 
             {error && <ErrorNotice message={error} />}
 
@@ -84,7 +87,7 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
               data={subjects}
               keyExtractor={(item) => item.id}
               style={styles.list}
-              ListEmptyComponent={!loading ? <Text style={styles.empty}>No subjects yet.</Text> : null}
+              ListEmptyComponent={!loading ? <Text style={styles.empty}>{t('subjectPicker.empty')}</Text> : null}
               renderItem={({ item }) => (
                 <Pressable
                   style={[styles.option, selectedId === item.id && styles.optionSelected]}
@@ -103,18 +106,29 @@ export default function SubjectPicker({ schoolId, selectedId, onSelect }: Props)
 
             {showCreate ? (
               <View style={styles.createForm}>
-                <LabeledInput label="Code" value={code} onChangeText={setCode} placeholder="e.g. MATH" autoCapitalize="characters" />
-                <LabeledInput label="Name" value={name} onChangeText={setName} placeholder="e.g. Mathematics" />
+                <LabeledInput
+                  label={t('subjectPicker.code')}
+                  value={code}
+                  onChangeText={setCode}
+                  placeholder={t('subjectPicker.codePlaceholder')}
+                  autoCapitalize="characters"
+                />
+                <LabeledInput
+                  label={t('common.name')}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder={t('subjectPicker.namePlaceholder')}
+                />
                 <Pressable style={styles.createButton} onPress={handleCreate} disabled={creating}>
-                  <Text style={styles.createButtonText}>{creating ? 'Creating…' : 'Create & select'}</Text>
+                  <Text style={styles.createButtonText}>{creating ? t('common.creating') : t('common.createAndSelect')}</Text>
                 </Pressable>
                 <Pressable onPress={() => setShowCreate(false)}>
-                  <Text style={styles.cancel}>Cancel</Text>
+                  <Text style={styles.cancel}>{t('common.cancel')}</Text>
                 </Pressable>
               </View>
             ) : (
               <Pressable onPress={() => setShowCreate(true)}>
-                <Text style={styles.addNew}>+ New subject</Text>
+                <Text style={styles.addNew}>{t('subjectPicker.addNew')}</Text>
               </Pressable>
             )}
           </Pressable>

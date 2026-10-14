@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { getEmployee, isActiveEmployee, searchEmployees } from '../../api/employees';
 import { listStudentsInClassSection } from '../../api/classSections';
@@ -13,6 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { attendanceStatusLabel } from '../../utils/attendanceLabels';
 
 interface Props {
   classSection: ClassSection;
@@ -35,6 +37,7 @@ const methodEmoji: Record<AttendanceMethod, string> = {
 };
 
 export function AttendanceTakeBody({ classSection }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const isAdmin = session.role === 'ADMIN';
@@ -44,7 +47,10 @@ export function AttendanceTakeBody({ classSection }: Props) {
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
   const [methods, setMethods] = useState<Record<string, AttendanceMethod | null>>({});
   const [teacherId, setTeacherId] = useState<string | null>(isAdmin ? classSection.classTeacherId : session.ownerId);
+  // Admin only: who the attendance will be marked as.
   const [teacherLabel, setTeacherLabel] = useState(isAdmin ? (classSection.classTeacherName ?? '') : '');
+  // Non-admin only: their own name - null while it loads, '' if it couldn't be.
+  const [myName, setMyName] = useState<string | null>(null);
 
   // Admin-only: search for a different marker than the section's default class teacher.
   const [showTeacherSearch, setShowTeacherSearch] = useState(isAdmin && !classSection.classTeacherId);
@@ -70,9 +76,17 @@ export function AttendanceTakeBody({ classSection }: Props) {
   useEffect(() => {
     if (isAdmin) return;
     getEmployee(schoolId, session.ownerId)
-      .then((me) => setTeacherLabel(`${me.name} (you)`))
-      .catch(() => setTeacherLabel('you'));
+      .then((me) => setMyName(me.name))
+      .catch(() => setMyName(''));
   }, [isAdmin, schoolId, session.ownerId]);
+
+  // "<name> (you)", or just "you" when the name couldn't be loaded.
+  const selfLabel =
+    myName === null
+      ? '…'
+      : myName
+        ? t('attendance.take.selfWithName', { name: myName })
+        : t('attendance.take.self');
 
   useEffect(() => {
     if (!isAdmin || !showTeacherSearch || teacherQuery.trim().length < 2) {
@@ -165,26 +179,31 @@ export function AttendanceTakeBody({ classSection }: Props) {
 
   return (
     <ScreenContainer>
-      <DatePickerField label="Date" value={date} onChange={setDate} />
+      <DatePickerField label={t('attendance.take.date')} value={date} onChange={setDate} />
         <Pressable style={styles.loadButton} onPress={handleLoadDate} disabled={loadingDate}>
-          <Text style={styles.loadButtonText}>{loadingDate ? 'Loading…' : 'Load attendance for this date'}</Text>
+          <Text style={styles.loadButtonText}>{loadingDate ? t('common.loading') : t('attendance.take.load')}</Text>
         </Pressable>
 
-        <Text style={[styles.label, { marginTop: spacing.md }]}>Marked by</Text>
+        <Text style={[styles.label, { marginTop: spacing.md }]}>{t('attendance.take.markedBy')}</Text>
         {!isAdmin ? (
           <View style={styles.fixedMarker}>
             <Text style={styles.fixedMarkerText}>
-              You&apos;ll mark this as <Text style={styles.fixedMarkerName}>{teacherLabel || '…'}</Text>
+              <Trans
+                t={t}
+                i18nKey="attendance.take.youWillMark"
+                values={{ name: selfLabel }}
+                components={{ bold: <Text style={styles.fixedMarkerName} /> }}
+              />
             </Text>
           </View>
         ) : !showTeacherSearch ? (
           <View style={styles.markerCard}>
             <View style={styles.markerCardBody}>
-              <Text style={styles.markerCardLabel}>Class teacher</Text>
-              <Text style={styles.markerCardName}>{teacherLabel || 'Not set'}</Text>
+              <Text style={styles.markerCardLabel}>{t('attendance.take.classTeacher')}</Text>
+              <Text style={styles.markerCardName}>{teacherLabel || t('attendance.take.notSet')}</Text>
             </View>
             <Pressable onPress={() => setShowTeacherSearch(true)}>
-              <Text style={styles.changeLink}>Change</Text>
+              <Text style={styles.changeLink}>{t('attendance.take.change')}</Text>
             </Pressable>
           </View>
         ) : (
@@ -192,7 +211,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
             <SearchBar
               value={teacherQuery}
               onChangeText={setTeacherQuery}
-              placeholder="Search for who's marking by name…"
+              placeholder={t('attendance.take.searchMarker')}
             />
             {searchingTeachers && <ActivityIndicator color={colors.primary} style={styles.searchLoading} />}
             {!searchingTeachers &&
@@ -205,7 +224,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
                 </Pressable>
               ))}
             {!searchingTeachers && teacherQuery.trim().length >= 2 && teacherResults.length === 0 && (
-              <Text style={styles.empty}>No one matches that search.</Text>
+              <Text style={styles.empty}>{t('attendance.take.noMatch')}</Text>
             )}
             {classSection.classTeacherId && (
               <Pressable
@@ -216,7 +235,9 @@ export function AttendanceTakeBody({ classSection }: Props) {
                   setTeacherQuery('');
                 }}
               >
-                <Text style={styles.changeLink}>Use class teacher ({classSection.classTeacherName})</Text>
+                <Text style={styles.changeLink}>
+                  {t('attendance.take.useClassTeacher', { name: classSection.classTeacherName ?? '' })}
+                </Text>
               </Pressable>
             )}
           </View>
@@ -224,10 +245,10 @@ export function AttendanceTakeBody({ classSection }: Props) {
 
         {loadingRoster && <ActivityIndicator style={styles.loading} />}
         {error && <ErrorNotice message={error} />}
-        {success && <Text style={styles.success}>Attendance saved for {date}.</Text>}
+        {success && <Text style={styles.success}>{t('attendance.take.saved', { date })}</Text>}
 
         {!loadingRoster && roster.length === 0 && (
-          <Text style={styles.empty}>0 students in this section.</Text>
+          <Text style={styles.empty}>{t('attendance.noStudents')}</Text>
         )}
 
         {roster.length > 0 && (
@@ -235,7 +256,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
             <View style={[styles.checkbox, allMarkedPresent && styles.checkboxChecked]}>
               {allMarkedPresent && <Text style={styles.checkboxTick}>✓</Text>}
             </View>
-            <Text style={styles.selectAllText}>Mark all students present</Text>
+            <Text style={styles.selectAllText}>{t('attendance.take.markAll')}</Text>
           </Pressable>
         )}
 
@@ -249,7 +270,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
                 {statuses[student.id] === 'PRESENT' && <Text style={styles.checkboxTick}>✓</Text>}
               </View>
               <Text style={styles.studentName}>
-                {student.name} · Roll {student.rollNumber}
+                {t('attendance.studentRow', { name: student.name, roll: student.rollNumber })}
                 {methods[student.id] ? ` · ${methodEmoji[methods[student.id] as AttendanceMethod]}` : ''}
               </Text>
             </Pressable>
@@ -266,7 +287,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
                     onPress={() => setStatus(student.id, status)}
                   >
                     <Text style={[styles.statusChipText, selected && styles.statusChipTextSelected]}>
-                      {status.replace('_', ' ')}
+                      {attendanceStatusLabel(status, t)}
                     </Text>
                   </Pressable>
                 );
@@ -281,7 +302,7 @@ export function AttendanceTakeBody({ classSection }: Props) {
             onPress={handleSubmit}
             disabled={!canSubmit || submitting}
           >
-            <Text style={styles.submitText}>{submitting ? 'Saving…' : 'Save attendance'}</Text>
+            <Text style={styles.submitText}>{submitting ? t('common.saving') : t('attendance.take.save')}</Text>
           </Pressable>
         )}
     </ScreenContainer>

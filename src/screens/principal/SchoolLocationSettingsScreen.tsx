@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getSchool, updateSchoolLocation } from '../../api/schools';
 import LabeledInput from '../../components/LabeledInput';
@@ -16,6 +17,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SchoolLocationSettings'>;
 
 export function SchoolLocationSettingsScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
@@ -44,7 +46,7 @@ export function SchoolLocationSettingsScreen({ navigation }: Props) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Location permission is required to use your current location.');
+        setError(t('schoolLocation.permissionDenied'));
         return;
       }
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
@@ -86,17 +88,17 @@ export function SchoolLocationSettingsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="School Location" subtitle="Geofence for self-attendance" onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('dashboard.features.schoolLocation.title')}
+        subtitle={t('schoolLocation.subtitle')}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
-        <Text style={styles.description}>
-          Teachers can self-mark today&apos;s attendance only when their device reports a location
-          within this radius of the school. Outdoor GPS is typically accurate to 5-20m, so a
-          radius under ~75m may produce false rejections.
-        </Text>
+        <Text style={styles.description}>{t('schoolLocation.description')}</Text>
 
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <ErrorNotice message={error} />}
-        {success && <Text style={styles.success}>School location updated.</Text>}
+        {success && <Text style={styles.success}>{t('schoolLocation.updated')}</Text>}
 
         {!loading && (
           <View style={styles.card}>
@@ -104,30 +106,30 @@ export function SchoolLocationSettingsScreen({ navigation }: Props) {
               {locating ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
-                <Text style={styles.locateButtonText}>📍 Use my current location</Text>
+                <Text style={styles.locateButtonText}>{t('schoolSetup.useCurrentLocation')}</Text>
               )}
             </Pressable>
 
             <LabeledInput
-              label="Latitude"
+              label={t('schoolLocation.latitude')}
               value={latitude}
               onChangeText={setLatitude}
               keyboardType="numbers-and-punctuation"
-              placeholder="e.g. 26.9124"
+              placeholder={t('schoolLocation.latitudePlaceholder')}
             />
             <LabeledInput
-              label="Longitude"
+              label={t('schoolLocation.longitude')}
               value={longitude}
               onChangeText={setLongitude}
               keyboardType="numbers-and-punctuation"
-              placeholder="e.g. 75.7873"
+              placeholder={t('schoolLocation.longitudePlaceholder')}
             />
             <LabeledInput
-              label="Geofence radius (meters)"
+              label={t('schoolLocation.radius')}
               value={radiusMeters}
               onChangeText={setRadiusMeters}
               keyboardType="numeric"
-              placeholder="100 (max 700)"
+              placeholder={t('schoolLocation.radiusPlaceholder')}
             />
 
             <Pressable
@@ -135,7 +137,7 @@ export function SchoolLocationSettingsScreen({ navigation }: Props) {
               onPress={handleSave}
               disabled={!canSave || saving}
             >
-              {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveButtonText}>Save location</Text>}
+              {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveButtonText}>{t('schoolLocation.save')}</Text>}
             </Pressable>
           </View>
         )}
