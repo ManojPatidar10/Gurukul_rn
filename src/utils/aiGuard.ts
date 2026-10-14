@@ -1,4 +1,4 @@
-import type { AiChatMessage, AiStatus } from '../api/ai';
+import type { AiChatMessage, AiChatResponse, AiStatus } from '../api/ai';
 import type { AiNotice, AiNoticeKind } from '../api/types';
 import { shiftIsoDate } from './feeBills';
 
@@ -33,6 +33,23 @@ export function replyLeavesHistory(
   response: { refused?: boolean | null; excludeFromHistory?: boolean | null } | null | undefined,
 ): boolean {
   return response?.refused === true || response?.excludeFromHistory === true;
+}
+
+/**
+ * The screen's entry for a reply. `content` is `response.reply` exactly as received - never
+ * trimmed, re-wrapped or markdown-stripped - because {@link historyForRequest} re-sends it as stored
+ * and the server recognises an earlier exchange only by the reply it sent (spec
+ * helper-server-history). `refused` only picks the muted styling; a supportive reply is a normal
+ * bubble that is still left out of the history when the server marks it.
+ */
+export function replyEntry(id: string, response: AiChatResponse): AiChatEntry {
+  return {
+    id,
+    role: 'assistant',
+    content: response.reply,
+    refused: response.refused === true,
+    excludeFromHistory: replyLeavesHistory(response),
+  };
 }
 
 /**
