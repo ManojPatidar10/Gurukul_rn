@@ -9,6 +9,12 @@ export interface AiChatMessage {
 }
 
 export interface AiChatResponse {
+  /**
+   * The answer, to be shown and re-sent in later requests exactly as received: no trimming and no
+   * markdown or other rewriting. The server uses an earlier exchange only when it recognises it as
+   * one it answered for this user in the last 24 hours (it keeps an HMAC of the question and this
+   * text, never the text), so a changed copy is left out and the follow-up loses that context.
+   */
   reply: string;
   /**
    * Which model answered. The server picks it from config - the app never chooses. null when the
@@ -54,8 +60,14 @@ export interface AiMyMisuseEvent {
 }
 
 /**
- * Academic Helper. The whole visible conversation is re-sent each turn; nothing is stored
- * server-side, so reinstalling the app starts a fresh chat.
+ * Academic Helper. The whole visible conversation (less the exchanges `historyForRequest` leaves
+ * out) is re-sent each turn. What the server keeps: for an answered exchange no text, only an HMAC
+ * of the question and the reply, for 24 hours; for a refused message a short excerpt of it (at most
+ * 200 characters, none for a distress message) in the misuse log, which the user sees through
+ * `getMyAiMisuse`. It uses an earlier exchange only when it recognises it as one it answered for
+ * this user; any other earlier message is left out of what the model sees, without an error. So each
+ * message's `content` must be re-sent exactly as it was typed and sent, or as the reply was
+ * received. Leaving the screen starts a fresh chat.
  *
  * Note what this deliberately does NOT send: the model, and the system prompt. Both are server-side
  * configuration. The server picks the prompt from the caller's role in the JWT, so a student can't

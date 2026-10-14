@@ -25,6 +25,7 @@ import {
   pausedUntilFromStatus,
   pausedUntilLabel,
   rangeForDays,
+  replyEntry,
   replyLeavesHistory,
   roleLabelKey,
   scopeKeyLabelKey,
@@ -130,6 +131,55 @@ describe('historyForRequest', () => {
     ];
     expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'hi' }]);
   });
+
+  // The server uses an earlier exchange only when it recognises it as one it answered for this user
+  // (spec helper-server-history): an HMAC of the question as sent and the reply as received. A
+  // trimmed, re-wrapped or otherwise rewritten copy is left out of what the model sees.
+  it('re-sends every kept content byte-identical, exactly as typed or received', () => {
+    const longReply = 'Q. Explain fractions.\nA. A fraction is part of a whole, like 3/4.\n'.repeat(400).slice(0, 20_000);
+    expect(longReply).toHaveLength(20_000);
+    const contents: [role: 'user' | 'assistant', content: string][] = [
+      ['user', 'Explain fractions'],
+      ['assistant', '  \n\n  Fractions are parts of a whole.  \n\n'],
+      ['user', 'Steps please'],
+      ['assistant', 'Step 1: find a common denominator.\r\nStep 2: add the numerators.\r\n'],
+      ['user', 'And the next part?'],
+      ['assistant', 'Part A\n\n\n\nPart B'],
+      ['user', 'हिंदी में समझाइए: क्‍ष और क्‌ष'],
+      ['assistant', 'भिन्न का अर्थ है पूरे का एक भाग। क्‍ष, ज्‌ञ ​'],
+      ['user', 'Thanks! 👍🏽'],
+      ['assistant', 'Great work! 🎉 Keep going 👨‍👩‍👧 🇮🇳'],
+      ['user', 'Make the full answer key'],
+      ['assistant', longReply],
+      ['user', 'Give an example'],
+    ];
+    const messages: AiChatEntry[] = contents.map(([role, content], i) =>
+      role === 'assistant' ? { id: String(i), role, content, refused: false, excludeFromHistory: false } : { id: String(i), role, content },
+    );
+
+    const sent = historyForRequest(messages);
+    expect(sent).toHaveLength(contents.length);
+    sent.forEach((message, i) => {
+      expect(message.role).toBe(contents[i][0]);
+      expect(message.content).toBe(contents[i][1]);
+    });
+    // What reaches the server after api.post's JSON.stringify and the server's parse.
+    const received = JSON.parse(JSON.stringify({ messages: sent })) as { messages: { content: string }[] };
+    expect(received.messages.map((m) => m.content)).toEqual(contents.map(([, content]) => content));
+  });
+
+  it('re-sends the kept exchanges byte-identical around a dropped refused pair', () => {
+    const reply = '\r\nA fraction has a numerator and a denominator.\n\n\n\n';
+    const messages: AiChatEntry[] = [
+      { id: '1', role: 'user', content: 'What is a fraction?' },
+      { id: '2', role: 'assistant', content: reply, refused: false, excludeFromHistory: false },
+      { id: '3', role: 'user', content: 'Tell me a joke' },
+      { id: '4', role: 'assistant', content: REFUSAL, refused: true, excludeFromHistory: true },
+      { id: '5', role: 'user', content: ' Give an example ' },
+    ];
+    const sent = historyForRequest(messages);
+    expect(sent.map((m) => m.content)).toEqual(['What is a fraction?', reply, ' Give an example ']);
+  });
 });
 
 describe('replyLeavesHistory', () => {
@@ -169,6 +219,66 @@ describe('replyLeavesHistory', () => {
       { id: '3', role: 'user', content: 'Explain fractions' },
     ];
     expect(historyForRequest(messages)).toEqual([{ role: 'user', content: 'Explain fractions' }]);
+  });
+});
+
+describe('replyEntry', () => {
+  // The screen stores this entry and historyForRequest re-sends its content; the server recognises an
+  // earlier exchange only by the reply exactly as it sent it (spec helper-server-history).
+  it('stores the reply exactly as received: no trimming, re-wrapping or markdown stripping', () => {
+    const replies = [
+      '  \r\nA fraction is part of a whole.\r\n\n\n\n  ',
+      '**Step 1:** find a common denominator.\r\n- add the numerators\r\n- keep the denominator\n',
+      '\n\n# Answer key\n\n1. `3/4`\n2. _half_\n\n\n',
+      'भिन्न का अर्थ है पूरे का एक भाग। क्‍ष, ज्‌ञ ​ 🎉',
+    ];
+    for (const reply of replies) {
+      const entry = replyEntry('a-1', { reply, model: 'claude-haiku-5-5', refused: false, excludeFromHistory: false, notice: null });
+      expect(entry.content).toBe(reply);
+      expect(entry.content).toHaveLength(reply.length);
+    }
+  });
+
+  it('is re-sent byte-identical by historyForRequest', () => {
+    const reply = '  Fractions are parts of a whole.\r\n\r\n\r\n\r\nExample: 1/2.  \n';
+    const messages: AiChatEntry[] = [
+      { id: 'q-1', role: 'user', content: 'Explain fractions' },
+      replyEntry('a-1', { reply, model: 'claude-haiku-5-5', refused: false, excludeFromHistory: false }),
+      { id: 'q-2', role: 'user', content: 'Give an example' },
+    ];
+    const sent = historyForRequest(messages);
+    expect(sent).toEqual([
+      { role: 'user', content: 'Explain fractions' },
+      { role: 'assistant', content: reply },
+      { role: 'user', content: 'Give an example' },
+    ]);
+    expect(sent[1].content).toBe(reply);
+  });
+
+  it('is an assistant entry with the given id, kept for a model answer', () => {
+    expect(replyEntry('a-7', { reply: 'ok', model: 'claude-haiku-5-5', refused: false, excludeFromHistory: false })).toEqual({
+      id: 'a-7',
+      role: 'assistant',
+      content: 'ok',
+      refused: false,
+      excludeFromHistory: false,
+    });
+  });
+
+  it('marks a refusal muted and left out, and a supportive reply left out but not muted', () => {
+    expect(replyEntry('a-1', { reply: REFUSAL, model: null, refused: true, excludeFromHistory: true })).toMatchObject({
+      refused: true,
+      excludeFromHistory: true,
+    });
+    expect(replyEntry('a-2', { reply: WELLBEING, model: null, refused: false, excludeFromHistory: true })).toMatchObject({
+      refused: false,
+      excludeFromHistory: true,
+    });
+  });
+
+  it('falls back to refused alone on an older server without the fields', () => {
+    expect(replyEntry('a-1', { reply: 'ok', model: 'claude-haiku-5-5' })).toMatchObject({ refused: false, excludeFromHistory: false });
+    expect(replyEntry('a-2', { reply: REFUSAL, model: null, refused: true })).toMatchObject({ refused: true, excludeFromHistory: true });
   });
 });
 

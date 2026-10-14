@@ -1,4 +1,4 @@
-import { askAi, getAiStatus, getMyAiMisuse } from '../api/ai';
+import { askAi, getAiStatus, getMyAiMisuse, type AiChatMessage } from '../api/ai';
 import { liftAiPause, listAiDataAccess, listAiMisuse, listAiPauses } from '../api/aiMisuse';
 import { api, ApiError, NetworkError } from '../api/client';
 
@@ -200,5 +200,24 @@ describe("the caller's own AI endpoints", () => {
       'school-1',
       expect.objectContaining({ timeoutMs: expect.any(Number) })
     );
+  });
+
+  // The server recognises an earlier exchange only by the question and reply exactly as first sent
+  // (spec helper-server-history), so askAi must not trim or normalise any content on the way out.
+  it('posts every message content unchanged: no trimming or line-ending normalisation', async () => {
+    post.mockResolvedValue({ reply: 'ok', model: 'claude-haiku-5-5', refused: false, notice: null });
+    const messages: AiChatMessage[] = [
+      { role: 'user', content: 'Q' },
+      { role: 'assistant', content: '  A\r\n\n\n\n' },
+      { role: 'user', content: ' Next ' },
+    ];
+    await askAi('school-1', messages);
+    expect(post.mock.calls[0][0]).toBe('/api/v1/ai/chat');
+    const body = post.mock.calls[0][1] as { messages: AiChatMessage[] };
+    expect(body.messages).toEqual(messages);
+    expect(body.messages.map((m) => m.role)).toEqual(['user', 'assistant', 'user']);
+    expect(body.messages[0].content).toBe('Q');
+    expect(body.messages[1].content).toBe('  A\r\n\n\n\n');
+    expect(body.messages[2].content).toBe(' Next ');
   });
 });

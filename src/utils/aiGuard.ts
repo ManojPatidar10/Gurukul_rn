@@ -1,4 +1,4 @@
-import type { AiChatMessage, AiStatus } from '../api/ai';
+import type { AiChatMessage, AiChatResponse, AiStatus } from '../api/ai';
 import type { AiNotice, AiNoticeKind } from '../api/types';
 import { shiftIsoDate } from './feeBills';
 
@@ -36,11 +36,32 @@ export function replyLeavesHistory(
 }
 
 /**
+ * The screen's entry for a reply. `content` is `response.reply` exactly as received - never
+ * trimmed, re-wrapped or markdown-stripped - because {@link historyForRequest} re-sends it as stored
+ * and the server recognises an earlier exchange only by the reply it sent (spec
+ * helper-server-history). `refused` only picks the muted styling; a supportive reply is a normal
+ * bubble that is still left out of the history when the server marks it.
+ */
+export function replyEntry(id: string, response: AiChatResponse): AiChatEntry {
+  return {
+    id,
+    role: 'assistant',
+    content: response.reply,
+    refused: response.refused === true,
+    excludeFromHistory: replyLeavesHistory(response),
+  };
+}
+
+/**
  * The turns to send with the next question: every exchange except the ones marked
  * `excludeFromHistory` or `refused` (see {@link replyLeavesHistory}). Such a reply is dropped
  * together with the user message right before it, so a refused or distressed message isn't sent
  * again inside the history (the server drops such pairs too, for older app builds). A model answer
  * stays, and so does a supportive reply from an older server, which doesn't mark it.
+ *
+ * Each kept `content` goes out exactly as stored (the question as sent, the reply as received),
+ * never trimmed or rewritten: the server uses an earlier exchange only when it recognises it as one
+ * it answered for this user in the last 24 hours, and leaves any other out of what the model sees.
  */
 export function historyForRequest(messages: AiChatEntry[]): AiChatMessage[] {
   const out: AiChatMessage[] = [];
