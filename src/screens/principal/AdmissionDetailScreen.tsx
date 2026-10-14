@@ -36,6 +36,7 @@ import { useToast } from '../../context/ToastContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { canEdit, canEnrol, nextStages, stageVariant, transitionLabelKey } from '../../utils/admissionStages';
+import { genderLabel } from '../../utils/personLabels';
 import { prepareImageForUpload } from '../../utils/prepareImage';
 import { getErrorMessage } from '../../api/errorMessage';
 import { pickedFileSize, putToPresignedUrl } from '../../api/presignedUpload';
@@ -339,7 +340,7 @@ export function AdmissionDetailScreen({ route, navigation }: Props) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t('admissions.detail.student')}</Text>
           <Field label={t('admissions.form.dob')} value={admission.dob} />
-          <Field label={t('admissions.form.gender')} value={admission.gender} />
+          <Field label={t('admissions.form.gender')} value={genderLabel(admission.gender, t)} />
           <Field label={t('admissions.form.address')} value={admission.address} />
           <Field label={t('admissions.form.previousSchool')} value={admission.previousSchoolName} />
           <Field label={t('admissions.form.appliedClass')} value={admission.appliedClassName} />

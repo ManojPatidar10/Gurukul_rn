@@ -20,6 +20,7 @@ import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { visibleEmployeeFields, type EmployeeDetailField } from '../../utils/employeeFields';
+import { personStatusLabel } from '../../utils/personLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -122,7 +123,7 @@ export function EmployeeDetailScreen({ route, navigation }: Props) {
           <View style={styles.heroText}>
             <Text style={styles.heroName}>{employee.name}</Text>
             <StatusChip
-              label={employee.status === 'ACTIVE' ? t('common.active') : employee.status === 'INACTIVE' ? t('common.inactive') : employee.status}
+              label={personStatusLabel(employee.status, t)}
               variant={employee.status === 'ACTIVE' ? 'success' : 'neutral'}
             />
           </View>

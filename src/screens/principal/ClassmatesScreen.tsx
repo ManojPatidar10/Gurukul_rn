@@ -14,6 +14,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { personStatusLabel } from '../../utils/personLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -96,9 +97,7 @@ export function ClassmatesScreen({ navigation }: Props) {
                 </Text>
               </View>
               <StatusChip
-                label={
-                  item.status === 'ACTIVE' ? t('common.active') : item.status === 'INACTIVE' ? t('common.inactive') : item.status
-                }
+                label={personStatusLabel(item.status, t)}
                 variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}
               />
             </Pressable>

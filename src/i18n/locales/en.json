@@ -3341,6 +3341,13 @@
     "sections": {
       "settings": "Settings"
     },
+    "roles": {
+      "ADMIN": "Principal/Admin",
+      "TEACHER": "Teacher",
+      "STUDENT": "Student",
+      "PARENT": "Parent",
+      "DRIVER": "Bus driver"
+    },
     "edit": "Edit",
     "download": "Download",
     "editCardTitle": "Edit ID card",

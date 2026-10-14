@@ -25,6 +25,7 @@ import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
 import { dateLocale } from '../../i18n/dateLocale';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { genderLabel, personStatusLabel } from '../../utils/personLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -184,7 +185,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           <View style={styles.heroText}>
             <Text style={styles.heroName}>{student.name}</Text>
             <StatusChip
-              label={student.status === 'ACTIVE' ? t('common.active') : student.status}
+              label={personStatusLabel(student.status, t)}
               variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
             />
           </View>
@@ -215,7 +216,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
         <View style={styles.card}>
           <Field label={t('students.detail.classSection')} value={student.classSectionLabel} />
           <Field label={t('students.detail.dob')} value={student.dob} />
-          <Field label={t('students.detail.gender')} value={student.gender} />
+          <Field label={t('students.detail.gender')} value={genderLabel(student.gender, t)} />
           {isViewerAdmin && student.registrationNumber && (
             <Field label={t('students.detail.registrationNumber')} value={student.registrationNumber} />
           )}

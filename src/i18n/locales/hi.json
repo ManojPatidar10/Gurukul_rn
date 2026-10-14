@@ -2740,7 +2740,7 @@
     "award": {
       "title": "सम्मान दें",
       "searchPlaceholder": "विद्यार्थी का नाम खोजें",
-      "recognizing": "सम्मान दिया जा रहा है",
+      "recognizing": "सम्मान पाने वाले विद्यार्थी",
       "points": "अंक",
       "reason": "कारण",
       "reasonPlaceholder": "जैसे लैब में एक सहपाठी की मदद की",
@@ -3340,6 +3340,13 @@
     "missing": "अपना कार्ड पूरा करने के लिए {{items}} जोड़ें",
     "sections": {
       "settings": "सेटिंग्स"
+    },
+    "roles": {
+      "ADMIN": "प्रिंसिपल/एडमिन",
+      "TEACHER": "शिक्षक",
+      "STUDENT": "विद्यार्थी",
+      "PARENT": "अभिभावक",
+      "DRIVER": "बस ड्राइवर"
     },
     "edit": "बदलें",
     "download": "डाउनलोड",

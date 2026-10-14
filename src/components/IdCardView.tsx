@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { IdCard } from '../api/idCards';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
+import { personStatusLabel } from '../utils/personLabels';
 
 interface Props {
   card: IdCard;
@@ -77,7 +78,7 @@ export function IdCardView({ card, previewPhotoUri }: Props) {
       </View>
 
       <View style={styles.foot}>
-        <Text style={styles.footText}>{card.status}</Text>
+        <Text style={styles.footText}>{personStatusLabel(card.status, t)}</Text>
         {!!card.academicYear && <Text style={styles.footText}>{t('idCard.valid', { year: card.academicYear })}</Text>}
       </View>
     </View>

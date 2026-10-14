@@ -94,10 +94,11 @@ describe('locale parity (en.json / hi.json)', () => {
 
     // t('a.b') / t("a.b") calls, plus any quoted key in the Hindi tasks' namespaces - those include
     // the enum-to-key maps (Record<Union, string>), key lists (MONTH_KEYS, SORTS, WEEKDAY_KEYS) and
-    // <Trans i18nKey="...">, which hold keys rather than call t with them.
+    // <Trans i18nKey="...">, which hold keys rather than call t with them. common, auth and profile
+    // are here for the status, gender and role maps in utils/personLabels.ts.
     const T_CALL = /\bt\(\s*(['"])([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)\1/g;
     const NAMESPACED =
-      /(['"])((?:games|questionBank|assessments|gradingScale|reportCardGrid|reportCardPublish|sectionDetail|quizInsights|attendance|events|globalSearch|schoolLocation|subjectPicker|credentials|staffAttendance|attendanceDevices)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\1/g;
+      /(['"])((?:games|questionBank|assessments|gradingScale|reportCardGrid|reportCardPublish|sectionDetail|quizInsights|attendance|events|globalSearch|schoolLocation|subjectPicker|credentials|staffAttendance|attendanceDevices|common|auth|profile)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\1/g;
     const exists = (key: string) => key in EN || `${key}_one` in EN || `${key}_other` in EN;
 
     const used = new Map<string, string>();
@@ -120,7 +121,7 @@ describe('locale parity (en.json / hi.json)', () => {
         // Part 3: the screens that were still English-only.
         'attendance|events|globalSearch|schoolLocation|subjectPicker|credentials|classSection|staffAttendance',
         'chat\\.list|newConversation|students\\.(?:classmates|detail|list)|employees\\.(?:detail|list)',
-        'registration\\.student|dashboard\\.teacherCopy',
+        'registration\\.student|dashboard\\.teacherCopy|profile\\.roles',
       ].join('|')})\\.`
     );
     const hasWords = (value: unknown) =>
