@@ -1,5 +1,5 @@
 import { getMyChildren } from '../api/parents';
-import { isTargetShowing, notificationTarget } from '../utils/notificationRouting';
+import { isOwnAbsenceAlert, isTargetShowing, notificationTarget } from '../utils/notificationRouting';
 import { openNotificationTarget } from '../utils/openNotificationTarget';
 
 jest.mock('../api/parents', () => ({ getMyChildren: jest.fn() }));
@@ -159,6 +159,42 @@ describe('notificationTarget', () => {
       screen: 'ReportCard',
       studentId: 's1',
     });
+  });
+});
+
+describe('isOwnAbsenceAlert', () => {
+  const alert = { type: 'ABSENCE_ALERT', studentId: 'me', date: '2026-10-14' };
+
+  it("is true for a student's own absence alert", () => {
+    expect(isOwnAbsenceAlert(alert, 'STUDENT', 'me')).toBe(true);
+  });
+
+  it("is false for a sibling's alert, after the phone switched to another profile", () => {
+    expect(isOwnAbsenceAlert({ ...alert, studentId: 'sibling' }, 'STUDENT', 'me')).toBe(false);
+  });
+
+  it('is false without a usable studentId', () => {
+    expect(isOwnAbsenceAlert({ type: 'ABSENCE_ALERT', date: '2026-10-14' }, 'STUDENT', 'me')).toBe(false);
+    expect(isOwnAbsenceAlert({ ...alert, studentId: 7 }, 'STUDENT', '7')).toBe(false);
+    expect(isOwnAbsenceAlert({ ...alert, studentId: '' }, 'STUDENT', '')).toBe(false);
+  });
+
+  it('is false for parents and staff, whose taps go through notificationTarget', () => {
+    for (const ownerType of ['PARENT', 'TEACHER', 'EMPLOYEE', 'ADMIN']) {
+      expect(isOwnAbsenceAlert(alert, ownerType, 'me')).toBe(false);
+    }
+  });
+
+  it('is false for any other kind of alert, or none', () => {
+    expect(isOwnAbsenceAlert({ type: 'FEE_DUE', studentId: 'me' }, 'STUDENT', 'me')).toBe(false);
+    expect(isOwnAbsenceAlert(undefined, 'STUDENT', 'me')).toBe(false);
+    expect(isOwnAbsenceAlert(null, 'STUDENT', 'me')).toBe(false);
+  });
+
+  it("leaves a parent's absence-alert routing as it was", () => {
+    expect(notificationTarget(alert, 'PARENT')).toEqual({ screen: 'AttendanceHistory', studentId: 'me' });
+    // The inbox has no student route for it: a student's tap is handled in usePushNotifications.
+    expect(notificationTarget(alert, 'STUDENT')).toBeNull();
   });
 });
 
