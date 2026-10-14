@@ -28,6 +28,8 @@
     "other": "Other",
     "logOut": "Log out",
     "profile": "Profile",
+    "loading": "Loading…",
+    "add": "Add",
     "copy": "Copy",
     "copied": "Copied to clipboard"
   },
@@ -264,6 +266,12 @@
       "fees": {
         "title": "My Fees",
         "description": "Your fee dues"
+      }
+    },
+    "teacherCopy": {
+      "students": {
+        "title": "My Students",
+        "description": "Students in classes you teach"
       }
     },
     "cover": {
@@ -506,6 +514,7 @@
       "loadError": "Could not load students.",
       "empty": "0 students yet — enroll the first one.",
       "noSearchResults": "No students match your search.",
+      "searchPlaceholder": "Search by name or roll number",
       "rowSubtitle": "Roll {{roll}} · {{classSection}}"
     },
     "detail": {
@@ -524,7 +533,24 @@
       "attendance": "Attendance",
       "deleteTitle": "Delete student",
       "deleteMessage": "Remove {{name}}? This cannot be undone.",
+      "reportCard": "Report card",
+      "createLogin": "Create student login",
+      "generateInvite": "Generate invite code",
+      "inviteTitle": "Student invite code",
+      "generating": "Generating…",
+      "inviteShare": "Share this code with {{name}} to register — it expires {{date}}:",
+      "inviteCode": "Invite code",
       "rollLabel": "Roll {{roll}}"
+    },
+    "classmates": {
+      "title": "My Classmates",
+      "searchPlaceholder": "Search by name",
+      "all": "All",
+      "section": "Section {{section}}",
+      "loadError": "Could not load classmates.",
+      "noMatch": "No match found.",
+      "empty": "No classmates found.",
+      "rowMeta": "Roll {{roll}} · Section {{section}}"
     },
     "form": {
       "titleEdit": "Edit student",
@@ -553,6 +579,7 @@
       "loadError": "Could not load employees.",
       "empty": "0 employees yet — add the first one.",
       "noSearchResults": "No employees match your search.",
+      "searchPlaceholder": "Search by name",
       "showInactive": "Show inactive ({{count}})",
       "hideInactive": "Hide inactive"
     },
@@ -562,6 +589,8 @@
       "bankAccount": "Bank account",
       "contactPhone": "Contact phone",
       "salaryHistory": "Salary history",
+      "attendance": "Attendance",
+      "createLogin": "Create teacher login",
       "timetable": "Timetable"
     },
     "form": {
@@ -1461,6 +1490,37 @@
     }
   },
   "classSection": {
+    "classes": {
+      "myClass": "My class",
+      "myClassHint": "Attendance, fees, marks and report cards",
+      "loadError": "Could not load classes.",
+      "empty": "0 classes yet — a class appears here once a class-section is created for it (via Students → enroll/transfer)."
+    },
+    "sections": {
+      "subtitle": "Sections",
+      "loadError": "Could not load sections.",
+      "empty": "No sections found.",
+      "row": "Section {{section}}"
+    },
+    "students": {
+      "empty": "0 students in this section.",
+      "roll": "Roll {{roll}}"
+    },
+    "subjects": {
+      "subject": "Subject",
+      "selectedSubject": "Subject: {{subject}}",
+      "teacher": "Teacher",
+      "selectedTeacher": "Teacher: {{teacher}}",
+      "assigning": "Assigning…",
+      "assign": "Assign subject",
+      "add": "+ Assign subject",
+      "empty": "No subjects assigned to this section yet.",
+      "rowTeacher": "Teacher: {{name}}"
+    },
+    "myStudents": {
+      "loadError": "Could not load your classes.",
+      "empty": "You aren't assigned to any class yet."
+    },
     "picker": {
       "empty": "No class-sections yet.",
       "className": "Class name",
@@ -1811,6 +1871,8 @@
       "title": "Student registration",
       "subtitle": "Enter your registration number to link your account",
       "registrationNumber": "Registration number",
+      "inviteCode": "Invite code",
+      "inviteCodePlaceholder": "e.g. K7M2QXPZ",
       "registrationNumberPlaceholder": "e.g. as given by your school"
     },
     "parent": {
@@ -2478,6 +2540,12 @@
     "loadMore": "Load more"
   },
   "chat": {
+    "list": {
+      "newConversation": "+ New Conversation",
+      "empty": "No conversations yet.",
+      "unknownName": "Unknown",
+      "conversation": "Conversation"
+    },
     "messagePlaceholder": "Message...",
     "send": "Send",
     "attachTitle": "Add attachment",
@@ -2492,6 +2560,12 @@
     "classTeacherOf": "Class teacher {{section}}",
     "admin": "Admin",
     "parentOf": "{{name}} (Parent of {{children}})",
+    "title": "New Conversation",
+    "searchPeople": "Search staff or classmates by name",
+    "noMatch": "No match found.",
+    "empty": "No one to message yet.",
+    "staffName": "{{name}} (Staff)",
+    "studentName": "{{name}} (Student)",
     "searchTeachers": "Search teachers by name"
   },
   "games": {
@@ -2662,6 +2736,15 @@
       "award": "Award spot recognition",
       "recent": "Recent recognition",
       "nothingYet": "Nothing yet."
+    },
+    "award": {
+      "title": "Award recognition",
+      "searchPlaceholder": "Search student by name",
+      "recognizing": "Recognizing",
+      "points": "Points",
+      "reason": "Reason",
+      "reasonPlaceholder": "e.g. Helped a classmate in lab",
+      "submit": "Award points"
     },
     "review": {
       "heading": "Review your answers",
@@ -3016,6 +3099,176 @@
       "lowCorrect": "Only {{percent}}% got this right"
     }
   },
+  "attendance": {
+    "noStudents": "0 students in this section.",
+    "studentRow": "{{name}} · Roll {{roll}}",
+    "history": {
+      "subtitle": "Attendance history",
+      "calendar": "Calendar",
+      "list": "List",
+      "presentRate": "Present rate",
+      "totalDays": "Total days",
+      "records": "Records",
+      "empty": "No attendance recorded yet.",
+      "selfCheckIn": "📍 Self check-in"
+    },
+    "calendar": {
+      "weekdays": {
+        "sun": "S",
+        "mon": "M",
+        "tue": "T",
+        "wed": "W",
+        "thu": "T",
+        "fri": "F",
+        "sat": "S"
+      }
+    },
+    "section": {
+      "take": "Take Attendance",
+      "history": "History"
+    },
+    "take": {
+      "date": "Date",
+      "load": "Load attendance for this date",
+      "markedBy": "Marked by",
+      "youWillMark": "You'll mark this as <bold>{{name}}</bold>",
+      "self": "you",
+      "selfWithName": "{{name}} (you)",
+      "classTeacher": "Class teacher",
+      "notSet": "Not set",
+      "change": "Change",
+      "searchMarker": "Search for who's marking by name…",
+      "noMatch": "No one matches that search.",
+      "useClassTeacher": "Use class teacher ({{name}})",
+      "saved": "Attendance saved for {{date}}.",
+      "markAll": "Mark all students present",
+      "save": "Save attendance"
+    },
+    "sectionHistory": {
+      "daysRecorded_one": "{{count}} day recorded",
+      "daysRecorded_other": "{{count}} days recorded"
+    }
+  },
+  "events": {
+    "create": "Create event",
+    "allGrades": "All grades",
+    "loadError": "Could not load events.",
+    "empty": "No events yet.",
+    "category": {
+      "SPORTS": "Sports",
+      "CULTURAL": "Cultural",
+      "ACADEMIC": "Academic",
+      "OTHER": "Other"
+    },
+    "scope": {
+      "SCHOOL": "School",
+      "CLASS": "Class",
+      "GRADE": "Grade"
+    },
+    "scopeTag": {
+      "school": "School-wide",
+      "grade": "Grade",
+      "gradeNamed": "Grade {{className}}",
+      "class": "Class"
+    },
+    "status": {
+      "UPCOMING": "Upcoming",
+      "ONGOING": "Ongoing",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "participation": {
+      "NONE": "Just an announcement",
+      "RSVP": "RSVP (attending?)",
+      "REGISTRATION": "Registration form",
+      "POLL": "Poll / vote"
+    },
+    "form": {
+      "name": "Title",
+      "namePlaceholder": "e.g. Annual Sports Meet",
+      "description": "Description",
+      "descriptionPlaceholder": "What's this event about?",
+      "eventDate": "Event date",
+      "venue": "Venue",
+      "venuePlaceholder": "e.g. School Ground",
+      "category": "Category",
+      "audience": "Who is this for?",
+      "noClasses": "No classes set up yet.",
+      "starts": "Starts",
+      "ends": "Ends",
+      "participation": "Participation",
+      "registrationHint": "Add the fields participants need to fill in (e.g. Team Name).",
+      "fieldLabel": "Field label",
+      "fieldPlaceholder": "e.g. Team Name"
+    },
+    "detail": {
+      "title": "Event",
+      "loadError": "Could not load this event.",
+      "by": "By {{name}}",
+      "cancelledNote": "This event has been cancelled.",
+      "rsvpTitle": "Will you attend?",
+      "rsvp": {
+        "ACCEPTED": "I'm attending",
+        "MAYBE": "Maybe",
+        "DECLINED": "Can't make it"
+      },
+      "registerTitle": "Register to participate",
+      "registered": "You're registered:",
+      "submitting": "Submitting…",
+      "submitRegistration": "Submit registration",
+      "vote": "Vote",
+      "noOptions": "No options added yet.",
+      "addOption": "Add option",
+      "optionPlaceholder": "e.g. Design A",
+      "viewResponses": "View responses",
+      "response": {
+        "ACCEPTED": "Accepted",
+        "DECLINED": "Declined",
+        "MAYBE": "Maybe"
+      },
+      "cancelEvent": "Cancel event",
+      "cancelMessage": "This will mark the event as cancelled. Continue?",
+      "no": "No"
+    }
+  },
+  "globalSearch": {
+    "title": "Search",
+    "placeholder": "Search students, staff…",
+    "noResults": "No results for \"{{query}}\".",
+    "hint": "Start typing to search across students and staff.",
+    "studentRow": "Student · {{classSection}}",
+    "staffRow": "Staff · {{designation}}",
+    "student": "Student",
+    "staff": "Staff"
+  },
+  "schoolLocation": {
+    "subtitle": "Geofence for self-attendance",
+    "description": "Teachers can self-mark today's attendance only when their device reports a location within this radius of the school. Outdoor GPS is typically accurate to 5-20m, so a radius under ~75m may produce false rejections.",
+    "updated": "School location updated.",
+    "permissionDenied": "Location permission is required to use your current location.",
+    "latitude": "Latitude",
+    "latitudePlaceholder": "e.g. 26.9124",
+    "longitude": "Longitude",
+    "longitudePlaceholder": "e.g. 75.7873",
+    "radius": "Geofence radius (meters)",
+    "radiusPlaceholder": "100 (max 700)",
+    "save": "Save location"
+  },
+  "subjectPicker": {
+    "select": "Select subject",
+    "empty": "No subjects yet.",
+    "code": "Code",
+    "codePlaceholder": "e.g. MATH",
+    "namePlaceholder": "e.g. Mathematics",
+    "addNew": "+ New subject"
+  },
+  "credentials": {
+    "set": "Set login credentials",
+    "created": "Credential created. Share these with {{name}} — they won't be shown again:",
+    "username": "Username",
+    "password": "Password",
+    "create": "Create credential"
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "server": "Something went wrong on our side. Please try again in a moment.",
@@ -3104,6 +3357,13 @@
     "saveCount_other": "Save {{count}} changes",
     "saved_one": "Attendance saved for {{count}} staff member.",
     "saved_other": "Attendance saved for {{count}} staff members.",
+    "subtitle": "Today's check-ins",
+    "today": "Today · {{date}}",
+    "marked": "Marked",
+    "selfCheckIns": "Self check-in",
+    "empty": "No staff records for this school yet.",
+    "selfCheckInTag": "📍 self check-in",
+    "notMarked": "Not marked",
     "statuses": {
       "PRESENT": "Present",
       "ABSENT": "Absent",
@@ -3112,6 +3372,30 @@
     },
     "selfMark": {
       "setByAdminTitle": "Already marked by an admin",
+      "updateLocation": "📍 Update school location & radius",
+      "markedPresent": "You're marked present",
+      "checkInTitle": "Check in from the school",
+      "intro": "We'll use your current location to confirm you're within the school's premises before marking today's attendance.",
+      "markButton": "Mark my attendance",
+      "tryAgain": "Try again",
+      "locating": "Getting your location...",
+      "verifying": "Checking this phone with Google Play...",
+      "submitting": "Verifying you're within range...",
+      "pastAttendance": "Past attendance",
+      "permissionDenied": "Location permission is required to mark attendance from here.",
+      "problems": {
+        "noChecks": "This version of the app can’t verify your location. Update Smart Gurukul and try again.",
+        "appCloned": "Smart Gurukul is running inside a cloner app (like Parallel Space or Dual Space). Open it directly from your home screen and try again.",
+        "rooted": "Attendance can’t be self-marked from a rooted or jailbroken phone, because the location can be faked. Ask an admin to mark it for you.",
+        "developerOptions": "Turn off Developer options in your phone’s Settings, then try again. Fake GPS apps work through Developer options, so check-in is blocked while they’re on.",
+        "mocked": "Your phone is using a fake (mock) location. Turn off any fake GPS app and try again.",
+        "playOutdated": "Update Google Play services and the Google Play Store app on this phone, then try again.",
+        "playMissing": "Self check-in needs the Google Play Store and Google Play services, signed in with a Google account. Ask an admin to mark your attendance if this phone doesn't have them.",
+        "network": "Check your internet connection, then try again.",
+        "busy": "Google's security check is busy. Wait a minute, then try again.",
+        "appNotInstalled": "Install Smart Gurukul from the Play Store, then try again.",
+        "unknown": "Smart Gurukul couldn't check this phone. Update Smart Gurukul from the Play Store, then try again."
+      },
       "setByAdmin": "An admin has already marked your attendance today as {{status}}. Ask an admin if this needs to change."
     }
   },
@@ -3266,6 +3550,7 @@
       "addBus": "Add bus",
       "editBus": "Edit bus",
       "busName": "Bus name",
+      "busNamePlaceholder": "Bus 1",
       "registration": "Registration number",
       "capacity": "Seats",
       "defaultDriver": "Usual driver",

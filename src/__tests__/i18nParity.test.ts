@@ -93,11 +93,11 @@ describe('locale parity (en.json / hi.json)', () => {
     walk('');
 
     // t('a.b') / t("a.b") calls, plus any quoted key in the Hindi tasks' namespaces - those include
-    // the enum-to-key maps (Record<Union, string>) and key lists (MONTH_KEYS, SORTS), which hold keys
-    // rather than call t with them.
+    // the enum-to-key maps (Record<Union, string>), key lists (MONTH_KEYS, SORTS, WEEKDAY_KEYS) and
+    // <Trans i18nKey="...">, which hold keys rather than call t with them.
     const T_CALL = /\bt\(\s*(['"])([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)\1/g;
     const NAMESPACED =
-      /(['"])((?:games|questionBank|assessments|gradingScale|reportCardGrid|reportCardPublish|sectionDetail|quizInsights)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\1/g;
+      /(['"])((?:games|questionBank|assessments|gradingScale|reportCardGrid|reportCardPublish|sectionDetail|quizInsights|attendance|events|globalSearch|schoolLocation|subjectPicker|credentials|staffAttendance|attendanceDevices)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\1/g;
     const exists = (key: string) => key in EN || `${key}_one` in EN || `${key}_other` in EN;
 
     const used = new Map<string, string>();
@@ -112,9 +112,17 @@ describe('locale parity (en.json / hi.json)', () => {
     expect(missing).toEqual([]);
   });
 
-  it('has Hindi, not pasted English, in the games, assessment, report-card and quiz-results namespaces', () => {
-    const OWN =
-      /^(games|questionBank|assessments|gradingScale|reportCardDetail|reportCardGrid|reportCardPublish|sectionDetail|quizInsights)\./;
+  it('has Hindi, not pasted English, in the namespaces the Hindi tasks translated', () => {
+    const OWN = new RegExp(
+      `^(${[
+        // Parts 1 and 2: games, assessments, report cards and quiz results.
+        'games|questionBank|assessments|gradingScale|reportCardDetail|reportCardGrid|reportCardPublish|sectionDetail|quizInsights',
+        // Part 3: the screens that were still English-only.
+        'attendance|events|globalSearch|schoolLocation|subjectPicker|credentials|classSection|staffAttendance',
+        'chat\\.list|newConversation|students\\.(?:classmates|detail|list)|employees\\.(?:detail|list)',
+        'registration\\.student|dashboard\\.teacherCopy',
+      ].join('|')})\\.`
+    );
     const hasWords = (value: unknown) =>
       /[A-Za-z]/.test(
         String(value)
@@ -125,5 +133,18 @@ describe('locale parity (en.json / hi.json)', () => {
       .filter((k) => OWN.test(k) && hasWords(EN[k]))
       .filter((k) => !/[ऀ-ॿ]/.test(String(HI[k])));
     expect(english).toEqual([]);
+  });
+
+  it('has the same <tags> in Hindi as in English, so <Trans> can render them', () => {
+    const tags = (value: unknown) =>
+      [...String(value).matchAll(/<\/?([A-Za-z][A-Za-z0-9]*)\s*\/?>/g)]
+        .map((match) => match[0])
+        .sort()
+        .join(' ');
+    expect(Object.keys(EN).filter((k) => tags(EN[k]) !== '').length).toBeGreaterThan(0);
+    const mismatched = Object.keys(EN)
+      .filter((k) => k in HI && tags(EN[k]) !== tags(HI[k]))
+      .map((k) => `${k}: en [${tags(EN[k])}] vs hi [${tags(HI[k])}]`);
+    expect(mismatched).toEqual([]);
   });
 });
