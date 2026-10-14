@@ -3364,6 +3364,7 @@
       "undo": "Undo",
       "droppedCount": "{{dropped}} of {{total}} dropped home",
       "droppedSummary": "{{count}} dropped",
+      "doneCount": "Done ({{count}})",
       "endWithUndropped": "{{count}} children are not marked dropped yet: {{names}}. Their families won't get a drop-off message. End the trip anyway?"
     },
     "admin": {

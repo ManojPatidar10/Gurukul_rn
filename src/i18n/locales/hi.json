@@ -3364,6 +3364,7 @@
       "undo": "वापस लें",
       "droppedCount": "{{total}} में से {{dropped}} घर पर उतारे",
       "droppedSummary": "{{count}} घर पर उतारे",
+      "doneCount": "हो गए ({{count}})",
       "endWithUndropped": "{{count}} बच्चों को अभी घर पर उतारा मार्क नहीं किया गया: {{names}}। उनके परिवार को उतरने का संदेश नहीं जाएगा। फिर भी ट्रिप खत्म करें?"
     },
     "admin": {
