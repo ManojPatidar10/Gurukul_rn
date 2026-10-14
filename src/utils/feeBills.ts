@@ -560,12 +560,3 @@ export function paymentSettingsConfirmText(accountNumber: string, upiId: string,
     ? t('fees.paymentSettings.confirmWithUpi', { account, upiId: upi })
     : t('fees.paymentSettings.confirmWithoutUpi', { account });
 }
-
-/**
- * Where Remind overdue families reaches, for its confirm: the bill list's year (or all years) and,
- * when one is picked, its class. A null year is the server's default, which the summary names.
- */
-export function overdueReminderScope(year: string | null, className: string | null, t: TFunction): string {
-  const yearText = !year || year === ALL_ACADEMIC_YEARS ? t('fees.reminder.scopeAllYears') : t('fees.reminder.scopeYear', { year });
-  return className ? t('fees.reminder.scopeClass', { className, year: yearText }) : yearText;
-}

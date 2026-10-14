@@ -1032,16 +1032,7 @@
       "confirmMessage": "{{name}}'s family will get a push about the ₹{{amount}} still owed on this bill. A family gets at most one reminder per bill a day from here.",
       "confirm": "Send reminder",
       "sent": "Reminder sent to {{name}}'s family.",
-      "alreadySent": "{{name}}'s family was already reminded about this bill today, so nothing new was sent.",
-      "remindOverdue": "Remind overdue families",
-      "remindOverdueConfirmTitle": "Remind every overdue family?",
-      "remindOverdueConfirmMessage": "Every family with an overdue bill in {{scope}} gets a push about what they owe. Families already reminded about a bill today aren't sent another. Withdrawn students are left out.",
-      "scopeYear": "{{year}}",
-      "scopeAllYears": "all years",
-      "scopeClass": "{{className}}, {{year}}",
-      "remindOverdueStarted_one": "Sending reminders for {{count}} overdue bill.",
-      "remindOverdueStarted_other": "Sending reminders for {{count}} overdue bills.",
-      "nothingOverdue": "No overdue bills to remind about."
+      "alreadySent": "{{name}}'s family was already reminded about this bill today, so nothing new was sent."
     },
     "howToPay": {
       "title": "How to pay",

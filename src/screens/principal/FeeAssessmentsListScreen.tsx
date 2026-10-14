@@ -1,10 +1,10 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { listClassSections } from '../../api/classSections';
-import { getFeeAssessmentSummary, listFeeAssessments, remindOverdueFees } from '../../api/feeAssessments';
+import { getFeeAssessmentSummary, listFeeAssessments } from '../../api/feeAssessments';
 import type { ClassSection, FeeAssessment, FeeAssessmentFilters, FeeAssessmentSummary, FeeBillStatus } from '../../api/types';
 import Dropdown from '../../components/Dropdown';
 import { ErrorNotice } from '../../components/ErrorNotice';
@@ -25,7 +25,6 @@ import {
   FEE_BILL_STATUSES,
   feeStatusLabel,
   feeStatusVariant,
-  overdueReminderScope,
   sectionsForYear,
   studentLeftTagKey,
 } from '../../utils/feeBills';
@@ -66,7 +65,6 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
   const [hasNext, setHasNext] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [summaryFailed, setSummaryFailed] = useState(false);
-  const [reminding, setReminding] = useState(false);
   const { showToast } = useToast();
   // Each request takes the next number; a reply to an older one (a filter changed meanwhile) is
   // dropped, and only the latest request clears the loading flags. So Load more stays off until a
@@ -194,34 +192,6 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
     }
   };
 
-  // The families of the overdue bills this year and class show (active students only, whatever the
-  // withdrawn switch says). The server sends in the background, at most once per bill per family a day.
-  const remindOverdue = () => {
-    const className = yearSections.find((section) => section.id === classSectionId)?.displayLabel ?? null;
-    const send = () => {
-      setReminding(true);
-      remindOverdueFees(schoolId, { academicYear: yearFilter ?? undefined, classSectionId: classSectionId || undefined })
-        .then((result) =>
-          showToast(
-            result.billCount > 0
-              ? t('fees.reminder.remindOverdueStarted', { count: result.billCount })
-              : t('fees.reminder.nothingOverdue'),
-            result.billCount > 0 ? 'success' : 'info'
-          )
-        )
-        .catch((e) => showToast(getErrorMessage(e), 'error'))
-        .finally(() => setReminding(false));
-    };
-    Alert.alert(
-      t('fees.reminder.remindOverdueConfirmTitle'),
-      t('fees.reminder.remindOverdueConfirmMessage', { scope: overdueReminderScope(shownYear, className, t) }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('fees.reminder.confirm'), onPress: send },
-      ]
-    );
-  };
-
   const yearOptions = [
     ...academicYearOptions(summary).map((year) => ({ label: year, value: year })),
     { label: t('fees.assessmentsList.allYears'), value: ALL_ACADEMIC_YEARS },
@@ -268,22 +238,6 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
             <Text style={styles.summaryLabel}>{t('fees.assessmentsList.summaryUnpaidAmount')}</Text>
           </View>
         </View>
-      )}
-
-      {!summaryFailed && summary && summary.overdueCount > 0 && (
-        <Pressable
-          style={[styles.remindButton, reminding && styles.remindButtonBusy]}
-          onPress={remindOverdue}
-          disabled={reminding}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: reminding, busy: reminding }}
-        >
-          {reminding ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : (
-            <Text style={styles.remindButtonText}>{t('fees.reminder.remindOverdue')}</Text>
-          )}
-        </Pressable>
       )}
 
       <View style={styles.dropdownRow}>
@@ -402,16 +356,6 @@ export function FeeAssessmentsListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  remindButton: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  remindButtonBusy: { opacity: 0.6 },
-  remindButtonText: { color: colors.primary, fontWeight: '700' },
   root: { flex: 1, backgroundColor: colors.background },
   body: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   empty: { color: colors.textMuted, textAlign: 'center', marginTop: 40 },

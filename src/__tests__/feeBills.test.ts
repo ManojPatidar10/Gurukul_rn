@@ -26,7 +26,6 @@ import {
   feeStatusVariant,
   formatAdjustmentLine,
   formatDueDate,
-  overdueReminderScope,
   formatInstantDate,
   formatSignedRupees,
   generateConfirmation,
@@ -616,15 +615,5 @@ describe('payment settings', () => {
     expect(paymentSettingsConfirmText('123456789012', 'school@oksbi', tHi)).toBe(
       fill(hi.fees.paymentSettings.confirmWithUpi, { account: 'XXXX9012', upiId: 'school@oksbi' })
     );
-  });
-});
-
-describe('overdue reminder scope', () => {
-  it('names the year, or all years, and the class when one is picked', () => {
-    expect(overdueReminderScope('2026-27', null, tEn)).toBe('2026-27');
-    expect(overdueReminderScope('ALL', null, tEn)).toBe('all years');
-    expect(overdueReminderScope(null, null, tEn)).toBe('all years');
-    expect(overdueReminderScope('2026-27', 'Grade 7 - A', tEn)).toBe('Grade 7 - A, 2026-27');
-    expect(overdueReminderScope('ALL', 'Grade 7 - A', tHi)).toBe('Grade 7 - A, सभी वर्षों');
   });
 });

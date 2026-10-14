@@ -492,14 +492,6 @@ export interface FeeReminderResult {
   alreadyRemindedToday: boolean;
 }
 
-/** What Remind overdue families started: the pushes go out in the background. */
-export interface FeeOverdueReminderResult {
-  /** The year reminded about, or 'ALL'. */
-  academicYear: string;
-  /** Overdue bills (active students) whose families are being reminded. */
-  billCount: number;
-}
-
 /** Active students' open bills for one academic year (or 'ALL'); cancelled bills never count. */
 export interface DuesReport {
   academicYear: string;
