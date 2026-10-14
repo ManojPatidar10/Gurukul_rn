@@ -19,7 +19,10 @@ const ts = jest.requireActual<typeof TS>('typescript');
  * English, add it below with the reason.
  */
 
-/** Files that stay English on purpose, by path under src/, with the reason. */
+/**
+ * Files that stay English on purpose, by path under src/, with the reason. Each one must still have
+ * English in it: once a file is translated, drop it from here so the guard covers it again.
+ */
 const ALLOWED_FILES: Record<string, string> = {
   'screens/principal/PushDebugScreen.tsx':
     'A hidden support screen (long-press the version footer) for us, not for users; English only by design.',
@@ -32,10 +35,9 @@ const ALLOWED_FILES: Record<string, string> = {
   'screens/principal/InCallScreen.tsx': 'Video calls are switched off - translate before turning videoCalls on.',
   'components/IncomingCallOverlay.tsx': 'Video calls are switched off - translate before turning videoCalls on.',
   'hooks/useGoogleMeetGate.ts': 'Video calls are switched off - translate before turning videoCalls on.',
-  'utils/selfMarkLocation.ts':
-    "The self check-in refusals' canonical English. The screen words them by code (selfMarkMessages.ts), and selfMarkMessages.test.ts holds en.json to this text.",
-  'utils/selfMarkIntegrity.ts':
-    "The Play Integrity refusals' canonical English. The screen words them by code (selfMarkMessages.ts), and selfMarkMessages.test.ts holds en.json to this text.",
+  'hooks/useCallTargets.ts':
+    'Video calls are switched off (only the call pickers use it) - translate before turning videoCalls on.',
+  'data.ts': 'Sample school records that no screen imports: the school names are data, not words to translate.',
   'utils/activityLogFormat.ts':
     "The activity log's record and field names and Yes/No are technical identifiers; translating them is a follow-up.",
 };
@@ -77,6 +79,7 @@ describe('hard-coded English', () => {
         if (!ok) setError('Something broke.');
         showToast(\`Saved \${status}.\`, 'success');
         Alert.alert('Oops', 'Try again later.', [{ text: 'Retry', style: 'cancel' }]);
+        const people = staff.map((e) => ({ id: e.id, name: \`\${e.name} (Staff)\`, icon: { name: 'user-tie' } }));
         return (
           <View style={{ textTransform: 'uppercase' }}>
             <Text>Hello
@@ -104,6 +107,7 @@ describe('hard-coded English', () => {
         'call:Alert.alert Oops',
         'call:Alert.alert Try again later.',
         'prop:text Retry',
+        'prop:name (Staff)',
         'jsx-text Hello world',
         'attr:placeholder Search by name',
         'attr:accessibilityLabel All good',
@@ -118,16 +122,15 @@ describe('hard-coded English', () => {
     expect(files.length).toBeGreaterThan(150);
     for (const allowed of Object.keys(ALLOWED_FILES)) expect(files).toContain(allowed);
 
-    const findings = files
-      .filter((file) => !(file in ALLOWED_FILES))
-      .flatMap((file) =>
-        show(
-          file,
-          findHardcodedText(ts, file, fs.readFileSync(`${__dirname}/../${file}`, 'utf8')).filter(
-            (f) => !ALLOWED_STRINGS.has(f.text)
-          )
-        )
+    const scan = (file: string) =>
+      findHardcodedText(ts, file, fs.readFileSync(`${__dirname}/../${file}`, 'utf8')).filter(
+        (f) => !ALLOWED_STRINGS.has(f.text)
       );
+    const findings = files.filter((file) => !(file in ALLOWED_FILES)).flatMap((file) => show(file, scan(file)));
     expect(findings).toEqual([]);
+
+    // An allowed file with no English left would only hide the next regression in it.
+    const clean = Object.keys(ALLOWED_FILES).filter((file) => scan(file).length === 0);
+    expect(clean).toEqual([]);
   });
 });

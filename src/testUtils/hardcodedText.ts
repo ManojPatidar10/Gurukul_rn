@@ -10,14 +10,16 @@ import type * as TS from 'typescript';
  * - strings and template literals in JSX attributes (placeholder="...", title={...}), except
  *   non-text props (style, name, keyboardType, ...) and on... handlers;
  * - strings and template literals shown as JSX children: <Text>{busy ? 'Saving…' : label}</Text>;
- * - text/label/title/subtitle/description/message/placeholder/hint object properties;
+ * - text/label/name/title/subtitle/description/message/placeholder/hint object properties (`name` is
+ *   what pickers and call lists show: { name: `${e.name} (Staff)` });
  * - arguments of Alert.alert(...), showToast(...) and state setters (setError(...));
  * - sentence-like strings a function returns (not HTML).
  *
  * It ignores keys and other arguments of t(), navigate() and every other call; identifier-like
  * strings ('primary', 'calendar-alt', 'DriverHome') and ALL_CAPS codes ('PRESENT'); the operands
  * of comparisons and case labels; and example data with a digit and no spaces ('K7M2QXPZ').
- * It's a heuristic: a false positive goes in the test's allowlist with a reason.
+ * It's a heuristic: a false positive goes in the test's allowlist with a reason. It can't tell a
+ * single lowercase word from a code, so setLabel('you') isn't found: read those by eye in review.
  */
 
 export interface HardcodedText {
@@ -42,7 +44,7 @@ const NON_TEXT_ATTRS = new Set([
 ]);
 
 // Object properties that hold words for the user.
-const TEXT_PROPS = new Set(['text', 'label', 'title', 'subtitle', 'description', 'message', 'placeholder', 'hint']);
+const TEXT_PROPS = new Set(['text', 'label', 'name', 'title', 'subtitle', 'description', 'message', 'placeholder', 'hint']);
 
 /** Whether a string has English words in it, rather than being a code, a key or data. */
 export function hasEnglishWords(raw: string): boolean {
