@@ -211,7 +211,7 @@ Key facts:
 - Games: one XP score from attendance and quiz wins (Gurukul Arena and Battle Room); streaks, weekly leagues (Bronze up to Gurukul Master), House Wars (each house's XP plus house points that teachers and admins award for effort), live Battle Room quizzes and 1v1 Gurukul Arena. Quiz questions are written by teachers or drafted with AI and reviewed by teachers.
 - Communication: one-to-one chat between staff, between staff and students (a student can message any staff member) and between parent accounts and their child's teachers and the school's admins, with photos and PDFs up to 10 MB and a push to the other person. School notices are posted from School Events (a plain announcement, an RSVP, a registration form or a poll) to the whole school (admin), one class-section or a whole grade (admin or class teacher), and pushed to all staff, the students covered and their parent accounts. No group chat, no student-to-student chat, no calling and no SMS.
 - Also included: admissions tracked by stage, student and staff ID cards with a QR code, attendance export, activity log.
-- Languages: every user can switch the app between English and Hindi. The parent home and child dashboard, sign-in, fees, report cards, timetable, school bus and ID cards are in Hindi; a few screens (attendance history, the chat list and school events) are still in English.
+- Languages: every user can switch the app between English and Hindi. Sign-in, the parent home and child dashboard, fees, report cards, timetable, school bus and ID cards are in Hindi. Some screens, staff ones too, are still English-only, including taking class attendance, teachers' class and student lists, attendance history, the chat list and school events.
 - Getting started: free 1-month pilot. The Smart Gurukul team imports the school's student register and trains staff. Pricing is shared after a demo.
 - Not available: online fee payment, homework, SMS, group chat, hostel, library, statutory payroll (PF/ESI/TDS), full accounting (trial balance, balance sheet), automatic timetable generation, bus route planning."""
 
@@ -629,9 +629,11 @@ BANNED = [  # (pattern, flags): claims and names that must never appear on an in
     (r"video call", re.I), (r"वीडियो कॉल", 0), (r"school groups", re.I),
     (r"transport and bus tracking", re.I), (r"\bERP\b", 0), (r"Balaji", re.I), (r"\bJNV\b", 0),
     # Sign-in has two paths (WhatsApp code or username and password); only the WhatsApp code shows every
-    # child on a number (a parent account covers one child); a few app screens are still English-only.
+    # child on a number (a parent account covers one child). Some app screens, teachers' class attendance
+    # and class lists among them, are still English-only, so never say only "a few" screens are.
     (r"Sign-in uses a one-time code", re.I), (r"whole app to Hindi", re.I), (r"All children, one login", re.I),
     (r"on one sign-in", re.I), (r"यूज़र के फ़ोन पर वन-टाइम कोड भेजा जाता है", 0), (r"पूरा ऐप हिंदी", 0),
+    (r"\ba few (?:app )?screens\b", re.I),
     # A parent's attendance history and chat list are still English-only, so not every parent screen is in
     # Hindi; and the language button opens a menu, so switching language takes two taps, not one.
     (r"\bparent screens\b", re.I), (r"अभिभावकों की स्क्रीन", 0), (r"\bin one tap\b", re.I), (r"एक टैप में", 0),
