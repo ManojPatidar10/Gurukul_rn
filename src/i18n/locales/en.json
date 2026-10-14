@@ -1025,6 +1025,15 @@
         "12": "Dec"
       }
     },
+    "reminder": {
+      "send": "Send fee reminder",
+      "sendHint": "Sends the family a push now, in English and Hindi, about what is still owed. The app also reminds them automatically 3 days before the due date and once a week while it's overdue.",
+      "confirmTitle": "Send a fee reminder?",
+      "confirmMessage": "{{name}}'s family will get a push about the ₹{{amount}} still owed on this bill. A family gets at most one reminder per bill a day from here.",
+      "confirm": "Send reminder",
+      "sent": "Reminder sent to {{name}}'s family.",
+      "alreadySent": "{{name}}'s family was already reminded about this bill today, so nothing new was sent."
+    },
     "howToPay": {
       "title": "How to pay",
       "body": "Pay at the school office by cash, cheque or bank transfer. Once the school records your payment, its receipt shows under Payment history below.",

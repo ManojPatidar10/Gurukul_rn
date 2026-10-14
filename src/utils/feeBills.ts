@@ -108,6 +108,8 @@ export interface BillDetailActions {
   recordPayment: boolean;
   /** Admin: add an adjustment, change the due date, cancel. Not on a cancelled bill. */
   adminActions: boolean;
+  /** Admin: Send fee reminder. A live bill with money owed, for a student still at the school. */
+  sendReminder: boolean;
   /** Admin: Cancel bill, among those actions: only while nothing is paid on it. */
   cancelBill: boolean;
   /** Admin: the bill has payments, so Cancel is replaced by a hint to reverse them first. */
@@ -121,7 +123,7 @@ export interface BillDetailActions {
 }
 
 export function billDetailActions(
-  bill: BillStatusFields & Pick<FeeAssessment, 'totalPaid' | 'remainingDue'>,
+  bill: BillStatusFields & Pick<FeeAssessment, 'totalPaid' | 'remainingDue' | 'studentStatus'>,
   viewer: BillViewer
 ): BillDetailActions {
   const isAdmin = viewer.role === 'ADMIN';
@@ -132,6 +134,7 @@ export function billDetailActions(
   return {
     recordPayment: isAdmin && owed,
     adminActions: isAdmin && live,
+    sendReminder: isAdmin && owed && bill.studentStatus === 'ACTIVE',
     cancelBill: isAdmin && cancellable,
     cancelBlockedByPayments: isAdmin && live && !cancellable,
     howToPay: isFamily && owed,
