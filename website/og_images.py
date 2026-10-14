@@ -18,8 +18,14 @@ Outlines are filled even-odd (each contour XORed in), at 4x, then scaled down wi
 
 Design: brand tokens from marketing-sales-pipeline/brand/tokens.json (60% paper, 30% violet, 10% marigold).
 Left: the lockup, eyebrow, headline (up to 3 lines), a marigold bar and smartgurukul.org on paper. Right:
-violet, with the demo button in a marigold pill (ink text: never white on marigold). No screenshots,
-numbers, prices or people. Fonts and lockups are in website/og/ (fonts under the SIL OFL, see OFL.txt).
+violet, with the page's button in a marigold pill (ink text: never white on marigold) under the app's
+tagline. The button is "Book a free demo" unless the page's cta_label says otherwise, and a service page
+gets no tagline (build.og_card_text). No screenshots, numbers, prices or people. Fonts and lockups are in
+website/og/ (fonts under the SIL OFL, see OFL.txt).
+
+Text that doesn't fit stops the script instead of running into the violet side: the eyebrow, each headline
+line, the button and the tagline are measured (shaped advance), and every card is drawn before any file
+is written.
 """
 import json
 import sys
@@ -33,12 +39,12 @@ try:
 except ImportError as e:  # pragma: no cover - a setup problem, not a code path
     raise SystemExit(f"{e}. og_images.py needs: pip install pillow uharfbuzz fonttools")
 
-from build import OUT, ROOT, og_card_path, og_hash, read_pages
+from build import OG_CTA, OG_TAGLINE, OUT, ROOT, og_card_path, og_card_text, og_hash, read_pages
 
 ASSETS = ROOT / "og"
 CARD_DIR = OUT / "assets" / "og"
 DEFAULT_CARD = OUT / "assets" / "og-image.png"
-DEFAULT_TEXT = ("en", "School management app", "Your whole school, connected.")
+DEFAULT_TEXT = ("en", "School management app", "Your whole school, connected.", OG_CTA["en"], OG_TAGLINE["en"])
 
 W, H = 1200, 630
 SPLIT = 744          # the paper side is ~62% of the card, the violet side ~38%
@@ -53,8 +59,6 @@ VIOLET_700 = (0x6D, 0x28, 0xD9)
 MARIGOLD = (0xF5, 0xA7, 0x0A)
 WHITE = (0xFF, 0xFF, 0xFF)
 
-CTA = {"en": "Book a free demo", "hi": "मुफ़्त डेमो बुक करें"}
-TRIO = {"en": "AI + School + Games", "hi": "AI + स्कूल + गेम्स"}
 LOCKUP = {"en": "lockup-horizontal@2x.png", "hi": "lockup-hindi@2x.png"}
 
 
@@ -232,13 +236,41 @@ def shape_layer(size, draw_fn):
     return big.resize(size, Image.LANCZOS)
 
 
-def card(lang, eyebrow, headline, fonts):
+def require_fit(text, font, size, room, what):
+    """The text's drawn width; stops the run when it is wider than the room it has, so a long eyebrow or
+    button can't run into the violet side (or off the card) with the build none the wiser."""
+    width = font.width(text, size)
+    if width > room:
+        raise SystemExit(f"{what} is {width:.0f} px wide at {size} px, but has {room:.0f} px: {text!r}")
+    return width
+
+
+def card(lang, eyebrow, headline, button, tagline, fonts):
+    """One 1200x630 card. button: the text in the marigold pill; tagline: the white line above it, or ""."""
     hi = lang == "hi"
     display = fonts["mukta"] if hi else fonts["poppins_bold"]
     small = fonts["mukta"] if hi else fonts["poppins_semi"]
-    img = Image.new("RGB", (W, H), PAPER)
 
-    # Right: violet panel with a soft marigold circle (as on the site's violet sections) and the CTA.
+    # Measure first: nothing is drawn for a card whose text doesn't fit.
+    max_w = SPLIT - PAD - 48               # the paper side, less its margins
+    panel_room = W - SPLIT - 2 * 40        # the violet side, less its margins
+    cta_size = 34 if hi else 30
+    trio_size = 26 if hi else 24
+    brow_size = 30 if hi else 28
+    cta_w = require_fit(button, small, cta_size, panel_room - 2 * 40, "the button text")
+    trio_w = require_fit(tagline, small, trio_size, panel_room, "the tagline") if tagline else 0
+    require_fit(eyebrow, small, brow_size, max_w, "og_eyebrow")
+    for head_size in ((66, 58) if hi else (60, 52)):
+        lines = balanced_wrap(headline, display, head_size, max_w)
+        if len(lines) <= 3 and all(display.width(line, head_size) <= max_w for line in lines):
+            break
+    if len(lines) > 3:
+        raise SystemExit(f"headline too long for 3 lines: {headline!r}")
+    for line in lines:  # one word wider than the room still gets a line of its own
+        require_fit(line, display, head_size, max_w, "og_headline line")
+
+    # Right: violet panel with a soft marigold circle (as on the site's violet sections) and the button.
+    img = Image.new("RGB", (W, H), PAPER)
     img.paste(VIOLET, (SPLIT, 0, W, H))
     circle = shape_layer((W - SPLIT, H), lambda d, s: d.ellipse((96 * s, -250 * s, 616 * s, 270 * s), fill=255))
     tint = Image.blend(Image.new("RGB", circle.size, VIOLET), Image.new("RGB", circle.size, MARIGOLD), 0.16)
@@ -247,18 +279,16 @@ def card(lang, eyebrow, headline, fonts):
     img.paste(Image.new("RGB", circle2.size, VIOLET_700), (SPLIT, 0), circle2)
 
     panel_mid = SPLIT + (W - SPLIT) // 2
-    cta_size = 34 if hi else 30
-    cta_w = small.width(CTA[lang], cta_size)
     pill_w, pill_h = int(cta_w + 2 * 40), 84
-    pill_x, pill_y = panel_mid - pill_w // 2, H // 2 - pill_h // 2 + 24
+    # The pill sits 24 px low when the tagline is above it, so the two are centred together.
+    pill_x, pill_y = panel_mid - pill_w // 2, H // 2 - pill_h // 2 + (24 if tagline else 0)
     pill = shape_layer((pill_w, pill_h), lambda d, s: d.rounded_rectangle(
         (0, 0, pill_w * s - 1, pill_h * s - 1), radius=pill_h * s // 2, fill=255))
     img.paste(Image.new("RGB", pill.size, MARIGOLD), (pill_x, pill_y), pill)
     cta_base = pill_y + pill_h / 2 + (small.top - small.bottom) * cta_size / 2
-    draw_text(img, CTA[lang], small, cta_size, INK, panel_mid - cta_w / 2, cta_base)
-    trio_size = 26 if hi else 24
-    trio_w = small.width(TRIO[lang], trio_size)
-    draw_text(img, TRIO[lang], small, trio_size, WHITE, panel_mid - trio_w / 2, pill_y - 34)
+    draw_text(img, button, small, cta_size, INK, panel_mid - cta_w / 2, cta_base)
+    if tagline:
+        draw_text(img, tagline, small, trio_size, WHITE, panel_mid - trio_w / 2, pill_y - 34)
 
     # Left: lockup, eyebrow, headline, marigold bar, URL.
     lockup = Image.open(ASSETS / LOCKUP[lang]).convert("RGBA")
@@ -271,14 +301,6 @@ def card(lang, eyebrow, headline, fonts):
     url_base = H - 52
     draw_text(img, "smartgurukul.org", fonts["poppins_semi"], url_size, INK_600, PAD, url_base)
 
-    max_w = SPLIT - PAD - 48
-    for head_size in ((66, 58) if hi else (60, 52)):
-        lines = balanced_wrap(headline, display, head_size, max_w)
-        if len(lines) <= 3:
-            break
-    if len(lines) > 3:
-        raise SystemExit(f"headline too long for 3 lines: {headline!r}")
-    brow_size = 30 if hi else 28
     pitch = display.pitch * head_size
     block = (brow_size * (small.top + small.bottom) + 18
              + head_size * (display.top + display.bottom) + pitch * (len(lines) - 1) + 30 + 10)
@@ -312,16 +334,17 @@ def main():
         "poppins_semi": Font("Poppins-SemiBold.ttf", 0.75, 0.24, 1.16),
         "mukta": Font("Mukta-SemiBold.ttf", 0.92, 0.36, 1.32),
     }
-    manifest, expected = {}, set()
+    # Every card is drawn before any is saved, so text that doesn't fit stops the run with nothing written.
+    cards, manifest = [], {}
     for meta, _ in read_pages():
         if not meta.get("og_headline"):
             continue
-        lang = meta.get("lang", "en")
-        out = OUT / og_card_path(meta["path"])
-        save(card(lang, meta.get("og_eyebrow", ""), meta["og_headline"], fonts), out)
+        cards.append((card(*og_card_text(meta), fonts), OUT / og_card_path(meta["path"])))
         manifest[meta["path"]] = og_hash(meta)
-        expected.add(out.name)
-    save(card(*DEFAULT_TEXT, fonts), DEFAULT_CARD)
+    cards.append((card(*DEFAULT_TEXT, fonts), DEFAULT_CARD))
+    for img, out in cards:
+        save(img, out)
+    expected = {out.name for _, out in cards}
     for stale in sorted(CARD_DIR.glob("*.png")):
         if stale.name not in expected:  # a page lost its og_headline or was renamed
             stale.unlink()
