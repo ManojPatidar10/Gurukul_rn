@@ -112,9 +112,9 @@ describe('locale parity (en.json / hi.json)', () => {
     expect(missing).toEqual([]);
   });
 
-  it('has Hindi, not pasted English, in the games, assessment, report-card and quiz-results namespaces', () => {
+  it('has Hindi, not pasted English, in the games, assessment, report-card, quiz-results and notice namespaces', () => {
     const OWN =
-      /^(games|questionBank|assessments|gradingScale|reportCardDetail|reportCardGrid|reportCardPublish|sectionDetail|quizInsights)\./;
+      /^(games|questionBank|assessments|gradingScale|reportCardDetail|reportCardGrid|reportCardPublish|sectionDetail|quizInsights|announcementCompose)\./;
     const hasWords = (value: unknown) =>
       /[A-Za-z]/.test(
         String(value)
