@@ -17,6 +17,9 @@ Meta keys:
 - lang: "hi" for Hindi pages. alternate: the other-language version of this page.
   hreflang: [en_path, hi_path] for a page that has a Hindi pair (written to the head and sitemap).
 - og_title, og_image_alt: social-card overrides.
+- og_eyebrow, og_headline: the page's own Open Graph card (assets/og/<path>.png, drawn by og_images.py).
+  A page without og_headline shares the default card, assets/og-image.png. The card's button follows the
+  page's cta_label, and a service page's card leaves off the app tagline (see og_card_text).
 - has_form: the page holds the demo form. cta_href / cta_label: header button override.
 - noindex: keep out of search, the sitemap and llms.txt.
 - software: false drops the SoftwareApplication node (privacy, 404, share).
@@ -27,6 +30,14 @@ Every indexable product page (software pages without a form) gets the "Try it fr
 band before the footer, unless its body already has a .cta-band. On Hindi pages, links to English
 pages get hreflang="en".
 
+App labels quoted in the copy go in <span class="ui">…</span>; the build checks each one against the app's
+own strings (src/i18n/locales/hi.json on Hindi pages, en.json on English pages), so a renamed button
+fails the build instead of leaving the site pointing at a label that no longer exists.
+
+Social cards: after changing a page's og_eyebrow/og_headline (or adding a page with one), run
+    python website/og_images.py    (needs Pillow, uharfbuzz and fonttools)
+before this script; the build FAILs when a card is missing or older than its page's meta.
+
 Pages in docs/ that are NOT built here: deck.html (build_deck.py), film.html, onboarding-toolkit.html
 (hand-written), robots.txt, site.webmanifest, CNAME, favicon.ico, the IndexNow key file and assets/.
 """
@@ -35,6 +46,7 @@ import hashlib
 import html
 import json
 import re
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -65,7 +77,7 @@ FEATURES = [
     "Exams, grading scales and PDF report cards",
     "School bus tracking with a driver app and live map for families",
     "Parent app with multi-child access and chat with teachers",
-    "Chat, announcements and school events with RSVP",
+    "One-to-one chat, school notices and events with RSVP, registration forms and polls",
     "Admissions and ID cards with QR codes",
     "XP, daily streaks, weekly leagues and House Wars",
     "Live Battle Room quizzes and 1v1 Arena challenges",
@@ -134,10 +146,49 @@ SERVICE = {
     },
 }
 
+# Alt text for the default card (assets/og-image.png, drawn by og_images.py: the English lockup, "School
+# management app", the tagline and a "Book a free demo" button). Pages with og_headline share their
+# own card, whose alt is "Smart Gurukul: <og_headline>" unless og_image_alt overrides it.
 OG_IMAGE_ALT = {
-    "en": "Smart Gurukul: Your whole school, connected. The app's principal dashboard and Game Hub screens.",
-    "hi": "स्मार्ट गुरुकुल: पूरा स्कूल, एक ऐप पर जुड़ा। ऐप के प्रिंसिपल डैशबोर्ड और गेम हब की स्क्रीन।",
+    "en": "Smart Gurukul: Your whole school, connected.",
+    "hi": "स्मार्ट गुरुकुल: Your whole school, connected.",
 }
+OG_ALT_PREFIX = {"en": "Smart Gurukul: ", "hi": "स्मार्ट गुरुकुल: "}
+OG_DEFAULT = "assets/og-image.png"
+# Bump when og_images.py draws the cards differently, so the manifest check asks for a re-run.
+OG_VERSION = "2"
+OG_MAX_BYTES = 300 * 1024
+# The longest og_eyebrow / og_headline the build accepts. og_images.py measures the drawn text and stops on
+# anything that doesn't fit; these limits make the build FAIL first in the usual case (a 49-character
+# English eyebrow is ~770 px at 28 px, past the 632 px the paper side has room for).
+OG_TEXT_MAX = {"og_eyebrow": 36, "og_headline": 50}
+# The card's button and the line above it, unless the page says otherwise (see og_card_text).
+OG_CTA = {"en": "Book a free demo", "hi": "मुफ़्त डेमो बुक करें"}
+OG_TAGLINE = {"en": "AI + School + Games", "hi": "AI + स्कूल + गेम्स"}
+
+
+def og_card_path(path):
+    """The page's own social card: hi/parent-app.html -> assets/og/hi-parent-app.png."""
+    return "assets/og/" + path.replace("/", "-").replace(".html", ".png")
+
+
+def og_card_text(meta):
+    """(lang, eyebrow, headline, button, tagline) that the page's card is drawn from.
+
+    The button says what the page's own header button says (cta_label, e.g. "Get a free quote" on
+    website-services), so a shared link never promises something the page doesn't offer. The app's tagline
+    ("AI + School + Games") is left off a service page (service: true), which sells websites, not the app.
+    """
+    lang = meta.get("lang", "en")
+    button = meta.get("cta_label") or OG_CTA[lang]
+    tagline = "" if meta.get("service") else OG_TAGLINE[lang]
+    return lang, meta.get("og_eyebrow", ""), meta["og_headline"], button, tagline
+
+
+def og_hash(meta):
+    """What the card was drawn from. og_images.py writes it to assets/og/manifest.json; the build compares."""
+    key = "\x1f".join(og_card_text(meta)) + "\x1f" + OG_VERSION
+    return hashlib.sha1(key.encode("utf-8")).hexdigest()
 
 # The facts block at the top of docs/llms.txt. Keep it in step with FEATURES and the pages: every line
 # must be true on main today (see marketing-sales-pipeline/content/claims.md).
@@ -152,15 +203,17 @@ Key facts:
 - Timetable: bell schedule (including Saturday), weekly timetables with rooms, one-period date changes (substitute, cancel, extra period), a list of periods that need a substitute based on staff attendance, free teachers per period, and notifications to the affected teachers and students. Admins can make changes by chatting with the AI helpdesk and confirming them. There is no automatic timetable generation.
 - Fees: admin-set fee structures per class, bills for a whole section, due dates, concessions, waivers, late fees and corrections, payments recorded by the school (cash, cheque, UPI or bank-transfer reference) with numbered PDF receipts, reversals for mistakes, bounced cheques and refunds, and fee-due reminders to parents. Online fee payment is not available.
 - Payroll and expenses: salary structures, monthly payroll runs and payslips in the app (no PF/ESI/TDS); vendors and expenses with approvals (no self-approval); one ledger with a day book and fund summary.
-- Exams and report cards: the school's own grading scale and terms, marks entered by each class's teachers, report cards published to a section, PDF report cards, and alerts to students and parents on publish.
+- Exams and report cards: the school's own terms (with dates) and grading bands (a built-in scale until it sets one). Assessments (assignment, quiz, test or exam) per class and subject, with a date, maximum marks and a term, added by the admin, the class teacher or a subject teacher; only they enter marks, with AB (absent, counted as 0), EX (excused, left out) and remarks. A section-wide marks grid and a publish check for missing marks. The admin or the class teacher publishes a term for a section: students and parents are notified on the first publish, that term's marks lock and each report card is kept exactly as published. Only an admin can unpublish, with a reason kept in the activity log. Report cards show subject-wise and overall marks, percentage and grade, term attendance and remarks; a PDF per student (students and parents, once published) or for a whole section, one page per student (admin or class teacher), with a DRAFT watermark before publishing.
 - School bus: the driver's phone shares the bus location during a trip (no GPS device); the driver marks boarding and drop-off; families get app and WhatsApp alerts and see the bus live while their child is on it. No route planning.
-- Parents: the same app. They see attendance, fees and receipts with fee-due reminders, report card, timetable, upcoming tests, ID card and the school bus. Two ways to sign in, both tied to the mobile number on the child's record: a one-time code on WhatsApp signs in on the child's own account (switching between all children on that number), or a parent account (the child's registration number and that number, then a username and password once the school approves it). A parent account adds absence alerts, school announcements and chat with the child's teachers and the school office.
+- Sign-in: a one-time code on WhatsApp to the mobile number on record, or a username and password (stored hashed, never as plain text).
+- Parents: the same app. They see attendance, fees and receipts with fee-due reminders, report card, timetable, upcoming tests, ID card and the school bus. Two ways to sign in, both tied to the mobile number on the child's record: a one-time code on WhatsApp signs in on the child's own account (switching between all children on that number), or a parent account (the child's registration number and that number, then a username and password once the school approves it); a parent account covers one child. A parent account adds absence alerts, the list of school announcements and chat with the child's teachers and the school office.
 - AI: an AI helpdesk assistant (users ask about their own attendance, fees and timetable; admins also about school-wide figures, through a fixed set of checked, school-scoped lookups rather than free-form database queries); Academic Helper (students are taught the method rather than given answers); and an AI question paper generator for teachers (up to 30 questions, MCQ, true/false, one-word, numeric, short and long answer; shared as a PDF with or without the answer key; MCQs can go to the quiz bank). AI output is a draft for teachers to check.
-- Games: one XP score from attendance, assessment results, quiz wins and teacher-awarded participation; streaks, weekly leagues (Bronze up to Gurukul Master), House Wars, live Battle Room quizzes and 1v1 Gurukul Arena. Quiz questions are written by teachers or drafted with AI and reviewed by teachers.
-- Also included: chat and announcements, school events with RSVP, admissions tracked by stage, student and staff ID cards with a QR code, attendance export, activity log.
-- Languages: the app works in English and Hindi.
+- Games: one XP score from attendance and quiz wins (Gurukul Arena and Battle Room); streaks, weekly leagues (Bronze up to Gurukul Master), House Wars (each house's XP plus house points that teachers and admins award for effort), live Battle Room quizzes and 1v1 Gurukul Arena. Quiz questions are written by teachers or drafted with AI and reviewed by teachers.
+- Communication: one-to-one chat between staff, between staff and students (a student can message any staff member) and between parent accounts and their child's teachers and the school's admins, with photos and PDFs up to 10 MB and a push to the other person. School notices are posted from School Events (a plain announcement, an RSVP, a registration form or a poll) to the whole school (admin), one class-section or a whole grade (admin or class teacher), and pushed to all staff, the students covered and their parent accounts. No group chat, no student-to-student chat, no calling and no SMS.
+- Also included: admissions tracked by stage, student and staff ID cards with a QR code, attendance export, activity log.
+- Languages: every user can switch the app between English and Hindi. Sign-in, the parent home and child dashboard, fees, report cards, timetable, school bus and ID cards are in Hindi. Some screens, staff ones too, are still English-only, including taking class attendance, teachers' class and student lists, attendance history, the chat list and school events.
 - Getting started: free 1-month pilot. The Smart Gurukul team imports the school's student register and trains staff. Pricing is shared after a demo.
-- Not available: online fee payment, homework, SMS, hostel, library, statutory payroll (PF/ESI/TDS), full accounting (trial balance, balance sheet), automatic timetable generation, bus route planning."""
+- Not available: online fee payment, homework, SMS, group chat, hostel, library, statutory payroll (PF/ESI/TDS), full accounting (trial balance, balance sheet), automatic timetable generation, bus route planning."""
 
 # Header nav: (English page, English label, Hindi label). On Hindi pages a link goes to the Hindi
 # version of the page when one exists (see HI_OF), otherwise to the English page.
@@ -181,10 +234,12 @@ FOOTER_PRODUCT = [
     ("ai-question-paper-generator.html", "AI question papers", "AI से प्रश्न पत्र"),
     ("gamified-learning.html", "Gamified learning", "गेमिफ़ाइड लर्निंग"),
     ("gps-attendance.html", "GPS attendance", "GPS हाज़िरी"),
-    ("school-timetable-app.html", "Timetable &amp; substitutions", "टाइमटेबल और सब्स्टिट्यूशन"),
+    ("school-timetable-app.html", "Timetable &amp; substitutions", "टाइमटेबल और सब्स्टीट्यूट"),
     ("school-fee-management.html", "Fee management", "फ़ीस और पेरोल"),
     ("school-bus-tracking.html", "School bus tracking", "स्कूल बस ट्रैकिंग"),
     ("parent-app.html", "Parent app", "पैरेंट ऐप"),
+    ("report-card-software.html", "Report cards", "रिपोर्ट कार्ड"),
+    ("school-communication-app.html", "Chat and notices", "चैट और सूचनाएँ"),
     ("website-services.html", "School websites", "स्कूल वेबसाइट"),
 ]
 
@@ -403,8 +458,13 @@ def head(meta, body):
     robots = "noindex, follow" if meta.get("noindex") else "index, follow, max-image-preview:large, max-snippet:-1"
     # Both 500 weights are in use: Mukta 500 by the hero chips (.chip small), Poppins 500 by the nav and form labels.
     fonts = "family=Poppins:wght@500;600;700&family=Mukta:wght@400;500;600;700;800"
-    og_img = f"{SITE}/assets/og-image.png"
-    og_alt = html.escape(meta.get("og_image_alt", OG_IMAGE_ALT[lang]))
+    if meta.get("og_headline"):
+        og_img = f"{SITE}/{og_card_path(p)}"
+        og_alt = meta.get("og_image_alt", OG_ALT_PREFIX[lang] + meta["og_headline"])
+    else:
+        og_img = f"{SITE}/{OG_DEFAULT}"
+        og_alt = meta.get("og_image_alt", OG_IMAGE_ALT[lang])
+    og_alt = html.escape(og_alt)
     og_title = html.escape(meta.get("og_title", title))
     locale_alt = ""
     if meta.get("hreflang"):
@@ -568,7 +628,56 @@ def write_sitemap(indexable):
 BANNED = [  # (pattern, flags): claims and names that must never appear on an indexable page
     (r"video call", re.I), (r"वीडियो कॉल", 0), (r"school groups", re.I),
     (r"transport and bus tracking", re.I), (r"\bERP\b", 0), (r"Balaji", re.I), (r"\bJNV\b", 0),
+    # Sign-in has two paths (WhatsApp code or username and password); only the WhatsApp code shows every
+    # child on a number (a parent account covers one child). Some app screens, teachers' class attendance
+    # and class lists among them, are still English-only, so never say only "a few" screens are.
+    (r"Sign-in uses a one-time code", re.I), (r"whole app to Hindi", re.I), (r"All children, one login", re.I),
+    (r"on one sign-in", re.I), (r"यूज़र के फ़ोन पर वन-टाइम कोड भेजा जाता है", 0), (r"पूरा ऐप हिंदी", 0),
+    (r"\ba few (?:app )?screens\b", re.I),
+    # A parent's attendance history and chat list are still English-only, so not every parent screen is in
+    # Hindi; and the language button opens a menu, so switching language takes two taps, not one.
+    (r"\bparent screens\b", re.I), (r"अभिभावकों की स्क्रीन", 0), (r"\bin one tap\b", re.I), (r"एक टैप में", 0),
+    # XP comes only from attendance and quiz wins (Gurukul_bk awards XpSource ATTENDANCE, QUIZ_WIN and
+    # BATTLE_ROOM_WIN, nothing else). Assessment results earn none, and teachers award house points, not XP.
+    # (Case-sensitive "XP", so the class="xp" badges don't count as the word.)
+    (r"\bXP\b[^.<;]{0,80}\b(?i:results|participation)\b|\b(?i:results|participation|doing well)\b[^.<;]{0,60}\bXP\b",
+     0),
+    (r"\+XP · नतीजे", 0), (r"अच्छा करने पर XP", 0),
+    # "एक से एक" is an idiom ("each one better than the last"); it doesn't say one-to-one.
+    (r"एक-से-एक", 0),
 ]
+# App labels quoted on the site (<span class="ui">) must be the app's own text, from these files.
+LOCALES = REPO / "src" / "i18n" / "locales"
+UI_LABEL = re.compile(r'<span class="ui">(.*?)</span>', re.S)
+_LABELS = {}
+
+
+def app_labels(lang):
+    """Every string in the app's en.json or hi.json, normalised like a quoted label."""
+    if lang not in _LABELS:
+        def walk(value):
+            if isinstance(value, dict):
+                for v in value.values():
+                    yield from walk(v)
+            elif isinstance(value, str):
+                yield norm_label(value)
+        data = json.loads((LOCALES / f"{lang}.json").read_text(encoding="utf-8"))
+        _LABELS[lang] = set(walk(data))
+    return _LABELS[lang]
+
+
+def norm_label(text):
+    # The site writes curly apostrophes (house style); the app's strings use straight ones.
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", text))).replace("’", "'").strip()
+
+
+def png_size(path):
+    """(width, height) from a PNG's IHDR chunk, or None when the file isn't a PNG."""
+    with open(path, "rb") as f:
+        head = f.read(24)
+    if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", head[16:24])
 BARE_NAME = re.compile(r"(?<!Smart )\bGurukul\b(?! Arena| Master)")
 BARE_NAME_HI = re.compile(r"(?<!स्मार्ट )गुरुकुल(?! एरीना| मास्टर)")
 EXTERNAL = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//)", re.I)
@@ -632,6 +741,10 @@ def ids_in(path, cache={}):
 def check(built):
     """built: [(meta, html)] for every page this run wrote. Returns (fails, warns)."""
     fails, warns = [], []
+    try:
+        manifest = json.loads((OUT / "assets" / "og" / "manifest.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        manifest = {}
     for meta, doc in built:
         p = meta["path"]
         say = lambda bucket, msg: bucket.append(f"{p}: {msg}")
@@ -671,6 +784,38 @@ def check(built):
             elif frag and target.endswith(".html") and frag not in ids_in(target):
                 say(fails, f"#{frag} not found in {target}: {url}")
 
+        lang = meta.get("lang", "en")
+        for label in UI_LABEL.findall(doc):
+            if norm_label(label) not in app_labels(lang):
+                say(fails, f'<span class="ui">{norm_label(label)}</span> is not an app label in '
+                           f'src/i18n/locales/{lang}.json')
+
+        if lang == "hi":
+            for tag, url in re.findall(r'(<a\b[^>]*?\shref="([^"]*)"[^>]*>)', doc):
+                if re.search(r'\sclass="lang"|\slang="', tag):
+                    continue  # the language switches (header and footer) go to the English page on purpose
+                hit = resolve(p, html.unescape(url))
+                if hit and hit[0] in HI_OF:
+                    say(fails, f"links to the English {hit[0]} although {HI_OF[hit[0]]} exists: {url}")
+
+        if meta.get("og_headline"):
+            for key, most in OG_TEXT_MAX.items():
+                if len(meta.get(key, "")) > most:
+                    say(fails, f"{key} is {len(meta[key])} characters (want at most {most})")
+            card = og_card_path(p)
+            f = OUT / card
+            size = png_size(f) if f.is_file() else None
+            if size is None:
+                say(fails, f"{card} is missing or isn't a PNG (run python website/og_images.py)")
+            else:
+                if size != (1200, 630):
+                    say(fails, f"{card} is {size[0]}x{size[1]} (want 1200x630)")
+                if f.stat().st_size > OG_MAX_BYTES:
+                    say(fails, f"{card} is {f.stat().st_size // 1024} KB (want at most {OG_MAX_BYTES // 1024} KB)")
+                if manifest.get(p) != og_hash(meta):
+                    say(fails, f"{card} doesn't match the page's og_eyebrow/og_headline "
+                               "(run python website/og_images.py)")
+
         text = visible_text(doc)
         names = [text, meta["title"], meta["description"]] + [s for ld in lds for s in ld_strings(ld)]
         for chunk in names:
@@ -689,6 +834,10 @@ def check(built):
                 say(warns, f"title is {len(meta['title'])} characters (over 60)")
             if not 120 <= len(meta["description"]) <= 160:
                 say(warns, f"description is {len(meta['description'])} characters (want 120-160)")
+    for pattern, flags in BANNED:  # the llms.txt facts block makes the same claims as the pages
+        for m in re.finditer(pattern, LLMS_FACTS, flags):
+            fails.append(f'llms.txt: banned phrase "{m.group(0)}": '
+                         f'...{LLMS_FACTS[max(0, m.start() - 50):m.end() + 30]}...')
     return fails, warns
 
 
