@@ -1,3 +1,4 @@
+import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -13,7 +14,7 @@ import { NotificationPermissionPrompt } from '../components/NotificationPermissi
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useAuth } from '../context/AuthContext';
 import { useSchoolId } from '../context/SchoolContext';
-import { colors, radius, softShadow, spacing } from '../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../theme/colors';
 import type { PrincipalStackParamList } from '../types/principal';
 import { getErrorMessage } from '../api/errorMessage';
 import { ErrorNotice } from '../components/ErrorNotice';
@@ -96,6 +97,18 @@ export function ParentHomeScreen({ navigation }: Props) {
             <Text style={styles.chevron}>›</Text>
           </Pressable>
         ))}
+        <Pressable style={styles.row} onPress={() => navigation.navigate('LinkChild')} accessibilityRole="button">
+          <View style={styles.linkIcon}>
+            <FontAwesome5 name="user-plus" size={16} color={accents.students.base} />
+          </View>
+          <View style={styles.rowMain}>
+            <Text style={styles.rowName}>
+              {children.length === 0 ? t('parentHome.linkFirstChild') : t('parentHome.linkChild')}
+            </Text>
+            {children.length > 0 && <Text style={styles.rowMeta}>{t('parentHome.linkChildHint')}</Text>}
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </Pressable>
         <Pressable style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
@@ -123,6 +136,15 @@ const styles = StyleSheet.create({
   rowName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   chevron: { fontSize: 22, color: colors.textMuted },
+  // The same size, shape and colours as an AvatarBadge, with an icon in place of initials.
+  linkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: accents.students.light,
+  },
   logoutButton: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.md },
   logoutText: { color: colors.error, fontWeight: '700', fontSize: 14 },
 });

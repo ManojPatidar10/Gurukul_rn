@@ -147,6 +147,8 @@ export type PrincipalStackParamList = {
   AttendanceHistory: { student: Pick<Student, 'id' | 'name'> };
   RegistrationInbox: undefined;
   ParentHome: undefined;
+  /** Parent only (ParentNavigator): link another child by registration number. */
+  LinkChild: undefined;
   ChildDashboard: { student: Pick<Student, 'id' | 'name' | 'classSectionId'> };
   ChildFees: { student: Pick<Student, 'id' | 'name'> };
   /**

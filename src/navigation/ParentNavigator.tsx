@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { LinkChildScreen } from '../screens/LinkChildScreen';
 import { ParentHomeScreen } from '../screens/ParentHomeScreen';
 import { AnnouncementsScreen } from '../screens/principal/AnnouncementsScreen';
 import { AttendanceHistoryScreen } from '../screens/principal/AttendanceHistoryScreen';
@@ -32,6 +33,7 @@ export function ParentNavigator() {
       }}
     >
       <Stack.Screen name="ParentHome" component={ParentHomeScreen} />
+      <Stack.Screen name="LinkChild" component={LinkChildScreen} />
       <Stack.Screen name="ChildDashboard" component={ChildDashboardScreen} />
       <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
       <Stack.Screen name="ChildFees" component={ChildFeesScreen} />

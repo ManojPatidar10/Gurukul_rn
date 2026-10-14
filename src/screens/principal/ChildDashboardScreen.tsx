@@ -178,6 +178,11 @@ export function ChildDashboardScreen({ route, navigation }: Props) {
           <UpcomingAssessmentsCard key={student.classSectionId} classSectionId={student.classSectionId} />
         )}
 
+        {/* A one-child parent's home (ParentHome replaces itself with this screen), so the way to a
+            second child has to be here too. */}
+        <Pressable style={styles.linkChildButton} onPress={() => navigation.navigate('LinkChild')} accessibilityRole="button">
+          <Text style={styles.linkChildText}>{t('childDashboard.linkChild')}</Text>
+        </Pressable>
         <Pressable style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutText}>{t('common.logOut')}</Text>
         </Pressable>
@@ -226,6 +231,8 @@ const styles = StyleSheet.create({
   assessmentTitle: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
   assessmentMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   more: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, fontWeight: '600' },
-  logoutButton: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.md },
+  linkChildButton: { alignItems: 'center', paddingVertical: spacing.md, marginTop: spacing.lg },
+  linkChildText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
+  logoutButton: { alignItems: 'center', paddingVertical: spacing.lg },
   logoutText: { color: colors.error, fontWeight: '700', fontSize: 14 },
 });

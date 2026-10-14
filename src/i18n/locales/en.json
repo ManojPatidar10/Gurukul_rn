@@ -1838,7 +1838,25 @@
     "empty": "No children linked to your account yet.",
     "rollAndClass": "Roll {{roll}} · {{classSection}}",
     "schoolBus": "School bus",
-    "schoolBusHint": "See the bus your child is on"
+    "schoolBusHint": "See the bus your child is on",
+    "linkChild": "Link another child",
+    "linkFirstChild": "Link your child",
+    "linkChildHint": "A brother or sister at this school"
+  },
+  "linkChild": {
+    "title": "Link another child",
+    "subtitle": "Add a brother or sister at this school to your account",
+    "linkedHeading": "Linked to your account",
+    "noneLinked": "No children linked to your account yet.",
+    "numberLabel": "Child's registration number",
+    "numberPlaceholder": "e.g. as given by the school",
+    "hint": "Ask the school office for the registration number. Your phone number must be the one on this child's school record.",
+    "submit": "Link child",
+    "submitting": "Linking…",
+    "successTitle": "Child linked",
+    "successNamed": "{{name}} ({{classSection}}) is now linked to your account. Their absence and fee alerts will come to this account.",
+    "successGeneric": "The child is now linked to your account.",
+    "linkAnother": "Link another child"
   },
   "childDashboard": {
     "attendance": "Attendance",
@@ -1847,6 +1865,7 @@
     "idCard": "ID Card",
     "timetable": "Timetable",
     "schoolBus": "School bus",
+    "linkChild": "Link another child",
     "upcoming": {
       "title": "Upcoming assessments",
       "empty": "No upcoming tests or exams.",
@@ -3057,7 +3076,11 @@
       "AI_SCHOOL_DAILY_LIMIT": "Your school has used today's AI limit. AI help will be back after midnight.",
       "AI_MESSAGE_TOO_LONG": "Your message is too long. Please keep it under {{max}} characters.",
       "AI_PAUSE_NOT_ACTIVE": "This pause has already ended.",
-      "AI_UNAVAILABLE": "AI help isn't available right now. Please try again in a few minutes."
+      "AI_UNAVAILABLE": "AI help isn't available right now. Please try again in a few minutes.",
+      "LINK_CHILD_NOT_FOUND": "No child at this school has that registration number. Check it with the school office.",
+      "LINK_CHILD_CONTACT_MISMATCH": "Your phone number isn't the one on this child's school record. Ask the school to update the record, then try again.",
+      "LINK_CHILD_ALREADY_LINKED": "This child is already linked to your account.",
+      "LINK_CHILD_LOCKED": "Too many wrong tries for this registration number. Please try again after 15 minutes."
     }
   },
   "sectionHub": {

@@ -10,7 +10,7 @@ import { FEATURE_FLAGS } from '../config/featureFlags';
 import i18n from '../i18n';
 import { navigationRef } from '../navigation/navigationRef';
 import { getPushStatus, refreshPushPermission, setPushRegisterHandler, updatePushStatus } from '../push/pushStatus';
-import { isTargetShowing, notificationTarget } from '../utils/notificationRouting';
+import { isOwnAbsenceAlert, isTargetShowing, notificationTarget } from '../utils/notificationRouting';
 import { openNotificationTarget } from '../utils/openNotificationTarget';
 
 Notifications.setNotificationHandler({
@@ -226,11 +226,20 @@ export function usePushNotifications(schoolId: string | null, session: Session |
             });
           })
           .catch(() => {});
+      } else if (isOwnAbsenceAlert(data, session.ownerType, session.ownerId)) {
+        // A student's own absence alert (sent to their login when no parent is linked) opens their
+        // attendance history. Offline, the name falls back to the login name, as the dashboard's
+        // "My attendance" tile does, and the history screen shows its own load error.
+        getStudent(session.schoolId, session.ownerId)
+          .then((student) => ({ id: student.id, name: student.name }))
+          .catch(() => ({ id: session.ownerId, name: session.username }))
+          .then((student) => navigationRef.navigate('AttendanceHistory', { student }));
       } else {
         // Shared with the in-app Alerts inbox, so a push tap and an inbox tap can't drift apart:
         // ABSENCE_ALERT / FEE_DUE / REPORT_CARD_PUBLISHED (a parent's copy names one child) open
-        // that child's attendance / fees / report card for that term (a student's own FEE_DUE, sent
-        // when no parent is linked, opens My Fees); ANNOUNCEMENT opens the
+        // that child's attendance / fees / report card for that term (a student's own ABSENCE_ALERT
+        // is handled just above; a student's own FEE_DUE, sent when no parent is linked, opens My
+        // Fees); ANNOUNCEMENT opens the
         // parent's Announcements screen (staff and students have none, so it just opens the app);
         // BUS_TRIP opens the family's bus map, or an admin's transport screen; SALARY_PAID opens
         // the staff member's payslip; BOT_ACTION_READY (a helpdesk-bot timetable proposal waiting

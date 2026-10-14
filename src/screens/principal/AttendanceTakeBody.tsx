@@ -13,6 +13,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { registerStudents } from '../../utils/attendanceRegister';
 
 interface Props {
   classSection: ClassSection;
@@ -58,9 +59,10 @@ export function AttendanceTakeBody({ classSection }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Only pupils still at the school: one who left keeps their class-section (see registerStudents).
   useEffect(() => {
     listStudentsInClassSection(schoolId, classSection.id)
-      .then(setRoster)
+      .then((students) => setRoster(registerStudents(students)))
       .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingRoster(false));
   }, [schoolId, classSection.id]);

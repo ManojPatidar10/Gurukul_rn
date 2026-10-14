@@ -32,6 +32,8 @@ export function notificationTarget(
       // Only the parent app has an announcements screen; staff/students just open the app.
       return role === 'PARENT' ? { screen: 'Announcements' } : null;
     case 'ABSENCE_ALERT':
+      // A student's own copy (sent when no parent is linked) is opened in usePushNotifications via
+      // isOwnAbsenceAlert: students have no inbox, and their name comes from their own record.
       return role === 'PARENT' && studentId ? { screen: 'AttendanceHistory', studentId } : null;
     case 'FEE_DUE':
       // Online payment is on hold, so a fee reminder opens the fee summary: the child's for a
@@ -82,6 +84,26 @@ export function notificationTarget(
     default:
       return null;
   }
+}
+
+/**
+ * A student's own absence alert: sent to their login when no parent account is linked
+ * (AbsenceAlertService). Students have no inbox, so usePushNotifications opens it. A different
+ * studentId means the phone has since switched to a sibling's profile; that tap just opens the app.
+ */
+export function isOwnAbsenceAlert(
+  data: Record<string, unknown> | null | undefined,
+  ownerType: string,
+  ownerId: string
+): boolean {
+  return (
+    !!data &&
+    data.type === 'ABSENCE_ALERT' &&
+    ownerType === 'STUDENT' &&
+    typeof data.studentId === 'string' &&
+    data.studentId !== '' &&
+    data.studentId === ownerId
+  );
 }
 
 /** The focused route, as navigationRef.getCurrentRoute() gives it. */

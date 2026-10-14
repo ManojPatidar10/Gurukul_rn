@@ -2,6 +2,7 @@ import { ApiError, NetworkError, SessionExpiredError } from '../api/client';
 import { getErrorMessage, isRetryable } from '../api/errorMessage';
 import i18n from '../i18n';
 import en from '../i18n/locales/en.json';
+import hi from '../i18n/locales/hi.json';
 import { pausedUntilLabel } from '../utils/aiGuard';
 
 jest.mock('../api/authStorage', () => ({ setStoredSession: jest.fn() }));
@@ -172,6 +173,46 @@ describe('getErrorMessage', () => {
         )
       )
     ).toBe(en.errors.codes.PAYMENT_ATTEMPT_ALREADY_REPORTED);
+  });
+
+  describe('the link-a-child refusals', () => {
+    // The server's English text for each code, as RegistrationService sends it.
+    const refusals = [
+      ['LINK_CHILD_NOT_FOUND', 404, 'No student found with that registration number'],
+      [
+        'LINK_CHILD_CONTACT_MISMATCH',
+        400,
+        "This child's parent contact number on school records doesn't match your account's phone number - ask the school to update it, then try again",
+      ],
+      ['LINK_CHILD_ALREADY_LINKED', 400, 'This child is already linked to your account'],
+      ['LINK_CHILD_LOCKED', 400, 'Too many failed attempts - try again later'],
+    ] as const;
+
+    afterEach(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    it('words each code in English', () => {
+      for (const [code, status, serverText] of refusals) {
+        expect(getErrorMessage(new ApiError(serverText, status, code))).toBe(en.errors.codes[code]);
+      }
+    });
+
+    it('words each code in Hindi when the app is in Hindi', async () => {
+      if (!i18n.hasResourceBundle('hi', 'translation')) i18n.addResourceBundle('hi', 'translation', hi);
+      await i18n.changeLanguage('hi');
+      for (const [code, status, serverText] of refusals) {
+        const message = getErrorMessage(new ApiError(serverText, status, code));
+        expect(message).toBe(hi.errors.codes[code]);
+        expect(message).not.toBe(en.errors.codes[code]);
+      }
+    });
+
+    it("shows the server's own text from a backend that sends no code", () => {
+      for (const [, status, serverText] of refusals) {
+        expect(getErrorMessage(new ApiError(serverText, status))).toBe(serverText);
+      }
+    });
   });
 
   it('explains a bare permission refusal', () => {
