@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { useLanguage } from '../i18n/useLanguage';
 import { colors, radius, shadow, spacing } from '../theme/colors';
 
 export function LanguageSwitch() {
+  const { t } = useTranslation();
   const { language, languages, setLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
@@ -16,7 +18,7 @@ export function LanguageSwitch() {
         style={styles.badge}
         onPress={() => setOpen(true)}
         accessibilityRole="button"
-        accessibilityLabel="Change language"
+        accessibilityLabel={t('language.toggleLabel')}
       >
         <Text style={styles.badgeText}>{language.toUpperCase()}</Text>
       </Pressable>

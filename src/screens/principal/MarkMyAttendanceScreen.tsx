@@ -17,8 +17,10 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { attendanceStatusLabel } from '../../utils/attendanceLabels';
 import { defaultIntegrityDeps, isIntegrityRefusal, withPlayIntegrity } from '../../utils/selfMarkIntegrity';
 import { readSelfMarkLocation, SelfMarkLocationError } from '../../utils/selfMarkLocation';
+import { selfMarkErrorText } from '../../utils/selfMarkMessages';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'MarkMyAttendance'>;
 
@@ -81,7 +83,7 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
           setRecord(todayRecord);
           setError(
             t('staffAttendance.selfMark.setByAdmin', {
-              status: t(`staffAttendance.statuses.${todayRecord.status}`),
+              status: attendanceStatusLabel(todayRecord.status, t),
             })
           );
           setStatus('setByAdmin');
@@ -101,7 +103,7 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
     try {
       const { status: permission } = await Location.requestForegroundPermissionsAsync();
       if (permission !== 'granted') {
-        setError('Location permission is required to mark attendance from here.');
+        setError(t('staffAttendance.selfMark.permissionDenied'));
         setStatus('error');
         return;
       }
@@ -117,9 +119,16 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
       setRecord(saved);
       setStatus('success');
     } catch (e) {
-      // The server's Play Integrity refusals say what to do; getErrorMessage would turn the 503 one into
+      // A refusal on the phone is worded by its code, in the app's language. The server's Play Integrity
+      // refusals say what to do, so they're shown as sent; getErrorMessage would turn the 503 one into
       // generic "unavailable" text.
-      setError(e instanceof SelfMarkLocationError || isIntegrityRefusal(e) ? e.message : getErrorMessage(e));
+      setError(
+        e instanceof SelfMarkLocationError
+          ? selfMarkErrorText(e, t)
+          : isIntegrityRefusal(e)
+            ? e.message
+            : getErrorMessage(e)
+      );
       if (e instanceof ApiError && e.errorCode === ATTENDANCE_SET_BY_ADMIN) {
         setStatus('setByAdmin');
         // Reload the calendar so it shows the admin's entry for today.
@@ -134,14 +143,14 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Mark My Attendance" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('dashboard.features.markMyAttendance.title')} onBack={() => navigation.goBack()} />
       <ScreenContainer>
         {session.role === 'ADMIN' && (
           <Pressable
             style={styles.locationLink}
             onPress={() => navigation.navigate('SchoolLocationSettings')}
           >
-            <Text style={styles.locationLinkText}>📍 Update school location &amp; radius</Text>
+            <Text style={styles.locationLinkText}>{t('staffAttendance.selfMark.updateLocation')}</Text>
           </Pressable>
         )}
         <View style={styles.card}>
@@ -150,10 +159,10 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
           ) : status === 'success' && record ? (
             <>
               <Text style={styles.successIcon}>✓</Text>
-              <Text style={styles.title}>You&apos;re marked present</Text>
+              <Text style={styles.title}>{t('staffAttendance.selfMark.markedPresent')}</Text>
               <Text style={styles.subtitle}>{record.attendanceDate}</Text>
               <Pressable style={styles.secondaryButton} onPress={() => navigation.goBack()}>
-                <Text style={styles.secondaryButtonText}>Done</Text>
+                <Text style={styles.secondaryButtonText}>{t('common.done')}</Text>
               </Pressable>
             </>
           ) : status === 'setByAdmin' ? (
@@ -161,16 +170,13 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
               <Text style={styles.title}>{t('staffAttendance.selfMark.setByAdminTitle')}</Text>
               {error && <ErrorNotice message={error} />}
               <Pressable style={styles.secondaryButton} onPress={() => navigation.goBack()}>
-                <Text style={styles.secondaryButtonText}>Done</Text>
+                <Text style={styles.secondaryButtonText}>{t('common.done')}</Text>
               </Pressable>
             </>
           ) : (
             <>
-              <Text style={styles.title}>Check in from the school</Text>
-              <Text style={styles.subtitle}>
-                We&apos;ll use your current location to confirm you&apos;re within the school&apos;s premises before
-                marking today&apos;s attendance.
-              </Text>
+              <Text style={styles.title}>{t('staffAttendance.selfMark.checkInTitle')}</Text>
+              <Text style={styles.subtitle}>{t('staffAttendance.selfMark.intro')}</Text>
               {error && <ErrorNotice message={error} />}
               <Pressable
                 style={styles.primaryButton}
@@ -181,18 +187,20 @@ export function MarkMyAttendanceScreen({ navigation }: Props) {
                   <ActivityIndicator color={colors.white} />
                 ) : (
                   <Text style={styles.primaryButtonText}>
-                    {status === 'error' ? 'Try again' : 'Mark my attendance'}
+                    {status === 'error'
+                      ? t('staffAttendance.selfMark.tryAgain')
+                      : t('staffAttendance.selfMark.markButton')}
                   </Text>
                 )}
               </Pressable>
-              {status === 'locating' && <Text style={styles.hint}>Getting your location...</Text>}
-              {status === 'verifying' && <Text style={styles.hint}>Checking this phone with Google Play...</Text>}
-              {status === 'submitting' && <Text style={styles.hint}>Verifying you&apos;re within range...</Text>}
+              {status === 'locating' && <Text style={styles.hint}>{t('staffAttendance.selfMark.locating')}</Text>}
+              {status === 'verifying' && <Text style={styles.hint}>{t('staffAttendance.selfMark.verifying')}</Text>}
+              {status === 'submitting' && <Text style={styles.hint}>{t('staffAttendance.selfMark.submitting')}</Text>}
             </>
           )}
         </View>
 
-        <Text style={styles.calendarTitle}>Past attendance</Text>
+        <Text style={styles.calendarTitle}>{t('staffAttendance.selfMark.pastAttendance')}</Text>
         <View style={styles.calendarCard}>
           {loadingMonth && <ActivityIndicator style={styles.loading} color={colors.primary} />}
           <MonthAttendanceCalendar month={month} onMonthChange={setMonth} recordsByDate={recordsByDate} />

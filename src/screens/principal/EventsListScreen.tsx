@@ -2,6 +2,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listClassNames } from '../../api/classSections';
 import { listEvents } from '../../api/events';
@@ -11,10 +12,12 @@ import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
+import { dateLocale } from '../../i18n/dateLocale';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { eventScopeTag, eventStatusLabel } from '../../utils/eventLabels';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventsList'>;
 
@@ -25,18 +28,12 @@ const CATEGORY_ICON: Record<string, string> = {
   OTHER: 'star',
 };
 
-const SCOPE_TAG: Record<string, { label: string; color: string }> = {
-  SCHOOL: { label: 'School-wide', color: '#0369A1' },
-  GRADE: { label: 'Grade', color: '#7C3AED' },
-  CLASS: { label: 'Class', color: '#059669' },
+// The scope tag's colour; its words come from eventScopeTag.
+const SCOPE_COLOR: Record<string, string> = {
+  SCHOOL: '#0369A1',
+  GRADE: '#7C3AED',
+  CLASS: '#059669',
 };
-
-function scopeLabel(event: SchoolEvent): string {
-  const tag = SCOPE_TAG[event.scope ?? ''];
-  if (!tag) return '';
-  if (event.scope === 'GRADE' && event.className) return `Grade ${event.className}`;
-  return tag.label;
-}
 
 function statusVariant(status: string | null): 'success' | 'warning' | 'error' | 'neutral' | 'info' {
   switch (status) {
@@ -52,6 +49,7 @@ function statusVariant(status: string | null): 'success' | 'warning' | 'error' |
 }
 
 export function EventsListScreen({ navigation }: Props) {
+  const { t, i18n } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -89,19 +87,19 @@ export function EventsListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="School Events" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('dashboard.features.events.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         {canCreate && (
           <Pressable style={styles.addButton} onPress={() => navigation.navigate('EventForm')}>
             <FontAwesome5 name="plus" size={14} color={colors.white} />
-            <Text style={styles.addButtonText}>Create event</Text>
+            <Text style={styles.addButtonText}>{t('events.create')}</Text>
           </Pressable>
         )}
 
         {canFilterByGrade && classNames.length > 0 && (
           <View style={styles.chips}>
             <Pressable style={[styles.chip, gradeFilter === null && styles.chipSelected]} onPress={() => setGradeFilter(null)}>
-              <Text style={[styles.chipText, gradeFilter === null && styles.chipTextSelected]}>All grades</Text>
+              <Text style={[styles.chipText, gradeFilter === null && styles.chipTextSelected]}>{t('events.allGrades')}</Text>
             </Pressable>
             {classNames.map((name) => (
               <Pressable
@@ -124,7 +122,7 @@ export function EventsListScreen({ navigation }: Props) {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
             !loading ? (
-              <Text style={styles.empty}>{error ? 'Could not load events.' : 'No events yet.'}</Text>
+              <Text style={styles.empty}>{error ? t('events.loadError') : t('events.empty')}</Text>
             ) : null
           }
           renderItem={({ item }) => (
@@ -136,18 +134,21 @@ export function EventsListScreen({ navigation }: Props) {
                 <View style={styles.rowTitleRow}>
                   <Text style={styles.rowTitle}>{item.name}</Text>
                   {item.scope && (
-                    <View style={[styles.scopeTag, { backgroundColor: `${SCOPE_TAG[item.scope]?.color}22` }]}>
-                      <Text style={[styles.scopeTagText, { color: SCOPE_TAG[item.scope]?.color }]}>{scopeLabel(item)}</Text>
+                    <View style={[styles.scopeTag, { backgroundColor: `${SCOPE_COLOR[item.scope]}22` }]}>
+                      <Text style={[styles.scopeTagText, { color: SCOPE_COLOR[item.scope] }]}>{eventScopeTag(item, null, t)}</Text>
                     </View>
                   )}
                 </View>
                 <Text style={styles.rowMeta}>
-                  {new Date(item.eventDate).toLocaleDateString()}
+                  {new Date(item.eventDate).toLocaleDateString(dateLocale(i18n.language))}
                   {item.venue ? ` · ${item.venue}` : ''}
                 </Text>
               </View>
               {item.participationStatus && (
-                <StatusChip label={item.participationStatus} variant={statusVariant(item.participationStatus)} />
+                <StatusChip
+                  label={eventStatusLabel(item.participationStatus, t)}
+                  variant={statusVariant(item.participationStatus)}
+                />
               )}
             </Pressable>
           )}

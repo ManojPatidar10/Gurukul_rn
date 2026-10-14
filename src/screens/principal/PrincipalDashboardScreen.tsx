@@ -192,12 +192,6 @@ const STUDENT_TILE_ORDER: FeatureId[] = [
 // Their words are under dashboard.studentCopy.<id> in the translations.
 const STUDENT_COPY_IDS: FeatureId[] = ['classes', 'fees'];
 
-// Students routes to the same screen admins use, but scoped to the classes a teacher teaches -
-// the copy needs to reflect that instead of the school-wide framing.
-const TEACHER_COPY: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>> = {
-  students: { title: 'My Students', description: 'Students in classes you teach' },
-};
-
 // The admin's Students, Admissions and Staff tiles cover more than their old single screen, so
 // their copy says what's behind them.
 const ADMIN_COPY_IDS: FeatureId[] = ['students', 'employees', 'admissions'];
@@ -234,6 +228,15 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [loadingCounts, setLoadingCounts] = useState(true);
   // Periods that need a substitute today; null until loaded, or when it couldn't be (plain label then).
   const [coverNeeded, setCoverNeeded] = useState<number | null>(null);
+
+  // A teacher's Students tile opens the same screen admins use (MyStudents), scoped to the classes
+  // they teach - the copy says that instead of the school-wide framing.
+  const teacherCopy: Partial<Record<FeatureId, Pick<FeatureAction, 'title' | 'description'>>> = {
+    students: {
+      title: t('dashboard.teacherCopy.students.title'),
+      description: t('dashboard.teacherCopy.students.description'),
+    },
+  };
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
@@ -308,7 +311,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           ? { ...feature, title: t(`dashboard.studentCopy.${feature.id}.title`), description: t(`dashboard.studentCopy.${feature.id}.description`) }
           : feature;
       }
-      if (isTeacher) return applyRoleCopy(feature, TEACHER_COPY);
+      if (isTeacher) return applyRoleCopy(feature, teacherCopy);
       return feature;
     });
 
@@ -382,21 +385,21 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
             <Pressable
               style={styles.headerChatButton}
               onPress={() => navigation.navigate('GlobalSearch')}
-              accessibilityLabel="Search"
+              accessibilityLabel={t('globalSearch.title')}
             >
               <FontAwesome5 name="search" size={18} color={colors.white} />
             </Pressable>
             <Pressable
               style={styles.headerChatButton}
               onPress={() => navigation.navigate('ConversationsList')}
-              accessibilityLabel="Messages"
+              accessibilityLabel={t('parentComms.messages')}
             >
               <FontAwesome5 name="comment-dots" size={18} color={colors.white} />
             </Pressable>
             <Pressable
               style={styles.headerChatButton}
               onPress={() => navigation.navigate('Profile')}
-              accessibilityLabel="Profile"
+              accessibilityLabel={t('common.profile')}
             >
               <FontAwesome5 name="user" size={18} color={colors.white} />
             </Pressable>
@@ -479,7 +482,11 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           ))}
         </View>
       </ScreenContainer>
-      <Pressable style={[styles.fab, { bottom: fabBottom }]} onPress={() => navigation.navigate('HelpdeskBot')} accessibilityLabel="Helpdesk Bot">
+      <Pressable
+        style={[styles.fab, { bottom: fabBottom }]}
+        onPress={() => navigation.navigate('HelpdeskBot')}
+        accessibilityLabel={t('helpdeskBot.title')}
+      >
         <FontAwesome5 name="robot" size={22} color={colors.white} />
       </Pressable>
     </View>

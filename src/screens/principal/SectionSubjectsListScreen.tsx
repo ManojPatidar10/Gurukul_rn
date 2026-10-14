@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { assignSectionSubject, listSectionSubjects } from '../../api/sectionSubjects';
 import { getEmployee } from '../../api/employees';
@@ -20,6 +21,7 @@ import { assessmentPermissions } from '../../utils/assessmentPermissions';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionSubjectsList'>;
 
 export function SectionSubjectsListScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const classSection = route.params.classSection;
@@ -88,13 +90,13 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Subjects"
+        subtitle={t('sectionDetail.subjects.title')}
         onBack={() => navigation.goBack()}
       />
       <ScreenContainer>
         {canAssign && (showAssign ? (
           <View style={styles.assignForm}>
-            <Text style={styles.label}>Subject</Text>
+            <Text style={styles.label}>{t('classSection.subjects.subject')}</Text>
             <SubjectPicker
               schoolId={schoolId}
               selectedId={subjectId}
@@ -103,9 +105,11 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
                 setSubjectLabel(`${s.name} (${s.code})`);
               }}
             />
-            {subjectLabel ? <Text style={styles.selectedHint}>Subject: {subjectLabel}</Text> : null}
+            {subjectLabel ? (
+              <Text style={styles.selectedHint}>{t('classSection.subjects.selectedSubject', { subject: subjectLabel })}</Text>
+            ) : null}
 
-            <Text style={[styles.label, { marginTop: spacing.md }]}>Teacher</Text>
+            <Text style={[styles.label, { marginTop: spacing.md }]}>{t('classSection.subjects.teacher')}</Text>
             <EmployeePicker
               schoolId={schoolId}
               selectedId={teacherId}
@@ -114,22 +118,26 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
                 setTeacherLabel(`${e.name} (${e.designation})`);
               }}
             />
-            {teacherLabel ? <Text style={styles.selectedHint}>Teacher: {teacherLabel}</Text> : null}
+            {teacherLabel ? (
+              <Text style={styles.selectedHint}>{t('classSection.subjects.selectedTeacher', { teacher: teacherLabel })}</Text>
+            ) : null}
 
             <Pressable
               style={[styles.addButton, (!subjectId || !teacherId || assigning) && styles.disabled]}
               onPress={handleAssign}
               disabled={!subjectId || !teacherId || assigning}
             >
-              <Text style={styles.addButtonText}>{assigning ? 'Assigning…' : 'Assign subject'}</Text>
+              <Text style={styles.addButtonText}>
+                {assigning ? t('classSection.subjects.assigning') : t('classSection.subjects.assign')}
+              </Text>
             </Pressable>
             <Pressable onPress={() => setShowAssign(false)}>
-              <Text style={styles.cancel}>Cancel</Text>
+              <Text style={styles.cancel}>{t('common.cancel')}</Text>
             </Pressable>
           </View>
         ) : (
           <Pressable style={styles.addButton} onPress={() => setShowAssign(true)}>
-            <Text style={styles.addButtonText}>+ Assign subject</Text>
+            <Text style={styles.addButtonText}>{t('classSection.subjects.add')}</Text>
           </Pressable>
         ))}
 
@@ -143,7 +151,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
             loading ? (
               <ActivityIndicator style={styles.loader} color={colors.primary} />
             ) : (
-              <Text style={styles.empty}>No subjects assigned to this section yet.</Text>
+              <Text style={styles.empty}>{t('classSection.subjects.empty')}</Text>
             )
           }
           renderItem={({ item }) => (
@@ -156,7 +164,7 @@ export function SectionSubjectsListScreen({ route, navigation }: Props) {
                 <Text style={styles.rowName}>
                   {item.subjectName} ({item.subjectCode})
                 </Text>
-                <Text style={styles.rowMeta}>Teacher: {item.teacherName}</Text>
+                <Text style={styles.rowMeta}>{t('classSection.subjects.rowTeacher', { name: item.teacherName })}</Text>
               </View>
             </Pressable>
           )}

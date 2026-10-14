@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getSectionAttendanceHistory } from '../../api/attendance';
 import type { ClassSection, SectionAttendanceHistory } from '../../api/types';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function SectionAttendanceHistoryBody({ classSection, onSelectStudent }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [history, setHistory] = useState<SectionAttendanceHistory | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export function SectionAttendanceHistoryBody({ classSection, onSelectStudent }: 
         {error && <ErrorNotice message={error} />}
 
         {history && history.students.length === 0 && (
-          <Text style={styles.empty}>0 students in this section.</Text>
+          <Text style={styles.empty}>{t('attendance.noStudents')}</Text>
         )}
 
         {history?.students.map((student) => {
@@ -47,10 +49,10 @@ export function SectionAttendanceHistoryBody({ classSection, onSelectStudent }: 
             >
               <View style={styles.rowBody}>
                 <Text style={styles.rowName}>
-                  {student.studentName} · Roll {student.rollNumber}
+                  {t('attendance.studentRow', { name: student.studentName, roll: student.rollNumber })}
                 </Text>
                 <Text style={styles.rowMeta}>
-                  {student.totalRecords} day{student.totalRecords === 1 ? '' : 's'} recorded
+                  {t('attendance.sectionHistory.daysRecorded', { count: student.totalRecords })}
                 </Text>
               </View>
               <Text style={styles.rowPercent}>{percentPresent === null ? '—' : `${percentPresent}%`}</Text>

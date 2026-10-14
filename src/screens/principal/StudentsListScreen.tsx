@@ -15,6 +15,7 @@ import { useToast } from '../../context/ToastContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { personStatusLabel } from '../../utils/personLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -44,13 +45,7 @@ const StudentRow = memo(function StudentRow({
         </Text>
       </View>
       <StatusChip
-        label={
-          student.status === 'ACTIVE'
-            ? t('common.active')
-            : student.status === 'INACTIVE'
-              ? t('common.inactive')
-              : student.status
-        }
+        label={personStatusLabel(student.status, t)}
         variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
       />
     </Pressable>
@@ -138,7 +133,7 @@ export function StudentsListScreen({ navigation }: Props) {
           <Text style={styles.addButtonText}>{t('students.list.addButton')}</Text>
         </Pressable>
 
-        <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name or roll number" />
+        <SearchBar value={query} onChangeText={setQuery} placeholder={t('students.list.searchPlaceholder')} />
 
         {error && <ErrorNotice message={error} />}
 

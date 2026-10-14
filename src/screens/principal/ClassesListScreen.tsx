@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listClassNames } from '../../api/classSections';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -14,6 +15,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'ClassesList'>;
 
 export function ClassesListScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const homeroom = route.params?.homeroom;
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
@@ -44,7 +46,7 @@ export function ClassesListScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Classes" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('dashboard.features.classes.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
         {error && <ErrorNotice message={error} />}
         <FlatList
@@ -60,11 +62,11 @@ export function ClassesListScreen({ route, navigation }: Props) {
                 onPress={() => navigation.navigate('SectionDetail', { classSection: homeroom })}
               >
                 <View style={styles.homeroomText}>
-                  <Text style={styles.homeroomLabel}>My class</Text>
+                  <Text style={styles.homeroomLabel}>{t('classSection.classes.myClass')}</Text>
                   <Text style={styles.rowName}>
                     {homeroom.className} - {homeroom.section}
                   </Text>
-                  <Text style={styles.homeroomMeta}>Attendance, fees, marks and report cards</Text>
+                  <Text style={styles.homeroomMeta}>{t('classSection.classes.myClassHint')}</Text>
                 </View>
                 <Text style={styles.chevron}>›</Text>
               </Pressable>
@@ -73,9 +75,7 @@ export function ClassesListScreen({ route, navigation }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
-                {error
-                  ? 'Could not load classes.'
-                  : '0 classes yet — a class appears here once a class-section is created for it (via Students → enroll/transfer).'}
+                {error ? t('classSection.classes.loadError') : t('classSection.classes.empty')}
               </Text>
             ) : null
           }

@@ -16,6 +16,7 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import { attendanceMethodLabel, attendanceStatusLabel } from '../../utils/attendanceLabels';
 import { changedStaffAttendanceRecords } from '../../utils/staffAttendance';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'StaffAttendance'>;
@@ -122,13 +123,17 @@ export function StaffAttendanceScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Staff Attendance" subtitle="Today's check-ins" onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('dashboard.features.staffAttendance.title')}
+        subtitle={t('staffAttendance.subtitle')}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         <View style={styles.dateNav}>
           <Pressable style={styles.dateNavButton} onPress={() => shiftDate(-1)}>
             <Text style={styles.dateNavButtonText}>‹</Text>
           </Pressable>
-          <Text style={styles.dateText}>{isToday(date) ? `Today · ${date}` : date}</Text>
+          <Text style={styles.dateText}>{isToday(date) ? t('staffAttendance.today', { date }) : date}</Text>
           <Pressable style={styles.dateNavButton} onPress={() => shiftDate(1)} disabled={isToday(date)}>
             <Text style={[styles.dateNavButtonText, isToday(date) && styles.dateNavButtonDisabled]}>›</Text>
           </Pressable>
@@ -153,11 +158,11 @@ export function StaffAttendanceScreen({ navigation }: Props) {
                 <Text style={styles.summaryValue}>
                   {markedCount}/{roster.entries.length}
                 </Text>
-                <Text style={styles.summaryLabel}>Marked</Text>
+                <Text style={styles.summaryLabel}>{t('staffAttendance.marked')}</Text>
               </View>
               <View style={styles.summaryStat}>
                 <Text style={styles.summaryValue}>{selfMarkedCount}</Text>
-                <Text style={styles.summaryLabel}>Self check-in</Text>
+                <Text style={styles.summaryLabel}>{t('staffAttendance.selfCheckIns')}</Text>
               </View>
             </View>
 
@@ -168,14 +173,14 @@ export function StaffAttendanceScreen({ navigation }: Props) {
             )}
             {editing && <Text style={styles.editHint}>{t('staffAttendance.editHint')}</Text>}
 
-            {roster.entries.length === 0 && <Text style={styles.empty}>No staff records for this school yet.</Text>}
+            {roster.entries.length === 0 && <Text style={styles.empty}>{t('staffAttendance.empty')}</Text>}
             {editing &&
               roster.entries.map((entry) => (
                 <View key={entry.employeeId} style={styles.editRow}>
                   <Text style={styles.rowName}>{entry.employeeName}</Text>
                   <Text style={styles.rowMeta}>
                     {entry.designation}
-                    {entry.selfMarked ? ' · 📍 self check-in' : ''}
+                    {entry.selfMarked ? ` · ${t('staffAttendance.selfCheckInTag')}` : ''}
                   </Text>
                   <View style={styles.statusRow}>
                     {STATUSES.map((status) => {
@@ -190,7 +195,7 @@ export function StaffAttendanceScreen({ navigation }: Props) {
                           onPress={() => setDraft((prev) => ({ ...prev, [entry.employeeId]: status }))}
                         >
                           <Text style={[styles.statusChipText, selected && styles.statusChipTextSelected]}>
-                            {t(`staffAttendance.statuses.${status}`)}
+                            {attendanceStatusLabel(status, t)}
                           </Text>
                         </Pressable>
                       );
@@ -229,12 +234,12 @@ export function StaffAttendanceScreen({ navigation }: Props) {
                     <Text style={styles.rowName}>{entry.employeeName}</Text>
                     <Text style={styles.rowMeta}>
                       {entry.designation}
-                      {entry.selfMarked ? ' · 📍 self check-in' : ''}
-                      {entry.method ? ` · ${methodEmoji[entry.method]} ${entry.method.toLowerCase()}` : ''}
+                      {entry.selfMarked ? ` · ${t('staffAttendance.selfCheckInTag')}` : ''}
+                      {entry.method ? ` · ${methodEmoji[entry.method]} ${attendanceMethodLabel(entry.method, t)}` : ''}
                     </Text>
                   </View>
                   <StatusChip
-                    label={entry.status ? entry.status.replace('_', ' ') : 'Not marked'}
+                    label={entry.status ? attendanceStatusLabel(entry.status, t) : t('staffAttendance.notMarked')}
                     variant={entry.status ? statusVariant[entry.status] : 'neutral'}
                   />
                 </Pressable>

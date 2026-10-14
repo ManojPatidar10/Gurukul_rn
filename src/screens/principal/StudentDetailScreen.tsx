@@ -22,8 +22,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
 import { useGoogleMeetGate } from '../../hooks/useGoogleMeetGate';
+import { dateLocale } from '../../i18n/dateLocale';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { genderLabel, personStatusLabel } from '../../utils/personLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
@@ -39,7 +41,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function StudentDetailScreen({ route, navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const isViewerStudent = session.ownerType === 'STUDENT';
@@ -183,7 +185,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
           <View style={styles.heroText}>
             <Text style={styles.heroName}>{student.name}</Text>
             <StatusChip
-              label={student.status === 'ACTIVE' ? t('common.active') : student.status}
+              label={personStatusLabel(student.status, t)}
               variant={student.status === 'ACTIVE' ? 'success' : 'neutral'}
             />
           </View>
@@ -214,7 +216,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
         <View style={styles.card}>
           <Field label={t('students.detail.classSection')} value={student.classSectionLabel} />
           <Field label={t('students.detail.dob')} value={student.dob} />
-          <Field label={t('students.detail.gender')} value={student.gender} />
+          <Field label={t('students.detail.gender')} value={genderLabel(student.gender, t)} />
           {isViewerAdmin && student.registrationNumber && (
             <Field label={t('students.detail.registrationNumber')} value={student.registrationNumber} />
           )}
@@ -248,11 +250,11 @@ export function StudentDetailScreen({ route, navigation }: Props) {
               <Text style={styles.actionText}>{t('students.detail.attendance')}</Text>
             </Pressable>
             <Pressable style={styles.actionButton} onPress={() => navigation.navigate('ReportCard', { student })}>
-              <Text style={styles.actionText}>Report card</Text>
+              <Text style={styles.actionText}>{t('students.detail.reportCard')}</Text>
             </Pressable>
             {isViewerAdmin && (
               <Pressable style={styles.actionButton} onPress={() => setShowCredentials((v) => !v)}>
-                <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : 'Set login credentials'}</Text>
+                <Text style={styles.actionText}>{showCredentials ? t('common.cancel') : t('credentials.set')}</Text>
               </Pressable>
             )}
             {isViewerAdmin && (
@@ -270,7 +272,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
                   if (!showInvite) handleGenerateInvite();
                 }}
               >
-                <Text style={styles.actionText}>{showInvite ? t('common.cancel') : 'Generate invite code'}</Text>
+                <Text style={styles.actionText}>{showInvite ? t('common.cancel') : t('students.detail.generateInvite')}</Text>
               </Pressable>
             )}
             {isViewerAdmin && (
@@ -283,16 +285,16 @@ export function StudentDetailScreen({ route, navigation }: Props) {
 
         {isViewerAdmin && showCredentials && (
           <View style={styles.transferPanel}>
-            <Text style={styles.transferTitle}>Create student login</Text>
+            <Text style={styles.transferTitle}>{t('students.detail.createLogin')}</Text>
             {createdCredential ? (
               <View>
                 <Text style={styles.success}>
-                  Credential created. Share these with {student.name} — they won&apos;t be shown again:
+                  {t('credentials.created', { name: student.name })}
                 </Text>
                 <View style={styles.credentialBox}>
-                  <Text style={styles.credentialLabel}>Username</Text>
+                  <Text style={styles.credentialLabel}>{t('credentials.username')}</Text>
                   <Text style={styles.credentialValue}>{createdCredential.username}</Text>
-                  <Text style={[styles.credentialLabel, { marginTop: spacing.sm }]}>Password</Text>
+                  <Text style={[styles.credentialLabel, { marginTop: spacing.sm }]}>{t('credentials.password')}</Text>
                   <Text style={styles.credentialValue}>{createdCredential.password}</Text>
                 </View>
                 <Pressable
@@ -302,13 +304,13 @@ export function StudentDetailScreen({ route, navigation }: Props) {
                     setPassword('');
                   }}
                 >
-                  <Text style={styles.doneLink}>Done</Text>
+                  <Text style={styles.doneLink}>{t('common.done')}</Text>
                 </Pressable>
               </View>
             ) : (
               <>
-                <LabeledInput label="Username" value={username} onChangeText={setUsername} autoCapitalize="none" />
-                <LabeledInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+                <LabeledInput label={t('credentials.username')} value={username} onChangeText={setUsername} autoCapitalize="none" />
+                <LabeledInput label={t('credentials.password')} value={password} onChangeText={setPassword} secureTextEntry />
                 {credentialError && <ErrorNotice message={credentialError} />}
                 <Pressable
                   style={[styles.credentialSubmit, (!username || !password || creatingCredential) && styles.disabled]}
@@ -316,7 +318,7 @@ export function StudentDetailScreen({ route, navigation }: Props) {
                   disabled={!username || !password || creatingCredential}
                 >
                   <Text style={styles.credentialSubmitText}>
-                    {creatingCredential ? 'Creating…' : 'Create credential'}
+                    {creatingCredential ? t('common.creating') : t('credentials.create')}
                   </Text>
                 </Pressable>
               </>
@@ -326,17 +328,19 @@ export function StudentDetailScreen({ route, navigation }: Props) {
 
         {isViewerAdmin && showInvite && (
           <View style={styles.transferPanel}>
-            <Text style={styles.transferTitle}>Student invite code</Text>
-            {generatingInvite && <Text style={styles.transferring}>Generating…</Text>}
+            <Text style={styles.transferTitle}>{t('students.detail.inviteTitle')}</Text>
+            {generatingInvite && <Text style={styles.transferring}>{t('students.detail.generating')}</Text>}
             {inviteError && <ErrorNotice message={inviteError} />}
             {inviteResult && (
               <View>
                 <Text style={styles.success}>
-                  Share this code with {student.name} to register — it expires{' '}
-                  {new Date(inviteResult.expiresAt).toLocaleString()}:
+                  {t('students.detail.inviteShare', {
+                    name: student.name,
+                    date: new Date(inviteResult.expiresAt).toLocaleString(dateLocale(i18n.language)),
+                  })}
                 </Text>
                 <View style={styles.credentialBox}>
-                  <Text style={styles.credentialLabel}>Invite code</Text>
+                  <Text style={styles.credentialLabel}>{t('students.detail.inviteCode')}</Text>
                   <Text style={styles.credentialValue}>{inviteResult.code}</Text>
                 </View>
               </View>

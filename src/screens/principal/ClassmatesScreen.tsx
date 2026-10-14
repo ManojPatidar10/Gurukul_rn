@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getStudent, listAllStudents } from '../../api/students';
 import type { Student } from '../../api/types';
@@ -13,12 +14,14 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { personStatusLabel } from '../../utils/personLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Classmates'>;
 
 export function ClassmatesScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -49,18 +52,18 @@ export function ClassmatesScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="My Classmates" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('students.classmates.title')} onBack={() => navigation.goBack()} />
       <View style={styles.body}>
-        <SearchBar value={query} onChangeText={setQuery} placeholder="Search by name" />
+        <SearchBar value={query} onChangeText={setQuery} placeholder={t('students.classmates.searchPlaceholder')} />
 
         {sections.length > 0 && (
           <View style={styles.chips}>
             <Pressable style={[styles.chip, section === null && styles.chipSelected]} onPress={() => setSection(null)}>
-              <Text style={[styles.chipText, section === null && styles.chipTextSelected]}>All</Text>
+              <Text style={[styles.chipText, section === null && styles.chipTextSelected]}>{t('students.classmates.all')}</Text>
             </Pressable>
             {sections.map((s) => (
               <Pressable key={s} style={[styles.chip, section === s && styles.chipSelected]} onPress={() => setSection(s)}>
-                <Text style={[styles.chipText, section === s && styles.chipTextSelected]}>Section {s}</Text>
+                <Text style={[styles.chipText, section === s && styles.chipTextSelected]}>{t('students.classmates.section', { section: s })}</Text>
               </Pressable>
             ))}
           </View>
@@ -76,7 +79,11 @@ export function ClassmatesScreen({ navigation }: Props) {
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.empty}>
-                {error ? 'Could not load classmates.' : query ? 'No match found.' : 'No classmates found.'}
+                {error
+                  ? t('students.classmates.loadError')
+                  : query
+                    ? t('students.classmates.noMatch')
+                    : t('students.classmates.empty')}
               </Text>
             ) : null
           }
@@ -86,10 +93,13 @@ export function ClassmatesScreen({ navigation }: Props) {
               <View style={styles.rowMain}>
                 <Text style={styles.rowName}>{item.name}</Text>
                 <Text style={styles.rowMeta}>
-                  Roll {item.rollNumber} · Section {item.section}
+                  {t('students.classmates.rowMeta', { roll: item.rollNumber, section: item.section })}
                 </Text>
               </View>
-              <StatusChip label={item.status} variant={item.status === 'ACTIVE' ? 'success' : 'neutral'} />
+              <StatusChip
+                label={personStatusLabel(item.status, t)}
+                variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}
+              />
             </Pressable>
           )}
         />

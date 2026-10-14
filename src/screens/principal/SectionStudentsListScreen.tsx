@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { listStudentsInClassSection } from '../../api/classSections';
 import type { Student } from '../../api/types';
@@ -11,12 +12,14 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
+import { personStatusLabel } from '../../utils/personLabels';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'SectionStudentsList'>;
 
 export function SectionStudentsListScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
   const listBottom = useBottomInset();
   const schoolId = useSchoolId();
   const classSection = route.params.classSection;
@@ -35,7 +38,7 @@ export function SectionStudentsListScreen({ route, navigation }: Props) {
     <View style={styles.root}>
       <ScreenHeader
         title={`${classSection.className} - ${classSection.section}`}
-        subtitle="Students"
+        subtitle={t('sectionDetail.students.title')}
         onBack={() => navigation.goBack()}
       />
       <View style={styles.body}>
@@ -45,15 +48,18 @@ export function SectionStudentsListScreen({ route, navigation }: Props) {
           contentContainerStyle={{ paddingBottom: listBottom }}
           data={students}
           keyExtractor={(item) => item.id}
-          ListEmptyComponent={!loading ? <Text style={styles.empty}>0 students in this section.</Text> : null}
+          ListEmptyComponent={!loading ? <Text style={styles.empty}>{t('classSection.students.empty')}</Text> : null}
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => navigation.navigate('StudentDetail', { student: item })}>
               <AvatarBadge name={item.name} accentKey="students" />
               <View style={styles.rowMain}>
                 <Text style={styles.rowName}>{item.name}</Text>
-                <Text style={styles.rowMeta}>Roll {item.rollNumber}</Text>
+                <Text style={styles.rowMeta}>{t('classSection.students.roll', { roll: item.rollNumber })}</Text>
               </View>
-              <StatusChip label={item.status} variant={item.status === 'ACTIVE' ? 'success' : 'neutral'} />
+              <StatusChip
+                label={personStatusLabel(item.status, t)}
+                variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}
+              />
             </Pressable>
           )}
         />

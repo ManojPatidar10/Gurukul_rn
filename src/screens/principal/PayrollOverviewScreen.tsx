@@ -14,13 +14,9 @@ import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { formatInr } from '../../utils/money';
-import { runStatusLabel } from '../../utils/payroll';
+import { runMonthLabel, runStatusLabel } from '../../utils/payroll';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PayrollOverview'>;
-
-const MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
 
 export function PayrollOverviewScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -78,9 +74,7 @@ export function PayrollOverviewScreen({ navigation }: Props) {
                   onPress={() => runId && navigation.navigate('PayrollRun', { runId })}
                 >
                   <View style={styles.rowMain}>
-                    <Text style={styles.rowName}>
-                      {MONTH_NAMES[run.month - 1] ?? run.month} {run.year}
-                    </Text>
+                    <Text style={styles.rowName}>{runMonthLabel(run.month, run.year, t)}</Text>
                     <Text style={styles.rowMeta}>
                       {t('payroll.overview.runSubtitle', { count: run.employeeCount })} · {formatInr(run.totalNet)}
                     </Text>

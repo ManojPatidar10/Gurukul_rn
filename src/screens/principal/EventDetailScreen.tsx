@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getClassSection } from '../../api/classSections';
 import {
@@ -21,18 +22,22 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
+import { dateLocale } from '../../i18n/dateLocale';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { getErrorMessage } from '../../api/errorMessage';
 import { ErrorNotice } from '../../components/ErrorNotice';
+import {
+  eventCategoryLabel,
+  eventResponseLabel,
+  eventRsvpLabel,
+  eventScopeTag,
+  eventStatusLabel,
+} from '../../utils/eventLabels';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'EventDetail'>;
 
-const RSVP_OPTIONS: { key: EventRsvpStatus; label: string }[] = [
-  { key: 'ACCEPTED', label: "I'm attending" },
-  { key: 'MAYBE', label: 'Maybe' },
-  { key: 'DECLINED', label: "Can't make it" },
-];
+const RSVP_OPTIONS: EventRsvpStatus[] = ['ACCEPTED', 'MAYBE', 'DECLINED'];
 
 function statusVariant(status: string | null): 'success' | 'warning' | 'error' | 'neutral' | 'info' {
   switch (status) {
@@ -47,13 +52,16 @@ function statusVariant(status: string | null): 'success' | 'warning' | 'error' |
   }
 }
 
-const SCOPE_TAG: Record<string, { label: string; color: string }> = {
-  SCHOOL: { label: 'School-wide', color: '#0369A1' },
-  GRADE: { label: 'Grade', color: '#7C3AED' },
-  CLASS: { label: 'Class', color: '#059669' },
+// The scope tag's colour; its words come from eventScopeTag.
+const SCOPE_COLOR: Record<string, string> = {
+  SCHOOL: '#0369A1',
+  GRADE: '#7C3AED',
+  CLASS: '#059669',
 };
 
 export function EventDetailScreen({ route, navigation }: Props) {
+  const { t, i18n } = useTranslation();
+  const locale = dateLocale(i18n.language);
   const { eventId } = route.params;
   const schoolId = useSchoolId();
   const { session } = useAuth();
@@ -161,10 +169,10 @@ export function EventDetailScreen({ route, navigation }: Props) {
   };
 
   const handleCancel = () => {
-    Alert.alert('Cancel event', 'This will mark the event as cancelled. Continue?', [
-      { text: 'No', style: 'cancel' },
+    Alert.alert(t('events.detail.cancelEvent'), t('events.detail.cancelMessage'), [
+      { text: t('events.detail.no'), style: 'cancel' },
       {
-        text: 'Cancel event',
+        text: t('events.detail.cancelEvent'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -197,7 +205,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   if (loading) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Event" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('events.detail.title')} onBack={() => navigation.goBack()} />
         <ActivityIndicator color={colors.primary} style={styles.loading} />
       </View>
     );
@@ -206,9 +214,9 @@ export function EventDetailScreen({ route, navigation }: Props) {
   if (!event) {
     return (
       <View style={styles.root}>
-        <ScreenHeader title="Event" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('events.detail.title')} onBack={() => navigation.goBack()} />
         <ScreenContainer>
-          <ErrorNotice message={error ?? 'Could not load this event.'} />
+          <ErrorNotice message={error ?? t('events.detail.loadError')} />
         </ScreenContainer>
       </View>
     );
@@ -218,22 +226,25 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={event.name} subtitle={event.category ?? undefined} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={event.name}
+        subtitle={event.category ? eventCategoryLabel(event.category, t) : undefined}
+        onBack={() => navigation.goBack()}
+      />
       <ScreenContainer>
         <View style={styles.card}>
           {(event.participationStatus || event.scope) && (
             <View style={styles.statusRow}>
               {event.participationStatus && (
-                <StatusChip label={event.participationStatus} variant={statusVariant(event.participationStatus)} />
+                <StatusChip
+                  label={eventStatusLabel(event.participationStatus, t)}
+                  variant={statusVariant(event.participationStatus)}
+                />
               )}
               {event.scope && (
-                <View style={[styles.scopeTag, { backgroundColor: `${SCOPE_TAG[event.scope]?.color}22` }]}>
-                  <Text style={[styles.scopeTagText, { color: SCOPE_TAG[event.scope]?.color }]}>
-                    {event.scope === 'GRADE' && event.className
-                      ? `Grade ${event.className}`
-                      : event.scope === 'CLASS' && classSectionLabel
-                        ? classSectionLabel
-                        : (SCOPE_TAG[event.scope]?.label ?? event.scope)}
+                <View style={[styles.scopeTag, { backgroundColor: `${SCOPE_COLOR[event.scope]}22` }]}>
+                  <Text style={[styles.scopeTagText, { color: SCOPE_COLOR[event.scope] }]}>
+                    {eventScopeTag(event, classSectionLabel, t)}
                   </Text>
                 </View>
               )}
@@ -243,28 +254,30 @@ export function EventDetailScreen({ route, navigation }: Props) {
           {event.venue && <Text style={styles.meta}>📍 {event.venue}</Text>}
           {event.startAt && event.endAt && (
             <Text style={styles.meta}>
-              🗓 {new Date(event.startAt).toLocaleString()} — {new Date(event.endAt).toLocaleString()}
+              🗓 {new Date(event.startAt).toLocaleString(locale)} — {new Date(event.endAt).toLocaleString(locale)}
             </Text>
           )}
-          <Text style={styles.meta}>By {event.createdByEmployeeName}</Text>
+          <Text style={styles.meta}>{t('events.detail.by', { name: event.createdByEmployeeName })}</Text>
         </View>
 
         {error && <ErrorNotice message={error} />}
 
-        {isCancelled && <Text style={styles.cancelledNote}>This event has been cancelled.</Text>}
+        {isCancelled && <Text style={styles.cancelledNote}>{t('events.detail.cancelledNote')}</Text>}
 
         {!isCancelled && event.participationType === 'RSVP' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Will you attend?</Text>
+            <Text style={styles.sectionTitle}>{t('events.detail.rsvpTitle')}</Text>
             <View style={styles.chips}>
-              {RSVP_OPTIONS.map((opt) => (
+              {RSVP_OPTIONS.map((option) => (
                 <Pressable
-                  key={opt.key}
-                  style={[styles.chip, event.myRsvpStatus === opt.key && styles.chipSelected]}
-                  onPress={() => handleRsvp(opt.key)}
+                  key={option}
+                  style={[styles.chip, event.myRsvpStatus === option && styles.chipSelected]}
+                  onPress={() => handleRsvp(option)}
                   disabled={submitting}
                 >
-                  <Text style={[styles.chipText, event.myRsvpStatus === opt.key && styles.chipTextSelected]}>{opt.label}</Text>
+                  <Text style={[styles.chipText, event.myRsvpStatus === option && styles.chipTextSelected]}>
+                    {eventRsvpLabel(option, t)}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -273,10 +286,10 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
         {!isCancelled && event.participationType === 'REGISTRATION' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Register to participate</Text>
+            <Text style={styles.sectionTitle}>{t('events.detail.registerTitle')}</Text>
             {event.myRegistrationAnswers ? (
               <View style={styles.registeredBox}>
-                <Text style={styles.registeredNote}>You&apos;re registered:</Text>
+                <Text style={styles.registeredNote}>{t('events.detail.registered')}</Text>
                 {Object.entries(event.myRegistrationAnswers).map(([key, value]) => (
                   <Text key={key} style={styles.meta}>
                     {key}: {value}
@@ -298,7 +311,9 @@ export function EventDetailScreen({ route, navigation }: Props) {
                   onPress={handleSubmitRegistration}
                   disabled={submitting}
                 >
-                  <Text style={styles.submitText}>{submitting ? 'Submitting…' : 'Submit registration'}</Text>
+                  <Text style={styles.submitText}>
+                    {submitting ? t('events.detail.submitting') : t('events.detail.submitRegistration')}
+                  </Text>
                 </Pressable>
               </>
             )}
@@ -307,7 +322,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
         {!isCancelled && event.participationType === 'POLL' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Vote</Text>
+            <Text style={styles.sectionTitle}>{t('events.detail.vote')}</Text>
             {(poll?.options ?? []).map((opt) => (
               <Pressable
                 key={opt.id}
@@ -327,15 +342,20 @@ export function EventDetailScreen({ route, navigation }: Props) {
                 </Text>
               </Pressable>
             ))}
-            {poll && poll.options.length === 0 && <Text style={styles.meta}>No options added yet.</Text>}
+            {poll && poll.options.length === 0 && <Text style={styles.meta}>{t('events.detail.noOptions')}</Text>}
 
             {isCreatorOrAdmin && (
               <View style={styles.addFieldRow}>
                 <View style={styles.addFieldInput}>
-                  <LabeledInput label="Add option" value={newOptionLabel} onChangeText={setNewOptionLabel} placeholder="e.g. Design A" />
+                  <LabeledInput
+                    label={t('events.detail.addOption')}
+                    value={newOptionLabel}
+                    onChangeText={setNewOptionLabel}
+                    placeholder={t('events.detail.optionPlaceholder')}
+                  />
                 </View>
                 <Pressable style={styles.addFieldButton} onPress={handleAddOption} disabled={!newOptionLabel.trim() || submitting}>
-                  <Text style={styles.addFieldButtonText}>Add</Text>
+                  <Text style={styles.addFieldButtonText}>{t('common.add')}</Text>
                 </Pressable>
               </View>
             )}
@@ -345,13 +365,15 @@ export function EventDetailScreen({ route, navigation }: Props) {
         {isCreatorOrAdmin && (event.participationType === 'RSVP' || event.participationType === 'REGISTRATION') && (
           <View style={styles.section}>
             <Pressable style={styles.rosterButton} onPress={loadRoster}>
-              <Text style={styles.rosterButtonText}>{rosterLoading ? 'Loading…' : 'View responses'}</Text>
+              <Text style={styles.rosterButtonText}>
+                {rosterLoading ? t('common.loading') : t('events.detail.viewResponses')}
+              </Text>
             </Pressable>
             {event.participationType === 'RSVP' &&
               rsvps?.map((r) => (
                 <View key={r.ownerId} style={styles.rosterRow}>
                   <Text style={styles.rosterName}>{r.name}</Text>
-                  <Text style={styles.rosterStatus}>{r.status}</Text>
+                  <Text style={styles.rosterStatus}>{eventResponseLabel(r.status, t)}</Text>
                 </View>
               ))}
             {event.participationType === 'REGISTRATION' &&
@@ -366,7 +388,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
         {isCreatorOrAdmin && !isCancelled && (
           <Pressable style={styles.cancelButton} onPress={handleCancel}>
-            <Text style={styles.cancelButtonText}>Cancel event</Text>
+            <Text style={styles.cancelButtonText}>{t('events.detail.cancelEvent')}</Text>
           </Pressable>
         )}
       </ScreenContainer>

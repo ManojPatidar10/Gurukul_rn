@@ -53,12 +53,12 @@ export interface PlayIntegrityDeps {
 }
 
 /**
- * The phone couldn't get a Play Integrity token. The message is for the teacher; `code` (an
- * ERR_INTEGRITY_* code) goes to the server in REPORT mode as `integrityClientError`.
+ * The phone couldn't get a Play Integrity token. The message is for the teacher (the screen words it
+ * by `code`); `code` (an ERR_* code) also goes to the server in REPORT mode as `integrityClientError`.
  */
 class IntegrityTokenError extends SelfMarkLocationError {
   constructor(public code: string) {
-    super(integrityErrorMessage(code));
+    super(integrityErrorMessage(code), code);
   }
 }
 

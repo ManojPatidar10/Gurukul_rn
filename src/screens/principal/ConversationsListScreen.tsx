@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { getConversationMessages, listConversations } from '../../api/chat';
 import type { Conversation } from '../../api/types';
@@ -38,6 +39,7 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
 }
 
 export function ConversationsListScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { session } = useAuth();
   const cacheKey = `${schoolId}:${session.ownerType}:${session.ownerId}`;
@@ -97,22 +99,22 @@ export function ConversationsListScreen({ navigation }: Props) {
 
   const otherPartyName = (conversation: Conversation) => {
     const other = otherParty(conversation);
-    if (!other) return 'Conversation';
-    return other.name ?? 'Unknown';
+    if (!other) return t('chat.list.conversation');
+    return other.name ?? t('chat.list.unknownName');
   };
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Messages" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('parentComms.messages')} onBack={() => navigation.goBack()} />
       <ScreenContainer padded={false}>
         <View style={styles.actionsRow}>
           <Pressable style={styles.newButton} onPress={() => navigation.navigate('NewConversation')}>
-            <Text style={styles.newButtonText}>+ New Conversation</Text>
+            <Text style={styles.newButtonText}>{t('chat.list.newConversation')}</Text>
           </Pressable>
         </View>
         {loading && <ActivityIndicator style={styles.loading} color={colors.primary} />}
         {error && <ErrorNotice message={error} inset />}
-        {!loading && conversations.length === 0 && <Text style={styles.empty}>No conversations yet.</Text>}
+        {!loading && conversations.length === 0 && <Text style={styles.empty}>{t('chat.list.empty')}</Text>}
         <FlatList
           data={conversations}
           scrollEnabled={false}

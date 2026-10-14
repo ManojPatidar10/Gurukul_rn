@@ -22,6 +22,7 @@ import { useLanguage } from '../../i18n/useLanguage';
 import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { missingLabelKey } from '../../utils/idCard';
+import { roleLabel } from '../../utils/personLabels';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Profile'>;
 
@@ -202,7 +203,7 @@ export function ProfileScreen({ navigation }: Props) {
               <Text style={styles.avatarText}>{session.username.trim().charAt(0).toUpperCase()}</Text>
             </View>
             <Text style={styles.identityName}>{session.username}</Text>
-            <Text style={styles.identityRole}>{session.role}</Text>
+            <Text style={styles.identityRole}>{roleLabel(session.role, t)}</Text>
           </View>
         )}
 
