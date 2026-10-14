@@ -5,6 +5,8 @@ import type {
   FeeAssessment,
   FeeAssessmentFilters,
   FeeAssessmentSummary,
+  FeeOverdueReminderResult,
+  FeeReminderResult,
   PayrollOverview,
 } from './types';
 import { feeAssessmentQuery } from '../utils/feeBills';
@@ -39,6 +41,20 @@ export function addFeeAdjustment(schoolId: string, id: string, req: FeeAdjustmen
 /** Only a bill with no payments on it can be cancelled; cancelling it again changes nothing. */
 export function cancelFeeAssessment(schoolId: string, id: string, reason: string) {
   return api.post<FeeAssessment>(`/api/v1/fee-assessments/${id}/cancel`, { reason }, schoolId);
+}
+
+/** Admin: the fee-due push to the bill's family now. At most once per bill per family a day. */
+export function sendFeeReminder(schoolId: string, id: string) {
+  return api.post<FeeReminderResult>(`/api/v1/fee-assessments/${id}/remind`, {}, schoolId);
+}
+
+/** Admin: the same push for every overdue bill in a year (left out: the current one) and class (left out: all). */
+export function remindOverdueFees(schoolId: string, scope: Pick<FeeAssessmentFilters, 'academicYear' | 'classSectionId'> = {}) {
+  return api.post<FeeOverdueReminderResult>(
+    '/api/v1/fee-assessments/overdue-reminders',
+    { academicYear: scope.academicYear, classSectionId: scope.classSectionId },
+    schoolId
+  );
 }
 
 export function listStudentFeeAssessments(schoolId: string, studentId: string) {

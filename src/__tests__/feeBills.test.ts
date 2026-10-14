@@ -26,6 +26,7 @@ import {
   feeStatusVariant,
   formatAdjustmentLine,
   formatDueDate,
+  overdueReminderScope,
   formatInstantDate,
   formatSignedRupees,
   generateConfirmation,
@@ -96,17 +97,25 @@ describe('bill detail actions', () => {
   const teacher = { role: 'TEACHER', ownerType: 'EMPLOYEE' };
   const student = { role: 'STUDENT', ownerType: 'STUDENT' };
   const parent = { role: 'PARENT', ownerType: 'PARENT' };
-  const bill = (status: FeeBillStatus, totalPaid: number, remainingDue: number, cancelled = status === 'CANCELLED') => ({
+  const bill = (
+    status: FeeBillStatus,
+    totalPaid: number,
+    remainingDue: number,
+    cancelled = status === 'CANCELLED',
+    studentStatus = 'ACTIVE'
+  ) => ({
     status,
     totalPaid,
     remainingDue,
     cancelled,
+    studentStatus,
   });
 
   it('gives an admin Record payment, the bill corrections and the payments on an open bill', () => {
     expect(billDetailActions(bill('PARTIAL', 5000, 13000), admin)).toEqual({
       recordPayment: true,
       adminActions: true,
+      sendReminder: true,
       cancelBill: false,
       cancelBlockedByPayments: true,
       howToPay: false,
@@ -128,6 +137,7 @@ describe('bill detail actions', () => {
     expect(billDetailActions(bill('CANCELLED', 0, 0), admin)).toEqual({
       recordPayment: false,
       adminActions: false,
+      sendReminder: false,
       cancelBill: false,
       cancelBlockedByPayments: false,
       howToPay: false,
@@ -136,6 +146,15 @@ describe('bill detail actions', () => {
     });
     // Even if a stale copy still says money is owed, the cancelled flag wins.
     expect(billDetailActions(bill('UNPAID', 0, 18000, true), admin).recordPayment).toBe(false);
+  });
+
+  it('offers Send fee reminder only while money is owed by a student still at the school', () => {
+    expect(billDetailActions(bill('OVERDUE', 0, 18000), admin).sendReminder).toBe(true);
+    expect(billDetailActions(bill('UNPAID', 0, 18000), admin).sendReminder).toBe(true);
+    expect(billDetailActions(bill('PAID', 18000, 0), admin).sendReminder).toBe(false);
+    expect(billDetailActions(bill('CANCELLED', 0, 0), admin).sendReminder).toBe(false);
+    expect(billDetailActions(bill('OVERDUE', 0, 18000, false, 'WITHDRAWN'), admin).sendReminder).toBe(false);
+    expect(billDetailActions(bill('OVERDUE', 0, 18000, false, 'ALUMNI'), admin).sendReminder).toBe(false);
   });
 
   it('keeps the corrections but not Record payment on a fully paid bill (a late fee can still be added)', () => {
@@ -150,6 +169,7 @@ describe('bill detail actions', () => {
       expect(billDetailActions(bill('OVERDUE', 0, 18000), viewer)).toEqual({
         recordPayment: false,
         adminActions: false,
+        sendReminder: false,
         cancelBill: false,
         cancelBlockedByPayments: false,
         howToPay: true,
@@ -169,6 +189,7 @@ describe('bill detail actions', () => {
     expect(billDetailActions(bill('OVERDUE', 0, 18000), teacher)).toEqual({
       recordPayment: false,
       adminActions: false,
+      sendReminder: false,
       cancelBill: false,
       cancelBlockedByPayments: false,
       howToPay: false,
@@ -595,5 +616,15 @@ describe('payment settings', () => {
     expect(paymentSettingsConfirmText('123456789012', 'school@oksbi', tHi)).toBe(
       fill(hi.fees.paymentSettings.confirmWithUpi, { account: 'XXXX9012', upiId: 'school@oksbi' })
     );
+  });
+});
+
+describe('overdue reminder scope', () => {
+  it('names the year, or all years, and the class when one is picked', () => {
+    expect(overdueReminderScope('2026-27', null, tEn)).toBe('2026-27');
+    expect(overdueReminderScope('ALL', null, tEn)).toBe('all years');
+    expect(overdueReminderScope(null, null, tEn)).toBe('all years');
+    expect(overdueReminderScope('2026-27', 'Grade 7 - A', tEn)).toBe('Grade 7 - A, 2026-27');
+    expect(overdueReminderScope('ALL', 'Grade 7 - A', tHi)).toBe('Grade 7 - A, सभी वर्षों');
   });
 });

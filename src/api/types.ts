@@ -484,6 +484,22 @@ export interface DuplicateReferenceData {
   existingTransactionDate: string;
 }
 
+/** What Send reminder did for one bill. */
+export interface FeeReminderResult {
+  /** Family members newly reminded: the linked parents, or the student's own login when none is linked. */
+  notifiedCount: number;
+  /** They were all already reminded about this bill today, so nothing new went out. */
+  alreadyRemindedToday: boolean;
+}
+
+/** What Remind overdue families started: the pushes go out in the background. */
+export interface FeeOverdueReminderResult {
+  /** The year reminded about, or 'ALL'. */
+  academicYear: string;
+  /** Overdue bills (active students) whose families are being reminded. */
+  billCount: number;
+}
+
 /** Active students' open bills for one academic year (or 'ALL'); cancelled bills never count. */
 export interface DuesReport {
   academicYear: string;
