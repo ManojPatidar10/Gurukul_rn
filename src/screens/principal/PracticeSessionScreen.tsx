@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { getPracticeSession, submitPracticeAnswer } from '../../api/practice';
 import type { PracticeSessionResponse, PublicQuizQuestionResponse, QuizOption } from '../../api/types';
+import { PracticeAnalysisPanel } from '../../components/PracticeAnalysisPanel';
 import { QuizReviewList } from '../../components/QuizReviewList';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -117,6 +118,10 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
             </Text>
           </View>
         )}
+        {/* Between the score and the per-question review on purpose: the banner says how it went,
+            this says what it means, and the review is there for whoever wants to check a specific
+            question afterwards. */}
+        {session.status === 'COMPLETED' && <PracticeAnalysisPanel sessionId={sessionId} />}
         {session.status === 'COMPLETED' && <QuizReviewList items={session.review} />}
 
         {session.status === 'ACTIVE' && currentQuestion && (

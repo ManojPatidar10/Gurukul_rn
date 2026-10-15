@@ -2256,7 +2256,24 @@
       "loadFailed": "यह प्रैक्टिस सेशन लोड नहीं हो सका।",
       "noXp": "प्रैक्टिस से XP नहीं मिलता — यह सिर्फ़ तैयारी के लिए है।",
       "complete": "प्रैक्टिस पूरी हुई!",
-      "score": "{{total}} में से {{correct}} सही"
+      "score": "{{total}} में से {{correct}} सही",
+      "analysis": {
+        "title": "अध्याय दर अध्याय",
+        "hint": "यह स्कोर कहाँ से आया।",
+        "score": "{{correct}}/{{answered}} · {{percent}}%",
+        "tooFew": "यहाँ इतने कम सवाल हैं कि कुछ कहना ठीक नहीं।",
+        "untagged_one": "{{count}} और सवाल अभी किसी अध्याय में दर्ज नहीं है।",
+        "untagged_other": "{{count}} और सवाल अभी किसी अध्याय में दर्ज नहीं हैं।",
+        "strengths": "मज़बूत पक्ष",
+        "focusAreas": "ध्यान देने योग्य",
+        "missedTitle": "क्या छूट गया",
+        "yourAnswer": "आपका जवाब",
+        "correctAnswer": "सही जवाब",
+        "roadmapTitle": "आगे क्या पढ़ें",
+        "roadmapHint": "सिलेबस के क्रम में, इसलिए पहले के अध्याय पहले आते हैं।",
+        "groundwork": "बुनियाद",
+        "notesTitle": "पढ़ाई के नोट्स"
+      }
     },
     "battleMatch": {
       "title": "बैटल रूम",

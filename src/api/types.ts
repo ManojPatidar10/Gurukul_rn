@@ -1759,6 +1759,74 @@ export interface PracticeSessionResponse {
   review?: QuizReviewItem[] | null;
 }
 
+export interface ChapterBreakdown {
+  chapterId: string;
+  chapterNumber: number;
+  /** "12. Friction" */
+  chapterLabel: string;
+  answered: number;
+  correct: number;
+  percentCorrect: number;
+  /**
+   * Too few answers here to read anything into the percentage - show the count, not a verdict.
+   * Two questions make 50% out of a single slip.
+   */
+  lowConfidence: boolean;
+}
+
+export interface MissedQuestion {
+  questionId: string;
+  questionText: string;
+  chapterLabel: string | null;
+  selectedAnswer: string | null;
+  correctAnswer: string | null;
+}
+
+export interface PracticeAnalysis {
+  sessionId: string;
+  subjectName: string;
+  completed: boolean;
+  answered: number;
+  correct: number;
+  percentCorrect: number;
+  /** Every chapter answered in, strongest first. */
+  chapters: ChapterBreakdown[];
+  strengths: ChapterBreakdown[];
+  focusAreas: ChapterBreakdown[];
+  missedQuestions: MissedQuestion[];
+  /** Answered questions with no chapter: counted in the score, absent from the breakdown. */
+  untaggedAnswered: number;
+}
+
+export interface RoadmapStep {
+  order: number;
+  chapterId: string;
+  chapterNumber: number;
+  chapterLabel: string;
+  /** Null when the student has not been tested on this chapter yet. */
+  percentCorrect: number | null;
+  reason: string;
+  /** Groundwork for a later chapter the student is finding hard. */
+  prerequisite: boolean;
+}
+
+export interface StudyNote {
+  chapterId: string;
+  chapterLabel: string;
+  guidance: string;
+  suggestedActions: string[];
+}
+
+export interface PracticeStudyPlan {
+  sessionId: string;
+  subjectName: string;
+  roadmap: RoadmapStep[];
+  /** Empty when the AI assistant is unavailable; the roadmap above still stands. */
+  studyNotes: StudyNote[];
+  /** Why the notes are missing, when they are. Null when everything is present. */
+  notesUnavailableReason: string | null;
+}
+
 export interface SubmitPracticeAnswerRequest {
   questionId: string;
   selectedOption: QuizOption;

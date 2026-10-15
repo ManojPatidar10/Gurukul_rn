@@ -2256,7 +2256,24 @@
       "loadFailed": "Could not load this practice session.",
       "noXp": "Practice doesn't earn XP — it's just for prep.",
       "complete": "Practice complete!",
-      "score": "{{correct}}/{{total}} correct"
+      "score": "{{correct}}/{{total}} correct",
+      "analysis": {
+        "title": "Chapter by chapter",
+        "hint": "Where this score came from.",
+        "score": "{{correct}}/{{answered}} · {{percent}}%",
+        "tooFew": "Too few questions here to call it either way.",
+        "untagged_one": "{{count}} more question isn't filed under a chapter yet.",
+        "untagged_other": "{{count}} more questions aren't filed under a chapter yet.",
+        "strengths": "Strengths",
+        "focusAreas": "Focus areas",
+        "missedTitle": "What you missed",
+        "yourAnswer": "You answered",
+        "correctAnswer": "Correct answer",
+        "roadmapTitle": "What to study next",
+        "roadmapHint": "In syllabus order, so earlier chapters come first.",
+        "groundwork": "groundwork",
+        "notesTitle": "Study notes"
+      }
     },
     "battleMatch": {
       "title": "Battle Room",
