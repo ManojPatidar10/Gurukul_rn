@@ -163,6 +163,10 @@ export type PrincipalStackParamList = {
   GradingScale: undefined;
   MarkMyAttendance: undefined;
   SchoolLocationSettings: undefined;
+  /** The home-screen setup checklist's screens (spec school-onboarding-tunnel). */
+  ClassSetup: undefined;
+  StudentImport: undefined;
+  TeacherSetup: undefined;
   StaffAttendance: undefined;
   EmployeeAttendanceHistory: { employee: Pick<Employee, 'id' | 'name'> };
   AttendanceDevices: undefined;

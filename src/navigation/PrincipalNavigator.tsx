@@ -13,6 +13,9 @@ import { GradingScaleScreen } from '../screens/principal/GradingScaleScreen';
 import { MarkMyAttendanceScreen } from '../screens/principal/MarkMyAttendanceScreen';
 import { PushDebugScreen } from '../screens/principal/PushDebugScreen';
 import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocationSettingsScreen';
+import { ClassSetupScreen } from '../screens/principal/ClassSetupScreen';
+import { StudentImportScreen } from '../screens/principal/StudentImportScreen';
+import { TeacherSetupScreen } from '../screens/principal/TeacherSetupScreen';
 import { StaffAttendanceScreen } from '../screens/principal/StaffAttendanceScreen';
 import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAttendanceHistoryScreen';
 import { ActivityLogScreen } from '../screens/principal/ActivityLogScreen';
@@ -199,6 +202,9 @@ export function PrincipalNavigator() {
         <Stack.Screen name="GradingScale" component={GradingScaleScreen} />
         <Stack.Screen name="MarkMyAttendance" component={MarkMyAttendanceScreen} />
         <Stack.Screen name="SchoolLocationSettings" component={SchoolLocationSettingsScreen} />
+        <Stack.Screen name="ClassSetup" component={ClassSetupScreen} />
+        <Stack.Screen name="StudentImport" component={StudentImportScreen} />
+        <Stack.Screen name="TeacherSetup" component={TeacherSetupScreen} />
         <Stack.Screen name="StaffAttendance" component={StaffAttendanceScreen} />
         <Stack.Screen name="EmployeeAttendanceHistory" component={EmployeeAttendanceHistoryScreen} />
         <Stack.Screen name="AttendanceDevices" component={AttendanceDevicesScreen} />

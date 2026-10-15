@@ -196,9 +196,11 @@ export default function App() {
     setPreAuthStep({ name: 'otpLogin', schoolId: school.id, schoolName: school.name });
   };
 
-  const handleRegistered = (newSchoolId: string, admin: Session) => {
+  // The sign-up hands back the principal's ADMIN session (the phone they typed), so they land on
+  // the home screen signed in and the OTP login afterwards goes to the same number.
+  const handleRegistered = (newSchoolId: string, principal: Session) => {
     setSchoolId(newSchoolId);
-    handleLoggedIn(admin);
+    handleLoggedIn(principal);
   };
 
   const loading = schoolId === undefined || session === undefined || !i18nReady;

@@ -9,14 +9,15 @@ export interface ApiResponse<T> {
 export interface School {
   id: string;
   name: string;
-  address: string;
+  /** Null for a school that signed up in the app and has not filled its profile in. */
+  address: string | null;
   city: string;
   state: string;
   pincode: string;
-  contactEmail: string;
+  contactEmail: string | null;
   contactPhone: string;
   principalName: string;
-  directorName: string;
+  directorName: string | null;
   bankAccountNumber: string | null;
   bankIfsc: string | null;
   bankAccountHolderName: string | null;
@@ -35,14 +36,14 @@ export interface School {
 
 export interface SchoolUpdateRequest {
   name: string;
-  address: string;
+  address?: string | null;
   city: string;
   state: string;
   pincode: string;
-  contactEmail: string;
+  contactEmail?: string | null;
   contactPhone: string;
   principalName: string;
-  directorName: string;
+  directorName?: string | null;
   bankAccountNumber?: string;
   bankIfsc?: string;
   bankAccountHolderName?: string;
@@ -57,16 +58,20 @@ export interface SchoolLocationUpdateRequest {
 
 export interface SchoolRegistrationRequest {
   name: string;
-  address: string;
   city: string;
   state: string;
   pincode: string;
-  contactEmail: string;
-  contactPhone: string;
   principalName: string;
+  /** The principal's mobile: the OTP login for the first ADMIN account. */
   principalPhone: string;
-  directorName: string;
-  adminPhone: string;
+  /** Everything below is optional - the in-app sign-up sends only the six fields above. */
+  address?: string;
+  contactEmail?: string;
+  /** Defaults to principalPhone on the server. */
+  contactPhone?: string;
+  directorName?: string;
+  /** A second, different phone creates a second ADMIN login (director/office). */
+  adminPhone?: string;
   adminUsername?: string;
   adminPassword?: string;
   latitude?: number;
@@ -83,7 +88,10 @@ export interface SchoolSearchResult {
 
 export interface SchoolRegistrationResponse {
   school: School;
-  admin: LoginResponse;
+  /** The ADMIN session on the principal's phone - the one the sign-up signs in with. */
+  principal: LoginResponse;
+  /** Null when the registration gave no second (admin) phone. */
+  admin: LoginResponse | null;
 }
 
 export interface ClassSection {
@@ -138,6 +146,21 @@ export interface StudentRequest {
   classSectionId: string;
   admissionDate: string;
   status?: string;
+}
+
+export interface StudentBulkImportRowResult {
+  index: number;
+  name: string;
+  success: boolean;
+  studentId: string | null;
+  error: string | null;
+}
+
+export interface StudentBulkImportResponse {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: StudentBulkImportRowResult[];
 }
 
 export interface StudentClassSectionUpdateRequest {

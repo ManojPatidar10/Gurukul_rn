@@ -38,35 +38,134 @@
   },
   "schoolSetup": {
     "title": "Register your school",
-    "subtitle": "One-time setup for this device",
-    "intro": "You'll be signed in as the school admin right after registering — your phone number below is used to sign in with an OTP afterwards.",
+    "stepOf": "Step {{step}} of {{total}}",
+    "schoolStep": {
+      "title": "Your school",
+      "intro": "Four things about the school. Everything else can wait until you're in."
+    },
+    "youStep": {
+      "title": "About you",
+      "intro": "You'll be the first admin of this school.",
+      "phoneHint": "Your sign-in code (OTP) will come to this number on WhatsApp. Use the number you keep with you.",
+      "afterwards": "Takes a few seconds. Next: add your classes, import your student register and add your teachers — the app walks you through it."
+    },
     "schoolName": "School name",
-    "address": "Address",
-    "city": "City",
+    "city": "City / town",
     "state": "State",
     "pincode": "Pincode",
-    "locationHint": "Optional: set the school's location now so teachers can self-mark attendance from the premises later. If you're not there right now, you can leave this blank and set it later, or enter coordinates manually.",
-    "useCurrentLocation": "📍 Use my current location",
-    "latitude": "Latitude (optional)",
-    "longitude": "Longitude (optional)",
-    "locationPermissionDenied": "Location permission denied - you can still enter coordinates manually, or skip this and set it later.",
-    "contactEmail": "Contact email",
-    "contactPhone": "Contact phone",
-    "principalName": "Principal name",
-    "principalPhone": "Principal phone",
-    "directorName": "Director name",
-    "adminPhone": "Your phone number (for admin login)",
-    "submit": "Register school",
-    "submitting": "Registering…",
+    "principalName": "Your name",
+    "principalPhone": "Your mobile number",
+    "next": "Next",
+    "submit": "Create my school",
+    "submitting": "Creating…",
     "errors": {
       "pincode": "Enter a valid 6-digit pincode.",
-      "email": "Enter a valid contact email address.",
-      "phone": "Enter a valid 10-digit contact phone number.",
-      "location": "Enter both latitude and longitude as numbers, or leave both blank.",
-      "radius": "Radius must be a number from 25 to 700 meters."
+      "phone": "Enter a valid 10-digit mobile number."
+    }
+  },
+  "setup": {
+    "title": "Get your school running",
+    "progress": "{{done}} of {{total}} done",
+    "dismiss": "Hide this checklist",
+    "steps": {
+      "classes": {
+        "title": "Add classes and sections",
+        "description": "Tap the classes your school runs — done in a minute."
+      },
+      "students": {
+        "title": "Import your student register",
+        "description": "Paste from Excel or WhatsApp, or pick a CSV file."
+      },
+      "teachers": {
+        "title": "Add your teachers",
+        "description": "Name and mobile — they sign in with an OTP on that number."
+      },
+      "location": {
+        "title": "Set the school's location",
+        "description": "So staff can check in from the premises without a machine."
+      },
+      "parents": {
+        "title": "Tell parents how to sign in",
+        "description": "Share a ready message on WhatsApp or your parent groups."
+      }
     },
-    "logoUploadFailed": "School registered, but the logo couldn't be uploaded ({{message}}). You can add it later from the School Logo tile.",
-    "radius": "Geofence radius in meters (optional, 25-700)"
+    "parentsMessage": "Namaste! {{school}} is now on the Smart Gurukul app. Install it, choose \"Find my school\", search {{school}}, and sign in with the mobile number you gave the school — you'll get a code on WhatsApp. You'll see your child's attendance, fees and report cards there. Android: https://play.google.com/store/apps/details?id=org.smartgurukul.app"
+  },
+  "classSetup": {
+    "title": "Classes and sections",
+    "year": "Session {{year}}",
+    "intro": "Tap every class your school runs, then the sections each class has. We create every combination that doesn't exist yet.",
+    "classes": "Classes",
+    "sections": "Sections",
+    "otherClass": "Another class",
+    "otherSection": "Another section",
+    "add": "Add",
+    "existing": "Already set up this session: {{count}}",
+    "toCreate": "Will be created now: {{count}}",
+    "create_one": "Create {{count}} class-section",
+    "create_other": "Create {{count}} class-sections",
+    "creating": "Creating {{done}} of {{total}}…",
+    "created_one": "{{count}} class-section created",
+    "created_other": "{{count}} class-sections created",
+    "partlyCreated": "{{count}} created, then this failed: {{error}}"
+  },
+  "studentImport": {
+    "title": "Import students",
+    "subtitle": "Your register, in one go",
+    "intro": "Copy the rows from your Excel register (or a WhatsApp list) and paste them below, or pick a CSV file. Nothing is saved until you tap Import.",
+    "format": {
+      "title": "Columns we read",
+      "columns": "Name · Class · Section · Gender · Date of birth · Parent name · Parent mobile · Address (optional)",
+      "hint": "A header row in English or Hindi is recognised in any order. Without a header, use this order. Dates like 15/05/2015; gender M/F or लड़का/लड़की."
+    },
+    "placeholder": "Rahul Sharma, 5, A, M, 15/05/2015, Rajesh Sharma, 9876543210\nPriya Verma, 5, B, F, 20/01/2016, Sunita Verma, 9123456789",
+    "pickFile": "Pick a CSV or text file",
+    "preview": "{{rows}} rows read · {{ready}} ready · {{problems}} need a fix",
+    "noHeader": "No header row found — columns read in the default order above.",
+    "tooMany": "That's more than {{max}} rows. Import in parts.",
+    "missingSections_one": "{{count}} class-section in the register doesn't exist yet: {{list}}",
+    "missingSections_other": "{{count}} class-sections in the register don't exist yet: {{list}}",
+    "createSections": "Create them now",
+    "creatingSections": "Creating…",
+    "sectionsCreated_one": "{{count}} class-section created",
+    "sectionsCreated_other": "{{count}} class-sections created",
+    "lineProblem": "Line {{line}} ({{name}}): {{problems}}",
+    "moreProblems": "…and {{count}} more",
+    "problems": {
+      "name": "name missing",
+      "className": "class missing",
+      "section": "section missing",
+      "gender": "gender unreadable",
+      "dob": "date of birth unreadable",
+      "parentName": "parent name missing",
+      "parentContact": "parent mobile invalid",
+      "classSection": "class-section not set up"
+    },
+    "import_one": "Import {{count}} student",
+    "import_other": "Import {{count}} students",
+    "importing": "Importing…",
+    "imported_one": "{{count}} student imported",
+    "imported_other": "{{count}} students imported",
+    "result": "Imported {{succeeded}} · failed {{failed}}",
+    "done": "Done"
+  },
+  "teacherSetup": {
+    "title": "Add teachers",
+    "subtitle": "Name and mobile is enough",
+    "intro": "Each teacher signs in with an OTP sent to their mobile — no passwords to hand out. Designation, joining date and the rest can be edited later under Staff.",
+    "name": "Name",
+    "phone": "Mobile",
+    "namePlaceholder": "Teacher's name",
+    "addRow": "+ Another teacher",
+    "howTheySignIn": "Tell them: install Smart Gurukul, choose \"Find my school\", search the school, enter this mobile number, type the code from WhatsApp.",
+    "invalidRow": "Each row needs a name and a valid 10-digit mobile number.",
+    "duplicatePhone": "Two rows have the same mobile number.",
+    "add_one": "Add {{count}} teacher",
+    "add_other": "Add {{count}} teachers",
+    "adding": "Adding…",
+    "added_one": "{{count}} teacher added",
+    "added_other": "{{count}} teachers added",
+    "partlyAdded": "{{count}} added. Not added: {{errors}}"
   },
   "dashboard": {
     "fallbackTitle": "Smart Gurukul",
@@ -1740,7 +1839,7 @@
     "title": "Smart Gurukul",
     "subtitle": "School management, made simple",
     "findSchool": "Find my school",
-    "registerSchool": "Register a new school"
+    "registerSchool": "Register a new school (2 minutes)"
   },
   "auth": {
     "sessionExpired": "Your session expired, please log in again.",
