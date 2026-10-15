@@ -24,6 +24,14 @@ export function PracticeStartScreen({ navigation }: Props) {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Picking a different subject clears the last one's error. It names the subject it was about
+  // ("No Grade 8 Social Science questions yet"), so leaving it up next to a different selection
+  // reads as a complaint about the newly picked subject instead.
+  const handleSelect = (next: Subject | null) => {
+    setSubject(next);
+    setError(null);
+  };
+
   const handleStart = async () => {
     if (!subject) return;
     setStarting(true);
@@ -44,7 +52,7 @@ export function PracticeStartScreen({ navigation }: Props) {
       <ScreenContainer>
         <Text style={styles.intro}>{t('games.practice.intro')}</Text>
 
-        <SubjectPicker schoolId={schoolId} selectedId={subject?.id ?? null} onSelect={setSubject} />
+        <SubjectPicker schoolId={schoolId} selectedId={subject?.id ?? null} onSelect={handleSelect} />
 
         {error && <ErrorNotice message={error} />}
 
