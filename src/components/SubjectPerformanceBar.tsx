@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { CATEGORICAL_PALETTE, SINGLE_SERIES_COLOR } from '../theme/chartPalette';
 import { colors, radius, spacing } from '../theme/colors';
+import { isNotableDelta } from '../utils/classComparison';
 
 const BELOW_AVERAGE_COLOR = CATEGORICAL_PALETTE[7]; // red, the diverging partner of slot 0
 
@@ -32,9 +33,9 @@ export function SubjectPerformanceBar({ percentage, classAverage, delta }: Props
   const scored = clamp(percentage);
   const hasComparison = classAverage != null && delta != null;
   const above = hasComparison && delta > 0;
-  // Within a point either way is noise. Calling a 0.4 gap a strength teaches a parent to read
-  // meaning into numbers that have none.
-  const notable = hasComparison && Math.abs(delta) > 1;
+  // One band, shared with the overall-status charts and the PDF, so the same gap cannot read as
+  // "in line" here and "behind" there.
+  const notable = hasComparison && isNotableDelta(delta);
 
   return (
     <View style={styles.root}>

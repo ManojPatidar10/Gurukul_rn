@@ -3161,5 +3161,28 @@
       "empty": "No categories yet.",
       "addLink": "Add a category"
     }
+  },
+  "overallStatus": {
+    "open": "View overall status",
+    "title": "Overall status",
+    "noPublished": "No published report cards yet, so there is nothing to chart.",
+    "progressTitle": "Overall performance by term",
+    "progressHint": "Every published term so far, oldest first.",
+    "singleTerm": "Only {{term}} is published so far ({{percent}}%). A second term will show the trend.",
+    "subjectTitle": "Subject-wise performance",
+    "subjectHint": "Latest term, each subject against its class average.",
+    "gapTitle": "Strengths and weaknesses",
+    "gapHint": "Percentage points above or below the class average.",
+    "strengths": "Strengths",
+    "weaknesses": "Needs work",
+    "allInLine": "Every subject is within a point of the class average.",
+    "legendStudent": "This student",
+    "legendClass": "Class average",
+    "legendAhead": "Ahead of class",
+    "legendBehind": "Behind class",
+    "axisPercent": "Percentage",
+    "axisPoints": "Points vs class",
+    "axisTerm": "Term",
+    "axisSubject": "Subject"
   }
 }

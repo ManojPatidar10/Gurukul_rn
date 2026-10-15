@@ -346,6 +346,16 @@ export function ReportCardScreen({ route, navigation }: Props) {
               )}
             </Pressable>
 
+            {/* Filled rather than outlined: this card is one term, and the charts behind here are
+                the only place the student's terms are seen next to each other. */}
+            <Pressable
+              style={styles.statusButton}
+              onPress={() => navigation.navigate('OverallStatus', { student: { id: student.id, name: student.name } })}
+              accessibilityRole="button"
+            >
+              <Text style={styles.statusButtonText}>{t('overallStatus.open')}</Text>
+            </Pressable>
+
             <Text style={styles.sectionTitle}>{t('reportCardDetail.subjects')}</Text>
             {reportCard.subjects.length === 0 && (
               <Text style={styles.empty}>{t('reportCardDetail.noResults')}</Text>
@@ -494,6 +504,15 @@ const styles = StyleSheet.create({
   },
   pdfButtonDisabled: { opacity: 0.6 },
   pdfButtonText: { color: colors.primary, fontWeight: '700' },
+  statusButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    marginTop: -spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  statusButtonText: { color: colors.white, fontWeight: '700' },
   sectionTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
   subjectCard: {
     backgroundColor: colors.surface,

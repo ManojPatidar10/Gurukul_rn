@@ -155,6 +155,8 @@ export type PrincipalStackParamList = {
     defaultTerm?: string;
     defaultSectionId?: string;
   };
+  /** Every chart the student's published terms support - opened from the report card. */
+  OverallStatus: { student: Pick<Student, 'id' | 'name'> };
   PublishReportCards: { classSection: ClassSection };
   SectionReportCardsGrid: { classSection: ClassSection };
   GradingScale: undefined;

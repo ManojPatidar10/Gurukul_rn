@@ -15,6 +15,7 @@ import { NewConversationScreen } from '../screens/principal/NewConversationScree
 import { NotificationsScreen } from '../screens/principal/NotificationsScreen';
 import { PushDebugScreen } from '../screens/principal/PushDebugScreen';
 import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
+import { OverallStatusScreen } from '../screens/principal/OverallStatusScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { MyBusScreen } from '../screens/transport/MyBusScreen';
 import { colors } from '../theme/colors';
@@ -39,6 +40,7 @@ export function ParentNavigator() {
       <Stack.Screen name="PaymentReceipt" component={PaymentReceiptScreen} />
       <Stack.Screen name="StudentFeePayments" component={StudentFeePaymentsScreen} />
       <Stack.Screen name="ReportCard" component={ReportCardScreen} />
+      <Stack.Screen name="OverallStatus" component={OverallStatusScreen} />
       <Stack.Screen name="IdCard" component={IdCardScreen} />
       <Stack.Screen name="ConversationsList" component={ConversationsListScreen} />
       <Stack.Screen name="NewConversation" component={NewConversationScreen} />
