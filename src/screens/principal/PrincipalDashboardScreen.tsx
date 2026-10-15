@@ -1,7 +1,8 @@
 import { FontAwesome5 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getClassSection, listClassSections } from '../../api/classSections';
@@ -9,12 +10,13 @@ import { getEmployee, isActiveEmployee, listAllEmployees } from '../../api/emplo
 import { getSchool } from '../../api/schools';
 import { getStudent, listStudents } from '../../api/students';
 import { getUncoveredPeriods } from '../../api/timetable';
-import type { ClassSection, School } from '../../api/types';
+import type { ClassSection, Employee, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { NotificationPermissionPrompt } from '../../components/NotificationPermissionPrompt';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { SetupChecklistCard } from '../../components/SetupChecklistCard';
 import { StatSummaryCard } from '../../components/StatSummaryCard';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
@@ -22,6 +24,7 @@ import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
 import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { FeatureAction, FeatureId, HubSection, PrincipalStackParamList } from '../../types/principal';
+import { setupComplete, setupSteps, type SetupStepId } from '../../utils/setupChecklist';
 import { coverCount } from '../../utils/substitutions';
 import { todayIso } from '../../utils/timetable';
 
@@ -218,6 +221,10 @@ interface Counts {
   vendors: number | null;
 }
 
+// Per school, so a device that registers a second school starts its checklist afresh.
+const setupDismissedKey = (schoolId: string) => `gurukul.setupDismissed.${schoolId}`;
+const parentsToldKey = (schoolId: string) => `gurukul.setupParentsTold.${schoolId}`;
+
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
@@ -234,6 +241,10 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [loadingCounts, setLoadingCounts] = useState(true);
   // Periods that need a substitute today; null until loaded, or when it couldn't be (plain label then).
   const [coverNeeded, setCoverNeeded] = useState<number | null>(null);
+  // The setup checklist: what the school still has to do, from the counts and roster loaded below.
+  const [employees, setEmployees] = useState<Employee[] | null>(null);
+  const [setupDismissed, setSetupDismissed] = useState(true);
+  const [parentsTold, setParentsTold] = useState(false);
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
@@ -356,8 +367,15 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           .then((res) => setCounts((prev) => ({ ...prev, students: res.totalElements })))
           .catch(() => setCounts((prev) => ({ ...prev, students: null }))),
         listAllEmployees(schoolId)
-          .then((rows) => setCounts((prev) => ({ ...prev, employees: rows.filter(isActiveEmployee).length })))
+          .then((rows) => {
+            setCounts((prev) => ({ ...prev, employees: rows.filter(isActiveEmployee).length }));
+            setEmployees(rows);
+          })
           .catch(() => setCounts((prev) => ({ ...prev, employees: null }))),
+        // The school's counts and location feed the setup checklist, so they refresh on every return.
+        getSchool(schoolId)
+          .then(setSchool)
+          .catch(() => undefined),
         listVendors(schoolId)
           .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
           .catch(() => setCounts((prev) => ({ ...prev, vendors: null }))),
@@ -370,6 +388,44 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     load();
     return unsubscribe;
   }, [schoolId, navigation, isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    AsyncStorage.multiGet([setupDismissedKey(schoolId), parentsToldKey(schoolId)])
+      .then(([[, dismissed], [, told]]) => {
+        setSetupDismissed(dismissed === '1');
+        setParentsTold(told === '1');
+      })
+      .catch(() => setSetupDismissed(false));
+  }, [schoolId, isAdmin]);
+
+  const steps = setupSteps(school, employees, parentsTold);
+  // Only once the school and roster are known - otherwise an established school would see the card flash.
+  const showSetup = isAdmin && !setupDismissed && school !== null && employees !== null && !setupComplete(steps);
+
+  const dismissSetup = () => {
+    setSetupDismissed(true);
+    AsyncStorage.setItem(setupDismissedKey(schoolId), '1').catch(() => undefined);
+  };
+
+  const tellParents = async () => {
+    try {
+      const result = await Share.share({ message: t('setup.parentsMessage', { school: school?.name ?? t('dashboard.fallbackTitle') }) });
+      if (result.action === Share.dismissedAction) return;
+      setParentsTold(true);
+      AsyncStorage.setItem(parentsToldKey(schoolId), '1').catch(() => undefined);
+    } catch {
+      // The share sheet failing to open is not worth an error; the row just stays open.
+    }
+  };
+
+  const openSetupStep = (id: SetupStepId) => {
+    if (id === 'classes') navigation.navigate('ClassSetup');
+    else if (id === 'students') navigation.navigate('StudentImport');
+    else if (id === 'teachers') navigation.navigate('TeacherSetup');
+    else if (id === 'location') navigation.navigate('SchoolLocationSettings');
+    else tellParents();
+  };
 
   return (
     <View style={styles.root}>
@@ -406,6 +462,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       {/* Leave room below the last tile so the floating bot button never covers it. */}
       <ScreenContainer contentContainerStyle={{ paddingBottom: fabBottom + FAB_SIZE + spacing.lg }}>
         <NotificationPermissionPrompt />
+        {showSetup && <SetupChecklistCard steps={steps} onStep={openSetupStep} onDismiss={dismissSetup} />}
         {isAdmin && (
           <View style={styles.statRow}>
             <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />

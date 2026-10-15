@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { Student, StudentRequest, StudentClassSectionUpdateRequest } from './types';
+import type { Student, StudentBulkImportResponse, StudentRequest, StudentClassSectionUpdateRequest } from './types';
 
 export function listStudents(schoolId: string, page = 0, size = 50) {
   return api.getPaginated<Student>(`/api/v1/students?page=${page}&size=${size}`, schoolId);
@@ -24,6 +24,11 @@ export function getStudent(schoolId: string, id: string) {
 
 export function createStudent(schoolId: string, req: StudentRequest) {
   return api.post<Student>('/api/v1/students', req, schoolId);
+}
+
+/** Enrols a whole register in one call; each row succeeds or fails on its own (admin only). */
+export function bulkCreateStudents(schoolId: string, students: StudentRequest[]) {
+  return api.post<StudentBulkImportResponse>('/api/v1/students/bulk', { students }, schoolId, { timeoutMs: 120_000 });
 }
 
 export function updateStudent(schoolId: string, id: string, req: StudentRequest) {
