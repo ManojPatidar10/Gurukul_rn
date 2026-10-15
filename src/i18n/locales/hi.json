@@ -1984,7 +1984,9 @@
     "grade": "ग्रेड",
     "subjects": "विषय",
     "noResults": "इस टर्म के लिए अभी कोई परिणाम दर्ज नहीं हुआ है।",
-    "moved": "कक्षा बदली"
+    "moved": "कक्षा बदली",
+    "vsClass": "कक्षा औसत ({{average}}%) की तुलना में {{delta}}",
+    "atClassAverage": "कक्षा औसत ({{average}}%) के अनुरूप"
   },
   "reportCardUnpublish": {
     "canUnpublishLater": "एडमिन बाद में कारण देकर इन्हें अप्रकाशित कर सकता है।",

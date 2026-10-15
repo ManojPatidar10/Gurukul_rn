@@ -1984,7 +1984,9 @@
     "grade": "Grade",
     "subjects": "Subjects",
     "noResults": "No results recorded for this term yet.",
-    "moved": "Moved"
+    "moved": "Moved",
+    "vsClass": "{{delta}} vs class average ({{average}}%)",
+    "atClassAverage": "In line with the class average ({{average}}%)"
   },
   "reportCardUnpublish": {
     "canUnpublishLater": "An admin can unpublish later, with a reason.",

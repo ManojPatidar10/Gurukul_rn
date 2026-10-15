@@ -11,6 +11,7 @@ import type { PublishedTerm, ReportCard } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { SubjectPerformanceBar } from '../../components/SubjectPerformanceBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
@@ -364,6 +365,11 @@ export function ReportCardScreen({ route, navigation }: Props) {
                     </View>
                     <StatusChip label={formatSubjectGrade(subject.grade)} variant="info" />
                   </View>
+                  <SubjectPerformanceBar
+                    percentage={subject.percentage}
+                    classAverage={subject.classAveragePercentage}
+                    delta={subject.deltaFromClassAverage}
+                  />
                   {(counts.absent > 0 || counts.excused > 0) && (
                     <View style={styles.countRow}>
                       {counts.absent > 0 && (

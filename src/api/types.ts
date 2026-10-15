@@ -888,6 +888,13 @@ export interface SubjectResult {
   excusedCount?: number;
   /** By date, then title. Missing from older servers: the per-assessment list is hidden. */
   assessments?: ReportCardAssessment[];
+  /**
+   * Mean percentage across classmates with a result in this subject. Null when this student is
+   * the only one, and missing from older servers - either way, no comparison is shown.
+   */
+  classAveragePercentage?: number | null;
+  /** This student minus the class mean, in percentage points. Null alongside a null average. */
+  deltaFromClassAverage?: number | null;
 }
 
 /** TERM: just the term's dates (attendanceFrom/To). TO_DATE: every record so far. */
@@ -910,6 +917,8 @@ export interface ReportCard {
   /** Assessments in this term with no mark for the student (blank and not marked absent). */
   missingMarksCount: number;
   attendancePercentage: number | null;
+  /** Class mean overall percentage. Null with no classmates; missing from older servers. */
+  classAveragePercentage?: number | null;
   published: boolean;
   publishedAt: string | null;
   // Missing from older servers.
