@@ -1,4 +1,5 @@
 import type { PublishedTerm, ReportCard } from '../api/types';
+import { termKey } from './academicTerms';
 import { compareTermsLatestFirst } from './assessmentTerms';
 import { isNotableDelta } from './classComparison';
 
@@ -50,6 +51,45 @@ export function termTrend(entries: TermCard[]): TermPoint[] {
         ? null
         : round1(entry.card.classAveragePercentage),
     }));
+}
+
+/**
+ * The card the subject charts should describe.
+ *
+ * <p>Follows the term the report card was open on, so walking back through the term chips and
+ * opening the charts does not silently jump to a different term's marks. A section is matched
+ * alongside the name because the same term can be published for more than one of a student's
+ * classes after a promotion, and those are different cards.
+ *
+ * <p>Falls back to the newest term when the requested one has nothing to show - staff can open
+ * this screen from a draft preview of a term that was never published, and the charts are built
+ * from published cards only.
+ */
+export function cardForTerm(
+  entries: TermCard[],
+  term?: string | null,
+  sectionId?: string | null
+): ReportCard | null {
+  const trend = termTrend(entries);
+  if (trend.length === 0) {
+    return null;
+  }
+  const plottable = (entry: TermCard) =>
+    trend.some((point) => point.key === `${entry.card.term}:${entry.card.classSectionId ?? ''}`);
+  const wanted = termKey(term);
+
+  const exact = entries.find(
+    (entry) =>
+      plottable(entry) &&
+      termKey(entry.card.term) === wanted &&
+      (entry.card.classSectionId ?? '') === (sectionId ?? '')
+  );
+  const byName = exact ?? entries.find((entry) => plottable(entry) && termKey(entry.card.term) === wanted);
+  if (byName) {
+    return byName.card;
+  }
+  const newest = trend[trend.length - 1];
+  return entries.find((entry) => `${entry.card.term}:${entry.card.classSectionId ?? ''}` === newest.key)?.card ?? null;
 }
 
 /**

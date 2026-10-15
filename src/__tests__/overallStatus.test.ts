@@ -1,6 +1,7 @@
 import type { PublishedTerm, ReportCard, SubjectResult } from '../api/types';
 import { isNotableDelta } from '../utils/classComparison';
 import {
+  cardForTerm,
   shortSubjectLabel,
   deltaAxisBound,
   deltaRanking,
@@ -79,6 +80,60 @@ describe('termTrend', () => {
     ];
 
     expect(termTrend(entries).map((p) => p.classAverage)).toEqual([70, null]);
+  });
+});
+
+describe('cardForTerm', () => {
+  const entries = [
+    { term: published('Term 1', '2026-04-01'), card: card('Term 1', 59.6) },
+    { term: published('Term 2', '2026-07-01'), card: card('Term 2', 66.6) },
+    { term: published('Half Yearly', '2026-09-01'), card: card('Half Yearly', 73.6) },
+  ];
+
+  it('describes the term the report card was open on', () => {
+    expect(cardForTerm(entries, 'Term 1')?.overallPercentage).toBe(59.6);
+    expect(cardForTerm(entries, 'Term 2')?.overallPercentage).toBe(66.6);
+  });
+
+  it('matches the term name however it was cased or spaced', () => {
+    expect(cardForTerm(entries, '  term 1 ')?.term).toBe('Term 1');
+  });
+
+  it('falls back to the newest term when none was named', () => {
+    expect(cardForTerm(entries, undefined)?.term).toBe('Half Yearly');
+  });
+
+  it('falls back to the newest term when the one asked for was never published', () => {
+    // Staff can open this from a draft preview of a term with no published card behind it.
+    // Showing nothing there would be worse than showing the latest and saying which it is.
+    expect(cardForTerm(entries, 'Annual')?.term).toBe('Half Yearly');
+  });
+
+  it('never returns a term that has no overall to plot', () => {
+    // Term 2 has no marks, so it is not on the chart - describing it would leave the subject
+    // charts empty under a heading naming a term the trend above does not show.
+    const withBlank = [
+      { term: published('Term 1', '2026-04-01'), card: card('Term 1', 59.6) },
+      { term: published('Term 2', '2026-07-01'), card: card('Term 2', null) },
+    ];
+
+    expect(cardForTerm(withBlank, 'Term 2')?.term).toBe('Term 1');
+  });
+
+  it('tells two sections of the same term apart', () => {
+    // After a promotion the same term name can be published for two classes, and they are
+    // different cards - picking the wrong one would quietly show the wrong class's marks.
+    const promoted = [
+      { term: published('Term 1', '2026-04-01'), card: { ...card('Term 1', 59.6), classSectionId: 'old' } },
+      { term: published('Term 1', '2026-04-01'), card: { ...card('Term 1', 71.2), classSectionId: 'new' } },
+    ];
+
+    expect(cardForTerm(promoted, 'Term 1', 'new')?.overallPercentage).toBe(71.2);
+    expect(cardForTerm(promoted, 'Term 1', 'old')?.overallPercentage).toBe(59.6);
+  });
+
+  it('is null when nothing is published at all', () => {
+    expect(cardForTerm([], 'Term 1')).toBeNull();
   });
 });
 

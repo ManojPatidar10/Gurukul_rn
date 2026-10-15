@@ -350,7 +350,14 @@ export function ReportCardScreen({ route, navigation }: Props) {
                 the only place the student's terms are seen next to each other. */}
             <Pressable
               style={styles.statusButton}
-              onPress={() => navigation.navigate('OverallStatus', { student: { id: student.id, name: student.name } })}
+              onPress={() =>
+                navigation.navigate('OverallStatus', {
+                  student: { id: student.id, name: student.name },
+                  // The term on screen, so the charts open on the same card the chips are showing.
+                  term: reportCard.term,
+                  sectionId: reportCard.classSectionId,
+                })
+              }
               accessibilityRole="button"
             >
               <Text style={styles.statusButtonText}>{t('overallStatus.open')}</Text>

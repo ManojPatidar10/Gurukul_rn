@@ -15,6 +15,7 @@ import { CATEGORICAL_PALETTE, SINGLE_SERIES_COLOR } from '../../theme/chartPalet
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
+  cardForTerm,
   deltaAxisBound,
   deltaRanking,
   shortSubjectLabel,
@@ -56,7 +57,7 @@ const PERCENT_AXIS_SECTIONS = 4; // 0 / 25 / 50 / 75 / 100
 export function OverallStatusScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
-  const { student } = route.params;
+  const { student, term, sectionId } = route.params;
   const [entries, setEntries] = useState<TermCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,10 +86,11 @@ export function OverallStatusScreen({ route, navigation }: Props) {
   }, [load]);
 
   const trend = termTrend(entries);
-  // The newest term is the one the subject charts describe; trend is oldest-first, so it is last.
-  const latest = trend.length > 0 ? entries.find((e) => e.card.term === trend[trend.length - 1].label)?.card : null;
-  const subjects = subjectComparison(latest ?? null);
-  const ranking = deltaRanking(latest ?? null);
+  // The subject charts describe the term the report card was open on, not always the newest one:
+  // stepping back through the term chips and opening the charts should keep showing that term.
+  const shown = cardForTerm(entries, term, sectionId);
+  const subjects = subjectComparison(shown);
+  const ranking = deltaRanking(shown);
 
   return (
     <View style={styles.root}>
@@ -106,9 +108,9 @@ export function OverallStatusScreen({ route, navigation }: Props) {
 
         {!loading && !error && trend.length > 0 && (
           <>
-            <ProgressChart trend={trend} />
-            <SubjectChart subjects={subjects} />
-            <GapChart ranking={ranking} />
+            <ProgressChart trend={trend} shownTerm={shown?.term} />
+            <SubjectChart subjects={subjects} term={shown?.term} />
+            <GapChart ranking={ranking} term={shown?.term} />
           </>
         )}
       </ScreenContainer>
@@ -117,7 +119,13 @@ export function OverallStatusScreen({ route, navigation }: Props) {
 }
 
 /** Overall percentage per term. A line, because the question is "which way am I going". */
-function ProgressChart({ trend }: { trend: ReturnType<typeof termTrend> }) {
+function ProgressChart({
+  trend,
+  shownTerm,
+}: {
+  trend: ReturnType<typeof termTrend>;
+  shownTerm?: string;
+}) {
   const { t } = useTranslation();
   const hasClass = trend.some((point) => point.classAverage != null);
 
@@ -143,7 +151,13 @@ function ProgressChart({ trend }: { trend: ReturnType<typeof termTrend> }) {
           <View style={styles.axisWrap}>
             <Text style={styles.yAxisTitle}>{t('overallStatus.axisPercent')}</Text>
             <LineChart
-              data={trend.map((point) => ({ value: point.overall, label: point.label }))}
+              // The point the two charts below describe is drawn larger, so this chart and those
+              // visibly agree about which term is being talked about.
+              data={trend.map((point) => ({
+                value: point.overall,
+                label: point.label,
+                dataPointRadius: point.label === shownTerm ? 7 : 4,
+              }))}
               data2={
                 hasClass
                   ? trend.map((point) => ({ value: point.classAverage ?? 0, label: point.label }))
@@ -176,7 +190,13 @@ function ProgressChart({ trend }: { trend: ReturnType<typeof termTrend> }) {
 }
 
 /** Each subject against its class average. Bars, because the question is "how big is each". */
-function SubjectChart({ subjects }: { subjects: ReturnType<typeof subjectComparison> }) {
+function SubjectChart({
+  subjects,
+  term,
+}: {
+  subjects: ReturnType<typeof subjectComparison>;
+  term?: string;
+}) {
   const { t } = useTranslation();
   if (subjects.length === 0) {
     return null;
@@ -206,7 +226,7 @@ function SubjectChart({ subjects }: { subjects: ReturnType<typeof subjectCompari
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{t('overallStatus.subjectTitle')}</Text>
-      <Text style={styles.cardHint}>{t('overallStatus.subjectHint')}</Text>
+      <Text style={styles.cardHint}>{t('overallStatus.subjectHint', { term })}</Text>
       <Legend
         items={[
           { color: SINGLE_SERIES_COLOR, label: t('overallStatus.legendStudent') },
@@ -233,7 +253,7 @@ function SubjectChart({ subjects }: { subjects: ReturnType<typeof subjectCompari
 }
 
 /** The gap to the class, signed. Diverging bars about a zero line: the question is which side. */
-function GapChart({ ranking }: { ranking: DeltaPoint[] }) {
+function GapChart({ ranking, term }: { ranking: DeltaPoint[]; term?: string }) {
   const { t } = useTranslation();
   if (ranking.length === 0) {
     return null;
@@ -245,7 +265,7 @@ function GapChart({ ranking }: { ranking: DeltaPoint[] }) {
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{t('overallStatus.gapTitle')}</Text>
-      <Text style={styles.cardHint}>{t('overallStatus.gapHint')}</Text>
+      <Text style={styles.cardHint}>{t('overallStatus.gapHint', { term })}</Text>
       <Legend
         items={[
           { color: SINGLE_SERIES_COLOR, label: t('overallStatus.legendAhead') },
