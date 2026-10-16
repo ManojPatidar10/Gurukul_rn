@@ -1812,6 +1812,19 @@ export interface QuizReviewItem {
   /** Null when the student didn't answer it. */
   selectedOption: QuizOption | null;
   correct: boolean;
+  /**
+   * Why each option is right or wrong. Practice review only, and null there too until the
+   * question's four have been written - ask for them with explainPracticeQuestion.
+   */
+  rationales?: OptionRationales | null;
+}
+
+/** One line per option saying why it is right or wrong. All four arrive together or not at all. */
+export interface OptionRationales {
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
 }
 
 export interface BankQuestionInput {

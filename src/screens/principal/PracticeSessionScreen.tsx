@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getPracticeSession, submitPracticeAnswer } from '../../api/practice';
+import { explainPracticeQuestion, getPracticeSession, submitPracticeAnswer } from '../../api/practice';
 import type { PracticeSessionResponse, PublicQuizQuestionResponse, QuizOption } from '../../api/types';
 import { QuizReviewList } from '../../components/QuizReviewList';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -24,7 +24,7 @@ const OPTIONS: { key: QuizOption; field: keyof PublicQuizQuestionResponse }[] = 
 ];
 
 export function PracticeSessionScreen({ route, navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { sessionId } = route.params;
   const schoolId = useSchoolId();
   const [session, setSession] = useState<PracticeSessionResponse | null>(null);
@@ -36,17 +36,63 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   // right or wrong: the correct options are revealed in the review once the session is over.
   const [answered, setAnswered] = useState<{ questionId: string; selected: QuizOption; correct: boolean } | null>(null);
 
+  // Questions whose four option rationales are being written right now, so the review can say so
+  // rather than look like it simply has nothing to add.
+  const [explaining, setExplaining] = useState<ReadonlySet<string>>(new Set());
+
   const load = useCallback(() => {
     setError(null);
-    return getPracticeSession(schoolId, sessionId)
+    return getPracticeSession(schoolId, sessionId, i18n.language)
       .then(setSession)
       .catch((e) => setError(getErrorMessage(e)));
-  }, [schoolId, sessionId]);
+  }, [schoolId, sessionId, i18n.language]);
 
   useEffect(() => {
     setLoading(true);
     load().finally(() => setLoading(false));
   }, [load]);
+
+  /**
+   * Once the session is over, fill in any question that hasn't got its per-option rationales yet -
+   * one at a time, not ten at once: each miss is a model call, and a question another student
+   * already reached costs nothing, so the queue shortens as the bank fills. A failure is left
+   * alone rather than surfaced: the review is still complete without it, and the student has an
+   * explanation of the correct answer either way.
+   */
+  useEffect(() => {
+    if (session?.status !== 'COMPLETED') return;
+    const missing = (session.review ?? []).filter((item) => !item.rationales).map((item) => item.questionId);
+    if (missing.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      for (const questionId of missing) {
+        if (cancelled) return;
+        setExplaining((prev) => new Set(prev).add(questionId));
+        try {
+          const next = await explainPracticeQuestion(schoolId, sessionId, questionId, i18n.language);
+          if (!cancelled) setSession(next);
+        } catch {
+          // Over the daily cap, or the model was unavailable - stop asking for the rest.
+          if (!cancelled) setExplaining(new Set());
+          return;
+        } finally {
+          if (!cancelled) {
+            setExplaining((prev) => {
+              const rest = new Set(prev);
+              rest.delete(questionId);
+              return rest;
+            });
+          }
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // session.id and status drive this; the review array is replaced on every fill, so depending on
+    // it directly would restart the loop mid-flight.
+  }, [session?.id, session?.status, schoolId, sessionId, i18n.language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { questions = [], myAnsweredQuestionIds = [] } = session ?? {};
   const currentQuestion = questions.find((q) => !myAnsweredQuestionIds.includes(q.id));
@@ -117,7 +163,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
             </Text>
           </View>
         )}
-        {session.status === 'COMPLETED' && <QuizReviewList items={session.review} />}
+        {session.status === 'COMPLETED' && <QuizReviewList items={session.review} rationalesPending={explaining} />}
 
         {session.status === 'ACTIVE' && currentQuestion && (
           <View style={styles.questionCard}>
