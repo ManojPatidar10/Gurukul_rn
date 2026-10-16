@@ -6,6 +6,7 @@ import { NewAdmissionScreen } from '../screens/principal/NewAdmissionScreen';
 import { AssessmentDetailScreen } from '../screens/principal/AssessmentDetailScreen';
 import { AssessmentFormScreen } from '../screens/principal/AssessmentFormScreen';
 import { AssessmentResultsScreen } from '../screens/principal/AssessmentResultsScreen';
+import { OverallStatusScreen } from '../screens/principal/OverallStatusScreen';
 import { ReportCardScreen } from '../screens/principal/ReportCardScreen';
 import { PublishReportCardsScreen } from '../screens/principal/PublishReportCardsScreen';
 import { SectionReportCardsGridScreen } from '../screens/principal/SectionReportCardsGridScreen';
@@ -197,6 +198,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
         <Stack.Screen name="RegistrationInbox" component={RegistrationInboxScreen} />
         <Stack.Screen name="ReportCard" component={ReportCardScreen} />
+        <Stack.Screen name="OverallStatus" component={OverallStatusScreen} />
         <Stack.Screen name="PublishReportCards" component={PublishReportCardsScreen} />
         <Stack.Screen name="SectionReportCardsGrid" component={SectionReportCardsGridScreen} />
         <Stack.Screen name="GradingScale" component={GradingScaleScreen} />

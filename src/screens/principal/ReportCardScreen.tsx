@@ -11,6 +11,7 @@ import type { PublishedTerm, ReportCard } from '../../api/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
+import { SubjectPerformanceBar } from '../../components/SubjectPerformanceBar';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useToast } from '../../context/ToastContext';
@@ -345,6 +346,23 @@ export function ReportCardScreen({ route, navigation }: Props) {
               )}
             </Pressable>
 
+            {/* Filled rather than outlined: this card is one term, and the charts behind here are
+                the only place the student's terms are seen next to each other. */}
+            <Pressable
+              style={styles.statusButton}
+              onPress={() =>
+                navigation.navigate('OverallStatus', {
+                  student: { id: student.id, name: student.name },
+                  // The term on screen, so the charts open on the same card the chips are showing.
+                  term: reportCard.term,
+                  sectionId: reportCard.classSectionId,
+                })
+              }
+              accessibilityRole="button"
+            >
+              <Text style={styles.statusButtonText}>{t('overallStatus.open')}</Text>
+            </Pressable>
+
             <Text style={styles.sectionTitle}>{t('reportCardDetail.subjects')}</Text>
             {reportCard.subjects.length === 0 && (
               <Text style={styles.empty}>{t('reportCardDetail.noResults')}</Text>
@@ -364,6 +382,11 @@ export function ReportCardScreen({ route, navigation }: Props) {
                     </View>
                     <StatusChip label={formatSubjectGrade(subject.grade)} variant="info" />
                   </View>
+                  <SubjectPerformanceBar
+                    percentage={subject.percentage}
+                    classAverage={subject.classAveragePercentage}
+                    delta={subject.deltaFromClassAverage}
+                  />
                   {(counts.absent > 0 || counts.excused > 0) && (
                     <View style={styles.countRow}>
                       {counts.absent > 0 && (
@@ -488,6 +511,15 @@ const styles = StyleSheet.create({
   },
   pdfButtonDisabled: { opacity: 0.6 },
   pdfButtonText: { color: colors.primary, fontWeight: '700' },
+  statusButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    marginTop: -spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  statusButtonText: { color: colors.white, fontWeight: '700' },
   sectionTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: spacing.md },
   subjectCard: {
     backgroundColor: colors.surface,

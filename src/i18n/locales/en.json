@@ -2431,7 +2431,9 @@
     "grade": "Grade",
     "subjects": "Subjects",
     "noResults": "No results recorded for this term yet.",
-    "moved": "Moved"
+    "moved": "Moved",
+    "vsClass": "{{delta}} vs class average ({{average}}%)",
+    "atClassAverage": "In line with the class average ({{average}}%)"
   },
   "reportCardUnpublish": {
     "canUnpublishLater": "An admin can unpublish later, with a reason.",
@@ -2712,7 +2714,21 @@
       "loadFailed": "Could not load this practice session.",
       "noXp": "Practice doesn't earn XP — it's just for prep.",
       "complete": "Practice complete!",
-      "score": "{{correct}}/{{total}} correct"
+      "score": "{{correct}}/{{total}} correct",
+      "analysis": {
+        "title": "Chapter by chapter",
+        "hint": "Where this score came from.",
+        "score": "{{correct}}/{{answered}} · {{percent}}%",
+        "tooFew": "Too few questions here to call it either way.",
+        "untagged_one": "{{count}} more question isn't filed under a chapter yet.",
+        "untagged_other": "{{count}} more questions aren't filed under a chapter yet.",
+        "strengths": "Strengths",
+        "focusAreas": "Focus areas",
+        "roadmapTitle": "What to study next",
+        "roadmapHint": "In syllabus order, so earlier chapters come first.",
+        "groundwork": "groundwork",
+        "notesTitle": "Study notes"
+      }
     },
     "battleMatch": {
       "title": "Battle Room",
@@ -3612,5 +3628,28 @@
       "empty": "No categories yet.",
       "addLink": "Add a category"
     }
+  },
+  "overallStatus": {
+    "open": "View overall status",
+    "title": "Overall status",
+    "noPublished": "No published report cards yet, so there is nothing to chart.",
+    "progressTitle": "Overall performance by term",
+    "progressHint": "Every published term so far, oldest first.",
+    "singleTerm": "Only {{term}} is published so far ({{percent}}%). A second term will show the trend.",
+    "subjectTitle": "Subject-wise performance",
+    "subjectHint": "{{term}} — each subject against its class average.",
+    "gapTitle": "Strengths and weaknesses",
+    "gapHint": "{{term}} — percentage points above or below the class average.",
+    "strengths": "Strengths",
+    "weaknesses": "Needs work",
+    "allInLine": "Every subject is within a point of the class average.",
+    "legendStudent": "This student",
+    "legendClass": "Class average",
+    "legendAhead": "Ahead of class",
+    "legendBehind": "Behind class",
+    "axisPercent": "Percentage",
+    "axisPoints": "Points vs class",
+    "axisTerm": "Term",
+    "axisSubject": "Subject"
   }
 }

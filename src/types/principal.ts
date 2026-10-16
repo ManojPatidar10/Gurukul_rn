@@ -158,6 +158,18 @@ export type PrincipalStackParamList = {
     defaultTerm?: string;
     defaultSectionId?: string;
   };
+  /**
+   * Every chart the student's published terms support - opened from the report card.
+   *
+   * `term` / `sectionId`: the card that was on screen, so the subject charts describe the same
+   * term the chips were showing. Left out, or naming a term with nothing published, the charts
+   * fall back to the newest term and say which one they are describing.
+   */
+  OverallStatus: {
+    student: Pick<Student, 'id' | 'name'>;
+    term?: string;
+    sectionId?: string;
+  };
   PublishReportCards: { classSection: ClassSection };
   SectionReportCardsGrid: { classSection: ClassSection };
   GradingScale: undefined;
