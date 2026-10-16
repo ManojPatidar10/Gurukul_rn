@@ -2338,7 +2338,30 @@
         "EXTRA": "अतिरिक्त क्लास"
       },
       "saved": "सेव हो गया। टीचरों और छात्रों को सूचना भेज दी गई है।",
-      "pastDate": "बीते दिनों में बदलाव नहीं हो सकता।"
+      "pastDate": "बीते दिनों में बदलाव नहीं हो सकता।",
+      "autoAssign": "स्वतः विकल्प शिक्षक लगाएँ",
+      "autoAssignHint": "हर खाली पीरियड को सबसे उपयुक्त खाली शिक्षक देता है, एक-एक पीरियड करके। सेव होने से पहले आप योजना देखते हैं।",
+      "autoAssignPreviewTitle_one": "{{count}} विकल्प शिक्षक लगाएँ?",
+      "autoAssignPreviewTitle_other": "{{count}} विकल्प शिक्षक लगाएँ?",
+      "autoAssignPreviewBody": "पुष्टि करने पर नीचे दिए हर शिक्षक और कक्षा को सूचना जाएगी।",
+      "autoAssignNoneFree": "कोई खाली नहीं - बिना शिक्षक छोड़ा",
+      "autoAssignNothing": "लगाने को कुछ नहीं - हर पीरियड भरा है या कोई खाली नहीं।",
+      "autoAssignConfirm": "पुष्टि करें",
+      "autoAssignDone": "{{assigned}} लगाए, {{unassigned}} बिना शिक्षक",
+      "stillToCover_one": "{{count}} बाकी",
+      "stillToCover_other": "{{count}} बाकी",
+      "allCovered": "सब भर गए",
+      "coveredBy": "{{name}} ले रहे हैं",
+      "coverLost": "विकल्प अनुपस्थित - नया शिक्षक चाहिए",
+      "away": "{{name}} अनुपस्थित हैं",
+      "substitute": "विकल्प शिक्षक",
+      "pickSubstitute": "शिक्षक चुनें",
+      "match": {
+        "SUBJECT_AND_SECTION": "{{section}} को {{subject}} पढ़ाते हैं",
+        "SUBJECT": "कहीं और {{subject}} पढ़ाते हैं",
+        "SECTION": "{{section}} को पढ़ाते हैं",
+        "FREE": "खाली"
+      }
     }
   },
   "reportCardPdf": {
