@@ -2790,6 +2790,7 @@
       "didNotAnswer": "You didn't answer this one.",
       "keyChanged": "The answer key was changed after you answered, so your mark stays as it was given.",
       "why": "Why:",
+      "writingWhy": "Working out why each option is right or wrong…",
       "reported": "Reported. Thanks!",
       "reportPlaceholder": "What looks wrong? (optional)",
       "sendReport": "Send report",
