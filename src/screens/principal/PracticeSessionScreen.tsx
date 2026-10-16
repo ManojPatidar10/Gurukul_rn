@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { explainPracticeQuestion, getPracticeSession, submitPracticeAnswer } from '../../api/practice';
-import type { PracticeSessionResponse, QuizOption, QuizReviewItem } from '../../api/types';
+import type { PracticeSessionResponse, PublicQuizQuestionResponse, QuizOption } from '../../api/types';
 import { QuizReviewList } from '../../components/QuizReviewList';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -16,7 +16,7 @@ import { ErrorNotice } from '../../components/ErrorNotice';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PracticeSession'>;
 
-const OPTIONS: { key: QuizOption; field: 'optionA' | 'optionB' | 'optionC' | 'optionD' }[] = [
+const OPTIONS: { key: QuizOption; field: keyof PublicQuizQuestionResponse }[] = [
   { key: 'A', field: 'optionA' },
   { key: 'B', field: 'optionB' },
   { key: 'C', field: 'optionC' },
@@ -35,10 +35,6 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
   // advance, so a previous question's correct/wrong state can never bleed into the next one. Only
   // right or wrong: the correct options are revealed in the review once the session is over.
   const [answered, setAnswered] = useState<{ questionId: string; selected: QuizOption; correct: boolean } | null>(null);
-  // The answered question's four option lines, once the server has them. Null while they are being
-  // written, so the card can say so rather than look like it has nothing to add.
-  const [answeredReview, setAnsweredReview] = useState<QuizReviewItem | null>(null);
-  const [explainingCurrent, setExplainingCurrent] = useState(false);
 
   // Questions whose four option rationales are being written right now, so the review can say so
   // rather than look like it simply has nothing to add.
@@ -110,11 +106,7 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
       setAnswered({ questionId, selected, correct: result.correct });
       // The last answer: reload straight into the score and the review. If that fails, the Next
       // button stays up to try again.
-      if (result.sessionCompleted) {
-        await load();
-      } else {
-        explainAnswered(questionId);
-      }
+      if (result.sessionCompleted) await load();
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -122,27 +114,8 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
     }
   };
 
-  /**
-   * Explain the question the student has just answered. They have committed and cannot answer it
-   * again, so the key costs them nothing now - and this is the moment the explanation is worth
-   * most, with the question still in front of them. A failure is left quiet: they already know
-   * whether they were right, and the end-of-session review will try again.
-   */
-  const explainAnswered = (questionId: string) => {
-    setAnsweredReview(null);
-    setExplainingCurrent(true);
-    explainPracticeQuestion(schoolId, sessionId, questionId, i18n.language)
-      .then((next) => {
-        setSession(next);
-        setAnsweredReview((next.review ?? []).find((item) => item.questionId === questionId) ?? null);
-      })
-      .catch(() => {})
-      .finally(() => setExplainingCurrent(false));
-  };
-
   const handleNext = async () => {
     setAnswered(null);
-    setAnsweredReview(null);
     setSubmitting(true);
     await load();
     setSubmitting(false);
@@ -211,36 +184,18 @@ export function PracticeSessionScreen({ route, navigation }: Props) {
             {OPTIONS.map(({ key, field }) => {
               const isThisAnswered = answered && answered.questionId === currentQuestion.id;
               const isSelected = isThisAnswered && answered.selected === key;
-              // Only for the question just answered: the key is already spent on it.
-              const isKey = isThisAnswered && answeredReview?.correctOption === key;
-              const rationale = isThisAnswered ? answeredReview?.rationales?.[field]?.trim() : undefined;
               return (
-                <View key={key}>
-                  <Pressable
-                    style={[
-                      styles.optionButton,
-                      isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong),
-                      !isSelected && isKey && styles.optionKeyOption,
-                      !!rationale && styles.optionWithRationale,
-                    ]}
-                    disabled={submitting || !!isThisAnswered}
-                    onPress={() => handleSelect(currentQuestion.id, key)}
-                  >
-                    <Text style={[styles.optionKey, isSelected && styles.optionKeySelected]}>{key}</Text>
-                    <Text style={styles.optionText}>{currentQuestion[field] as string}</Text>
-                    {!isSelected && isKey && <Text style={styles.keyTag}>{t('games.review.tags.correctAnswer')}</Text>}
-                  </Pressable>
-                  {!!rationale && <Text style={styles.rationale}>{rationale}</Text>}
-                </View>
+                <Pressable
+                  key={key}
+                  style={[styles.optionButton, isSelected && (answered!.correct ? styles.optionCorrect : styles.optionWrong)]}
+                  disabled={submitting || !!isThisAnswered}
+                  onPress={() => handleSelect(currentQuestion.id, key)}
+                >
+                  <Text style={[styles.optionKey, isSelected && styles.optionKeySelected]}>{key}</Text>
+                  <Text style={styles.optionText}>{currentQuestion[field] as string}</Text>
+                </Pressable>
               );
             })}
-
-            {answered && answered.questionId === currentQuestion.id && explainingCurrent && (
-              <View style={styles.rationaleLoading}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={styles.rationaleLoadingText}>{t('games.review.writingWhy')}</Text>
-              </View>
-            )}
 
             {answered && answered.questionId === currentQuestion.id && (
               <Pressable style={styles.nextButton} onPress={handleNext} disabled={submitting}>
@@ -296,21 +251,6 @@ const styles = StyleSheet.create({
   },
   optionCorrect: { borderColor: colors.success, backgroundColor: '#E4F5E8' },
   optionWrong: { borderColor: colors.error, backgroundColor: '#FBE7E7' },
-  /** The right answer when the student picked something else - marked, but not as their own. */
-  optionKeyOption: { borderColor: colors.success },
-  keyTag: { fontSize: 11, fontWeight: '700', color: colors.success },
-  /** The option sits tight against the line explaining it. */
-  optionWithRationale: { marginBottom: 2 },
-  rationale: {
-    fontSize: 12.5,
-    color: colors.textSecondary,
-    lineHeight: 18,
-    marginLeft: spacing.lg,
-    marginBottom: spacing.sm,
-    paddingRight: spacing.sm,
-  },
-  rationaleLoading: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  rationaleLoadingText: { fontSize: 12.5, color: colors.textMuted },
   optionKey: {
     width: 24,
     height: 24,
