@@ -46,7 +46,7 @@
     "youStep": {
       "title": "About you",
       "intro": "You'll be the first admin of this school.",
-      "phoneHint": "Your sign-in code (OTP) will come to this number on WhatsApp. Use the number you keep with you.",
+      "phoneHint": "We'll send a code to this number on WhatsApp now, and your sign-in codes (OTP) later. Use the number you keep with you.",
       "afterwards": "Takes a few seconds. Next: add your classes, import your student register and add your teachers — the app walks you through it."
     },
     "schoolName": "School name",
@@ -61,6 +61,16 @@
     "errors": {
       "pincode": "Enter a valid 6-digit pincode.",
       "phone": "Enter a valid 10-digit mobile number."
+    },
+    "sendCode": "Send me a code",
+    "sendingCode": "Sending…",
+    "codeStep": {
+      "title": "Enter the code",
+      "intro": "We sent a code on WhatsApp to {{phone}}. This proves the number is yours before the school is created.",
+      "code": "Code from WhatsApp",
+      "resend": "Resend code",
+      "resendIn": "Resend code in {{seconds}} s",
+      "changeNumber": "Change number"
     }
   },
   "setup": {

@@ -64,6 +64,8 @@ export interface SchoolRegistrationRequest {
   principalName: string;
   /** The principal's mobile: the OTP login for the first ADMIN account. */
   principalPhone: string;
+  /** From verifySignupOtp for that same mobile; the server requires it in production. Single use. */
+  signupToken?: string;
   /** Everything below is optional - the in-app sign-up sends only the six fields above. */
   address?: string;
   contactEmail?: string;
@@ -77,6 +79,11 @@ export interface SchoolRegistrationRequest {
   latitude?: number;
   longitude?: number;
   geofenceRadiusMeters?: number;
+}
+
+export interface SignupOtpVerifyResponse {
+  signupToken: string;
+  expiresAt: string;
 }
 
 export interface SchoolSearchResult {
