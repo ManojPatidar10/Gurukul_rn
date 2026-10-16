@@ -1,23 +1,27 @@
 <!--meta {
   "path": "gps-attendance.html",
   "crumb": "GPS attendance",
-  "title": "GPS Attendance App for Schools — No Biometric Machine | Smart Gurukul",
-  "description": "Teachers check in by GPS at school from their own phone, checked on our server. No biometric hardware to buy or repair. Class attendance in two taps, with monthly calendars.",
-  "priority": "0.9"
+  "title": "GPS Teacher Attendance App for Schools | Smart Gurukul",
+  "description": "Teachers check in by GPS from their own phone at school, checked on our server, and phones with fake GPS are refused. No biometric machine to buy or repair.",
+  "hreflang": ["gps-attendance.html", "hi/gps-attendance.html"],
+  "alternate": "hi/gps-attendance.html",
+  "priority": "0.9",
+  "og_eyebrow": "Teacher attendance",
+  "og_headline": "GPS check-in, no machine to buy"
 } -->
 <section class="page-hero">
   <div class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Smart Gurukul</a> › GPS attendance</nav>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="./">Smart Gurukul</a> › GPS attendance</nav>
     <p class="eyebrow">School</p>
     <h1>Teacher attendance by GPS, with no machine to buy</h1>
     <p class="lead">Teachers check in from their own phone when they reach school. There’s no biometric machine to buy, queue at or repair, and student attendance takes the class teacher two taps.</p>
-    <div class="hero-actions" style="margin-top:26px"><a class="btn btn-gold" href="index.html#demo">Book a free demo</a></div>
+    <div class="hero-actions" style="margin-top:26px"><a class="btn btn-gold" href="./#demo">Book a free demo</a></div>
   </div>
 </section>
 
 <section style="padding-bottom:0">
   <div class="wrap">
-    <div class="answer"><p><strong>In short:</strong> the school saves its location and a radius once (100 metres by default). When a teacher taps <em>Mark my attendance</em>, the phone sends its GPS position and <strong>our server, not the phone</strong>, checks the distance to the school. At school, they’re marked present. Too far away, the check-in is refused and shows how far they are.</p></div>
+    <div class="answer"><p><strong>In short:</strong> the school saves its location and a radius once (100 metres by default). When a teacher taps <em>Mark my attendance</em>, the phone sends its GPS position and <strong>our server, not the phone</strong>, checks the distance to the school. At school, they’re marked present. Too far away, the check-in is refused and shows how far they are. Check-ins from phones with a fake-GPS app, Developer options, root or a cloner app are refused too.</p></div>
   </div>
 </section>
 
@@ -27,7 +31,7 @@
       <div class="fr-media"><div class="phone"><img src="assets/img/gps-attendance.webp" width="540" height="1206" loading="lazy" alt="Mark My Attendance screen showing 'You're marked present' and a monthly attendance calendar"></div></div>
       <div>
         <p class="eyebrow">How it works</p>
-        <h2 style="font-size:clamp(1.6rem,3.4vw,2.3rem)">Four steps, set up once</h2>
+        <h2 style="font-size:clamp(1.6rem,3.4vw,2.3rem)">How does GPS teacher attendance work?</h2>
         <ol class="checks">
           <li><strong>Save the school’s location.</strong> The principal taps “use my current location” at school and sets the radius.</li>
           <li><strong>Teachers check in on arrival.</strong> One tap, and the phone shares its GPS position.</li>
@@ -46,6 +50,7 @@
       <div class="card"><span class="emoji">💸</span><h3>Nothing to buy</h3><p>A biometric machine has to be bought, installed and repaired. GPS check-in uses the phones teachers already carry.</p></div>
       <div class="card"><span class="emoji">🚪</span><h3>No queue at the gate</h3><p>Everyone checks in on their own phone instead of waiting for one device.</p></div>
       <div class="card"><span class="emoji">📍</span><h3>Checked on our server</h3><p>Presence is judged from the teacher’s location against the school’s saved location and radius.</p></div>
+      <div class="card"><span class="emoji">🛡️</span><h3>Fake GPS blocked</h3><p>Check-ins are refused from phones with a fake-GPS app, Developer options turned on, a rooted or jailbroken phone or a cloner app.</p></div>
       <div class="card"><span class="emoji">📅</span><h3>Reports in the app</h3><p>Monthly calendars for every teacher and student, and attendance export for records.</p></div>
     </div>
   </div>
@@ -60,6 +65,8 @@
       <li><strong>A calendar for every student</strong>, visible to the student and to their parents in the <a href="parent-app.html">parent app</a>.</li>
       <li><strong>Attendance export</strong> for records and inspections.</li>
     </ul>
+    <h2>Who covers an absent teacher’s classes?</h2>
+    <p>When a teacher is marked absent or half-day, their periods show up in the timetable as needing a substitute, next to the teachers who are free. See how <a href="school-timetable-app.html">timetable substitutions</a> work.</p>
   </div>
 </section>
 
@@ -68,8 +75,9 @@
     <div class="section-head center"><p class="eyebrow">FAQ</p><h2>GPS attendance: common questions</h2></div>
     <div class="faq">
       <details class="qa"><summary>How does GPS attendance work for teachers?</summary><p>The school saves its location and a radius. A teacher taps “Mark my attendance” on arrival, the phone sends its GPS position, and our server checks the distance to the school. At school, they are marked present; too far away, the check-in is refused.</p></details>
-      <details class="qa"><summary>Can teachers fake their location?</summary><p>The decision is made on our server from the school’s saved location, never by the phone, and every check-in’s location and accuracy are recorded. As with any GPS system, someone using special location-spoofing tools is harder to rule out than with a biometric machine.</p></details>
-      <details class="qa"><summary>What radius should a school use?</summary><p>The default is 100 metres from the saved point. Larger campuses can increase it.</p></details>
+      <details class="qa"><summary>Can teachers fake their location?</summary><p>The app refuses a check-in when the phone reports a fake (mock) location, has Developer options turned on, is rooted or jailbroken, or runs Smart Gurukul inside a cloner app. Our server also rejects stale locations and anything outside the school’s radius. These signals come from the phone, so no GPS system is as tamper-proof as a fingerprint machine, but the common fake-GPS tricks are blocked.</p></details>
+      <details class="qa"><summary>What radius should a school use?</summary><p>The default is 100 metres from the saved point. Larger campuses can increase it, up to 700 metres.</p></details>
+      <details class="qa"><summary>What if a teacher’s check-in is refused?</summary><p>The app says why. Turn off any fake-GPS app and Developer options, open Smart Gurukul directly rather than inside a cloner app, and try again at school. An admin can also mark a teacher’s attendance.</p></details>
       <details class="qa"><summary>Do we need a biometric machine?</summary><p>No. GPS check-in uses teachers’ own phones, so there is no hardware to buy or repair.</p></details>
     </div>
   </div>
@@ -79,8 +87,8 @@
   <div class="wrap">
     <h2 style="font-size:1.5rem">Explore more</h2>
     <div class="related">
-      <a href="parent-app.html">Parent app<span>Attendance, fees and report card</span></a>
-      <a href="ai-for-schools.html">AI for schools<span>An AI helper for every teacher</span></a>
+      <a href="school-timetable-app.html">Timetable<span>Substitutes for absent teachers</span></a>
+      <a href="parent-app.html">Parent app<span>Attendance, fees, report card and the bus</span></a>
       <a href="compare.html">Compare<span>Smart Gurukul vs. typical school software</span></a>
     </div>
   </div>

@@ -1,4 +1,5 @@
 import i18n from '../i18n';
+import { pausedUntilFromError, pausedUntilLabel } from '../utils/aiGuard';
 import { ApiError, NetworkError, SessionExpiredError } from './client';
 
 // Messages the server sends that say nothing a user can act on - replaced by our own wording.
@@ -29,6 +30,26 @@ function isGeneric(message: string | undefined) {
 }
 
 /**
+ * The values a code's translation fills in from the error's `data`, or null when the data it needs
+ * is missing (then the code's translation is skipped and the server's own message is used).
+ * Codes not listed here take no values.
+ */
+function codeValues(error: ApiError): Record<string, string | number> | null {
+  const data = error.data && typeof error.data === 'object' ? (error.data as Record<string, unknown>) : {};
+  switch (error.errorCode) {
+    case 'AI_PAUSED': {
+      // The server's text gives the time in India; ours shows it in the phone's own time zone.
+      const pausedUntil = pausedUntilFromError(error);
+      return pausedUntil ? { time: pausedUntilLabel(pausedUntil, i18n.language) } : null;
+    }
+    case 'AI_MESSAGE_TOO_LONG':
+      return typeof data.maxChars === 'number' ? { max: data.maxChars } : null;
+    default:
+      return {};
+  }
+}
+
+/**
  * What to tell the user when something failed. The server's own message is shown when it's written
  * for a person ("Student not found", "Invalid username or password"); crashes, outages, timeouts and
  * lost connections get clear wording of our own, in the app's language. A known `errorCode` wins
@@ -41,7 +62,14 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof NetworkError) return t(error.reason === 'timeout' ? 'errors.timeout' : 'errors.offline');
 
   if (error instanceof ApiError) {
-    if (error.errorCode && i18n.exists(`errors.codes.${error.errorCode}`)) return t(`errors.codes.${error.errorCode}`);
+    // The AI features' "turned off", "not set up", "billing" and "too long to finish" messages are
+    // each written for a person and say different things - the translation is only for a server
+    // that sent nothing useful.
+    if (error.errorCode === 'AI_UNAVAILABLE' && !isGeneric(error.message)) return error.message;
+    if (error.errorCode && i18n.exists(`errors.codes.${error.errorCode}`)) {
+      const values = codeValues(error);
+      if (values) return t(`errors.codes.${error.errorCode}`, values);
+    }
     const status = error.status ?? 0;
     if (status === 502 || status === 503 || status === 504) return t('errors.unavailable');
     if (status >= 500) return t('errors.server');

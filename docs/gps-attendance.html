@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GPS Attendance App for Schools — No Biometric Machine | Smart Gurukul</title>
-<meta name="description" content="Teachers check in by GPS at school from their own phone, checked on our server. No biometric hardware to buy or repair. Class attendance in two taps, with monthly calendars.">
+<title>GPS Teacher Attendance App for Schools | Smart Gurukul</title>
+<meta name="description" content="Teachers check in by GPS from their own phone at school, checked on our server, and phones with fake GPS are refused. No biometric machine to buy or repair.">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="canonical" href="https://smartgurukul.org/gps-attendance.html">
+<link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/gps-attendance.html">
+<link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/gps-attendance.html">
+<link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/gps-attendance.html">
 <meta name="theme-color" content="#7C3AED">
 <link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/brand/favicon-48.png" type="image/png" sizes="48x48">
@@ -14,21 +17,24 @@
 <link rel="manifest" href="site.webmanifest">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Smart Gurukul">
-<meta property="og:title" content="GPS Attendance App for Schools — No Biometric Machine | Smart Gurukul">
-<meta property="og:description" content="Teachers check in by GPS at school from their own phone, checked on our server. No biometric hardware to buy or repair. Class attendance in two taps, with monthly calendars.">
+<meta property="og:title" content="GPS Teacher Attendance App for Schools | Smart Gurukul">
+<meta property="og:description" content="Teachers check in by GPS from their own phone at school, checked on our server, and phones with fake GPS are refused. No biometric machine to buy or repair.">
 <meta property="og:url" content="https://smartgurukul.org/gps-attendance.html">
-<meta property="og:image" content="https://smartgurukul.org/assets/og-image.png">
+<meta property="og:image" content="https://smartgurukul.org/assets/og/gps-attendance.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Smart Gurukul: GPS check-in, no machine to buy">
 <meta property="og:locale" content="en_IN">
+<meta property="og:locale:alternate" content="hi_IN">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="GPS Attendance App for Schools — No Biometric Machine | Smart Gurukul">
-<meta name="twitter:description" content="Teachers check in by GPS at school from their own phone, checked on our server. No biometric hardware to buy or repair. Class attendance in two taps, with monthly calendars.">
-<meta name="twitter:image" content="https://smartgurukul.org/assets/og-image.png">
+<meta name="twitter:title" content="GPS Teacher Attendance App for Schools | Smart Gurukul">
+<meta name="twitter:description" content="Teachers check in by GPS from their own phone at school, checked on our server, and phones with fake GPS are refused. No biometric machine to buy or repair.">
+<meta name="twitter:image" content="https://smartgurukul.org/assets/og/gps-attendance.png">
+<meta name="twitter:image:alt" content="Smart Gurukul: GPS check-in, no machine to buy">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mukta:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="assets/site.css?v=2026-10-11">
+<link rel="stylesheet" href="assets/site.css?v=ae883448">
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -39,7 +45,8 @@
    "name": "Smart Gurukul",
    "alternateName": [
     "SmartGurukul",
-    "Smart Gurukul App"
+    "Smart Gurukul App",
+    "स्मार्ट गुरुकुल"
    ],
    "url": "https://smartgurukul.org/",
    "logo": "https://smartgurukul.org/assets/brand/icon-512.png",
@@ -51,13 +58,28 @@
     "@type": "Country",
     "name": "India"
    },
-   "description": "Smart Gurukul makes an AI-powered, gamified school app for Indian K-12 schools, built by an IIT-BHU team."
+   "description": "Smart Gurukul makes a school management app with AI and games for Indian K-12 schools, built by an IIT-BHU team.",
+   "disambiguatingDescription": "Software company that makes a school app for Indian K-12 schools; not a school.",
+   "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "sales",
+    "url": "https://smartgurukul.org/#demo",
+    "areaServed": "IN",
+    "availableLanguage": [
+     "en",
+     "hi"
+    ]
+   }
   },
   {
    "@type": "WebSite",
    "@id": "https://smartgurukul.org/#website",
    "url": "https://smartgurukul.org/",
    "name": "Smart Gurukul",
+   "alternateName": [
+    "SmartGurukul",
+    "स्मार्ट गुरुकुल"
+   ],
    "publisher": {
     "@id": "https://smartgurukul.org/#org"
    },
@@ -72,7 +94,7 @@
    "name": "Smart Gurukul",
    "applicationCategory": "EducationalApplication",
    "applicationSubCategory": "School management software",
-   "operatingSystem": "Android, iOS",
+   "operatingSystem": "Android",
    "inLanguage": [
     "en-IN",
     "hi-IN"
@@ -82,29 +104,32 @@
    },
    "url": "https://smartgurukul.org/",
    "image": "https://smartgurukul.org/assets/og-image.png",
-   "description": "Smart Gurukul connects the whole school in one app. It combines AI (an AI helpdesk assistant for staff and students), school operations (GPS attendance with no hardware, fees, payroll, exams and report cards, chat, video calls and events) and game-based learning (XP, streaks, leagues, House Wars, quiz battles) for principals, teachers, students and parents, in English and Hindi.",
+   "description": "Smart Gurukul connects the whole school in one app. It combines AI (an AI helpdesk, Academic Helper and a question paper generator), school operations (GPS teacher attendance with no hardware, fees and receipts, payroll, timetable and substitutions, exams and report cards, school bus tracking, chat and events) and game-based learning (XP, streaks, leagues, House Wars, quiz battles) for principals, teachers, students and parents, in English and Hindi.",
    "featureList": [
-    "AI helpdesk assistant inside the app for staff and students",
-    "AI help for teachers preparing teaching notes and explanations",
-    "GPS check-in attendance for teachers, with no biometric hardware",
-    "Class attendance marked from a phone, with history calendars",
-    "Fee structures, dues tracking and receipts",
+    "AI helpdesk assistant for staff and students",
+    "Academic Helper for teachers and students",
+    "AI question paper and quiz generator for teachers",
+    "GPS check-in attendance for teachers, with fake-GPS checks and no biometric hardware",
+    "Class attendance with absence alerts to parents",
+    "Timetable with bell schedule, rooms and substitutions",
+    "Fee structures, bills, due-date reminders and PDF receipts",
     "Payroll runs, salary structures and payslips",
-    "Exams, grading scales and report cards",
-    "Parent app with multi-child access",
-    "Chat, announcements and video calls for staff and students",
+    "Expenses, vendors and approvals",
+    "Exams, grading scales and PDF report cards",
+    "School bus tracking with a driver app and live map for families",
+    "Parent app with multi-child access and chat with teachers",
+    "One-to-one chat, school notices and events with RSVP, registration forms and polls",
+    "Admissions and ID cards with QR codes",
     "XP, daily streaks, weekly leagues and House Wars",
-    "Live Battle Room quizzes and 1v1 Arena challenges",
-    "School events with RSVP",
-    "Activity log and attendance export"
+    "Live Battle Room quizzes and 1v1 Arena challenges"
    ]
   },
   {
    "@type": "WebPage",
    "@id": "https://smartgurukul.org/gps-attendance.html#page",
    "url": "https://smartgurukul.org/gps-attendance.html",
-   "name": "GPS Attendance App for Schools — No Biometric Machine | Smart Gurukul",
-   "description": "Teachers check in by GPS at school from their own phone, checked on our server. No biometric hardware to buy or repair. Class attendance in two taps, with monthly calendars.",
+   "name": "GPS Teacher Attendance App for Schools | Smart Gurukul",
+   "description": "Teachers check in by GPS from their own phone at school, checked on our server, and phones with fake GPS are refused. No biometric machine to buy or repair.",
    "isPartOf": {
     "@id": "https://smartgurukul.org/#website"
    },
@@ -112,7 +137,7 @@
     "@id": "https://smartgurukul.org/#app"
    },
    "inLanguage": "en-IN",
-   "dateModified": "2026-10-11"
+   "dateModified": "2026-10-14"
   },
   {
    "@type": "BreadcrumbList",
@@ -147,7 +172,7 @@
      "name": "Can teachers fake their location?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "The decision is made on our server from the school’s saved location, never by the phone, and every check-in’s location and accuracy are recorded. As with any GPS system, someone using special location-spoofing tools is harder to rule out than with a biometric machine."
+      "text": "The app refuses a check-in when the phone reports a fake (mock) location, has Developer options turned on, is rooted or jailbroken, or runs Smart Gurukul inside a cloner app. Our server also rejects stale locations and anything outside the school’s radius. These signals come from the phone, so no GPS system is as tamper-proof as a fingerprint machine, but the common fake-GPS tricks are blocked."
      }
     },
     {
@@ -155,7 +180,15 @@
      "name": "What radius should a school use?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "The default is 100 metres from the saved point. Larger campuses can increase it."
+      "text": "The default is 100 metres from the saved point. Larger campuses can increase it, up to 700 metres."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What if a teacher’s check-in is refused?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The app says why. Turn off any fake-GPS app and Developer options, open Smart Gurukul directly rather than inside a cloner app, and try again at school. An admin can also mark a teacher’s attendance."
      }
     },
     {
@@ -176,31 +209,31 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header">
   <div class="wrap nav">
-    <a class="brand" href="index.html">
+    <a class="brand" href="./">
       <img src="assets/brand/lockup-horizontal.svg" width="193" height="40" alt="Smart Gurukul">
     </a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <ul class="nav-links"><li><a href="ai-for-schools.html">AI</a></li><li><a href="gamified-learning.html">Games</a></li><li><a href="gps-attendance.html" aria-current="page">GPS Attendance</a></li><li><a href="parent-app.html">Parent App</a></li><li><a href="website-services.html">Websites</a></li><li><a href="compare.html">Compare</a></li></ul>
+    <ul class="nav-links"><li><a href="ai-for-schools.html">AI</a></li><li class="nav-wide"><a href="gamified-learning.html">Games</a></li><li><a href="gps-attendance.html" aria-current="page">Attendance</a></li><li><a href="school-fee-management.html">Fees</a></li><li><a href="school-timetable-app.html">Timetable</a></li><li><a href="parent-app.html">Parent App</a></li><li><a href="compare.html">Compare</a></li></ul>
     <div class="nav-cta">
-      <a class="lang" href="hi/index.html" hreflang="hi" lang="hi">हिन्दी</a>
-      <a class="btn btn-primary btn-sm" href="index.html#demo">Book a free demo</a>
+      <a class="lang" href="hi/gps-attendance.html" hreflang="hi" lang="hi">हिन्दी</a>
+      <a class="btn btn-primary btn-sm" href="./#demo">Book a free demo</a>
     </div>
   </div>
 </header>
 <main id="main">
 <section class="page-hero">
   <div class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Smart Gurukul</a> › GPS attendance</nav>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="./">Smart Gurukul</a> › GPS attendance</nav>
     <p class="eyebrow">School</p>
     <h1>Teacher attendance by GPS, with no machine to buy</h1>
     <p class="lead">Teachers check in from their own phone when they reach school. There’s no biometric machine to buy, queue at or repair, and student attendance takes the class teacher two taps.</p>
-    <div class="hero-actions" style="margin-top:26px"><a class="btn btn-gold" href="index.html#demo">Book a free demo</a></div>
+    <div class="hero-actions" style="margin-top:26px"><a class="btn btn-gold" href="./#demo">Book a free demo</a></div>
   </div>
 </section>
 
 <section style="padding-bottom:0">
   <div class="wrap">
-    <div class="answer"><p><strong>In short:</strong> the school saves its location and a radius once (100 metres by default). When a teacher taps <em>Mark my attendance</em>, the phone sends its GPS position and <strong>our server, not the phone</strong>, checks the distance to the school. At school, they’re marked present. Too far away, the check-in is refused and shows how far they are.</p></div>
+    <div class="answer"><p><strong>In short:</strong> the school saves its location and a radius once (100 metres by default). When a teacher taps <em>Mark my attendance</em>, the phone sends its GPS position and <strong>our server, not the phone</strong>, checks the distance to the school. At school, they’re marked present. Too far away, the check-in is refused and shows how far they are. Check-ins from phones with a fake-GPS app, Developer options, root or a cloner app are refused too.</p></div>
   </div>
 </section>
 
@@ -210,7 +243,7 @@
       <div class="fr-media"><div class="phone"><img src="assets/img/gps-attendance.webp" width="540" height="1206" loading="lazy" alt="Mark My Attendance screen showing 'You're marked present' and a monthly attendance calendar"></div></div>
       <div>
         <p class="eyebrow">How it works</p>
-        <h2 style="font-size:clamp(1.6rem,3.4vw,2.3rem)">Four steps, set up once</h2>
+        <h2 style="font-size:clamp(1.6rem,3.4vw,2.3rem)">How does GPS teacher attendance work?</h2>
         <ol class="checks">
           <li><strong>Save the school’s location.</strong> The principal taps “use my current location” at school and sets the radius.</li>
           <li><strong>Teachers check in on arrival.</strong> One tap, and the phone shares its GPS position.</li>
@@ -229,6 +262,7 @@
       <div class="card"><span class="emoji">💸</span><h3>Nothing to buy</h3><p>A biometric machine has to be bought, installed and repaired. GPS check-in uses the phones teachers already carry.</p></div>
       <div class="card"><span class="emoji">🚪</span><h3>No queue at the gate</h3><p>Everyone checks in on their own phone instead of waiting for one device.</p></div>
       <div class="card"><span class="emoji">📍</span><h3>Checked on our server</h3><p>Presence is judged from the teacher’s location against the school’s saved location and radius.</p></div>
+      <div class="card"><span class="emoji">🛡️</span><h3>Fake GPS blocked</h3><p>Check-ins are refused from phones with a fake-GPS app, Developer options turned on, a rooted or jailbroken phone or a cloner app.</p></div>
       <div class="card"><span class="emoji">📅</span><h3>Reports in the app</h3><p>Monthly calendars for every teacher and student, and attendance export for records.</p></div>
     </div>
   </div>
@@ -243,6 +277,8 @@
       <li><strong>A calendar for every student</strong>, visible to the student and to their parents in the <a href="parent-app.html">parent app</a>.</li>
       <li><strong>Attendance export</strong> for records and inspections.</li>
     </ul>
+    <h2>Who covers an absent teacher’s classes?</h2>
+    <p>When a teacher is marked absent or half-day, their periods show up in the timetable as needing a substitute, next to the teachers who are free. See how <a href="school-timetable-app.html">timetable substitutions</a> work.</p>
   </div>
 </section>
 
@@ -251,8 +287,9 @@
     <div class="section-head center"><p class="eyebrow">FAQ</p><h2>GPS attendance: common questions</h2></div>
     <div class="faq">
       <details class="qa"><summary>How does GPS attendance work for teachers?</summary><p>The school saves its location and a radius. A teacher taps “Mark my attendance” on arrival, the phone sends its GPS position, and our server checks the distance to the school. At school, they are marked present; too far away, the check-in is refused.</p></details>
-      <details class="qa"><summary>Can teachers fake their location?</summary><p>The decision is made on our server from the school’s saved location, never by the phone, and every check-in’s location and accuracy are recorded. As with any GPS system, someone using special location-spoofing tools is harder to rule out than with a biometric machine.</p></details>
-      <details class="qa"><summary>What radius should a school use?</summary><p>The default is 100 metres from the saved point. Larger campuses can increase it.</p></details>
+      <details class="qa"><summary>Can teachers fake their location?</summary><p>The app refuses a check-in when the phone reports a fake (mock) location, has Developer options turned on, is rooted or jailbroken, or runs Smart Gurukul inside a cloner app. Our server also rejects stale locations and anything outside the school’s radius. These signals come from the phone, so no GPS system is as tamper-proof as a fingerprint machine, but the common fake-GPS tricks are blocked.</p></details>
+      <details class="qa"><summary>What radius should a school use?</summary><p>The default is 100 metres from the saved point. Larger campuses can increase it, up to 700 metres.</p></details>
+      <details class="qa"><summary>What if a teacher’s check-in is refused?</summary><p>The app says why. Turn off any fake-GPS app and Developer options, open Smart Gurukul directly rather than inside a cloner app, and try again at school. An admin can also mark a teacher’s attendance.</p></details>
       <details class="qa"><summary>Do we need a biometric machine?</summary><p>No. GPS check-in uses teachers’ own phones, so there is no hardware to buy or repair.</p></details>
     </div>
   </div>
@@ -262,9 +299,18 @@
   <div class="wrap">
     <h2 style="font-size:1.5rem">Explore more</h2>
     <div class="related">
-      <a href="parent-app.html">Parent app<span>Attendance, fees and report card</span></a>
-      <a href="ai-for-schools.html">AI for schools<span>An AI helper for every teacher</span></a>
+      <a href="school-timetable-app.html">Timetable<span>Substitutes for absent teachers</span></a>
+      <a href="parent-app.html">Parent app<span>Attendance, fees, report card and the bus</span></a>
       <a href="compare.html">Compare<span>Smart Gurukul vs. typical school software</span></a>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="cta-band">
+      <div><h2>Try it free for a month</h2><p>We import your register and train your staff. You decide after a month of real use.</p></div>
+      <a class="btn btn-gold" href="./#demo">Book a free demo</a>
     </div>
   </div>
 </section>
@@ -273,35 +319,40 @@
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="brand" href="index.html"><img src="assets/brand/lockup-horizontal-reversed.svg" width="183" height="38" alt="Smart Gurukul"></a>
+        <a class="brand" href="./"><img src="assets/brand/lockup-horizontal-reversed.svg" width="183" height="38" alt="Smart Gurukul"></a>
         <p class="foot-tagline">Your whole school, connected.</p>
         <p style="max-width:34ch">AI + School + Games for principals, teachers, students and parents. Built by an IIT-BHU team.</p>
       </div>
       <div>
-        <h4>Product</h4>
+        <p class="foot-title">Product</p>
         <ul>
           <li><a href="ai-for-schools.html">AI for schools</a></li>
+          <li><a href="ai-question-paper-generator.html">AI question papers</a></li>
           <li><a href="gamified-learning.html">Gamified learning</a></li>
           <li><a href="gps-attendance.html">GPS attendance</a></li>
+          <li><a href="school-timetable-app.html">Timetable &amp; substitutions</a></li>
+          <li><a href="school-fee-management.html">Fee management</a></li>
+          <li><a href="school-bus-tracking.html">School bus tracking</a></li>
           <li><a href="parent-app.html">Parent app</a></li>
-          <li><a href="money-features.html">Fees &amp; payroll</a></li>
+          <li><a href="report-card-software.html">Report cards</a></li>
+          <li><a href="school-communication-app.html">Chat and notices</a></li>
           <li><a href="website-services.html">School websites</a></li>
         </ul>
       </div>
       <div>
-        <h4>Compare</h4>
+        <p class="foot-title">Compare</p>
         <ul>
           <li><a href="compare.html">vs. other school software</a></li>
-          <li><a href="index.html#faq">FAQ</a></li>
-          <li><a href="hi/index.html" lang="hi">हिन्दी</a></li>
+          <li><a href="./#faq">FAQ</a></li>
+          <li><a href="hi/" lang="hi">हिन्दी</a></li>
           <li><a href="onboarding-toolkit.html">School onboarding toolkit</a></li>
         </ul>
       </div>
       <div>
-        <h4>Contact</h4>
+        <p class="foot-title">Contact</p>
         <ul>
           <li><a href="https://www.instagram.com/smartgurukul.app" rel="noopener" target="_blank">Instagram @smartgurukul.app</a></li>
-          <li><a href="index.html#demo">Book a free demo</a></li>
+          <li><a href="./#demo">Book a free demo</a></li>
           <li><a href="privacy.html">Privacy policy</a></li>
         </ul>
       </div>
@@ -312,7 +363,7 @@
     </div>
   </div>
 </footer>
-<div class="mobile-cta"><a class="btn btn-primary" href="index.html#demo">Book a free demo</a></div>
-<script src="assets/site.js?v=2026-10-11" defer></script>
+<div class="mobile-cta"><a class="btn btn-primary" href="./#demo">Book a free demo</a></div>
+<script src="assets/site.js?v=bec3e910" defer></script>
 </body>
 </html>

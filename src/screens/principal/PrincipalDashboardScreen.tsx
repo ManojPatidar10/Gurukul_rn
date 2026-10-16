@@ -1,26 +1,32 @@
 import { FontAwesome5 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { getClassSection, listClassSections } from '../../api/classSections';
 import { getEmployee, isActiveEmployee, listAllEmployees } from '../../api/employees';
 import { getSchool } from '../../api/schools';
 import { getStudent, listStudents } from '../../api/students';
-import type { ClassSection, School } from '../../api/types';
+import { getUncoveredPeriods } from '../../api/timetable';
+import type { ClassSection, Employee, School } from '../../api/types';
 import { listVendors } from '../../api/vendors';
 import { FeatureTile } from '../../components/FeatureTile';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { NotificationPermissionPrompt } from '../../components/NotificationPermissionPrompt';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { SetupChecklistCard } from '../../components/SetupChecklistCard';
 import { StatSummaryCard } from '../../components/StatSummaryCard';
 import { FEATURE_FLAGS } from '../../config/featureFlags';
 import { useAuth } from '../../context/AuthContext';
 import { useSchoolId } from '../../context/SchoolContext';
 import { useBottomInset } from '../../hooks/useBottomInset';
-import { colors, spacing } from '../../theme/colors';
+import { accents, colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { FeatureAction, FeatureId, HubSection, PrincipalStackParamList } from '../../types/principal';
+import { setupComplete, setupSteps, type SetupStepId } from '../../utils/setupChecklist';
+import { coverCount } from '../../utils/substitutions';
+import { todayIso } from '../../utils/timetable';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'PrincipalDashboard'>;
 
@@ -39,9 +45,12 @@ const ADMIN_ONLY_FEATURES: FeatureId[] = [
   'transport',
   'holidays',
   'activityLog',
+  'aiMisuseLog',
   'attendanceExport',
   'timetableEditor',
   'bellSchedule',
+  'substitutions',
+  'rooms',
   'schoolLocation',
   'idCards',
   'admissions',
@@ -135,11 +144,14 @@ const featureRoutes: Record<FeatureId, keyof PrincipalStackParamList> = {
   myAttendance: 'AttendanceHistory',
   attendanceDevices: 'AttendanceDevices',
   activityLog: 'ActivityLog',
+  aiMisuseLog: 'AiMisuseLog',
   attendanceExport: 'AttendanceExport',
   admissions: 'AdmissionsList',
   myTimetable: 'MyTimetable',
   timetableEditor: 'TimetableEditor',
   bellSchedule: 'PeriodSetup',
+  substitutions: 'Substitutions',
+  rooms: 'Rooms',
   schoolLocation: 'SchoolLocationSettings',
   idCards: 'IdCardSheets',
   attendance: 'SectionHub',
@@ -209,6 +221,10 @@ interface Counts {
   vendors: number | null;
 }
 
+// Per school, so a device that registers a second school starts its checklist afresh.
+const setupDismissedKey = (schoolId: string) => `gurukul.setupDismissed.${schoolId}`;
+const parentsToldKey = (schoolId: string) => `gurukul.setupParentsTold.${schoolId}`;
+
 export function PrincipalDashboardScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
@@ -223,6 +239,12 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
   const [myHomeroomSection, setMyHomeroomSection] = useState<ClassSection | null>(null);
   const [counts, setCounts] = useState<Counts>({ students: null, employees: null, vendors: null });
   const [loadingCounts, setLoadingCounts] = useState(true);
+  // Periods that need a substitute today; null until loaded, or when it couldn't be (plain label then).
+  const [coverNeeded, setCoverNeeded] = useState<number | null>(null);
+  // The setup checklist: what the school still has to do, from the counts and roster loaded below.
+  const [employees, setEmployees] = useState<Employee[] | null>(null);
+  const [setupDismissed, setSetupDismissed] = useState(true);
+  const [parentsTold, setParentsTold] = useState(false);
 
   const featureActions: FeatureAction[] = [
     { id: 'students', title: t('dashboard.features.students.title'), icon: 'user-graduate', description: t('dashboard.features.students.description') },
@@ -245,6 +267,8 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'myTimetable', title: t('dashboard.features.myTimetable.title'), icon: 'clock', description: t('dashboard.features.myTimetable.description') },
     { id: 'timetableEditor', title: t('dashboard.features.timetableEditor.title'), icon: 'table', description: t('dashboard.features.timetableEditor.description') },
     { id: 'bellSchedule', title: t('dashboard.features.bellSchedule.title'), icon: 'bell', description: t('dashboard.features.bellSchedule.description') },
+    { id: 'substitutions', title: t('dashboard.features.substitutions.title'), icon: 'user-clock', description: t('dashboard.features.substitutions.description') },
+    { id: 'rooms', title: t('dashboard.features.rooms.title'), icon: 'door-open', description: t('dashboard.features.rooms.description') },
     { id: 'gradingScale', title: t('dashboard.features.gradingScale.title'), icon: 'sliders-h', description: t('dashboard.features.gradingScale.description') },
     { id: 'markMyAttendance', title: t('dashboard.features.markMyAttendance.title'), icon: 'map-marker-alt', description: t('dashboard.features.markMyAttendance.description') },
     { id: 'staffAttendance', title: t('dashboard.features.staffAttendance.title'), icon: 'clipboard-check', description: t('dashboard.features.staffAttendance.description') },
@@ -254,6 +278,7 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
     { id: 'schoolLocation', title: t('dashboard.features.schoolLocation.title'), icon: 'map-marked-alt', description: t('dashboard.features.schoolLocation.description') },
     { id: 'idCards', title: t('dashboard.features.idCards.title'), icon: 'id-badge', description: t('dashboard.features.idCards.description') },
     { id: 'activityLog', title: t('dashboard.features.activityLog.title'), icon: 'history', description: t('dashboard.features.activityLog.description') },
+    { id: 'aiMisuseLog', title: t('dashboard.features.aiMisuseLog.title'), icon: 'user-shield', description: t('dashboard.features.aiMisuseLog.description') },
     { id: 'attendance', title: t('dashboard.features.attendance.title'), icon: 'clipboard-check', description: t('dashboard.features.attendance.description') },
     { id: 'vendorsExpenses', title: t('dashboard.features.vendorsExpenses.title'), icon: 'truck', description: t('dashboard.features.vendorsExpenses.description') },
     { id: 'academics', title: t('dashboard.features.academics.title'), icon: 'book', description: t('dashboard.features.academics.description') },
@@ -342,17 +367,65 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
           .then((res) => setCounts((prev) => ({ ...prev, students: res.totalElements })))
           .catch(() => setCounts((prev) => ({ ...prev, students: null }))),
         listAllEmployees(schoolId)
-          .then((rows) => setCounts((prev) => ({ ...prev, employees: rows.filter(isActiveEmployee).length })))
+          .then((rows) => {
+            setCounts((prev) => ({ ...prev, employees: rows.filter(isActiveEmployee).length }));
+            setEmployees(rows);
+          })
           .catch(() => setCounts((prev) => ({ ...prev, employees: null }))),
+        // The school's counts and location feed the setup checklist, so they refresh on every return.
+        getSchool(schoolId)
+          .then(setSchool)
+          .catch(() => undefined),
         listVendors(schoolId)
           .then((rows) => setCounts((prev) => ({ ...prev, vendors: rows.length })))
           .catch(() => setCounts((prev) => ({ ...prev, vendors: null }))),
       ]).finally(() => setLoadingCounts(false));
+      getUncoveredPeriods(schoolId, todayIso())
+        .then((rows) => setCoverNeeded(coverCount(rows)))
+        .catch(() => setCoverNeeded(null));
     };
     const unsubscribe = navigation.addListener('focus', load);
     load();
     return unsubscribe;
   }, [schoolId, navigation, isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    AsyncStorage.multiGet([setupDismissedKey(schoolId), parentsToldKey(schoolId)])
+      .then(([[, dismissed], [, told]]) => {
+        setSetupDismissed(dismissed === '1');
+        setParentsTold(told === '1');
+      })
+      .catch(() => setSetupDismissed(false));
+  }, [schoolId, isAdmin]);
+
+  const steps = setupSteps(school, employees, parentsTold);
+  // Only once the school and roster are known - otherwise an established school would see the card flash.
+  const showSetup = isAdmin && !setupDismissed && school !== null && employees !== null && !setupComplete(steps);
+
+  const dismissSetup = () => {
+    setSetupDismissed(true);
+    AsyncStorage.setItem(setupDismissedKey(schoolId), '1').catch(() => undefined);
+  };
+
+  const tellParents = async () => {
+    try {
+      const result = await Share.share({ message: t('setup.parentsMessage', { school: school?.name ?? t('dashboard.fallbackTitle') }) });
+      if (result.action === Share.dismissedAction) return;
+      setParentsTold(true);
+      AsyncStorage.setItem(parentsToldKey(schoolId), '1').catch(() => undefined);
+    } catch {
+      // The share sheet failing to open is not worth an error; the row just stays open.
+    }
+  };
+
+  const openSetupStep = (id: SetupStepId) => {
+    if (id === 'classes') navigation.navigate('ClassSetup');
+    else if (id === 'students') navigation.navigate('StudentImport');
+    else if (id === 'teachers') navigation.navigate('TeacherSetup');
+    else if (id === 'location') navigation.navigate('SchoolLocationSettings');
+    else tellParents();
+  };
 
   return (
     <View style={styles.root}>
@@ -389,12 +462,32 @@ export function PrincipalDashboardScreen({ navigation }: Props) {
       {/* Leave room below the last tile so the floating bot button never covers it. */}
       <ScreenContainer contentContainerStyle={{ paddingBottom: fabBottom + FAB_SIZE + spacing.lg }}>
         <NotificationPermissionPrompt />
+        {showSetup && <SetupChecklistCard steps={steps} onStep={openSetupStep} onDismiss={dismissSetup} />}
         {isAdmin && (
           <View style={styles.statRow}>
             <StatSummaryCard accentKey="students" icon="user-graduate" label={t('dashboard.features.students.title')} value={counts.students} loading={loadingCounts} />
             <StatSummaryCard accentKey="employees" icon="id-badge" label={t('dashboard.features.employees.title')} value={counts.employees} loading={loadingCounts} />
             <StatSummaryCard accentKey="vendors" icon="truck" label={t('dashboard.features.vendors.title')} value={counts.vendors} loading={loadingCounts} />
           </View>
+        )}
+        {/* The home grid is a fixed 12 tiles, so cover for absent teachers gets its own full-width card. */}
+        {isAdmin && (
+          <Pressable
+            style={[styles.coverCard, !!coverNeeded && styles.coverCardAlert]}
+            onPress={() => navigation.navigate('Substitutions')}
+            accessibilityRole="button"
+          >
+            <View style={[styles.coverIcon, { backgroundColor: accents.substitutions.light }]}>
+              <FontAwesome5 name="user-clock" size={16} color={accents.substitutions.base} />
+            </View>
+            <View style={styles.coverText}>
+              <Text style={styles.coverTitle}>
+                {coverNeeded ? t('dashboard.cover.needed', { count: coverNeeded }) : t('dashboard.cover.arrange')}
+              </Text>
+              <Text style={styles.coverDescription}>{t('dashboard.features.substitutions.description')}</Text>
+            </View>
+            <Text style={styles.coverChevron}>›</Text>
+          </Pressable>
         )}
 
         <Text style={styles.sectionTitle}>{t('dashboard.quickActions')}</Text>
@@ -486,6 +579,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
+  coverCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    ...softShadow,
+  },
+  coverCardAlert: { borderColor: accents.substitutions.base },
+  coverIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  coverText: { flex: 1 },
+  coverTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  coverDescription: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  coverChevron: { fontSize: 22, color: colors.textMuted, marginLeft: spacing.sm },
   sectionTitle: {
     fontSize: 17,
     fontWeight: '800',

@@ -106,9 +106,20 @@ describe('quizGenErrorMessage', () => {
     expect(quizGenErrorMessage(new ApiError(message, 503, 'AI_UNAVAILABLE'))).toBe(message);
   });
 
+  it('words the daily AI limits in the app language, not the server text', () => {
+    const resetsAt = { resetsAt: '2026-10-13T18:30:00Z' };
+    expect(quizGenErrorMessage(new ApiError('Server wording', 429, 'AI_USER_DAILY_LIMIT', resetsAt))).toBe(
+      en.errors.codes.AI_USER_DAILY_LIMIT
+    );
+    expect(quizGenErrorMessage(new ApiError('Server wording', 429, 'AI_SCHOOL_DAILY_LIMIT', resetsAt))).toBe(
+      en.errors.codes.AI_SCHOOL_DAILY_LIMIT
+    );
+  });
+
   it('falls back to the generic wording for other failures', () => {
     expect(quizGenErrorMessage(new ApiError('Service Unavailable', 503))).toBe(en.errors.unavailable);
-    expect(quizGenErrorMessage(new ApiError('', 503, 'AI_UNAVAILABLE'))).toBe(en.errors.unavailable);
+    // An AI_UNAVAILABLE with nothing to show gets the AI-specific fallback wording.
+    expect(quizGenErrorMessage(new ApiError('', 503, 'AI_UNAVAILABLE'))).toBe(en.errors.codes.AI_UNAVAILABLE);
     expect(quizGenErrorMessage(new NetworkError('timeout'))).toBe(en.errors.timeout);
     expect(quizGenErrorMessage(new ApiError('Too much writing for one go: at most 19 questions.', 400))).toBe(
       'Too much writing for one go: at most 19 questions.'

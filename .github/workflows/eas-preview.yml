@@ -1,0 +1,87 @@
+name: EAS preview APK
+
+# Keeps an installable Android preview APK on expo.dev up to date, without a Play Store release:
+# - when native code changed since the last preview build (a new runtime "fingerprint"), it starts a
+#   new EAS build of the "preview" profile (an APK, internal distribution);
+# - on every run it publishes the JavaScript to the "preview" EAS Update branch, so an installed
+#   preview APK updates itself the next time it is opened (the update applies on the following launch).
+# Builds are listed at https://expo.dev/accounts/yashcodes105/projects/gurukul-rn/builds
+#
+# One-time setup (Expo requires it before CI can build): someone signed in to an Expo account with
+# access to the project runs `npx eas-cli build --profile preview --platform android` once from
+# Gurukul_rn and answers "yes" to generating a new Android keystore, so EAS stores the signing key.
+# Needs the EXPO_TOKEN repository secret, the same one the "EAS Update (Expo Go)" workflow uses.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Queue rather than cancel: cancelling mid-run could leave a build started without its update.
+  group: eas-preview-apk
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Makes app.config.js use the fingerprint runtime, exactly as the preview build profile does.
+      APP_VARIANT: preview
+    steps:
+      - name: Check for EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::The EXPO_TOKEN repository secret is missing."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          # eas-cli needs Node 22 or later.
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v9
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build if native code changed, then publish the update
+        id: deploy
+        uses: expo/expo-github-action/continuous-deploy-fingerprint@v9
+        with:
+          profile: preview
+          branch: preview
+          environment: preview
+          platform: android
+
+      - name: Summary
+        env:
+          BUILD_ID: ${{ steps.deploy.outputs.android-build-id }}
+          NEW_BUILD: ${{ steps.deploy.outputs.android-did-start-new-build }}
+          FINGERPRINT: ${{ steps.deploy.outputs.android-fingerprint }}
+        run: |
+          {
+            echo "### Android preview APK"
+            echo "- Runtime fingerprint: \`$FINGERPRINT\`"
+            if [ -n "$BUILD_ID" ]; then
+              echo "- Build for this fingerprint: https://expo.dev/accounts/yashcodes105/projects/gurukul-rn/builds/$BUILD_ID"
+            fi
+            if [ "$NEW_BUILD" = "true" ]; then
+              echo "- Native code changed, so a new APK is building. Install it from the link above when it finishes."
+            else
+              echo "- No native changes: installed preview APKs pick this update up on their next launch."
+            fi
+            echo "- All builds: https://expo.dev/accounts/yashcodes105/projects/gurukul-rn/builds"
+          } >> "$GITHUB_STEP_SUMMARY"

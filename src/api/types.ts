@@ -1,3 +1,5 @@
+import type { DayOfWeek } from './timetable';
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T | null;
@@ -7,14 +9,15 @@ export interface ApiResponse<T> {
 export interface School {
   id: string;
   name: string;
-  address: string;
+  /** Null for a school that signed up in the app and has not filled its profile in. */
+  address: string | null;
   city: string;
   state: string;
   pincode: string;
-  contactEmail: string;
+  contactEmail: string | null;
   contactPhone: string;
   principalName: string;
-  directorName: string;
+  directorName: string | null;
   bankAccountNumber: string | null;
   bankIfsc: string | null;
   bankAccountHolderName: string | null;
@@ -33,14 +36,14 @@ export interface School {
 
 export interface SchoolUpdateRequest {
   name: string;
-  address: string;
+  address?: string | null;
   city: string;
   state: string;
   pincode: string;
-  contactEmail: string;
+  contactEmail?: string | null;
   contactPhone: string;
   principalName: string;
-  directorName: string;
+  directorName?: string | null;
   bankAccountNumber?: string;
   bankIfsc?: string;
   bankAccountHolderName?: string;
@@ -55,21 +58,32 @@ export interface SchoolLocationUpdateRequest {
 
 export interface SchoolRegistrationRequest {
   name: string;
-  address: string;
   city: string;
   state: string;
   pincode: string;
-  contactEmail: string;
-  contactPhone: string;
   principalName: string;
+  /** The principal's mobile: the OTP login for the first ADMIN account. */
   principalPhone: string;
-  directorName: string;
-  adminPhone: string;
+  /** From verifySignupOtp for that same mobile; the server requires it in production. Single use. */
+  signupToken?: string;
+  /** Everything below is optional - the in-app sign-up sends only the six fields above. */
+  address?: string;
+  contactEmail?: string;
+  /** Defaults to principalPhone on the server. */
+  contactPhone?: string;
+  directorName?: string;
+  /** A second, different phone creates a second ADMIN login (director/office). */
+  adminPhone?: string;
   adminUsername?: string;
   adminPassword?: string;
   latitude?: number;
   longitude?: number;
   geofenceRadiusMeters?: number;
+}
+
+export interface SignupOtpVerifyResponse {
+  signupToken: string;
+  expiresAt: string;
 }
 
 export interface SchoolSearchResult {
@@ -81,7 +95,10 @@ export interface SchoolSearchResult {
 
 export interface SchoolRegistrationResponse {
   school: School;
-  admin: LoginResponse;
+  /** The ADMIN session on the principal's phone - the one the sign-up signs in with. */
+  principal: LoginResponse;
+  /** Null when the registration gave no second (admin) phone. */
+  admin: LoginResponse | null;
 }
 
 export interface ClassSection {
@@ -136,6 +153,21 @@ export interface StudentRequest {
   classSectionId: string;
   admissionDate: string;
   status?: string;
+}
+
+export interface StudentBulkImportRowResult {
+  index: number;
+  name: string;
+  success: boolean;
+  studentId: string | null;
+  error: string | null;
+}
+
+export interface StudentBulkImportResponse {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: StudentBulkImportRowResult[];
 }
 
 export interface StudentClassSectionUpdateRequest {
@@ -480,6 +512,14 @@ export interface DuplicateReferenceData {
   existingStudentName: string;
   existingAmount: number;
   existingTransactionDate: string;
+}
+
+/** What Send reminder did for one bill. */
+export interface FeeReminderResult {
+  /** Family members newly reminded: the linked parents, or the student's own login when none is linked. */
+  notifiedCount: number;
+  /** They were all already reminded about this bill today, so nothing new went out. */
+  alreadyRemindedToday: boolean;
 }
 
 /** Active students' open bills for one academic year (or 'ALL'); cancelled bills never count. */
@@ -1456,18 +1496,133 @@ export interface CreateConversationRequest {
   otherPartyOwnerId: string;
 }
 
-export type SenderKind = 'USER' | 'BOT';
+/** The server sends HUMAN for a person's message and BOT for the helpdesk bot's. */
+export type SenderKind = 'HUMAN' | 'BOT';
+
+/** Effective status of a helpdesk-bot proposal: a PENDING one past its expiry is sent as EXPIRED. */
+export type BotActionStatus = 'PENDING' | 'EXECUTED' | 'FAILED' | 'CANCELLED' | 'EXPIRED' | 'SUPERSEDED';
+export type BotActionItemKind = 'SUBSTITUTE' | 'CANCEL' | 'EXTRA' | 'UNDO' | 'SET' | 'CLEAR';
+
+/** One period as a card shows it, before or after a proposed change. Strings are server-cleaned. */
+export interface BotCellState {
+  subjectName: string | null;
+  teacherName: string | null;
+  /** Set only when another employee shares this teacher's name: their designation and classes. */
+  teacherDetail: string | null;
+  /** Set only on `after` of SUBSTITUTE and EXTRA; false means "no app login - won't be notified". */
+  teacherHasLogin: boolean | null;
+  roomName: string | null;
+}
+
+/** One change of a bot proposal, in execution order. Built by the server from validated data. */
+export interface BotActionItem {
+  index: number;
+  kind: BotActionItemKind | string;
+  /** A SUBSTITUTE or EXTRA that updates the change already on that period. */
+  replacesExisting: boolean;
+  /** UNDO only: the kind being undone (SUBSTITUTE, CANCELLED or EXTRA). */
+  undoesKind: string | null;
+  /** YYYY-MM-DD for the dated kinds; null for SET and CLEAR. */
+  date: string | null;
+  dayOfWeek: DayOfWeek;
+  periodNumber: number;
+  periodLabel: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  sectionId: string;
+  className: string;
+  section: string;
+  academicYear: string;
+  /** "Grade 7 - A", with the year added when the school has two sections with that label. */
+  classLabel: string;
+  /** A dated change for a period that is already over today. */
+  periodEnded: boolean;
+  before: BotCellState | null;
+  after: BotCellState | null;
+  regularTeacherName: string | null;
+  /** SET only: the teacher also gets assigned to the class, which gives them access to it. */
+  assignsTeacher: boolean;
+  /** One English sentence from the server - the fallback for anything the app can't format. */
+  summary: string;
+}
+
+/** A proposal the helpdesk bot made for an admin to confirm (the card under a bot message). */
+export interface BotAction {
+  id: string;
+  messageId: string;
+  conversationId: string;
+  code: string;
+  type: string;
+  status: BotActionStatus | string;
+  changeCount: number;
+  /** English, e.g. "3 timetable changes"; the app shows its own translated title. */
+  title: string;
+  items: BotActionItem[];
+  /** Written by the bot, cleaned by the server, and shown to the teachers involved. */
+  reason: string | null;
+  requestedByOwnerType: OwnerType;
+  requestedByOwnerId: string;
+  createdAt: string;
+  expiresAt: string;
+  decidedAt: string | null;
+  failureCode: string | null;
+  failureReason: string | null;
+  /** The exact plain-text suffix the server appended to the message's content, for older apps. */
+  footer: string;
+  /** Grows on every stored change; the higher one wins when frames race. */
+  version: number;
+  /** The server clock when this was sent, to correct the phone's clock for the countdown. */
+  serverTime: string;
+}
 
 export interface Message {
   id: string;
   senderKind: SenderKind;
   senderOwnerType: OwnerType | null;
   senderOwnerId: string | null;
-  content: string;
+  content: string | null;
   sentAt: string;
   attachmentUrl: string | null;
   attachmentContentType: string | null;
   attachmentFileName: string | null;
+  /**
+   * A bot proposal's card. A server with bot actions always sends this key (null when there is no
+   * card); an older server leaves it out, which is how the app knows not to subscribe to updates.
+   */
+  action?: BotAction | null;
+  /**
+   * Set only on the live broadcast of a helpdesk-bot guard reply (a refusal, a pause, a limit...).
+   * REST history always has null (it isn't stored), and older servers leave the key out.
+   */
+  aiNotice?: AiNotice | null;
+}
+
+/**
+ * Why a fixed AI guard reply was sent instead of an answer. Unknown kinds from a newer server are
+ * treated like 'REFUSED' (see noticeKind in src/utils/aiGuard.ts).
+ */
+export type AiNoticeKind = 'REFUSED' | 'PAUSED' | 'SCHOOL_LIMIT' | 'USER_LIMIT' | 'TOO_LONG' | 'CHECK_FAILED' | 'OFF';
+
+/**
+ * `pausedUntil` non-null means the user's AI help is now paused until then: the reply that starts a
+ * pause (the 5th refused message) has kind 'PAUSED' and carries it, so the app locks the composer
+ * on that reply itself rather than on the next send.
+ */
+export interface AiNotice {
+  kind: AiNoticeKind;
+  pausedUntil: string | null;
+}
+
+/** BOT = the helpdesk bot, ASSISTANT = the Academic Helper. */
+export type AiFeature = 'BOT' | 'ASSISTANT';
+
+/** Why the AI guard refused a message. MODEL_REFUSAL: the model's own safety check (cyber/bio). */
+export type AiVerdict = 'OFF_TOPIC' | 'OTHERS_DATA' | 'PROMPT_ATTACK' | 'UNSAFE' | 'MODEL_REFUSAL';
+
+/** A frame on /topic/conversations/{id}/updates. Unknown types are ignored. */
+export interface ChatUpdateFrame {
+  type: 'MESSAGE_UPDATED' | string;
+  message: Message;
 }
 
 export interface MessageHistoryResponse {
@@ -1666,6 +1821,19 @@ export interface QuizReviewItem {
   /** Null when the student didn't answer it. */
   selectedOption: QuizOption | null;
   correct: boolean;
+  /**
+   * Why each option is right or wrong. Practice review only, and null there too until the
+   * question's four have been written - ask for them with explainPracticeQuestion.
+   */
+  rationales?: OptionRationales | null;
+}
+
+/** One line per option saying why it is right or wrong. All four arrive together or not at all. */
+export interface OptionRationales {
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
 }
 
 export interface BankQuestionInput {

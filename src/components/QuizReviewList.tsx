@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 
 import { reportQuizQuestion } from '../api/arena';
 import { getErrorMessage } from '../api/errorMessage';
-import type { QuizOption, QuizReviewItem } from '../api/types';
+import type { OptionRationales, QuizOption, QuizReviewItem } from '../api/types';
 import { useSchoolId } from '../context/SchoolContext';
 import { colors, radius, softShadow, spacing } from '../theme/colors';
 import { answerKeyChanged, reviewOptionMark } from '../utils/quizReview';
@@ -16,6 +16,15 @@ const OPTIONS: { key: QuizOption; field: 'optionA' | 'optionB' | 'optionC' | 'op
   { key: 'C', field: 'optionC' },
   { key: 'D', field: 'optionD' },
 ];
+
+/** The rationale for one option, or undefined while the question's four are still being written. */
+function rationaleFor(
+  rationales: OptionRationales | null | undefined,
+  field: 'optionA' | 'optionB' | 'optionC' | 'optionD'
+): string | undefined {
+  const line = rationales?.[field]?.trim();
+  return line ? line : undefined;
+}
 
 const COMMENT_MAX = 300;
 
@@ -29,8 +38,19 @@ type ReportState =
  * right or wrong), the correct option and the explanation. The answer key only arrives here, once
  * the game is over. Each card can report the answer as wrong to the question's author. The student's
  * option follows the mark recorded when they answered, not today's key (see utils/quizReview).
+ *
+ * <p>Practice passes rationalesPending: there every option also says why it is right or wrong, and
+ * the questions whose four lines haven't been written yet show that they are coming. Arena leaves
+ * it out and the review reads exactly as before.
  */
-export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | undefined }) {
+export function QuizReviewList({
+  items,
+  rationalesPending,
+}: {
+  items: QuizReviewItem[] | null | undefined;
+  /** Question ids whose per-option rationales are being written right now (practice only). */
+  rationalesPending?: ReadonlySet<string>;
+}) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const [reports, setReports] = useState<Record<string, ReportState>>({});
@@ -84,25 +104,36 @@ export function QuizReviewList({ items }: { items: QuizReviewItem[] | null | und
 
             {OPTIONS.map(({ key, field }) => {
               const mark = reviewOptionMark(item, key, t);
+              const rationale = rationaleFor(item.rationales, field);
               return (
-                <View
-                  key={key}
-                  style={[
-                    styles.option,
-                    mark.tone === 'right' && styles.optionCorrect,
-                    mark.tone === 'wrong' && styles.optionWrong,
-                  ]}
-                >
-                  <Text style={styles.optionKey}>{key}</Text>
-                  <Text style={styles.optionText}>{item[field]}</Text>
-                  {mark.tag && (
-                    <Text style={[styles.optionTag, { color: mark.tone === 'wrong' ? colors.error : colors.success }]}>
-                      {mark.tag}
-                    </Text>
-                  )}
+                <View key={key}>
+                  <View
+                    style={[
+                      styles.option,
+                      mark.tone === 'right' && styles.optionCorrect,
+                      mark.tone === 'wrong' && styles.optionWrong,
+                      !!rationale && styles.optionWithRationale,
+                    ]}
+                  >
+                    <Text style={styles.optionKey}>{key}</Text>
+                    <Text style={styles.optionText}>{item[field]}</Text>
+                    {mark.tag && (
+                      <Text style={[styles.optionTag, { color: mark.tone === 'wrong' ? colors.error : colors.success }]}>
+                        {mark.tag}
+                      </Text>
+                    )}
+                  </View>
+                  {!!rationale && <Text style={styles.rationale}>{rationale}</Text>}
                 </View>
               );
             })}
+
+            {rationalesPending?.has(item.questionId) && (
+              <View style={styles.rationaleLoading}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.rationaleLoadingText}>{t('games.review.writingWhy')}</Text>
+              </View>
+            )}
 
             {!item.selectedOption && <Text style={styles.note}>{t('games.review.didNotAnswer')}</Text>}
             {answerKeyChanged(item) && <Text style={styles.note}>{t('games.review.keyChanged')}</Text>}
@@ -212,6 +243,18 @@ const styles = StyleSheet.create({
   optionKey: { fontWeight: '800', fontSize: 12, color: colors.primary, width: 14 },
   optionText: { flex: 1, fontSize: 13.5, color: colors.textPrimary },
   optionTag: { fontSize: 11, fontWeight: '700' },
+  /** The option keeps its own bottom edge tight to the line explaining it. */
+  optionWithRationale: { marginBottom: 2 },
+  rationale: {
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginLeft: spacing.sm + 14,
+    marginBottom: spacing.sm,
+    paddingRight: spacing.sm,
+  },
+  rationaleLoading: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2, marginBottom: spacing.sm },
+  rationaleLoadingText: { fontSize: 12.5, color: colors.textMuted },
   note: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   explanation: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 19 },
   explanationLabel: { fontWeight: '700', color: colors.textPrimary },

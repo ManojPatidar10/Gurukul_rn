@@ -40,7 +40,9 @@ const SECTIONS: Record<HubSection, HubItem[]> = {
   academics: [
     { key: 'classes', accentKey: 'classes', icon: 'chalkboard-teacher', copyKey: 'dashboard.features.classes', navigate: (n) => n.navigate('ClassesList') },
     { key: 'timetableEditor', accentKey: 'timetableEditor', icon: 'table', copyKey: 'dashboard.features.timetableEditor', navigate: (n) => n.navigate('TimetableEditor') },
+    { key: 'substitutions', accentKey: 'substitutions', icon: 'user-clock', copyKey: 'dashboard.features.substitutions', navigate: (n) => n.navigate('Substitutions') },
     { key: 'bellSchedule', accentKey: 'bellSchedule', icon: 'bell', copyKey: 'dashboard.features.bellSchedule', navigate: (n) => n.navigate('PeriodSetup') },
+    { key: 'rooms', accentKey: 'rooms', icon: 'door-open', copyKey: 'dashboard.features.rooms', navigate: (n) => n.navigate('Rooms') },
     { key: 'gradingScale', accentKey: 'gradingScale', icon: 'sliders-h', copyKey: 'dashboard.features.gradingScale', navigate: (n) => n.navigate('GradingScale') },
     { key: 'academicTerms', accentKey: 'gradingScale', icon: 'calendar-alt', copyKey: 'dashboard.features.academicTerms', navigate: (n) => n.navigate('AcademicTerms') },
     { key: 'holidays', accentKey: 'holidays', icon: 'calendar-day', copyKey: 'dashboard.features.holidays', navigate: (n) => n.navigate('Holidays') },
@@ -49,6 +51,7 @@ const SECTIONS: Record<HubSection, HubItem[]> = {
   reports: [
     { key: 'attendanceExport', accentKey: 'attendanceExport', icon: 'file-excel', copyKey: 'dashboard.features.attendanceExport', navigate: (n) => n.navigate('AttendanceExport') },
     { key: 'activityLog', accentKey: 'activityLog', icon: 'history', copyKey: 'dashboard.features.activityLog', navigate: (n) => n.navigate('ActivityLog') },
+    { key: 'aiMisuseLog', accentKey: 'aiMisuseLog', icon: 'user-shield', copyKey: 'dashboard.features.aiMisuseLog', navigate: (n) => n.navigate('AiMisuseLog') },
   ],
 };
 

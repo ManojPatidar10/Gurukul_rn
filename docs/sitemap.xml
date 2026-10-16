@@ -2,61 +2,138 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://smartgurukul.org/ai-for-schools.html</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-14</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://smartgurukul.org/ai-question-paper-generator.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://smartgurukul.org/compare.html</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-14</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://smartgurukul.org/gamified-learning.html</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-14</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://smartgurukul.org/gps-attendance.html</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/gps-attendance.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/gps-attendance.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/gps-attendance.html"/>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://smartgurukul.org/hi/gps-attendance.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/gps-attendance.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/gps-attendance.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/gps-attendance.html"/>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://smartgurukul.org/hi/</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-14</lastmod>
     <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/"/>
     <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/"/>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://smartgurukul.org/hi/parent-app.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/parent-app.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/parent-app.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/parent-app.html"/>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://smartgurukul.org/hi/school-bus-tracking.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/school-bus-tracking.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/school-bus-tracking.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/school-bus-tracking.html"/>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://smartgurukul.org/hi/school-fee-management.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/school-fee-management.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/school-fee-management.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/school-fee-management.html"/>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://smartgurukul.org/hi/school-timetable-app.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/school-timetable-app.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/school-timetable-app.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/school-timetable-app.html"/>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://smartgurukul.org/</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-14</lastmod>
     <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/"/>
     <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/"/>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://smartgurukul.org/parent-app.html</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/parent-app.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/parent-app.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/parent-app.html"/>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://smartgurukul.org/privacy.html</loc>
-    <lastmod>2026-10-11</lastmod>
+    <lastmod>2026-10-13</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://smartgurukul.org/website-services.html</loc>
-    <lastmod>2026-10-11</lastmod>
+    <loc>https://smartgurukul.org/report-card-software.html</loc>
+    <lastmod>2026-10-14</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://smartgurukul.org/money-features.html</loc>
-    <lastmod>2026-10-11</lastmod>
-    <priority>0.6</priority>
+    <loc>https://smartgurukul.org/school-bus-tracking.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/school-bus-tracking.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/school-bus-tracking.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/school-bus-tracking.html"/>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://smartgurukul.org/onboarding-toolkit.html</loc>
-    <lastmod>2026-10-11</lastmod>
-    <priority>0.7</priority>
+    <loc>https://smartgurukul.org/school-communication-app.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://smartgurukul.org/school-fee-management.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/school-fee-management.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/school-fee-management.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/school-fee-management.html"/>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://smartgurukul.org/school-timetable-app.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://smartgurukul.org/school-timetable-app.html"/>
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://smartgurukul.org/hi/school-timetable-app.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://smartgurukul.org/school-timetable-app.html"/>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://smartgurukul.org/website-services.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <priority>0.8</priority>
   </url>
 </urlset>

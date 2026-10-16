@@ -2,6 +2,7 @@ import { ApiError, NetworkError, SessionExpiredError } from '../api/client';
 import { getErrorMessage, isRetryable } from '../api/errorMessage';
 import i18n from '../i18n';
 import en from '../i18n/locales/en.json';
+import { pausedUntilLabel } from '../utils/aiGuard';
 
 jest.mock('../api/authStorage', () => ({ setStoredSession: jest.fn() }));
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -49,6 +50,76 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(new ApiError('Request failed with status 429', 429, 'AI_RATE_LIMITED'))).toBe(
       en.errors.codes.AI_RATE_LIMITED
     );
+  });
+
+  describe('the AI guard codes', () => {
+    const fill = (text: string, vars: Record<string, string | number>) =>
+      text.replace(/\{\{(\w+)\}\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match));
+
+    it("says until when AI help is paused, in the phone's own time", () => {
+      const pausedUntil = new Date(Date.now() + 45 * 60 * 1000).toISOString();
+      const error = new ApiError(
+        "Your AI help is paused until 4:15 PM because of repeated messages that weren't about school work. Your school has been informed.",
+        429,
+        'AI_PAUSED',
+        { pausedUntil }
+      );
+      const message = getErrorMessage(error);
+      expect(message).toBe(fill(en.errors.codes.AI_PAUSED, { time: pausedUntilLabel(pausedUntil, 'en') }));
+      expect(message).not.toContain('{{');
+    });
+
+    it("keeps the server's text for a pause whose time didn't come with it", () => {
+      const serverText = 'Your AI help is paused until 4:15 PM.';
+      expect(getErrorMessage(new ApiError(serverText, 429, 'AI_PAUSED'))).toBe(serverText);
+      expect(getErrorMessage(new ApiError(serverText, 429, 'AI_PAUSED', { pausedUntil: 'soon' }))).toBe(serverText);
+    });
+
+    it('names the length limit for a message that is too long', () => {
+      const error = new ApiError('Your message is too long. Please keep it under 2000 characters.', 400, 'AI_MESSAGE_TOO_LONG', {
+        maxChars: 2000,
+      });
+      expect(getErrorMessage(error)).toBe(fill(en.errors.codes.AI_MESSAGE_TOO_LONG, { max: 2000 }));
+      expect(getErrorMessage(error)).toContain('2000');
+    });
+
+    it("keeps the server's text for a too-long message without its limit", () => {
+      const serverText = 'Your message is too long. Please keep it under 6000 characters.';
+      expect(getErrorMessage(new ApiError(serverText, 400, 'AI_MESSAGE_TOO_LONG'))).toBe(serverText);
+    });
+
+    it('explains both daily limits and an already-ended pause by their codes', () => {
+      expect(
+        getErrorMessage(new ApiError('Server wording', 429, 'AI_USER_DAILY_LIMIT', { resetsAt: '2026-10-13T18:30:00Z' }))
+      ).toBe(en.errors.codes.AI_USER_DAILY_LIMIT);
+      expect(
+        getErrorMessage(new ApiError('Server wording', 429, 'AI_SCHOOL_DAILY_LIMIT', { resetsAt: '2026-10-13T18:30:00Z' }))
+      ).toBe(en.errors.codes.AI_SCHOOL_DAILY_LIMIT);
+      expect(getErrorMessage(new ApiError('This pause has already ended.', 409, 'AI_PAUSE_NOT_ACTIVE', { id: 'p1' }))).toBe(
+        en.errors.codes.AI_PAUSE_NOT_ACTIVE
+      );
+    });
+
+    it("shows the server's own AI_UNAVAILABLE text when it says something specific", () => {
+      for (const text of [
+        'The Academic Helper is turned off right now. Please try again later.',
+        'The AI quiz generator is turned off right now.',
+        "The AI assistant isn't set up for this school yet.",
+      ]) {
+        expect(getErrorMessage(new ApiError(text, 503, 'AI_UNAVAILABLE'))).toBe(text);
+      }
+    });
+
+    it('uses our own words for an AI_UNAVAILABLE with a generic or empty message', () => {
+      expect(getErrorMessage(new ApiError('An unexpected error occurred', 503, 'AI_UNAVAILABLE'))).toBe(
+        en.errors.codes.AI_UNAVAILABLE
+      );
+      expect(getErrorMessage(new ApiError('', 503, 'AI_UNAVAILABLE'))).toBe(en.errors.codes.AI_UNAVAILABLE);
+    });
+
+    it('still words a plain 503 without a code as the server being unavailable', () => {
+      expect(getErrorMessage(new ApiError('The Academic Helper is turned off right now.', 503))).toBe(en.errors.unavailable);
+    });
   });
 
   it('has words for every fee bill refusal code', () => {

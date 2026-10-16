@@ -80,6 +80,7 @@ export type AccentKey =
   | 'myClassFees'
   | 'attendanceDevices'
   | 'activityLog'
+  | 'aiMisuseLog'
   | 'attendanceExport'
   | 'newAdmission'
   | 'admissions'
@@ -89,6 +90,8 @@ export type AccentKey =
   | 'myTimetable'
   | 'timetableEditor'
   | 'bellSchedule'
+  | 'substitutions'
+  | 'rooms'
   | 'schoolLogo'
   | 'schoolLocation'
   | 'attendance'
@@ -130,6 +133,7 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   myClassFees: { base: '#059669', light: '#DFF5EC' },
   attendanceDevices: { base: '#1D4ED8', light: '#E1EAFB' },
   activityLog: { base: '#334155', light: '#E2E8F0' },
+  aiMisuseLog: { base: '#B91C1C', light: '#FEE2E2' },
   attendanceExport: { base: '#15803D', light: '#DCFCE7' },
   newAdmission: { base: '#C2410C', light: '#FFEDD5' },
   admissions: { base: '#BE185D', light: '#FCE7F3' },
@@ -138,6 +142,8 @@ export const accents: Record<AccentKey, { base: string; light: string }> = {
   myTimetable: { base: '#0E7490', light: '#DDF2F7' },
   timetableEditor: { base: '#0E7490', light: '#DDF2F7' },
   bellSchedule: { base: '#475569', light: '#E7EAEE' },
+  substitutions: { base: '#C2410C', light: '#FFEDD5' },
+  rooms: { base: '#0F766E', light: '#DBF0EC' },
   schoolLogo: { base: '#7C3AED', light: '#EDE9FE' },
   schoolLocation: { base: '#0F766E', light: '#CCFBF1' },
   idCards: { base: '#0E7490', light: '#CFFAFE' },

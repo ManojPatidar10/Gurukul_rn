@@ -38,35 +38,144 @@
   },
   "schoolSetup": {
     "title": "Register your school",
-    "subtitle": "One-time setup for this device",
-    "intro": "You'll be signed in as the school admin right after registering — your phone number below is used to sign in with an OTP afterwards.",
+    "stepOf": "Step {{step}} of {{total}}",
+    "schoolStep": {
+      "title": "Your school",
+      "intro": "Four things about the school. Everything else can wait until you're in."
+    },
+    "youStep": {
+      "title": "About you",
+      "intro": "You'll be the first admin of this school.",
+      "phoneHint": "We'll send a code to this number on WhatsApp now, and your sign-in codes (OTP) later. Use the number you keep with you.",
+      "afterwards": "Takes a few seconds. Next: add your classes, import your student register and add your teachers — the app walks you through it."
+    },
     "schoolName": "School name",
-    "address": "Address",
-    "city": "City",
+    "city": "City / town",
     "state": "State",
     "pincode": "Pincode",
-    "locationHint": "Optional: set the school's location now so teachers can self-mark attendance from the premises later. If you're not there right now, you can leave this blank and set it later, or enter coordinates manually.",
-    "useCurrentLocation": "📍 Use my current location",
-    "latitude": "Latitude (optional)",
-    "longitude": "Longitude (optional)",
-    "locationPermissionDenied": "Location permission denied - you can still enter coordinates manually, or skip this and set it later.",
-    "contactEmail": "Contact email",
-    "contactPhone": "Contact phone",
-    "principalName": "Principal name",
-    "principalPhone": "Principal phone",
-    "directorName": "Director name",
-    "adminPhone": "Your phone number (for admin login)",
-    "submit": "Register school",
-    "submitting": "Registering…",
+    "principalName": "Your name",
+    "principalPhone": "Your mobile number",
+    "next": "Next",
+    "submit": "Create my school",
+    "submitting": "Creating…",
     "errors": {
       "pincode": "Enter a valid 6-digit pincode.",
-      "email": "Enter a valid contact email address.",
-      "phone": "Enter a valid 10-digit contact phone number.",
-      "location": "Enter both latitude and longitude as numbers, or leave both blank.",
-      "radius": "Radius must be a number from 25 to 700 meters."
+      "phone": "Enter a valid 10-digit mobile number."
     },
-    "logoUploadFailed": "School registered, but the logo couldn't be uploaded ({{message}}). You can add it later from the School Logo tile.",
-    "radius": "Geofence radius in meters (optional, 25-700)"
+    "sendCode": "Send me a code",
+    "sendingCode": "Sending…",
+    "codeStep": {
+      "title": "Enter the code",
+      "intro": "We sent a code on WhatsApp to {{phone}}. This proves the number is yours before the school is created.",
+      "code": "Code from WhatsApp",
+      "resend": "Resend code",
+      "resendIn": "Resend code in {{seconds}} s",
+      "changeNumber": "Change number"
+    }
+  },
+  "setup": {
+    "title": "Get your school running",
+    "progress": "{{done}} of {{total}} done",
+    "dismiss": "Hide this checklist",
+    "steps": {
+      "classes": {
+        "title": "Add classes and sections",
+        "description": "Tap the classes your school runs — done in a minute."
+      },
+      "students": {
+        "title": "Import your student register",
+        "description": "Paste from Excel or WhatsApp, or pick a CSV file."
+      },
+      "teachers": {
+        "title": "Add your teachers",
+        "description": "Name and mobile — they sign in with an OTP on that number."
+      },
+      "location": {
+        "title": "Set the school's location",
+        "description": "So staff can check in from the premises without a machine."
+      },
+      "parents": {
+        "title": "Tell parents how to sign in",
+        "description": "Share a ready message on WhatsApp or your parent groups."
+      }
+    },
+    "parentsMessage": "Namaste! {{school}} is now on the Smart Gurukul app. Install it, choose \"Find my school\", search {{school}}, and sign in with the mobile number you gave the school — you'll get a code on WhatsApp. You'll see your child's attendance, fees and report cards there. Android: https://play.google.com/store/apps/details?id=org.smartgurukul.app"
+  },
+  "classSetup": {
+    "title": "Classes and sections",
+    "year": "Session {{year}}",
+    "intro": "Tap every class your school runs, then the sections each class has. We create every combination that doesn't exist yet.",
+    "classes": "Classes",
+    "sections": "Sections",
+    "otherClass": "Another class",
+    "otherSection": "Another section",
+    "add": "Add",
+    "existing": "Already set up this session: {{count}}",
+    "toCreate": "Will be created now: {{count}}",
+    "create_one": "Create {{count}} class-section",
+    "create_other": "Create {{count}} class-sections",
+    "creating": "Creating {{done}} of {{total}}…",
+    "created_one": "{{count}} class-section created",
+    "created_other": "{{count}} class-sections created",
+    "partlyCreated": "{{count}} created, then this failed: {{error}}"
+  },
+  "studentImport": {
+    "title": "Import students",
+    "subtitle": "Your register, in one go",
+    "intro": "Copy the rows from your Excel register (or a WhatsApp list) and paste them below, or pick a CSV file. Nothing is saved until you tap Import.",
+    "format": {
+      "title": "Columns we read",
+      "columns": "Name · Class · Section · Gender · Date of birth · Parent name · Parent mobile · Address (optional)",
+      "hint": "A header row in English or Hindi is recognised in any order. Without a header, use this order. Dates like 15/05/2015; gender M/F or लड़का/लड़की."
+    },
+    "placeholder": "Rahul Sharma, 5, A, M, 15/05/2015, Rajesh Sharma, 9876543210\nPriya Verma, 5, B, F, 20/01/2016, Sunita Verma, 9123456789",
+    "pickFile": "Pick a CSV or text file",
+    "preview": "{{rows}} rows read · {{ready}} ready · {{problems}} need a fix",
+    "noHeader": "No header row found — columns read in the default order above.",
+    "tooMany": "That's more than {{max}} rows. Import in parts.",
+    "missingSections_one": "{{count}} class-section in the register doesn't exist yet: {{list}}",
+    "missingSections_other": "{{count}} class-sections in the register don't exist yet: {{list}}",
+    "createSections": "Create them now",
+    "creatingSections": "Creating…",
+    "sectionsCreated_one": "{{count}} class-section created",
+    "sectionsCreated_other": "{{count}} class-sections created",
+    "lineProblem": "Line {{line}} ({{name}}): {{problems}}",
+    "moreProblems": "…and {{count}} more",
+    "problems": {
+      "name": "name missing",
+      "className": "class missing",
+      "section": "section missing",
+      "gender": "gender unreadable",
+      "dob": "date of birth unreadable",
+      "parentName": "parent name missing",
+      "parentContact": "parent mobile invalid",
+      "classSection": "class-section not set up"
+    },
+    "import_one": "Import {{count}} student",
+    "import_other": "Import {{count}} students",
+    "importing": "Importing…",
+    "imported_one": "{{count}} student imported",
+    "imported_other": "{{count}} students imported",
+    "result": "Imported {{succeeded}} · failed {{failed}}",
+    "done": "Done"
+  },
+  "teacherSetup": {
+    "title": "Add teachers",
+    "subtitle": "Name and mobile is enough",
+    "intro": "Each teacher signs in with an OTP sent to their mobile — no passwords to hand out. Designation, joining date and the rest can be edited later under Staff.",
+    "name": "Name",
+    "phone": "Mobile",
+    "namePlaceholder": "Teacher's name",
+    "addRow": "+ Another teacher",
+    "howTheySignIn": "Tell them: install Smart Gurukul, choose \"Find my school\", search the school, enter this mobile number, type the code from WhatsApp.",
+    "invalidRow": "Each row needs a name and a valid 10-digit mobile number.",
+    "duplicatePhone": "Two rows have the same mobile number.",
+    "add_one": "Add {{count}} teacher",
+    "add_other": "Add {{count}} teachers",
+    "adding": "Adding…",
+    "added_one": "{{count}} teacher added",
+    "added_other": "{{count}} teachers added",
+    "partlyAdded": "{{count}} added. Not added: {{errors}}"
   },
   "dashboard": {
     "fallbackTitle": "Smart Gurukul",
@@ -169,6 +278,10 @@
         "title": "Activity Log",
         "description": "Who changed what, and when"
       },
+      "aiMisuseLog": {
+        "title": "AI Misuse Log",
+        "description": "Refused AI messages, pauses and data lookups"
+      },
       "attendanceExport": {
         "title": "Export Attendance",
         "description": "Download student or staff attendance as a spreadsheet"
@@ -228,6 +341,14 @@
       "holidays": {
         "title": "Holidays & festivals",
         "description": "School holidays and festival greetings"
+      },
+      "substitutions": {
+        "title": "Substitutions",
+        "description": "Give an absent teacher's periods to someone else"
+      },
+      "rooms": {
+        "title": "Rooms",
+        "description": "Classrooms and labs for the timetable"
       }
     },
     "adminCopy": {
@@ -253,6 +374,11 @@
         "title": "My Fees",
         "description": "Your fee dues"
       }
+    },
+    "cover": {
+      "needed_one": "{{count}} period needs a substitute today",
+      "needed_other": "{{count}} periods need a substitute today",
+      "arrange": "Arrange substitutions"
     }
   },
   "academicHelper": {
@@ -264,7 +390,223 @@
     "emptyTeacher": "Ask me anything about teaching — lesson ideas, explanations, quiz questions, or classroom tips."
   },
   "helpdeskBot": {
-    "title": "Helpdesk Bot"
+    "title": "Helpdesk Bot",
+    "typing": "Helpdesk is typing…",
+    "card": {
+      "title_one": "1 timetable change",
+      "title_other": "{{count}} timetable changes",
+      "status": {
+        "waiting": "Waiting for you",
+        "saved": "Saved",
+        "failed": "Couldn't save",
+        "cancelled": "Cancelled",
+        "expired": "Expired",
+        "replaced": "Replaced by a newer one"
+      },
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "confirmTitle_one": "Save this change?",
+      "confirmTitle_other": "Save {{count}} changes?",
+      "confirmBody": "The timetable will change as shown. Teachers and students affected by date changes get a notification.",
+      "confirmAssigns_one": "This also gives 1 teacher access to a class.",
+      "confirmAssigns_other": "This also gives {{count}} teachers access to a class.",
+      "confirmReason": "Reason the teachers will see: {{reason}}",
+      "save": "Save",
+      "notNow": "Not now",
+      "expiresIn": "Expires in {{minutes}} min",
+      "failedReason": "Couldn't save: {{reason}}",
+      "reason": "Reason (the teachers involved will see this): {{reason}}",
+      "room": "Room: {{room}}",
+      "noLogin": "no app login - won't be notified",
+      "assigns": "Also assigns {{teacher}} to teach {{subject}} in {{class}}: they can add marks and message or call this class's students and parents.",
+      "notPending": {
+        "EXECUTED": "This change is already saved.",
+        "CANCELLED": "This change was cancelled. Nothing was saved.",
+        "EXPIRED": "This change expired - nothing was saved. Ask the bot again.",
+        "SUPERSEDED": "A newer proposal replaced this one.",
+        "FAILED": "This change couldn't be saved."
+      }
+    },
+    "item": {
+      "substitute": "{{when}}, {{class}}: {{teacher}} takes {{subject}} instead of {{original}}",
+      "replacing": "{{when}}, {{class}}: {{teacher}} takes {{subject}} instead of {{original}} (covering for {{regular}})",
+      "cancel": "{{when}}, {{class}}: no {{subject}} class",
+      "extra": "{{when}}, {{class}}: extra {{subject}} class with {{teacher}}",
+      "undo": "{{when}}, {{class}}: back to the regular timetable",
+      "undoExtra": "{{when}}, {{class}}: the extra class is removed",
+      "set": "{{when}}, {{class}}: {{subject}} with {{teacher}} (was {{before}})",
+      "clear": "{{when}}, {{class}}: free period (was {{before}})",
+      "subjectWithTeacher": "{{subject}} with {{teacher}}",
+      "whenDate": "{{date}}, period {{n}}",
+      "whenWeekly": "Every {{day}}, period {{n}}",
+      "times": "({{start}}-{{end}})",
+      "ended": "(already over)",
+      "wasFree": "free"
+    },
+    "days": {
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday",
+      "SUNDAY": "Sunday"
+    }
+  },
+  "ai": {
+    "notice": "For school work only. Misuse is recorded and shared with your school.",
+    "noticeHint": "Shows what was recorded about you",
+    "paused": "AI help is paused until {{time}}.",
+    "pausedReason": "It was paused after repeated messages that weren't about school work.",
+    "off": "AI help is turned off right now. Please try again later.",
+    "refusedHint": "Not answered. This message isn't sent again with your next question.",
+    "features": {
+      "BOT": "Helpdesk bot",
+      "ASSISTANT": "Academic Helper"
+    },
+    "myRecords": {
+      "title": "What was recorded about me",
+      "intro": "Your messages from the last 30 days that weren't about school work. Your school can see these.",
+      "empty": "Nothing has been recorded about you.",
+      "notCounted": "Not counted toward a pause",
+      "close": "Close"
+    }
+  },
+  "aiMisuse": {
+    "title": "AI Misuse Log",
+    "intro": "Messages the AI refused because they weren't about school work, who is paused now, and the school data the helpdesk bot looked up for each person.",
+    "tabs": {
+      "refused": "Refused",
+      "paused": "Paused now",
+      "lookups": "Data lookups"
+    },
+    "ranges": {
+      "d1": "Today",
+      "d7": "7 days",
+      "d30": "30 days",
+      "d90": "90 days",
+      "d365": "1 year"
+    },
+    "filterHint": "Tap a name to see only that person.",
+    "personFilter": "Only {{name}}",
+    "clearPersonFilter": "Show everyone",
+    "unknownPerson": "Former user",
+    "notCounted": "Not counted",
+    "refusedEmpty": "No refused messages in this period.",
+    "pausedEmpty": "Nobody is paused right now.",
+    "lookupsEmpty": "No data lookups in this period.",
+    "pausedUntil": "Paused until {{time}}",
+    "refusalCount_one": "After {{count}} refused message",
+    "refusalCount_other": "After {{count}} refused messages",
+    "lift": "Lift pause",
+    "lifting": "Lifting…",
+    "liftFor": "Lift pause for {{name}}",
+    "liftTitle": "Lift pause?",
+    "liftBody": "Lift the pause for {{name}}? They can use AI help again right away.",
+    "lifted": "Pause lifted.",
+    "rows_one": "{{count}} row",
+    "rows_other": "{{count}} rows",
+    "roles": {
+      "STUDENT": "Student",
+      "TEACHER": "Teacher",
+      "PARENT": "Parent",
+      "ADMIN": "Admin"
+    },
+    "verdicts": {
+      "OFF_TOPIC": "Not school work",
+      "OTHERS_DATA": "Someone else's data",
+      "PROMPT_ATTACK": "Tried to change the rules",
+      "UNSAFE": "Unsafe",
+      "MODEL_REFUSAL": "Blocked by safety check",
+      "unknown": "Refused"
+    },
+    "categories": {
+      "study": "Studies",
+      "teaching": "Teaching",
+      "schoolInfo": "School information",
+      "schoolData": "School data",
+      "schoolAdmin": "School administration",
+      "timetable": "Timetable",
+      "greeting": "Greeting",
+      "followUp": "Follow-up",
+      "wellbeing": "Wellbeing",
+      "otherSchool": "Other school work",
+      "entertainment": "Entertainment",
+      "chitChat": "Chit-chat",
+      "newsPolitics": "News and politics",
+      "religionDebate": "Religious debate",
+      "shopping": "Shopping",
+      "travel": "Travel",
+      "moneyAdvice": "Money advice",
+      "healthDiagnosis": "Medical advice",
+      "outsideWriting": "Writing for outside school",
+      "dating": "Dating and romance",
+      "gamingCheats": "Game cheats",
+      "cheating": "Cheating in a test",
+      "other": "Other",
+      "othersRecords": "Another person's records",
+      "othersContact": "Others' contact details or passwords",
+      "promptInjection": "Tried to inject instructions",
+      "jailbreak": "Tried to remove the rules",
+      "promptExtraction": "Asked for the AI's instructions",
+      "adult": "Adult content",
+      "weapons": "Weapons",
+      "substances": "Drugs, alcohol or vaping",
+      "violence": "Violence",
+      "harassment": "Harassment or bullying",
+      "hacking": "Hacking",
+      "fraud": "Forgery or fraud",
+      "unsafeOther": "Other unsafe request",
+      "refusalCyber": "Harmful computer request",
+      "refusalBio": "Harmful biology request"
+    },
+    "tools": {
+      "getMyAttendance": "Own attendance",
+      "getMyFeeStatus": "Own fee status",
+      "getMySubjects": "Own subjects",
+      "getMyTimetable": "Own timetable",
+      "getMyTeachingAssignments": "Own teaching assignments",
+      "getClassAttendance": "Class attendance",
+      "getClassMarks": "Class marks",
+      "getClassFeeStatus": "Class fee status",
+      "querySchoolMetric": "School figures",
+      "getTimetable": "Timetable",
+      "listUncoveredPeriods": "Periods needing cover",
+      "findFreeTeachers": "Free teachers",
+      "listTimetableChanges": "Timetable changes",
+      "listRooms": "Rooms",
+      "proposeTimetableChanges": "Proposed timetable changes"
+    },
+    "outcomes": {
+      "OK": "Shown",
+      "NOT_IN_SCOPE": "Not their class",
+      "CLARIFY": "Asked to clarify",
+      "ERROR": "Failed"
+    },
+    "scopeKeys": {
+      "class": "Class",
+      "date": "Date",
+      "from": "From",
+      "to": "To",
+      "day": "Day",
+      "period": "Period",
+      "teacher": "Teacher",
+      "subject": "Subject",
+      "room": "Room",
+      "term": "Term",
+      "assessment": "Assessment",
+      "academicYear": "Academic year",
+      "status": "Status",
+      "belowPercent": "Below %",
+      "listAll": "Full list",
+      "entity": "Data",
+      "metric": "Measure",
+      "filters": "Filters",
+      "slots": "Periods",
+      "changes": "Changes",
+      "reason": "Reason"
+    },
+    "unavailable": "The AI misuse log needs a server update. Please try again later."
   },
   "students": {
     "list": {
@@ -328,7 +670,8 @@
       "joinDate": "Join date",
       "bankAccount": "Bank account",
       "contactPhone": "Contact phone",
-      "salaryHistory": "Salary history"
+      "salaryHistory": "Salary history",
+      "timetable": "Timetable"
     },
     "form": {
       "titleEdit": "Edit employee",
@@ -790,6 +1133,15 @@
         "11": "Nov",
         "12": "Dec"
       }
+    },
+    "reminder": {
+      "send": "Send fee reminder",
+      "sendHint": "Sends the family a push now, in English and Hindi, about what is still owed. The app also reminds them automatically 3 days before the due date and once a week while it's overdue.",
+      "confirmTitle": "Send a fee reminder?",
+      "confirmMessage": "{{name}}'s family will get a push about the ₹{{amount}} still owed on this bill. A family gets at most one reminder per bill a day from here.",
+      "confirm": "Send reminder",
+      "sent": "Reminder sent to {{name}}'s family.",
+      "alreadySent": "{{name}}'s family was already reminded about this bill today, so nothing new was sent."
     },
     "howToPay": {
       "title": "How to pay",
@@ -1497,7 +1849,7 @@
     "title": "Smart Gurukul",
     "subtitle": "School management, made simple",
     "findSchool": "Find my school",
-    "registerSchool": "Register a new school"
+    "registerSchool": "Register a new school (2 minutes)"
   },
   "auth": {
     "sessionExpired": "Your session expired, please log in again.",
@@ -1860,17 +2212,36 @@
       "title": "Timetables",
       "subtitle": "Weekly timetable per class",
       "pickSection": "Choose a class-section",
-      "noAssignments": "No subjects are assigned to this class yet. Assign subjects and teachers first; only those can be scheduled.",
+      "noAssignments": "No subjects are assigned to this class yet. Assign subjects and teachers, or tap a period and choose \"Another teacher or subject…\".",
       "assignSubjects": "Assign subjects",
       "pickTitle": "{{day}}, period {{n}}",
       "clearCell": "Leave free",
+      "clearConfirm": "Leave {{day}} period {{n}} free?",
+      "clearConfirmBody": "Its subject, teacher and room come off the weekly timetable straight away.",
       "save": "Save timetable",
       "saved": "Timetable saved.",
       "unsaved": "Unsaved changes",
       "clashTitle": "These periods clash with other classes:",
       "clashLine": "{{day}} period {{n}}: {{teacher}} is teaching {{section}}",
       "copyToAll": "Copy this day to every day",
-      "filled": "{{count}} of {{total}} periods filled"
+      "filled": "{{count}} of {{total}} periods filled",
+      "room": "Room",
+      "noRoom": "No room",
+      "manageRooms": "Manage rooms",
+      "otherTeacher": "Another teacher or subject…",
+      "subject": "Subject",
+      "teacher": "Teacher",
+      "pickBoth": "Pick a subject and a teacher.",
+      "saveCell": "Save this period",
+      "cellSaved": "Period saved.",
+      "cellCleared": "Period cleared.",
+      "immediateHint": "Tap a period to change it. Each change is saved straight away.",
+      "assignTitle": "Assign teacher to this class?",
+      "assignBody": "{{teacher}} doesn't teach {{subject}} in this class yet. Also assign them to teach {{subject}} here? They will also be able to add marks for it.",
+      "assignYes": "Assign and save",
+      "clashRoom": "{{day}} period {{n}}: room {{room}} is used by {{section}}",
+      "clashAbsent": "{{day}} period {{n}}: {{teacher}} is marked absent",
+      "clashOnDate": "On {{date}}: {{line}}"
     },
     "periods": {
       "title": "Bell Schedule",
@@ -1892,6 +2263,82 @@
         "endBeforeStart": "Period {{n}} must end after it starts.",
         "overlap": "Period {{n}} starts before period {{previous}} ends."
       }
+    },
+    "room": "Room {{name}}",
+    "date": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "week": "Week",
+      "pick": "Pick a date",
+      "noSchool": "No school on {{date}}.",
+      "holiday": "Holiday: {{name}}"
+    },
+    "badge": {
+      "substitute": "Substitute for {{teacher}}",
+      "covering": "You're covering for {{teacher}}",
+      "takenBy": "Taken by {{teacher}}",
+      "cancelled": "Cancelled",
+      "extra": "Extra class"
+    },
+    "rooms": {
+      "title": "Rooms",
+      "subtitle": "Classrooms and labs",
+      "add": "+ Add room",
+      "newTitle": "New room",
+      "edit": "Edit room",
+      "name": "Room name",
+      "capacity": "Seats (optional)",
+      "seats_one": "{{count}} seat",
+      "seats_other": "{{count}} seats",
+      "active": "In use",
+      "inactive": "Not in use",
+      "save": "Save room",
+      "saved": "Room saved.",
+      "remove": "Stop using this room",
+      "removeTitle": "Stop using {{name}}?",
+      "removeBody": "It stays on the periods that already have it, but can't be picked for new ones.",
+      "removed": "Room taken out of use.",
+      "empty": "No rooms yet. Add your classrooms and labs to put them on the timetable.",
+      "nameRequired": "Enter a room name.",
+      "nameTooLong": "A room name can be at most {{max}} characters.",
+      "badCapacity": "Seats must be a number from 1 to 1000."
+    },
+    "subs": {
+      "title": "Substitutions",
+      "subtitle": "Cover periods when a teacher is away",
+      "needsCover": "Needs a substitute",
+      "noneUncovered": "Every period of absent teachers is covered.",
+      "markLeave": "Mark who is on leave today",
+      "leaveHint": "Teachers marked Absent or Half day in staff attendance show here.",
+      "anyTeacher": "Another teacher's periods",
+      "anyTeacherHint": "Pick a teacher to see their periods on this day.",
+      "findSubstitute": "Find substitute",
+      "cancelPeriod": "Cancel this period",
+      "cancelTitle": "Cancel this period?",
+      "cancelBody": "{{class}}, period {{n}} won't happen on {{date}}. The teacher and students will be told.",
+      "freeTeachers": "Free in period {{n}}",
+      "noFreeTeachers": "No teacher is free in this period.",
+      "periodsThatDay_one": "{{count}} period that day",
+      "periodsThatDay_other": "{{count}} periods that day",
+      "teachesClass": "Teaches this class",
+      "halfDay": "Half day",
+      "absent": "Absent",
+      "sameRoom": "Same room",
+      "reason": "Reason (optional)",
+      "pickTeacherFirst": "Pick a teacher first.",
+      "save": "Save",
+      "undo": "Undo",
+      "undoTitle": "Undo this change?",
+      "undoBody": "The period goes back to the regular timetable. The teachers and students will be told.",
+      "changes": "Changes on this day",
+      "noChanges": "No changes on this day.",
+      "kind": {
+        "SUBSTITUTE": "Substitute",
+        "CANCELLED": "Cancelled",
+        "EXTRA": "Extra class"
+      },
+      "saved": "Saved. The teachers and students have been told.",
+      "pastDate": "Past days can't be changed."
     }
   },
   "reportCardPdf": {
@@ -2150,6 +2597,17 @@
     "markAllRead": "Mark all read",
     "loadMore": "Load more"
   },
+  "chat": {
+    "messagePlaceholder": "Message...",
+    "send": "Send",
+    "attachTitle": "Add attachment",
+    "attachPhoto": "Photo",
+    "attachPdf": "PDF document",
+    "permissionTitle": "Permission needed",
+    "photoPermission": "Allow photo library access to attach an image.",
+    "fileTooLarge": "That file is too large - attachments are limited to 10 MB.",
+    "attachment": "Attachment"
+  },
   "newConversation": {
     "classTeacherOf": "Class teacher {{section}}",
     "admin": "Admin",
@@ -2266,9 +2724,6 @@
         "untagged_other": "{{count}} more questions aren't filed under a chapter yet.",
         "strengths": "Strengths",
         "focusAreas": "Focus areas",
-        "missedTitle": "What you missed",
-        "yourAnswer": "You answered",
-        "correctAnswer": "Correct answer",
         "roadmapTitle": "What to study next",
         "roadmapHint": "In syllabus order, so earlier chapters come first.",
         "groundwork": "groundwork",
@@ -2351,6 +2806,7 @@
       "didNotAnswer": "You didn't answer this one.",
       "keyChanged": "The answer key was changed after you answered, so your mark stays as it was given.",
       "why": "Why:",
+      "writingWhy": "Working out why each option is right or wrong…",
       "reported": "Reported. Thanks!",
       "reportPlaceholder": "What looks wrong? (optional)",
       "sendReport": "Send report",
@@ -2726,7 +3182,17 @@
       "FEE_ADJUSTMENT_DUPLICATE": "This adjustment was added to the bill a moment ago, so it wasn't added again.",
       "FEE_TOTAL_BELOW_PAID": "This would make the fee less than what has already been paid.",
       "FEE_CATEGORY_CODE_EXISTS": "A fee category with this code already exists.",
-      "FEE_STRUCTURE_EXISTS": "This class already has a fee structure for this academic year. Edit that one instead."
+      "FEE_STRUCTURE_EXISTS": "This class already has a fee structure for this academic year. Edit that one instead.",
+      "ROOM_NAME_TAKEN": "A room with this name already exists.",
+      "TIMETABLE_OVERRIDE_EXISTS": "This period already has a change on this date. Undo or edit that change instead.",
+      "BOT_ACTION_NOT_PENDING": "This change can't be confirmed any more.",
+      "BOT_ACTION_NOT_YOURS": "Only the person who asked can confirm this change.",
+      "AI_PAUSED": "Your AI help is paused until {{time}} because of repeated messages that weren't about school work.",
+      "AI_USER_DAILY_LIMIT": "You've used your AI help for today. It will be back after midnight.",
+      "AI_SCHOOL_DAILY_LIMIT": "Your school has used today's AI limit. AI help will be back after midnight.",
+      "AI_MESSAGE_TOO_LONG": "Your message is too long. Please keep it under {{max}} characters.",
+      "AI_PAUSE_NOT_ACTIVE": "This pause has already ended.",
+      "AI_UNAVAILABLE": "AI help isn't available right now. Please try again in a few minutes."
     }
   },
   "sectionHub": {
@@ -2748,7 +3214,7 @@
     },
     "reports": {
       "title": "Reports",
-      "subtitle": "Exports and audit history"
+      "subtitle": "Exports, audit history and AI misuse"
     }
   },
   "profile": {
@@ -2915,6 +3381,7 @@
       "undo": "Undo",
       "droppedCount": "{{dropped}} of {{total}} dropped home",
       "droppedSummary": "{{count}} dropped",
+      "doneCount": "Done ({{count}})",
       "endWithUndropped": "{{count}} children are not marked dropped yet: {{names}}. Their families won't get a drop-off message. End the trip anyway?"
     },
     "admin": {

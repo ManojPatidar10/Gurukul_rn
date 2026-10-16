@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { getPracticeAnalysis, getPracticeStudyPlan } from '../api/practice';
 import { getErrorMessage } from '../api/errorMessage';
 import type { ChapterBreakdown, PracticeAnalysis, PracticeStudyPlan } from '../api/types';
-import { CATEGORICAL_PALETTE } from '../theme/chartPalette';
 import { useSchoolId } from '../context/SchoolContext';
 import { colors, radius, spacing } from '../theme/colors';
 import { chapterBarColor, chapterTone } from '../utils/practiceAnalysis';
@@ -96,27 +95,6 @@ export function PracticeAnalysisPanel({ sessionId }: Props) {
         <Text style={styles.footnote}>
           {t('games.practice.analysis.untagged', { count: analysis.untaggedAnswered })}
         </Text>
-      )}
-
-      {analysis.missedQuestions.length > 0 && (
-        // The evidence behind the verdict, and the only place a practice student sees their
-        // wrong answers at all - the session response carries no per-question review.
-        <>
-          <Text style={styles.sectionTitle}>{t('games.practice.analysis.missedTitle')}</Text>
-          {analysis.missedQuestions.map((missed) => (
-            <View key={missed.questionId} style={styles.missed}>
-              <Text style={styles.missedQuestion}>{missed.questionText}</Text>
-              <Text style={styles.missedAnswer}>
-                {t('games.practice.analysis.yourAnswer')}{' '}
-                <Text style={styles.missedWrong}>{missed.selectedAnswer}</Text>
-              </Text>
-              <Text style={styles.missedAnswer}>
-                {t('games.practice.analysis.correctAnswer')}{' '}
-                <Text style={styles.missedRight}>{missed.correctAnswer}</Text>
-              </Text>
-            </View>
-          ))}
-        </>
       )}
 
       {plan && plan.roadmap.length > 0 && (
@@ -249,16 +227,6 @@ const styles = StyleSheet.create({
   fill: { height: 8, borderRadius: radius.sm },
   lowConfidence: { fontSize: 11, color: colors.textMuted, marginTop: 3, fontStyle: 'italic' },
   footnote: { fontSize: 11, color: colors.textMuted, marginTop: spacing.xs, fontStyle: 'italic' },
-  missed: {
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  missedQuestion: { fontSize: 13, color: colors.textPrimary, marginBottom: 4 },
-  missedAnswer: { fontSize: 12, color: colors.textSecondary },
-  missedWrong: { color: CATEGORICAL_PALETTE[7], fontWeight: '600' },
-  missedRight: { color: colors.textPrimary, fontWeight: '600' },
   step: { flexDirection: 'row', marginBottom: spacing.sm, alignItems: 'flex-start' },
   stepNumber: {
     width: 22,

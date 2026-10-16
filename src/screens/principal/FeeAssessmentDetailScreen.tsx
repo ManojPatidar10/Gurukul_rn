@@ -12,6 +12,7 @@ import { FeePaymentHistory } from '../../components/FeePaymentHistory';
 import { FeeBillAdjustmentsCard } from '../../components/fees/FeeBillAdjustmentsCard';
 import { FeeBillAdminActions } from '../../components/fees/FeeBillAdminActions';
 import { HowToPayCard } from '../../components/fees/HowToPayCard';
+import { SendFeeReminderButton } from '../../components/fees/SendFeeReminderButton';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { StatusChip } from '../../components/StatusChip';
@@ -43,8 +44,9 @@ function Field({ label, value }: { label: string; value: string }) {
 
 /**
  * One bill. Everyone who may open it sees its status, due date, amounts and adjustments. An admin
- * records payments on it and corrects it (adjustment, due date, cancel); a student or parent is
- * told how to pay. The admin and the family see its payments, reversed ones included.
+ * records payments on it, sends the family a fee reminder, and corrects it (adjustment, due date,
+ * cancel); a student or parent is told how to pay. The admin and the family see its payments,
+ * reversed ones included.
  */
 export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
   const { session } = useAuth();
@@ -167,6 +169,8 @@ export function FeeAssessmentDetailScreen({ route, navigation }: Props) {
             <Text style={styles.payButtonText}>{t('fees.recordPayment.button')}</Text>
           </Pressable>
         )}
+
+        {actions.sendReminder && <SendFeeReminderButton schoolId={schoolId} bill={assessment} />}
 
         {actions.howToPay && <HowToPayCard />}
         {actions.nothingOwed && <Text style={styles.nothingOwed}>{t('fees.bill.noFeeToPay')}</Text>}

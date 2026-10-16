@@ -36,12 +36,15 @@ export type FeatureId =
   | 'registrationInbox'
   | 'attendanceDevices'
   | 'activityLog'
+  | 'aiMisuseLog'
   | 'attendanceExport'
   | 'admissions'
   | 'idCards'
   | 'myTimetable'
   | 'timetableEditor'
   | 'bellSchedule'
+  | 'substitutions'
+  | 'rooms'
   | 'schoolLocation'
   | 'attendance'
   | 'vendorsExpenses'
@@ -172,10 +175,20 @@ export type PrincipalStackParamList = {
   GradingScale: undefined;
   MarkMyAttendance: undefined;
   SchoolLocationSettings: undefined;
+  /** The home-screen setup checklist's screens (spec school-onboarding-tunnel). */
+  ClassSetup: undefined;
+  StudentImport: undefined;
+  TeacherSetup: undefined;
   StaffAttendance: undefined;
   EmployeeAttendanceHistory: { employee: Pick<Employee, 'id' | 'name'> };
   AttendanceDevices: undefined;
   ActivityLog: undefined;
+  /**
+   * Admin: refused AI messages, who is paused now (and lifting a pause), and the bot's data lookups.
+   * `pauseId`: opened from an AI_MISUSE_PAUSED push or alert - it shows "Paused now", and a new one
+   * reloads it when the log is already open (navigating to the screen on show only changes params).
+   */
+  AiMisuseLog: { pauseId?: string } | undefined;
   AttendanceExport: undefined;
   SchoolLogoSettings: undefined;
   /** `mode: 'edit'` shows only the details form (opened from Profile's Edit button). */
@@ -183,7 +196,8 @@ export type PrincipalStackParamList = {
   IdCardSheets: undefined;
   ConversationsList: undefined;
   NewConversation: undefined;
-  ConversationThread: { conversationId: string; title: string };
+  /** `isBot`: the helpdesk bot's chat (cards, "typing…"), set by HelpdeskBotScreen. */
+  ConversationThread: { conversationId: string; title: string; isBot?: boolean };
   Announcements: undefined;
   Notifications: undefined;
   HelpdeskBot: undefined;
@@ -231,8 +245,17 @@ export type PrincipalStackParamList = {
   AdmissionsList: undefined;
   AdmissionDetail: { admissionId: string };
   ResourceUpload: { teacherId: string; teacherName: string; classSectionId: string; classSectionLabel: string };
-  /** No params: the caller's own timetable. classSection: that section's. student: a parent's child. */
-  MyTimetable: { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'> } | undefined;
+  /**
+   * No params: the caller's own timetable. classSection: that section's. student: a parent's child.
+   * teacher: any teacher's (admin only). date: open on that date (YYYY-MM-DD) rather than today.
+   */
+  MyTimetable:
+    | { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'>; date?: string; teacher?: { id: string; name: string } }
+    | undefined;
   TimetableEditor: { classSection?: ClassSection } | undefined;
   PeriodSetup: undefined;
+  /** Admin: cover periods for a date (YYYY-MM-DD; today when left out). */
+  Substitutions: { date?: string } | undefined;
+  /** Admin: the school's classrooms and labs. */
+  Rooms: undefined;
 };

@@ -14,9 +14,13 @@ import { GradingScaleScreen } from '../screens/principal/GradingScaleScreen';
 import { MarkMyAttendanceScreen } from '../screens/principal/MarkMyAttendanceScreen';
 import { PushDebugScreen } from '../screens/principal/PushDebugScreen';
 import { SchoolLocationSettingsScreen } from '../screens/principal/SchoolLocationSettingsScreen';
+import { ClassSetupScreen } from '../screens/principal/ClassSetupScreen';
+import { StudentImportScreen } from '../screens/principal/StudentImportScreen';
+import { TeacherSetupScreen } from '../screens/principal/TeacherSetupScreen';
 import { StaffAttendanceScreen } from '../screens/principal/StaffAttendanceScreen';
 import { EmployeeAttendanceHistoryScreen } from '../screens/principal/EmployeeAttendanceHistoryScreen';
 import { ActivityLogScreen } from '../screens/principal/ActivityLogScreen';
+import { AiMisuseLogScreen } from '../screens/principal/AiMisuseLogScreen';
 import { AttendanceDevicesScreen } from '../screens/principal/AttendanceDevicesScreen';
 import { AttendanceExportScreen } from '../screens/principal/AttendanceExportScreen';
 import { SchoolLogoSettingsScreen } from '../screens/principal/SchoolLogoSettingsScreen';
@@ -66,6 +70,8 @@ import { MyStudentsScreen } from '../screens/principal/MyStudentsScreen';
 import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
 import { PeriodSetupScreen } from '../screens/principal/PeriodSetupScreen';
 import { TimetableEditorScreen } from '../screens/principal/TimetableEditorScreen';
+import { SubstitutionsScreen } from '../screens/principal/SubstitutionsScreen';
+import { RoomsScreen } from '../screens/principal/RoomsScreen';
 import { FeeCategoriesListScreen } from '../screens/principal/FeeCategoriesListScreen';
 import { PayFeesScreen } from '../screens/principal/PayFeesScreen';
 import { FeePaymentSettingsScreen } from '../screens/principal/FeePaymentSettingsScreen';
@@ -198,10 +204,14 @@ export function PrincipalNavigator() {
         <Stack.Screen name="GradingScale" component={GradingScaleScreen} />
         <Stack.Screen name="MarkMyAttendance" component={MarkMyAttendanceScreen} />
         <Stack.Screen name="SchoolLocationSettings" component={SchoolLocationSettingsScreen} />
+        <Stack.Screen name="ClassSetup" component={ClassSetupScreen} />
+        <Stack.Screen name="StudentImport" component={StudentImportScreen} />
+        <Stack.Screen name="TeacherSetup" component={TeacherSetupScreen} />
         <Stack.Screen name="StaffAttendance" component={StaffAttendanceScreen} />
         <Stack.Screen name="EmployeeAttendanceHistory" component={EmployeeAttendanceHistoryScreen} />
         <Stack.Screen name="AttendanceDevices" component={AttendanceDevicesScreen} />
         <Stack.Screen name="ActivityLog" component={ActivityLogScreen} />
+        <Stack.Screen name="AiMisuseLog" component={AiMisuseLogScreen} />
         <Stack.Screen name="AttendanceExport" component={AttendanceExportScreen} />
         <Stack.Screen name="SchoolLogoSettings" component={SchoolLogoSettingsScreen} />
         <Stack.Screen name="IdCard" component={IdCardScreen} />
@@ -247,6 +257,8 @@ export function PrincipalNavigator() {
         <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
         <Stack.Screen name="TimetableEditor" component={TimetableEditorScreen} />
         <Stack.Screen name="PeriodSetup" component={PeriodSetupScreen} />
+        <Stack.Screen name="Substitutions" component={SubstitutionsScreen} />
+        <Stack.Screen name="Rooms" component={RoomsScreen} />
         <Stack.Screen name="MyBus" component={MyBusScreen} />
         <Stack.Screen name="Holidays" component={HolidaysScreen} />
         <Stack.Screen name="AcademicTerms" component={AcademicTermsScreen} />
