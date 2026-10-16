@@ -1,4 +1,5 @@
 import { api } from './client';
+import { toApiLanguage } from '../utils/apiLanguage';
 import type {
   CreatePracticeSessionRequest,
   PracticeSessionResponse,
@@ -11,7 +12,8 @@ export function createPracticeSession(schoolId: string, req: CreatePracticeSessi
 }
 
 export function getPracticeSession(schoolId: string, id: string, language?: string) {
-  const query = language ? `?language=${encodeURIComponent(language)}` : '';
+  const apiLanguage = toApiLanguage(language);
+  const query = apiLanguage ? `?language=${apiLanguage}` : '';
   return api.get<PracticeSessionResponse>(`/api/v1/gamification/practice/sessions/${id}${query}`, schoolId);
 }
 
@@ -21,7 +23,8 @@ export function getPracticeSession(schoolId: string, id: string, language?: stri
  * afterwards every review reads them straight from the bank.
  */
 export function explainPracticeQuestion(schoolId: string, id: string, questionId: string, language?: string) {
-  const query = language ? `?language=${encodeURIComponent(language)}` : '';
+  const apiLanguage = toApiLanguage(language);
+  const query = apiLanguage ? `?language=${apiLanguage}` : '';
   return api.post<PracticeSessionResponse>(
     `/api/v1/gamification/practice/sessions/${id}/questions/${questionId}/explain${query}`,
     {},
