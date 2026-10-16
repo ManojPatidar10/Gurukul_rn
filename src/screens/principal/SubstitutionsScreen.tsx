@@ -9,11 +9,13 @@ import {
   clashesFromError,
   createOverride,
   deleteOverride,
+  autoAssign,
   getFreeTeachers,
   getTeacherTimetable,
   getUncoveredPeriods,
   listOverrides,
   updateOverride,
+  type AutoAssignPlan,
   type FreeTeacher,
   type OverrideKind,
   type Timetable,
@@ -23,6 +25,7 @@ import {
   type UncoveredPeriod,
 } from '../../api/timetable';
 import type { Employee } from '../../api/types';
+import Dropdown from '../../components/Dropdown';
 import { ClashList } from '../../components/ClashList';
 import EmployeePicker from '../../components/EmployeePicker';
 import { ErrorNotice } from '../../components/ErrorNotice';
@@ -40,13 +43,13 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
   freshLists,
-  groupUncoveredByTeacher,
+  groupUncoveredByPeriod,
   noRoomMeansRegular,
   overrideKindVariant,
   overrideSummary,
   overrideUpdateFromExisting,
   reloadAfterFailedWrite,
-  sortFreeTeachers,
+  sortFreeTeachersByMatch,
   uncoveredAction,
   uncoveredOverrideKind,
   type LoadedFor,
@@ -61,6 +64,8 @@ interface CoverTarget {
   sectionLabel: string;
   periodNumber: number;
   subjectName: string | null;
+  /** The absent teacher's subject, so free-teachers can rank whoever teaches it first. */
+  subjectId?: string | null;
   /** Set when changing the substitute of a cover that already exists. */
   overrideId: string | null;
   override: TimetableOverride | null;
@@ -179,6 +184,37 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   const periodLabel = (periodNumber: number, startTime?: string | null) =>
     startTime ? `${t('timetable.periodN', { n: periodNumber })} · ${startTime}` : t('timetable.periodN', { n: periodNumber });
 
+  // Auto-assign: the plan the server would carry out, shown before anything is saved.
+  const [plan, setPlan] = useState<AutoAssignPlan | null>(null);
+  const [autoAssigning, setAutoAssigning] = useState(false);
+
+  const previewAutoAssign = async () => {
+    setAutoAssigning(true);
+    setError(null);
+    try {
+      setPlan(await autoAssign(schoolId, date, { dryRun: true }));
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setAutoAssigning(false);
+    }
+  };
+
+  const confirmAutoAssign = async () => {
+    setAutoAssigning(true);
+    setError(null);
+    try {
+      const done = await autoAssign(schoolId, date);
+      setPlan(null);
+      showToast(t('timetable.subs.autoAssignDone', { assigned: done.assigned, unassigned: done.unassigned }), 'success');
+      await refresh();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setAutoAssigning(false);
+    }
+  };
+
   const confirmCancel = (sectionId: string, label: string, periodNumber: number) =>
     Alert.alert(t('timetable.subs.cancelTitle'), t('timetable.subs.cancelBody', { class: label, n: periodNumber, date: dateLabel }), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -235,6 +271,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
       sectionLabel: sectionLabel(entry),
       periodNumber: entry.periodNumber,
       subjectName: entry.subjectName,
+      subjectId: entry.subjectId,
       overrideId: uncoveredAction(entry) === 'edit' ? entry.overrideId : null,
       override: existing,
       kind: existing?.kind ?? 'SUBSTITUTE',
@@ -251,7 +288,20 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
     kind: 'SUBSTITUTE',
   });
 
-  const groups = groupUncoveredByTeacher(uncoveredShown ?? []);
+  const groups = groupUncoveredByPeriod(uncoveredShown ?? []);
+  // Covers already made, kept under their period greyed out, so "period 1 is handled" is something the
+  // admin can see rather than infer, and a wrong pick is one tap from undo.
+  const coveredByPeriod = new Map<number, TimetableOverride[]>();
+  for (const o of overridesShown ?? []) {
+    if (o.kind === 'SUBSTITUTE') coveredByPeriod.set(o.periodNumber, [...(coveredByPeriod.get(o.periodNumber) ?? []), o]);
+  }
+  const periodRows = [...new Set([...groups.map((g) => g.periodNumber), ...coveredByPeriod.keys()])]
+    .sort((a, b) => a - b)
+    .map((periodNumber) => {
+      const group = groups.find((g) => g.periodNumber === periodNumber) ?? null;
+      const covered = coveredByPeriod.get(periodNumber) ?? [];
+      return { periodNumber, group, covered, startTime: group?.startTime ?? covered[0]?.startTime ?? null, endTime: group?.endTime ?? covered[0]?.endTime ?? null };
+    });
   const teacherSlots = [...(teacherDayShown?.slots ?? [])].sort((a, b) => a.periodNumber - b.periodNumber);
   const teacherPeriodStart = (n: number) => teacherDayShown?.periods.find((p) => p.periodNumber === n)?.startTime ?? null;
 
@@ -273,32 +323,44 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
             <Text style={styles.link}>{t('timetable.subs.markLeave')}</Text>
           </Pressable>
         )}
-        {uncoveredShown !== null && groups.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
-        {groups.map((group) => (
-          <View key={group.teacherId} style={styles.card}>
+        {uncoveredShown !== null && periodRows.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
+        {!past && groups.length > 0 && (
+          <View style={styles.card}>
+            <ActionButton label={t('timetable.subs.autoAssign')} disabled={locked || autoAssigning} onPress={previewAutoAssign} />
+            <Text style={styles.hint}>{t('timetable.subs.autoAssignHint')}</Text>
+          </View>
+        )}
+        {periodRows.map((row) => (
+          <View key={row.periodNumber} style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{group.teacherName}</Text>
-              <StatusChip
-                label={group.attendanceStatus === 'ABSENT' ? t('timetable.subs.absent') : t('timetable.subs.halfDay')}
-                variant={group.attendanceStatus === 'ABSENT' ? 'error' : 'warning'}
-              />
+              <Text style={styles.cardTitle}>
+                {periodLabel(row.periodNumber, row.startTime)}
+                {row.endTime ? `–${row.endTime}` : ''}
+              </Text>
+              {row.group ? (
+                <StatusChip label={t('timetable.subs.stillToCover', { count: row.group.entries.length })} variant="warning" />
+              ) : (
+                <StatusChip label={t('timetable.subs.allCovered')} variant="success" />
+              )}
             </View>
-            {group.periods.map((entry) => {
+            {(row.group?.entries ?? []).map((entry) => {
               // A change whose substitute is now away: a substitution or an extra class.
               const kind = uncoveredOverrideKind(entry, overridesShown);
               return (
                 <View key={`${entry.sectionId}-${entry.periodNumber}`} style={styles.periodRow}>
                   <Text style={styles.periodTitle}>
-                    {periodLabel(entry.periodNumber, entry.startTime)} · {sectionLabel(entry)}
+                    {sectionLabel(entry)}
+                    {entry.subjectName ? ` · ${entry.subjectName}` : ''}
                   </Text>
-                  <Text style={styles.periodMeta}>
-                    {[entry.subjectName, entry.roomName ? t('timetable.room', { name: entry.roomName }) : null].filter(Boolean).join(' · ')}
-                  </Text>
-                  {kind && (
-                    <View style={styles.chipRow}>
-                      <StatusChip label={t(`timetable.subs.kind.${kind}`)} variant={overrideKindVariant(kind)} />
-                    </View>
-                  )}
+                  <View style={styles.chipRow}>
+                    <Text style={styles.periodMeta}>{t('timetable.subs.away', { name: entry.teacherName })}</Text>
+                    <StatusChip
+                      label={entry.attendanceStatus === 'ABSENT' ? t('timetable.subs.absent') : t('timetable.subs.halfDay')}
+                      variant={entry.attendanceStatus === 'ABSENT' ? 'error' : 'warning'}
+                    />
+                    {kind && <StatusChip label={t('timetable.subs.coverLost')} variant={overrideKindVariant(kind)} />}
+                  </View>
+                  {entry.roomName ? <Text style={styles.periodMeta}>{t('timetable.room', { name: entry.roomName })}</Text> : null}
                   {!past && (
                     <View style={styles.actions}>
                       <ActionButton
@@ -319,6 +381,20 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                 </View>
               );
             })}
+            {row.covered.map((o) => (
+              <View key={o.id ?? `${o.sectionId}-${o.periodNumber}`} style={[styles.periodRow, styles.coveredRow]}>
+                <Text style={styles.periodTitle}>
+                  {sectionLabel(o)}
+                  {o.subjectName ? ` · ${o.subjectName}` : ''}
+                </Text>
+                <Text style={styles.periodMeta}>{t('timetable.subs.coveredBy', { name: o.substituteTeacherName ?? '' })}</Text>
+                {!past && (
+                  <View style={styles.actions}>
+                    <ActionButton label={t('timetable.subs.undo')} danger disabled={locked} onPress={() => o.id && confirmUndo(o.id)} />
+                  </View>
+                )}
+              </View>
+            ))}
           </View>
         ))}
 
@@ -429,6 +505,22 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
         })}
       </ScreenContainer>
 
+      {plan && (
+
+        <AutoAssignSheet
+
+          plan={plan}
+
+          busy={autoAssigning}
+
+          onConfirm={confirmAutoAssign}
+
+          onClose={() => setPlan(null)}
+
+        />
+
+      )}
+
       {target && (
         <CoverSheet
           schoolId={schoolId}
@@ -497,13 +589,13 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
 
   const loadTeachers = useCallback(() => {
     setTeachers(null);
-    getFreeTeachers(schoolId, date, target.periodNumber, target.sectionId)
-      .then((rows) => setTeachers(sortFreeTeachers(rows)))
+    getFreeTeachers(schoolId, date, target.periodNumber, target.sectionId, target.subjectId)
+      .then((rows) => setTeachers(sortFreeTeachersByMatch(rows)))
       .catch((e) => {
         setTeachers([]);
         setError(getErrorMessage(e));
       });
-  }, [schoolId, date, target.periodNumber, target.sectionId]);
+  }, [schoolId, date, target.periodNumber, target.sectionId, target.subjectId]);
 
   useEffect(loadTeachers, [loadTeachers]);
 
@@ -568,33 +660,30 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
                 .join(' · ')}
             </Text>
 
-            <Text style={styles.fieldLabel}>{t('timetable.subs.freeTeachers', { n: target.periodNumber })}</Text>
             {teachers === null && <ActivityIndicator color={colors.primary} style={styles.loading} />}
             {teachers?.length === 0 && !error && <Text style={styles.empty}>{t('timetable.subs.noFreeTeachers')}</Text>}
-            {teachers?.map((teacher) => {
-              const active = selected === teacher.teacherId;
-              return (
-                <Pressable
-                  key={teacher.teacherId}
-                  style={[styles.option, active && styles.optionSelected]}
-                  onPress={() => setSelected(teacher.teacherId)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: active }}
-                >
-                  <Text style={styles.optionTitle}>
-                    {teacher.name}
-                    {teacher.designation ? ` (${teacher.designation})` : ''}
-                  </Text>
-                  <Text style={styles.optionDetail}>{t('timetable.subs.periodsThatDay', { count: teacher.periodsThatDay })}</Text>
-                  {(teacher.teachesSection || teacher.attendanceStatus === 'HALF_DAY') && (
-                    <View style={styles.chipRow}>
-                      {teacher.teachesSection && <StatusChip label={t('timetable.subs.teachesClass')} variant="success" />}
-                      {teacher.attendanceStatus === 'HALF_DAY' && <StatusChip label={t('timetable.subs.halfDay')} variant="warning" />}
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
+            {teachers && teachers.length > 0 && (
+              <Dropdown
+                label={t('timetable.subs.substitute')}
+                value={selected ?? ''}
+                placeholder={t('timetable.subs.pickSubstitute')}
+                required
+                onSelect={setSelected}
+                options={teachers.map((teacher) => ({
+                  value: teacher.teacherId,
+                  // Ranked by the server; the label says why: "Anil Verma — teaches Maths to Grade 8 - B · 3 periods today"
+                  label: [
+                    teacher.name,
+                    `${t(`timetable.subs.match.${teacher.match ?? 'FREE'}`, {
+                      subject: target.subjectName ?? '',
+                      section: target.sectionLabel,
+                    })} · ${t('timetable.subs.periodsThatDay', { count: teacher.periodsThatDay })}${
+                      teacher.attendanceStatus === 'HALF_DAY' ? ` · ${t('timetable.subs.halfDay')}` : ''
+                    }`,
+                  ].join(' — '),
+                }))}
+              />
+            )}
 
             <Text style={[styles.fieldLabel, styles.spaced]}>{t('timetable.editor.room')}</Text>
             <RoomPicker
@@ -625,6 +714,63 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
   );
 }
 
+/** Auto-assign's preview: who gets which class, and which periods nobody was free for, then Confirm. */
+function AutoAssignSheet({
+  plan,
+  busy,
+  onConfirm,
+  onClose,
+}: {
+  plan: AutoAssignPlan;
+  busy: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const sheetBottom = useBottomInset(spacing.lg);
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        <Pressable style={[styles.sheet, { paddingBottom: sheetBottom }]} onPress={() => {}}>
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <Text style={styles.sheetTitle}>
+              {plan.assigned > 0
+                ? t('timetable.subs.autoAssignPreviewTitle', { count: plan.assigned })
+                : t('timetable.subs.autoAssignNothing')}
+            </Text>
+            {plan.assigned > 0 && <Text style={styles.sheetSubtitle}>{t('timetable.subs.autoAssignPreviewBody')}</Text>}
+            {plan.items.map((item) => (
+              <View key={`${item.sectionId}-${item.periodNumber}`} style={styles.periodRow}>
+                <Text style={styles.periodTitle}>
+                  {t('timetable.periodN', { n: item.periodNumber })}
+                  {item.startTime ? ` · ${item.startTime}` : ''} · {sectionLabel(item)}
+                  {item.subjectName ? ` · ${item.subjectName}` : ''}
+                </Text>
+                {item.substituteTeacherName ? (
+                  <Text style={styles.periodMeta}>
+                    → {item.substituteTeacherName}
+                    {item.match
+                      ? ` (${t(`timetable.subs.match.${item.match}`, { subject: item.subjectName ?? '', section: sectionLabel(item) })})`
+                      : ''}
+                  </Text>
+                ) : (
+                  <Text style={[styles.periodMeta, styles.warn]}>{t('timetable.subs.autoAssignNoneFree')}</Text>
+                )}
+              </View>
+            ))}
+            <View style={[styles.actions, styles.spaced]}>
+              <ActionButton label={t('common.cancel')} disabled={busy} onPress={onClose} />
+              {plan.assigned > 0 && (
+                <ActionButton label={t('timetable.subs.autoAssignConfirm')} disabled={busy} onPress={onConfirm} />
+              )}
+            </View>
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   loading: { marginVertical: spacing.md },
@@ -644,6 +790,8 @@ const styles = StyleSheet.create({
   periodRow: { paddingTop: spacing.sm, marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   periodTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
   periodMeta: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  warn: { color: colors.warning, fontWeight: '700' },
+  coveredRow: { opacity: 0.6 },
   reason: { fontSize: 13, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },

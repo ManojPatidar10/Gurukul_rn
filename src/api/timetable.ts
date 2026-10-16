@@ -218,6 +218,40 @@ export interface FreeTeacher {
   attendanceStatus: 'PRESENT' | 'LATE' | 'HALF_DAY' | null;
   /** Already teaches a subject in the class asked about. */
   teachesSection: boolean;
+  /** Teaches the asked-about subject somewhere in the school (false when no subject was asked). */
+  teachesSubject: boolean;
+  /** Why the server ranks them where it does, best first. */
+  match: FreeTeacherMatch;
+}
+
+/** How well a free teacher fits the period: subject and section, subject elsewhere, section, or merely free. */
+export type FreeTeacherMatch = 'SUBJECT_AND_SECTION' | 'SUBJECT' | 'SECTION' | 'FREE';
+
+/** One uncovered period and who auto-assign picked for it (substitute null when nobody was free). */
+export interface AutoAssignItem {
+  sectionId: string;
+  className: string;
+  section: string;
+  periodNumber: number;
+  startTime: string | null;
+  subjectId: string | null;
+  subjectName: string | null;
+  absentTeacherId: string;
+  absentTeacherName: string;
+  substituteTeacherId: string | null;
+  substituteTeacherName: string | null;
+  match: FreeTeacherMatch | null;
+  /** NO_FREE_TEACHER when the row was left uncovered. */
+  skippedReason: string | null;
+}
+
+/** What auto-assign would do (dryRun) or has just done for a date. */
+export interface AutoAssignPlan {
+  date: string;
+  dryRun: boolean;
+  assigned: number;
+  unassigned: number;
+  items: AutoAssignItem[];
 }
 
 /** Writes the bot will also use can be checked without saving; the app always saves. */
@@ -345,9 +379,23 @@ export function getUncoveredPeriods(schoolId: string, date: string) {
   return api.get<UncoveredPeriod[]>(`/api/v1/timetable/uncovered${toQuery({ date })}`, schoolId);
 }
 
-/** Admin: teachers free in that period on that date, fewest periods that day first. */
-export function getFreeTeachers(schoolId: string, date: string, periodNumber: number, sectionId?: string) {
-  return api.get<FreeTeacher[]>(`/api/v1/timetable/free-teachers${toQuery({ date, periodNumber, sectionId })}`, schoolId);
+/**
+ * Admin: teachers free in that period on that date. Ranked, never filtered - pass the absent teacher's
+ * subject and whoever teaches it comes first, but everyone free is still listed.
+ */
+export function getFreeTeachers(schoolId: string, date: string, periodNumber: number, sectionId?: string, subjectId?: string | null) {
+  return api.get<FreeTeacher[]>(
+    `/api/v1/timetable/free-teachers${toQuery({ date, periodNumber, sectionId, subjectId: subjectId ?? undefined })}`,
+    schoolId
+  );
+}
+
+/**
+ * Admin: give every uncovered period of the date its best free teacher, one period at a time so nobody
+ * is double-booked. dryRun computes the plan and saves and sends nothing - the preview to confirm.
+ */
+export function autoAssign(schoolId: string, date: string, opts?: WriteOptions) {
+  return api.post<AutoAssignPlan>(`/api/v1/timetable/auto-assign${toQuery({ date, dryRun: opts?.dryRun || undefined })}`, {}, schoolId);
 }
 
 /** The clashing slots from a failed save, or null if the error wasn't a clash. */
