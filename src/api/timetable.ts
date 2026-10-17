@@ -383,9 +383,16 @@ export function getUncoveredPeriods(schoolId: string, date: string) {
  * Admin: teachers free in that period on that date. Ranked, never filtered - pass the absent teacher's
  * subject and whoever teaches it comes first, but everyone free is still listed.
  */
-export function getFreeTeachers(schoolId: string, date: string, periodNumber: number, sectionId?: string, subjectId?: string | null) {
+export function getFreeTeachers(
+  schoolId: string,
+  date: string,
+  periodNumber: number,
+  sectionId?: string,
+  subjectId?: string | null,
+  subjectOnly = false
+) {
   return api.get<FreeTeacher[]>(
-    `/api/v1/timetable/free-teachers${toQuery({ date, periodNumber, sectionId, subjectId: subjectId ?? undefined })}`,
+    `/api/v1/timetable/free-teachers${toQuery({ date, periodNumber, sectionId, subjectId: subjectId ?? undefined, subjectOnly: subjectOnly || undefined })}`,
     schoolId
   );
 }
