@@ -4,15 +4,9 @@ import type {
   SchoolLocationUpdateRequest,
   SchoolRegistrationRequest,
   SchoolRegistrationResponse,
-  SchoolSearchResult,
   SignupOtpVerifyResponse,
   SchoolUpdateRequest,
 } from './types';
-
-export function searchSchools(name?: string) {
-  const query = name ? `?name=${encodeURIComponent(name)}` : '';
-  return api.get<SchoolSearchResult[]>(`/api/v1/schools${query}`);
-}
 
 /** Sends a WhatsApp code to the mobile that will become the new school's principal login. */
 export function requestSignupOtp(phone: string) {

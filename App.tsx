@@ -34,7 +34,7 @@ import { trackTokenFromUrl } from './src/transport/trackLink';
 import { phoneLookupOutcome } from './src/utils/phoneLogin';
 import { TrackLinkView } from './src/screens/transport/TrackLinkView';
 import PhoneEntryScreen from './src/screens/PhoneEntryScreen';
-import SchoolSearchScreen from './src/screens/SchoolSearchScreen';
+import SchoolPickScreen from './src/screens/SchoolPickScreen';
 import SchoolSetupScreen from './src/screens/SchoolSetupScreen';
 import OtpLoginScreen from './src/screens/OtpLoginScreen';
 import ProfileSelectScreen from './src/screens/ProfileSelectScreen';
@@ -48,7 +48,6 @@ import RegistrationSubmittedScreen from './src/screens/RegistrationSubmittedScre
 type PreAuthStep =
   | { name: 'phone' }
   | { name: 'pickSchool'; phone: string; schools: SchoolSearchResult[] }
-  | { name: 'search' }
   | { name: 'register' }
   | { name: 'otpLogin'; schoolId: string; schoolName?: string; autoSend?: boolean }
   | { name: 'profileSelect'; schoolId: string; schoolName?: string; selectionToken: string; profiles: AuthProfile[] }
@@ -75,9 +74,8 @@ export default function App() {
   const [schoolId, setSchoolId] = useState<string | null | undefined>(undefined);
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [preAuthStep, setPreAuthStep] = useState<PreAuthStep>({ name: 'phone' });
-  // Set by the phone-first flow: the number the first screen looked up and the schools that know
-  // it; null when the user came in through school search. Locks the number on the OTP screen and
-  // decides where "back" goes from there.
+  // The number the first screen looked up and the schools that know it. Locks the number on the
+  // OTP screen and decides where "back" goes from there (the pick when there were several).
   const [phoneLogin, setPhoneLogin] = useState<{ phone: string; schools: SchoolSearchResult[] } | null>(null);
   const [i18nReady, setI18nReady] = useState(false);
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(0);
@@ -192,26 +190,21 @@ export default function App() {
     setSession(next);
   };
 
-  const openOtpLogin = (school: SchoolSearchResult, autoSend: boolean) => {
+  // The number is known to be on file at this school, so the code goes out as the screen opens.
+  const openOtpLogin = (school: SchoolSearchResult) => {
     setSchoolId(school.id);
     // Persist it like SchoolSetupScreen does - otherwise an app restart has a stored session but no
     // school, and drops the user back on the pre-login screens.
     setStoredSchoolId(school.id);
-    setPreAuthStep({ name: 'otpLogin', schoolId: school.id, schoolName: school.name, autoSend });
+    setPreAuthStep({ name: 'otpLogin', schoolId: school.id, schoolName: school.name, autoSend: true });
   };
 
-  // Came in through the school directory: the OTP screen asks for the number itself.
-  const handleSchoolSelected = (school: SchoolSearchResult) => {
-    setPhoneLogin(null);
-    openOtpLogin(school, false);
-  };
-
-  // Came in through the phone number: one school goes straight to its OTP, code already on its
-  // way; several ask which. A number registered nowhere never gets here - the screen handles it.
+  // One school goes straight to its OTP, code already on its way; several ask which. A number
+  // registered nowhere never gets here - the screen handles it.
   const handlePhoneSchools = (phone: string, schools: SchoolSearchResult[]) => {
     setPhoneLogin({ phone, schools });
     const outcome = phoneLookupOutcome(schools);
-    if (outcome.kind === 'single') openOtpLogin(outcome.school, true);
+    if (outcome.kind === 'single') openOtpLogin(outcome.school);
     else if (outcome.kind === 'choose') setPreAuthStep({ name: 'pickSchool', phone, schools });
   };
 
@@ -230,23 +223,16 @@ export default function App() {
         return (
           <PhoneEntryScreen
             onSchoolsFound={handlePhoneSchools}
-            onFindSchool={() => setPreAuthStep({ name: 'search' })}
             onRegisterSchool={() => setPreAuthStep({ name: 'register' })}
           />
         );
       case 'pickSchool':
         return (
-          <SchoolSearchScreen
-            preset={{ phone: preAuthStep.phone, schools: preAuthStep.schools }}
+          <SchoolPickScreen
+            phone={preAuthStep.phone}
+            schools={preAuthStep.schools}
             onBack={() => setPreAuthStep({ name: 'phone' })}
-            onSelect={(school) => openOtpLogin(school, true)}
-          />
-        );
-      case 'search':
-        return (
-          <SchoolSearchScreen
-            onBack={() => setPreAuthStep({ name: 'phone' })}
-            onSelect={handleSchoolSelected}
+            onSelect={openOtpLogin}
           />
         );
       case 'register':
@@ -266,11 +252,9 @@ export default function App() {
             autoSend={preAuthStep.autoSend}
             onBack={() =>
               setPreAuthStep(
-                !phoneLogin
-                  ? { name: 'search' }
-                  : phoneLogin.schools.length > 1
-                    ? { name: 'pickSchool', phone: phoneLogin.phone, schools: phoneLogin.schools }
-                    : { name: 'phone' }
+                phoneLogin && phoneLogin.schools.length > 1
+                  ? { name: 'pickSchool', phone: phoneLogin.phone, schools: phoneLogin.schools }
+                  : { name: 'phone' }
               )
             }
             onUsePassword={() =>

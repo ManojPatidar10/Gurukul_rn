@@ -17,16 +17,16 @@ import { normalizePhone } from '../utils/phoneLogin';
 interface Props {
   /** The number is on file at these schools (never empty); App picks between OTP and a school choice. */
   onSchoolsFound: (phone: string, schools: SchoolSearchResult[]) => void;
-  onFindSchool: () => void;
   onRegisterSchool: () => void;
 }
 
 /**
  * The first screen: the phone number, not the school. The server says which schools know the
- * number, and the school is only asked for when there is more than one. A number registered
- * nowhere stays here with the two ways in - search for the school, or register one.
+ * number, and the school is only asked for when there is more than one. There is no school
+ * directory to browse: a number registered nowhere is told so and stays here - its school has
+ * to add it. The one other way in is registering a new school.
  */
-export default function PhoneEntryScreen({ onSchoolsFound, onFindSchool, onRegisterSchool }: Props) {
+export default function PhoneEntryScreen({ onSchoolsFound, onRegisterSchool }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
@@ -95,9 +95,6 @@ export default function PhoneEntryScreen({ onSchoolsFound, onFindSchool, onRegis
           <Text style={styles.submitText}>{checking ? t('phoneLogin.checking') : t('phoneLogin.continue')}</Text>
         </Pressable>
 
-        <Pressable onPress={onFindSchool} style={styles.linkButton}>
-          <Text style={styles.linkText}>{t('welcome.findSchool')}</Text>
-        </Pressable>
         <Pressable onPress={onRegisterSchool} style={styles.linkButton}>
           <Text style={styles.linkText}>{t('welcome.registerSchool')}</Text>
         </Pressable>
