@@ -51,3 +51,9 @@ Thumbs.db
 credentials.json
 *.keystore
 !android/app/debug.keystore
+
+# Native modules' Gradle output. The /android rule above is root-anchored, so it does not cover
+# modules/*/android - a local build there was committed once already and broke the CI Android
+# build, which is a hard failure to read back to its cause.
+modules/*/android/build/
+modules/*/android/.gradle/
