@@ -253,6 +253,8 @@ export type PrincipalStackParamList = {
     | { classSection?: ClassSection; student?: Pick<Student, 'id' | 'name'>; date?: string; teacher?: { id: string; name: string } }
     | undefined;
   TimetableEditor: { classSection?: ClassSection } | undefined;
+  /** The section's whole week on one screen: days down the side, clock time across. */
+  TimetableWeek: { classSection: ClassSection };
   PeriodSetup: undefined;
   /** Admin: cover periods for a date (YYYY-MM-DD; today when left out). */
   Substitutions: { date?: string } | undefined;
