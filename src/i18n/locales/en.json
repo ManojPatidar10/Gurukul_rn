@@ -2372,7 +2372,9 @@
       "assignNow_one": "Assign {{count}} period now",
       "assignNow_other": "Assign {{count}} periods now",
       "assignNowHint": "These were not covered automatically. Each has a free teacher of the subject now.",
-      "autoAssignedChip": "Auto-assigned"
+      "autoAssignedChip": "Auto-assigned",
+      "currentSubstitute": "currently assigned",
+      "noOtherSubjectTeacherFree": "No other {{subject}} teacher is free in this period - keep the current substitute, or undo the cover."
     }
   },
   "reportCardPdf": {

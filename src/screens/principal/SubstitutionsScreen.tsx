@@ -513,7 +513,10 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
   const { t } = useTranslation();
   const sheetBottom = useBottomInset(spacing.lg);
   const [teachers, setTeachers] = useState<FreeTeacher[] | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  // Editing a cover starts on the person who holds it, so Save with no change keeps them.
+  const [selected, setSelected] = useState<string | null>(
+    target.override?.kind === 'SUBSTITUTE' ? (target.override.substituteTeacherId ?? null) : null
+  );
   const [roomId, setRoomId] = useState<string | null>(target.override?.roomId ?? null);
   // An auto-assigned cover's reason is the marker that makes it auto; an edit starts blank so saving makes it the admin's own.
   const [reason, setReason] = useState(target.override?.autoAssigned ? '' : (target.override?.reason ?? ''));
@@ -582,6 +585,27 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
     if (!saving) onClose();
   };
 
+  // Editing a cover: free-teachers leaves out whoever holds the period now - that is the substitute
+  // being changed - so offer them first, pre-selected. Then the admin can keep the person and change
+  // only the room or reason, and "no other X teacher is free" is a true statement rather than a wall.
+  const current = target.override?.kind === 'SUBSTITUTE' && target.override.substituteTeacherId && target.override.substituteTeacherName
+    ? { id: target.override.substituteTeacherId, name: target.override.substituteTeacherName }
+    : null;
+  const options = [
+    ...(current && !(teachers ?? []).some((x) => x.teacherId === current.id)
+      ? [{ value: current.id, label: `${current.name} — ${t('timetable.subs.currentSubstitute')}` }]
+      : []),
+    ...(teachers ?? []).map((teacher) => ({
+      value: teacher.teacherId,
+      label: [
+        teacher.name,
+        `${t(`timetable.subs.match.${teacher.match ?? 'FREE'}`, { subject: target.subjectName ?? '', section: target.sectionLabel })} · ${t('timetable.subs.periodsThatDay', { count: teacher.periodsThatDay })}${
+          teacher.attendanceStatus === 'HALF_DAY' ? ` · ${t('timetable.subs.halfDay')}` : ''
+        }`,
+      ].join(' — '),
+    })),
+  ];
+
   return (
     <Modal visible transparent animationType="slide" onRequestClose={close}>
       <Pressable style={styles.backdrop} onPress={close}>
@@ -595,29 +619,20 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
             </Text>
 
             {teachers === null && <ActivityIndicator color={colors.primary} style={styles.loading} />}
-            {teachers?.length === 0 && !error && (
+            {teachers?.length === 0 && !error && !current && (
               <Text style={styles.empty}>{t('timetable.subs.noSubjectTeacherFree', { subject: target.subjectName ?? '' })}</Text>
             )}
-            {teachers && teachers.length > 0 && (
+            {teachers?.length === 0 && !error && current && (
+              <Text style={styles.empty}>{t('timetable.subs.noOtherSubjectTeacherFree', { subject: target.subjectName ?? '' })}</Text>
+            )}
+            {teachers && options.length > 0 && (
               <Dropdown
                 label={t('timetable.subs.substitute')}
                 value={selected ?? ''}
                 placeholder={t('timetable.subs.pickSubstitute')}
                 required
                 onSelect={setSelected}
-                options={teachers.map((teacher) => ({
-                  value: teacher.teacherId,
-                  // Ranked by the server; the label says why: "Anil Verma — teaches Maths to Grade 8 - B · 3 periods today"
-                  label: [
-                    teacher.name,
-                    `${t(`timetable.subs.match.${teacher.match ?? 'FREE'}`, {
-                      subject: target.subjectName ?? '',
-                      section: target.sectionLabel,
-                    })} · ${t('timetable.subs.periodsThatDay', { count: teacher.periodsThatDay })}${
-                      teacher.attendanceStatus === 'HALF_DAY' ? ` · ${t('timetable.subs.halfDay')}` : ''
-                    }`,
-                  ].join(' — '),
-                }))}
+                options={options}
               />
             )}
 

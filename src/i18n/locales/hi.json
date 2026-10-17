@@ -2372,7 +2372,9 @@
       "assignNow_one": "{{count}} पीरियड अभी लगाएँ",
       "assignNow_other": "{{count}} पीरियड अभी लगाएँ",
       "assignNowHint": "ये अपने आप नहीं भरे थे। अब हर एक के लिए विषय का खाली शिक्षक है।",
-      "autoAssignedChip": "स्वतः लगाया"
+      "autoAssignedChip": "स्वतः लगाया",
+      "currentSubstitute": "अभी लगे हुए",
+      "noOtherSubjectTeacherFree": "इस पीरियड में {{subject}} का कोई और शिक्षक खाली नहीं है - मौजूदा विकल्प शिक्षक रखें, या कवर हटाएँ।"
     }
   },
   "reportCardPdf": {
