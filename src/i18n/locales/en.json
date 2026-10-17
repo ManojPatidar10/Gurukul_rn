@@ -1845,9 +1845,14 @@
       "feedbackDate": "Select a date."
     }
   },
+  "phoneLogin": {
+    "title": "Sign in",
+    "subtitle": "Enter the phone number your school has on file",
+    "continue": "Continue",
+    "checking": "Checking…",
+    "notRegistered": "This number isn't registered with any school yet. Ask your school to add it, or find your school below to request access."
+  },
   "welcome": {
-    "title": "Smart Gurukul",
-    "subtitle": "School management, made simple",
     "findSchool": "Find my school",
     "registerSchool": "Register a new school (2 minutes)"
   },
@@ -1950,6 +1955,10 @@
     "searchByName": "Search by name",
     "placeholder": "e.g. Gurukul",
     "empty": "No schools found."
+,
+    "chooseTitle": "Choose your school",
+    "registeredWith_one": "{{phone}} is registered with {{count}} school",
+    "registeredWith_other": "{{phone}} is registered with {{count}} schools"
   },
   "parentHome": {
     "title": "My Children",

@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,12 @@ interface Props {
   onLoggedIn: (session: Session) => void;
   onProfileSelectionRequired: (selectionToken: string, profiles: AuthProfile[]) => void;
   onRegister?: () => void;
+  /** The number the first screen looked up: shown locked here; "change" goes to onChangePhone. */
+  initialPhone?: string;
+  /** Where "Change phone number" goes for a locked number - the first screen, not merely one step back. */
+  onChangePhone?: () => void;
+  /** Send the code as soon as the screen opens - the number is already known to be on file here. */
+  autoSend?: boolean;
 }
 
 export default function OtpLoginScreen({
@@ -32,10 +38,13 @@ export default function OtpLoginScreen({
   onLoggedIn,
   onProfileSelectionRequired,
   onRegister,
+  initialPhone,
+  onChangePhone,
+  autoSend,
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(initialPhone ?? '');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +62,15 @@ export default function OtpLoginScreen({
       setSubmitting(false);
     }
   };
+
+  // Once per mount, not per re-render: a second send inside the cooldown would be refused.
+  const autoSentRef = useRef(false);
+  useEffect(() => {
+    if (!autoSend || !initialPhone || autoSentRef.current) return;
+    autoSentRef.current = true;
+    handleRequestOtp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleVerifyOtp = async () => {
     setSubmitting(true);
@@ -75,7 +93,7 @@ export default function OtpLoginScreen({
   return (
     <View style={styles.root}>
       <LinearGradient colors={gradients.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-        <Pressable onPress={onBack} style={styles.backButton}>
+        <Pressable onPress={onBack} style={[styles.backButton, { top: insets.top + spacing.xs }]} accessibilityRole="button">
           <Text style={styles.backText}>←</Text>
         </Pressable>
         <View style={[styles.languageSwitchWrapper, { top: insets.top + spacing.xs }]}>
@@ -92,7 +110,7 @@ export default function OtpLoginScreen({
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
-          editable={!otpSent}
+          editable={!otpSent && !initialPhone}
         />
 
         {otpSent && (
@@ -125,7 +143,7 @@ export default function OtpLoginScreen({
             >
               <Text style={styles.submitText}>{submitting ? t('auth.verifyingOtp') : t('auth.verifyAndSignIn')}</Text>
             </Pressable>
-            <Pressable onPress={() => setOtpSent(false)} style={styles.linkButton}>
+            <Pressable onPress={initialPhone ? (onChangePhone ?? onBack) : () => setOtpSent(false)} style={styles.linkButton}>
               <Text style={styles.linkText}>{t('auth.changePhoneNumber')}</Text>
             </Pressable>
           </>
@@ -154,9 +172,10 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.xl,
     ...shadow,
   },
+  // Top edge set from the safe-area inset at render time: a fixed offset left most of the button
+  // under the status bar, where taps never reach the app.
   backButton: {
     position: 'absolute',
-    top: spacing.xxl,
     left: spacing.lg,
     width: 38,
     height: 38,

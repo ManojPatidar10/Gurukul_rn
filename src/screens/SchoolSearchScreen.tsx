@@ -15,14 +15,19 @@ import { ErrorNotice } from '../components/ErrorNotice';
 interface Props {
   onBack: () => void;
   onSelect: (school: SchoolSearchResult) => void;
+  /**
+   * The schools that know a phone number, from the phone-first login: shown as a plain choice,
+   * with no directory search. Without it the screen is the public school directory.
+   */
+  preset?: { phone: string; schools: SchoolSearchResult[] };
 }
 
-export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
+export default function SchoolSearchScreen({ onBack, onSelect, preset }: Props) {
   const listBottom = useBottomInset();
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SchoolSearchResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [results, setResults] = useState<SchoolSearchResult[]>(preset?.schools ?? []);
+  const [loading, setLoading] = useState(!preset);
   const [error, setError] = useState<string | null>(null);
 
   const load = (name: string) => {
@@ -35,10 +40,12 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
   };
 
   useEffect(() => {
-    load('');
+    if (!preset) load('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    if (preset) return;
     const timeout = setTimeout(() => load(query), 350);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,9 +53,15 @@ export default function SchoolSearchScreen({ onBack, onSelect }: Props) {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={t('schoolSearch.title')} onBack={onBack} />
+      <ScreenHeader
+        title={preset ? t('schoolSearch.chooseTitle') : t('schoolSearch.title')}
+        subtitle={preset ? t('schoolSearch.registeredWith', { phone: preset.phone, count: preset.schools.length }) : undefined}
+        onBack={onBack}
+      />
       <View style={styles.body}>
-        <LabeledInput label={t('schoolSearch.searchByName')} value={query} onChangeText={setQuery} placeholder={t('schoolSearch.placeholder')} />
+        {!preset && (
+          <LabeledInput label={t('schoolSearch.searchByName')} value={query} onChangeText={setQuery} placeholder={t('schoolSearch.placeholder')} />
+        )}
 
         {loading && <ActivityIndicator style={styles.loading} />}
         {error && <ErrorNotice message={error} />}

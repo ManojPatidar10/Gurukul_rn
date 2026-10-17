@@ -7,6 +7,7 @@ import type {
   OtpRequest,
   OtpVerifyRequest,
   OtpVerifyResponse,
+  SchoolSearchResult,
   SelectProfileRequest,
   SwitchProfileRequest,
 } from './types';
@@ -17,6 +18,15 @@ export function login(schoolId: string, req: LoginRequest) {
 
 export function loginWithGoogle(schoolId: string, req: GoogleLoginRequest) {
   return api.post<LoginResponse>('/api/v1/auth/google', req, schoolId);
+}
+
+/**
+ * The schools a phone number can log in to - the app's first question, asked before any school is
+ * chosen, so this is the one auth call without an X-School-Id. Empty when the number is on file
+ * nowhere.
+ */
+export function lookupSchoolsByPhone(phone: string) {
+  return api.post<SchoolSearchResult[]>('/api/v1/auth/phone/schools', { phone });
 }
 
 export function requestOtp(schoolId: string, req: OtpRequest) {
