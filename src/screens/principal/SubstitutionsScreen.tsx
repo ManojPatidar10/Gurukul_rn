@@ -331,6 +331,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
           <View style={styles.card}>
             <ActionButton
               label={t('timetable.subs.assignNow', { count: plan.assigned })}
+              primary
               disabled={locked || autoAssigning}
               onPress={assignAll}
             />
@@ -345,9 +346,9 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                 {row.endTime ? `–${row.endTime}` : ''}
               </Text>
               {row.group ? (
-                <StatusChip label={t('timetable.subs.stillToCover', { count: row.group.entries.length })} variant="warning" />
+                <StatusChip label={t('timetable.subs.stillToCover', { count: row.group.entries.length })} variant="neutral" />
               ) : (
-                <StatusChip label={t('timetable.subs.allCovered')} variant="success" />
+                <StatusChip label={t('timetable.subs.allCovered')} variant="neutral" />
               )}
             </View>
             {(row.group?.entries ?? []).map((entry) => {
@@ -363,7 +364,7 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                     <Text style={styles.periodMeta}>{t('timetable.subs.away', { name: entry.teacherName })}</Text>
                     <StatusChip
                       label={entry.attendanceStatus === 'ABSENT' ? t('timetable.subs.absent') : t('timetable.subs.halfDay')}
-                      variant={entry.attendanceStatus === 'ABSENT' ? 'error' : 'warning'}
+                      variant="neutral"
                     />
                     {kind && <StatusChip label={t('timetable.subs.coverLost')} variant={overrideKindVariant(kind)} />}
                   </View>
@@ -373,15 +374,16 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                     if (!plan) return null;
                     return suggestion?.substituteTeacherName ? (
                       <Text style={styles.suggestion}>
-                        {t('timetable.subs.suggested', { name: suggestion.substituteTeacherName })}
-                        {suggestion.match
-                          ? ` · ${t(`timetable.subs.match.${suggestion.match}`, { subject: entry.subjectName ?? '', section: sectionLabel(entry) })}`
-                          : ''}
+                        {suggestion.fallback
+                          ? t('timetable.subs.suggestedFallback', { name: suggestion.substituteTeacherName, subject: entry.subjectName ?? '' })
+                          : `${t('timetable.subs.suggested', { name: suggestion.substituteTeacherName })}${
+                              suggestion.match
+                                ? ` · ${t(`timetable.subs.match.${suggestion.match}`, { subject: entry.subjectName ?? '', section: sectionLabel(entry) })}`
+                                : ''
+                            }`}
                       </Text>
                     ) : (
-                      <Text style={[styles.periodMeta, styles.warn]}>
-                        {t('timetable.subs.noSubjectTeacherFree', { subject: entry.subjectName ?? '' })}
-                      </Text>
+                      <Text style={[styles.periodMeta, styles.warn]}>{t('timetable.subs.noTeacherFree')}</Text>
                     );
                   })()}
                   {!past && (
@@ -412,7 +414,10 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                 </Text>
                 <View style={styles.chipRow}>
                   <Text style={styles.periodMeta}>{t('timetable.subs.coveredBy', { name: o.substituteTeacherName ?? '' })}</Text>
-                  {o.autoAssigned && <StatusChip label={t('timetable.subs.autoAssignedChip')} variant="success" />}
+                  {o.autoAssigned && <StatusChip label={t('timetable.subs.autoAssignedChip')} variant="neutral" />}
+                  {o.autoAssignedFallback && (
+                    <StatusChip label={t('timetable.subs.fallbackChip', { subject: o.subjectName ?? '' })} variant="warning" />
+                  )}
                 </View>
                 {!past && (
                   <View style={styles.actions}>
@@ -481,15 +486,29 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   );
 }
 
-function ActionButton({ label, onPress, danger, disabled }: { label: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
+function ActionButton({
+  label,
+  onPress,
+  danger,
+  primary,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  /** Destructive: plain text, no fill - the confirmation dialog carries the weight. */
+  danger?: boolean;
+  /** The one filled button on the screen. */
+  primary?: boolean;
+  disabled?: boolean;
+}) {
   return (
     <Pressable
-      style={[styles.actionButton, danger && styles.actionDanger, disabled && styles.disabled]}
+      style={[styles.actionButton, danger && styles.actionDanger, primary && styles.actionPrimary, disabled && styles.disabled]}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
     >
-      <Text style={[styles.actionText, danger && styles.actionDangerText]}>{label}</Text>
+      <Text style={[styles.actionText, danger && styles.actionDangerText, primary && styles.actionPrimaryText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -625,6 +644,9 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
             {teachers?.length === 0 && !error && current && (
               <Text style={styles.empty}>{t('timetable.subs.noOtherSubjectTeacherFree', { subject: target.subjectName ?? '' })}</Text>
             )}
+            {teachers && teachers.length > 0 && target.subjectId && teachers.every((x) => !x.teachesSubject) && (
+              <Text style={styles.hint}>{t('timetable.subs.fallbackPickerHint', { subject: target.subjectName ?? '' })}</Text>
+            )}
             {teachers && options.length > 0 && (
               <Dropdown
                 label={t('timetable.subs.substitute')}
@@ -684,21 +706,25 @@ const styles = StyleSheet.create({
   periodRow: { paddingTop: spacing.sm, marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   periodTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
   periodMeta: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  warn: { color: colors.warning, fontWeight: '700' },
+  warn: { color: colors.textSecondary, fontStyle: 'italic' },
   coveredRow: { opacity: 0.6 },
-  suggestion: { fontSize: 13, color: colors.success, fontWeight: '700', marginTop: 2 },
+  suggestion: { fontSize: 13, color: colors.textPrimary, fontWeight: '600', marginTop: 2 },
   reason: { fontSize: 13, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   actionButton: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  actionText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  actionDanger: { backgroundColor: '#FDECEC' },
-  actionDangerText: { color: colors.error },
+  actionText: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  actionDanger: { borderColor: 'transparent', backgroundColor: 'transparent' },
+  actionDangerText: { color: colors.textSecondary },
+  actionPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
+  actionPrimaryText: { color: colors.white },
   disabled: { opacity: 0.5 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   sheet: {

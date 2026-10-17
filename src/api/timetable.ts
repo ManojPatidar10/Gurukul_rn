@@ -162,6 +162,8 @@ export interface TimetableOverride {
   reason: string | null;
   /** Made by auto-assign when the teacher was marked away, and not edited since. */
   autoAssigned: boolean;
+  /** An auto-assigned cover taken by a teacher of another subject, because none of the subject was free. */
+  autoAssignedFallback: boolean;
   createdAt: string | null;
   updatedAt: string | null;
   dryRun?: boolean;
@@ -243,6 +245,8 @@ export interface AutoAssignItem {
   substituteTeacherId: string | null;
   substituteTeacherName: string | null;
   match: FreeTeacherMatch | null;
+  /** True when nobody who teaches the subject was free, so a free teacher of another subject took it. */
+  fallback: boolean;
   /** NO_FREE_TEACHER when the row was left uncovered. */
   skippedReason: string | null;
 }
