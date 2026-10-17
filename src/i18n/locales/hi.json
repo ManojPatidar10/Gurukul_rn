@@ -2377,7 +2377,7 @@
       "noOtherSubjectTeacherFree": "इस पीरियड में {{subject}} का कोई और शिक्षक खाली नहीं है - मौजूदा विकल्प शिक्षक रखें, या कवर हटाएँ।",
       "suggestedFallback": "सुझाव: {{name}} - {{subject}} का कोई शिक्षक खाली नहीं",
       "noTeacherFree": "इस पीरियड में कोई खाली नहीं है",
-      "fallbackChip": "{{subject}} के शिक्षक नहीं",
+      "fallbackChip": "{{subject}} नहीं पढ़ाते",
       "fallbackPickerHint": "इस पीरियड में {{subject}} का कोई शिक्षक खाली नहीं है। ये शिक्षक खाली हैं।"
     }
   },
