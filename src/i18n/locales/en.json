@@ -2377,7 +2377,7 @@
       "noOtherSubjectTeacherFree": "No other {{subject}} teacher is free in this period - keep the current substitute, or undo the cover.",
       "suggestedFallback": "Suggested: {{name}} - no {{subject}} teacher is free",
       "noTeacherFree": "Nobody is free in this period",
-      "fallbackChip": "Not a {{subject}} teacher",
+      "fallbackChip": "Doesn't teach {{subject}}",
       "fallbackPickerHint": "No {{subject}} teacher is free in this period. These teachers are free."
     }
   },
