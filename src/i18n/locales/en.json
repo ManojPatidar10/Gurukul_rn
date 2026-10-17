@@ -2374,7 +2374,11 @@
       "assignNowHint": "These were not covered automatically. Each has a free teacher of the subject now.",
       "autoAssignedChip": "Auto-assigned",
       "currentSubstitute": "currently assigned",
-      "noOtherSubjectTeacherFree": "No other {{subject}} teacher is free in this period - keep the current substitute, or undo the cover."
+      "noOtherSubjectTeacherFree": "No other {{subject}} teacher is free in this period - keep the current substitute, or undo the cover.",
+      "suggestedFallback": "Suggested: {{name}} - no {{subject}} teacher is free",
+      "noTeacherFree": "Nobody is free in this period",
+      "fallbackChip": "Not a {{subject}} teacher",
+      "fallbackPickerHint": "No {{subject}} teacher is free in this period. These teachers are free."
     }
   },
   "reportCardPdf": {
