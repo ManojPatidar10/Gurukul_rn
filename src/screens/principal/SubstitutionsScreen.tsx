@@ -327,7 +327,9 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
           </Pressable>
         )}
         {uncoveredShown !== null && periodRows.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
-        {!past && plan && plan.assigned > 0 && (
+        {/* The plan is only fetched while something is uncovered, so once the list empties it would go stale; the
+            button follows the list, not the plan. */}
+        {!past && groups.length > 0 && plan && plan.assigned > 0 && (
           <View style={styles.card}>
             <ActionButton
               label={t('timetable.subs.assignNow', { count: plan.assigned })}
