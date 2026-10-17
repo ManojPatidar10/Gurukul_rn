@@ -2367,7 +2367,12 @@
       "assignAllSuggested_one": "Assign {{count}} suggested substitute",
       "assignAllSuggested_other": "Assign all {{count}} suggested substitutes",
       "noSubjectTeacherFree": "No {{subject}} teacher is free in this period",
-      "change": "Change"
+      "change": "Change",
+      "autoHint": "Substitutes are assigned the moment a teacher is marked away - a free teacher of the same subject - and told. Change or undo any of them below.",
+      "assignNow_one": "Assign {{count}} period now",
+      "assignNow_other": "Assign {{count}} periods now",
+      "assignNowHint": "These were not covered automatically. Each has a free teacher of the subject now.",
+      "autoAssignedChip": "Auto-assigned"
     }
   },
   "reportCardPdf": {

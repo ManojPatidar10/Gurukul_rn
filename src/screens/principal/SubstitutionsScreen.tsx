@@ -122,6 +122,9 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
     load();
   }, [load]);
 
+  // Covers are made when attendance is saved, on another screen: coming back here must show them.
+  useEffect(() => navigation.addListener('focus', () => void load()), [navigation, load]);
+
   // With rooms out of use, so a change that already has one keeps showing it (pickers hide the rest).
   // A failed reload keeps the rooms already shown.
   const loadRooms = useCallback(
@@ -317,24 +320,21 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
         {/* Needs a substitute */}
         <Text style={styles.sectionTitle}>{t('timetable.subs.needsCover')}</Text>
         <Text style={styles.hint}>{t('timetable.subs.leaveHint')}</Text>
+        <Text style={styles.hint}>{t('timetable.subs.autoHint')}</Text>
         {date === today && (
           <Pressable onPress={() => navigation.navigate('StaffAttendance')} accessibilityRole="link">
             <Text style={styles.link}>{t('timetable.subs.markLeave')}</Text>
           </Pressable>
         )}
         {uncoveredShown !== null && periodRows.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
-        {!past && groups.length > 0 && (
+        {!past && plan && plan.assigned > 0 && (
           <View style={styles.card}>
             <ActionButton
-              label={
-                plan && plan.assigned > 0
-                  ? t('timetable.subs.assignAllSuggested', { count: plan.assigned })
-                  : t('timetable.subs.autoAssign')
-              }
-              disabled={locked || autoAssigning || !plan || plan.assigned === 0}
+              label={t('timetable.subs.assignNow', { count: plan.assigned })}
+              disabled={locked || autoAssigning}
               onPress={assignAll}
             />
-            <Text style={styles.hint}>{t('timetable.subs.autoAssignHint')}</Text>
+            <Text style={styles.hint}>{t('timetable.subs.assignNowHint')}</Text>
           </View>
         )}
         {periodRows.map((row) => (
@@ -410,7 +410,10 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                   {sectionLabel(o)}
                   {o.subjectName ? ` · ${o.subjectName}` : ''}
                 </Text>
-                <Text style={styles.periodMeta}>{t('timetable.subs.coveredBy', { name: o.substituteTeacherName ?? '' })}</Text>
+                <View style={styles.chipRow}>
+                  <Text style={styles.periodMeta}>{t('timetable.subs.coveredBy', { name: o.substituteTeacherName ?? '' })}</Text>
+                  {o.autoAssigned && <StatusChip label={t('timetable.subs.autoAssignedChip')} variant="success" />}
+                </View>
                 {!past && (
                   <View style={styles.actions}>
                     <ActionButton label={t('timetable.subs.change')} disabled={locked} onPress={() => setTarget(coverFromOverride(o))} />
@@ -512,7 +515,8 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
   const [teachers, setTeachers] = useState<FreeTeacher[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<string | null>(target.override?.roomId ?? null);
-  const [reason, setReason] = useState(target.override?.reason ?? '');
+  // An auto-assigned cover's reason is the marker that makes it auto; an edit starts blank so saving makes it the admin's own.
+  const [reason, setReason] = useState(target.override?.autoAssigned ? '' : (target.override?.reason ?? ''));
   const [error, setError] = useState<string | null>(null);
   const [clashes, setClashes] = useState<TimetableClash[]>([]);
   const [saving, setSaving] = useState(false);
