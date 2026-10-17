@@ -70,6 +70,7 @@ import { MyStudentsScreen } from '../screens/principal/MyStudentsScreen';
 import { MyTimetableScreen } from '../screens/principal/MyTimetableScreen';
 import { PeriodSetupScreen } from '../screens/principal/PeriodSetupScreen';
 import { TimetableEditorScreen } from '../screens/principal/TimetableEditorScreen';
+import { TimetableWeekScreen } from '../screens/principal/TimetableWeekScreen';
 import { SubstitutionsScreen } from '../screens/principal/SubstitutionsScreen';
 import { RoomsScreen } from '../screens/principal/RoomsScreen';
 import { FeeCategoriesListScreen } from '../screens/principal/FeeCategoriesListScreen';
@@ -256,6 +257,7 @@ export function PrincipalNavigator() {
         <Stack.Screen name="AdmissionDetail" component={AdmissionDetailScreen} />
         <Stack.Screen name="MyTimetable" component={MyTimetableScreen} />
         <Stack.Screen name="TimetableEditor" component={TimetableEditorScreen} />
+        <Stack.Screen name="TimetableWeek" component={TimetableWeekScreen} />
         <Stack.Screen name="PeriodSetup" component={PeriodSetupScreen} />
         <Stack.Screen name="Substitutions" component={SubstitutionsScreen} />
         <Stack.Screen name="Rooms" component={RoomsScreen} />

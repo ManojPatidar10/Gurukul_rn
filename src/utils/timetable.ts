@@ -325,3 +325,84 @@ export function describeClash(clash: TimetableClash): ClashDescription {
     date: clash.date ?? null,
   };
 }
+
+// ---------------------------------------------------------------- week timeline
+
+/**
+ * Pixels per minute on the week timeline. Chosen so a 45-minute period is wide enough for a
+ * subject and a teacher's name; a 15-minute break then comes out a third of that, which is the
+ * point - the blocks are meant to be read as durations, not as equal cells.
+ */
+export const TIMELINE_PX_PER_MINUTE = 2.4;
+
+/** One period drawn on the timeline, already positioned. */
+export interface TimelineBlock {
+  periodNumber: number;
+  label: string | null;
+  breakPeriod: boolean;
+  startTime: string;
+  endTime: string;
+  minutes: number;
+  /** Offset from the timeline's left edge, in px. */
+  left: number;
+  width: number;
+}
+
+export interface Timeline {
+  /** Empty when the bell schedule has no usable times - the caller draws nothing. */
+  blocks: TimelineBlock[];
+  /** Whole-hour marks across the top, e.g. 08:00 ... 14:00. */
+  ticks: { time: string; left: number }[];
+  width: number;
+}
+
+/**
+ * The geometry of one school day, left to right in real time.
+ *
+ * <p>Blocks are positioned and sized from the clock, not laid out one after another, so a gap
+ * between two periods shows as a gap and a break is visibly shorter than a lesson. There is
+ * deliberately no minimum width: widening a 10-minute break to stay legible would slide every
+ * later period away from the time it actually starts, which is the one thing this view exists to
+ * show.
+ */
+export function buildTimeline(periods: Period[], pxPerMinute = TIMELINE_PX_PER_MINUTE): Timeline {
+  const usable = periods
+    .map((p) => ({ period: p, start: normalizeTime(p.startTime), end: normalizeTime(p.endTime) }))
+    .filter((p): p is { period: Period; start: string; end: string } => p.start !== null && p.end !== null)
+    .filter((p) => toMinutes(p.end) > toMinutes(p.start))
+    .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+
+  if (usable.length === 0) {
+    return { blocks: [], ticks: [], width: 0 };
+  }
+
+  const dayStart = toMinutes(usable[0].start);
+  const dayEnd = usable.reduce((max, p) => Math.max(max, toMinutes(p.end)), dayStart);
+  const width = (dayEnd - dayStart) * pxPerMinute;
+
+  const blocks = usable.map(({ period, start, end }) => {
+    const from = toMinutes(start);
+    const to = toMinutes(end);
+    return {
+      periodNumber: period.periodNumber,
+      label: period.label,
+      breakPeriod: period.breakPeriod,
+      startTime: start,
+      endTime: end,
+      minutes: to - from,
+      left: (from - dayStart) * pxPerMinute,
+      width: (to - from) * pxPerMinute,
+    };
+  });
+
+  // Whole hours only: a tick per period would just repeat the times already on the blocks.
+  const ticks: { time: string; left: number }[] = [];
+  for (let minute = Math.ceil(dayStart / 60) * 60; minute <= dayEnd; minute += 60) {
+    ticks.push({
+      time: `${String(Math.floor(minute / 60)).padStart(2, '0')}:00`,
+      left: (minute - dayStart) * pxPerMinute,
+    });
+  }
+
+  return { blocks, ticks, width };
+}

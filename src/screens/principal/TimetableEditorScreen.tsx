@@ -370,6 +370,18 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
           </View>
         )}
 
+        {/* The editor is one day at a time; this opens the same week laid out against the clock,
+            which is where "when is this class free" is actually answerable. */}
+        {!loading && classSection && periods.length > 0 && (
+          <Pressable
+            style={styles.weekLink}
+            onPress={() => navigation.navigate('TimetableWeek', { classSection })}
+            accessibilityRole="button"
+          >
+            <Text style={styles.weekLinkText}>{t('timetable.week.open')}</Text>
+          </Pressable>
+        )}
+
         {loading && <ActivityIndicator color={colors.primary} style={styles.loading} />}
 
         {!loading && error && <ErrorNotice message={error} />}
@@ -553,6 +565,17 @@ export function TimetableEditorScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  weekLink: {
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  weekLinkText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
   root: { flex: 1, backgroundColor: colors.background },
   pickerWrap: { marginBottom: spacing.md },
   fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.xs, fontWeight: '600' },

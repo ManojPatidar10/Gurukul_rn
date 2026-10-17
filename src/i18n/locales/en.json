@@ -2379,6 +2379,15 @@
       "noTeacherFree": "Nobody is free in this period",
       "fallbackChip": "Not a {{subject}} teacher",
       "fallbackPickerHint": "No {{subject}} teacher is free in this period. These teachers are free."
+    },
+    "week": {
+      "open": "Week view",
+      "title": "Week at a glance",
+      "hint": "Scroll sideways through the day. Block width is real time: a break is shorter than a lesson, and a gap means the class is free.",
+      "noSchedule": "No bell schedule yet - set up periods first, then the week can be drawn against the clock.",
+      "download": "Download PDF",
+      "savedTo": "Saved to {{path}}",
+      "downloadFailed": "Couldn't download the timetable: {{message}}"
     }
   },
   "reportCardPdf": {

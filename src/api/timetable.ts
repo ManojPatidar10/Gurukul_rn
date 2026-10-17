@@ -1,4 +1,17 @@
-import { ApiError, api } from './client';
+import { File, Paths } from 'expo-file-system';
+
+import { ApiError, api, BASE_URL, ensureFreshAccessToken, getAuthToken } from './client';
+import { timetablePdfFileName } from '../utils/timetablePdfName';
+
+/** Mirrors reportCardPdf.download: rejects on any non-2xx, so an error body is never saved as a .pdf. */
+async function downloadPdf(schoolId: string, path: string, fileName: string): Promise<File> {
+  await ensureFreshAccessToken();
+  const headers: Record<string, string> = { 'X-School-Id': schoolId };
+  const token = getAuthToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const destination = new File(Paths.cache, fileName);
+  return File.downloadFileAsync(`${BASE_URL}${path}`, destination, { headers, idempotent: true });
+}
 
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 
@@ -446,4 +459,19 @@ export function overrideExistsFromError(e: unknown): { overrideId: string | null
 export function timetableRuleFromError(e: unknown): string | null {
   if (!(e instanceof ApiError) || e.errorCode !== 'TIMETABLE_INVALID') return null;
   return asString(asRecord(e.data).rule) || null;
+}
+
+/**
+ * A section's weekly timetable as a one-page landscape PDF - the week view, printable. Same access
+ * rules as GET /class-sections/{id}/timetable; rejects when the school has no bell schedule yet.
+ */
+export function downloadSectionTimetablePdf(
+  schoolId: string,
+  section: { id: string; className: string; section: string }
+) {
+  return downloadPdf(
+    schoolId,
+    `/api/v1/class-sections/${section.id}/timetable.pdf`,
+    timetablePdfFileName(section.className, section.section)
+  );
 }
