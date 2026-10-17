@@ -1850,10 +1850,9 @@
     "subtitle": "Enter the phone number your school has on file",
     "continue": "Continue",
     "checking": "Checking…",
-    "notRegistered": "This number isn't registered with any school yet. Ask your school to add it, or find your school below to request access."
+    "notRegistered": "This number isn't registered with any school yet. Ask your school to add it to your record."
   },
   "welcome": {
-    "findSchool": "Find my school",
     "registerSchool": "Register a new school (2 minutes)"
   },
   "auth": {
@@ -1950,13 +1949,8 @@
       "backToSignIn": "Back to sign in"
     }
   },
-  "schoolSearch": {
-    "title": "Find your school",
-    "searchByName": "Search by name",
-    "placeholder": "e.g. Gurukul",
-    "empty": "No schools found."
-,
-    "chooseTitle": "Choose your school",
+  "schoolPick": {
+    "title": "Choose your school",
     "registeredWith_one": "{{phone}} is registered with {{count}} school",
     "registeredWith_other": "{{phone}} is registered with {{count}} schools"
   },
