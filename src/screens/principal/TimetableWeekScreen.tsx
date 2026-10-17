@@ -1,21 +1,31 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+
+import * as Sharing from 'expo-sharing';
 
 import { getErrorMessage } from '../../api/errorMessage';
-import { getSectionTimetable, type Timetable, type TimetableSlot } from '../../api/timetable';
+import { downloadSectionTimetablePdf, getSectionTimetable, type Timetable, type TimetableSlot } from '../../api/timetable';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useSchoolId } from '../../context/SchoolContext';
+import { useToast } from '../../context/ToastContext';
 import { colors, radius, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import { buildTimeline, slotKey, slotsToCells, type TimelineBlock } from '../../utils/timetable';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'TimetableWeek'>;
 
-/** Height of one day's lane. Two lines of text in a block, plus breathing room. */
-const LANE_HEIGHT = 56;
+/**
+ * The lanes split the height the screen actually has, inside these bounds. Below the floor two
+ * lines of text stop fitting; above the ceiling five days plus whitespace reads emptier, not
+ * clearer. Fixed 56pt lanes left half of most phones blank under the grid.
+ */
+const LANE_MIN = 64;
+const LANE_MAX = 110;
+/** Header, hint, axis and paddings - what the lanes cannot have. */
+const CHROME_HEIGHT = 220;
 /** Width of the pinned day column on the left. */
 const DAY_COLUMN = 56;
 
@@ -35,8 +45,11 @@ export function TimetableWeekScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const schoolId = useSchoolId();
   const { classSection } = route.params;
+  const { showToast } = useToast();
+  const { height: windowHeight } = useWindowDimensions();
   const [timetable, setTimetable] = useState<Timetable | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -51,6 +64,29 @@ export function TimetableWeekScreen({ route, navigation }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+
+  const dayCount = timetable?.days.length || 5;
+  const laneHeight = Math.max(LANE_MIN, Math.min(LANE_MAX, (windowHeight - CHROME_HEIGHT) / dayCount));
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const file = await downloadSectionTimetablePdf(schoolId, {
+        id: classSection.id,
+        className: classSection.className,
+        section: classSection.section,
+      });
+      if (!(await Sharing.isAvailableAsync())) {
+        showToast(t('timetable.week.savedTo', { path: file.uri }), 'success');
+        return;
+      }
+      await Sharing.shareAsync(file.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
+    } catch (e) {
+      showToast(t('timetable.week.downloadFailed', { message: getErrorMessage(e) }), 'error');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const timeline = buildTimeline(timetable?.periods ?? []);
   const cells = slotsToCells(timetable?.slots ?? []);
@@ -77,14 +113,28 @@ export function TimetableWeekScreen({ route, navigation }: Props) {
 
       {!loading && !error && timeline.blocks.length > 0 && (
         <ScrollView contentContainerStyle={styles.page}>
-          <Text style={styles.hint}>{t('timetable.week.hint')}</Text>
+          <View style={styles.topRow}>
+            <Text style={[styles.hint, styles.hintGrow]}>{t('timetable.week.hint')}</Text>
+            <Pressable
+              style={[styles.downloadButton, downloading && styles.downloadDisabled]}
+              onPress={handleDownload}
+              disabled={downloading}
+              accessibilityRole="button"
+            >
+              {downloading ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <Text style={styles.downloadText}>{t('timetable.week.download')}</Text>
+              )}
+            </Pressable>
+          </View>
 
           <View style={styles.grid}>
             {/* The day column stays put while the hours scroll, so a row never loses its label. */}
             <View style={styles.dayColumn}>
               <View style={styles.axisSpacer} />
               {(timetable?.days ?? []).map((day) => (
-                <View key={day} style={styles.dayCell}>
+                <View key={day} style={[styles.dayCell, { height: laneHeight }]}>
                   <Text style={styles.dayText}>{t(`timetable.days.${day}`)}</Text>
                 </View>
               ))}
@@ -101,7 +151,7 @@ export function TimetableWeekScreen({ route, navigation }: Props) {
                 </View>
 
                 {(timetable?.days ?? []).map((day) => (
-                  <View key={day} style={[styles.lane, { width: timeline.width }]}>
+                  <View key={day} style={[styles.lane, { width: timeline.width, height: laneHeight }]}>
                     {timeline.ticks.map((tick) => (
                       <View key={tick.time} style={[styles.hourRule, { left: tick.left }]} />
                     ))}
@@ -162,15 +212,28 @@ const styles = StyleSheet.create({
   empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
   page: { padding: spacing.md },
   hint: { fontSize: 12, color: colors.textSecondary, marginBottom: spacing.sm },
+  hintGrow: { flex: 1, marginRight: spacing.sm, marginBottom: 0 },
+  topRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
+  downloadButton: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+    minWidth: 96,
+    alignItems: 'center',
+  },
+  downloadDisabled: { opacity: 0.6 },
+  downloadText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
   grid: { flexDirection: 'row' },
   dayColumn: { width: DAY_COLUMN },
   axisSpacer: { height: 20 },
-  dayCell: { height: LANE_HEIGHT, justifyContent: 'center' },
-  dayText: { fontSize: 12, fontWeight: '700', color: colors.textPrimary },
+  dayCell: { justifyContent: 'center' },
+  dayText: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
   axis: { height: 20 },
-  axisLabel: { position: 'absolute', fontSize: 10, color: colors.textMuted },
+  axisLabel: { position: 'absolute', fontSize: 11, color: colors.textMuted },
   lane: {
-    height: LANE_HEIGHT,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     justifyContent: 'center',
@@ -183,7 +246,7 @@ const styles = StyleSheet.create({
   // fill, so they do not look alike.
   freeBlock: { backgroundColor: colors.surfaceMuted },
   breakBlock: { backgroundColor: colors.surfaceMuted, justifyContent: 'center', alignItems: 'center' },
-  breakText: { fontSize: 9, color: colors.textMuted },
-  subject: { fontSize: 11, fontWeight: '700', color: colors.textPrimary },
-  teacher: { fontSize: 10, color: colors.textSecondary, marginTop: 1 },
+  breakText: { fontSize: 10, color: colors.textMuted },
+  subject: { fontSize: 12, fontWeight: '700', color: colors.textPrimary },
+  teacher: { fontSize: 11, color: colors.textSecondary, marginTop: 1 },
 });
