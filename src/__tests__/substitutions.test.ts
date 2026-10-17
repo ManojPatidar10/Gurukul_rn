@@ -3,6 +3,7 @@ import type { FreeTeacher, TimetableOverride, UncoveredPeriod } from '../api/tim
 import {
   coverCount,
   freshLists,
+  groupUncoveredByPeriod,
   groupUncoveredByTeacher,
   noRoomMeansRegular,
   overrideKindVariant,
@@ -10,19 +11,27 @@ import {
   overrideUpdateFromExisting,
   reloadAfterFailedWrite,
   sortFreeTeachers,
+  sortFreeTeachersByMatch,
   uncoveredAction,
   uncoveredOverrideKind,
 } from '../utils/substitutions';
 
 jest.mock('../api/authStorage', () => ({ setStoredSession: jest.fn(() => Promise.resolve()) }));
 
-const free = (name: string, periodsThatDay: number, teachesSection: boolean): FreeTeacher => ({
+const free = (
+  name: string,
+  periodsThatDay: number,
+  teachesSection: boolean,
+  match: FreeTeacher['match'] = teachesSection ? 'SECTION' : 'FREE'
+): FreeTeacher => ({
   teacherId: name.toLowerCase(),
   name,
   designation: 'TGT',
   periodsThatDay,
   attendanceStatus: null,
   teachesSection,
+  teachesSubject: match === 'SUBJECT' || match === 'SUBJECT_AND_SECTION',
+  match,
 });
 
 const uncovered = (teacherName: string, periodNumber: number, extra: Partial<UncoveredPeriod> = {}): UncoveredPeriod => ({
@@ -55,6 +64,8 @@ const override = (extra: Partial<TimetableOverride>): TimetableOverride => ({
   startTime: '09:20',
   endTime: '10:00',
   kind: 'SUBSTITUTE',
+  autoAssigned: false,
+  autoAssignedFallback: false,
   originalTeacherId: 'sunita',
   originalTeacherName: 'Sunita',
   originalSubjectId: 'maths',
@@ -252,5 +263,43 @@ describe('reloadAfterFailedWrite', () => {
     expect(reloadAfterFailedWrite(new ApiError('Bad', 400, 'TIMETABLE_INVALID', { rule: 'PAST_DATE' }))).toBe(false);
     expect(reloadAfterFailedWrite(new Error('Network'))).toBe(false);
     expect(reloadAfterFailedWrite(null)).toBe(false);
+  });
+});
+
+describe('groupUncoveredByPeriod', () => {
+  it('puts the earliest period first and every class in it underneath, in class order', () => {
+    const groups = groupUncoveredByPeriod([
+      uncovered('Sunita', 3, { className: 'Grade 8', section: 'B', sectionId: 's8b' }),
+      uncovered('Ravi', 1, { className: 'Grade 10', section: 'A', sectionId: 's10a' }),
+      uncovered('Sunita', 1, { className: 'Grade 8', section: 'B', sectionId: 's8b' }),
+      uncovered('Meena', 1, { className: 'Grade 8', section: 'A', sectionId: 's8a' }),
+    ]);
+    expect(groups.map((g) => g.periodNumber)).toEqual([1, 3]);
+    expect(groups[0].entries.map((e) => `${e.className}-${e.section}`)).toEqual(['Grade 10-A', 'Grade 8-A', 'Grade 8-B']);
+    expect(groups[0].startTime).toBe('09:00');
+    expect(groups[1].entries).toHaveLength(1);
+  });
+
+  it('is empty for an empty day', () => {
+    expect(groupUncoveredByPeriod([])).toEqual([]);
+  });
+});
+
+describe('sortFreeTeachersByMatch', () => {
+  it('ranks subject-and-section, then subject, then section, then free - load breaks ties inside a tier', () => {
+    const sorted = sortFreeTeachersByMatch([
+      free('Idle', 0, false, 'FREE'),
+      free('Deepa', 4, true, 'SECTION'),
+      free('Priya', 2, false, 'SUBJECT'),
+      free('Anil', 3, true, 'SUBJECT_AND_SECTION'),
+      free('Busy', 5, false, 'SUBJECT'),
+    ]);
+    expect(sorted.map((t) => t.name)).toEqual(['Anil', 'Priya', 'Busy', 'Deepa', 'Idle']);
+  });
+
+  it('never drops anyone - a free teacher who fits nothing is still listed last', () => {
+    const sorted = sortFreeTeachersByMatch([free('Idle', 0, false, 'FREE'), free('Anil', 3, true, 'SUBJECT_AND_SECTION')]);
+    expect(sorted).toHaveLength(2);
+    expect(sorted[1].name).toBe('Idle');
   });
 });

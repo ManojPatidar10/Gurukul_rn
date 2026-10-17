@@ -9,22 +9,20 @@ import {
   clashesFromError,
   createOverride,
   deleteOverride,
+  autoAssign,
   getFreeTeachers,
-  getTeacherTimetable,
   getUncoveredPeriods,
   listOverrides,
   updateOverride,
+  type AutoAssignPlan,
   type FreeTeacher,
   type OverrideKind,
-  type Timetable,
   type TimetableClash,
   type TimetableOverride,
-  type TimetableSlot,
   type UncoveredPeriod,
 } from '../../api/timetable';
-import type { Employee } from '../../api/types';
+import Dropdown from '../../components/Dropdown';
 import { ClashList } from '../../components/ClashList';
-import EmployeePicker from '../../components/EmployeePicker';
 import { ErrorNotice } from '../../components/ErrorNotice';
 import LabeledInput from '../../components/LabeledInput';
 import { RoomPicker } from '../../components/RoomPicker';
@@ -40,18 +38,18 @@ import { colors, radius, softShadow, spacing } from '../../theme/colors';
 import type { PrincipalStackParamList } from '../../types/principal';
 import {
   freshLists,
-  groupUncoveredByTeacher,
+  groupUncoveredByPeriod,
   noRoomMeansRegular,
   overrideKindVariant,
   overrideSummary,
   overrideUpdateFromExisting,
   reloadAfterFailedWrite,
-  sortFreeTeachers,
+  sortFreeTeachersByMatch,
   uncoveredAction,
   uncoveredOverrideKind,
   type LoadedFor,
 } from '../../utils/substitutions';
-import { formatIsoDate, isIsoDate, isPastIso, slotBadge, todayIso } from '../../utils/timetable';
+import { formatIsoDate, isIsoDate, isPastIso, todayIso } from '../../utils/timetable';
 
 type Props = NativeStackScreenProps<PrincipalStackParamList, 'Substitutions'>;
 
@@ -61,6 +59,8 @@ interface CoverTarget {
   sectionLabel: string;
   periodNumber: number;
   subjectName: string | null;
+  /** The absent teacher's subject, so free-teachers can rank whoever teaches it first. */
+  subjectId?: string | null;
   /** Set when changing the substitute of a cover that already exists. */
   overrideId: string | null;
   override: TimetableOverride | null;
@@ -68,7 +68,6 @@ interface CoverTarget {
   kind: OverrideKind;
 }
 
-const isTeaching = (employee: Employee) => employee.employeeType !== 'NON_TEACHING';
 const sectionLabel = (row: { className: string; section: string }) => `${row.className} - ${row.section}`;
 
 /**
@@ -89,8 +88,6 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   const [uncovered, setUncovered] = useState<UncoveredPeriod[] | null>(null);
   const [overrides, setOverrides] = useState<TimetableOverride[] | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [teacher, setTeacher] = useState<Employee | null>(null);
-  const [teacherDay, setTeacherDay] = useState<Timetable | null>(null);
   const [loadedFor, setLoadedFor] = useState<LoadedFor | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -105,17 +102,12 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   const load = useCallback(() => {
     const requestId = ++requestRef.current;
     setLoading(true);
-    return Promise.all([
-      getUncoveredPeriods(schoolId, date),
-      listOverrides(schoolId, { from: date, to: date }),
-      teacher ? getTeacherTimetable(schoolId, teacher.id, date) : Promise.resolve(null),
-    ])
-      .then(([uncoveredRows, overrideRows, day]) => {
+    return Promise.all([getUncoveredPeriods(schoolId, date), listOverrides(schoolId, { from: date, to: date })])
+      .then(([uncoveredRows, overrideRows]) => {
         if (requestId !== requestRef.current) return;
         setUncovered(uncoveredRows);
         setOverrides(overrideRows);
-        setTeacherDay(day);
-        setLoadedFor({ date, teacherId: teacher?.id ?? null });
+        setLoadedFor({ date, teacherId: null });
         setError(null);
       })
       .catch((e) => {
@@ -124,11 +116,14 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
       .finally(() => {
         if (requestId === requestRef.current) setLoading(false);
       });
-  }, [schoolId, date, teacher]);
+  }, [schoolId, date]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Covers are made when attendance is saved, on another screen: coming back here must show them.
+  useEffect(() => navigation.addListener('focus', () => void load()), [navigation, load]);
 
   // With rooms out of use, so a change that already has one keeps showing it (pickers hide the rest).
   // A failed reload keeps the rooms already shown.
@@ -179,6 +174,13 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   const periodLabel = (periodNumber: number, startTime?: string | null) =>
     startTime ? `${t('timetable.periodN', { n: periodNumber })} · ${startTime}` : t('timetable.periodN', { n: periodNumber });
 
+  // Auto-assign: the plan the server would carry out, shown before anything is saved.
+  // Keyed by the date it was computed for, so a plan from the previous date is never shown as this one's.
+  const [planFor, setPlanFor] = useState<{ date: string; plan: AutoAssignPlan } | null>(null);
+  const plan = planFor?.date === date ? planFor.plan : null;
+  const [autoAssigning, setAutoAssigning] = useState(false);
+
+
   const confirmCancel = (sectionId: string, label: string, periodNumber: number) =>
     Alert.alert(t('timetable.subs.cancelTitle'), t('timetable.subs.cancelBody', { class: label, n: periodNumber, date: dateLabel }), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -220,12 +222,47 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
       },
     ]);
 
-  // Only the lists loaded for the date (and teacher) now picked are shown: a stale row's buttons
+  // Only the lists loaded for the date now picked are shown: a stale row's buttons
   // would act on the new date. While the new date loads, the spinner shows instead.
-  const fresh = freshLists(loadedFor, date, teacher?.id ?? null);
+  const fresh = freshLists(loadedFor, date, null);
   const uncoveredShown = fresh.day ? uncovered : null;
+
+  /**
+   * The server's plan for the day - who it would give each uncovered period to - fetched as a dry
+   * run whenever the uncovered list changes, so every row can show its suggestion before anything
+   * is saved. Nothing is written until the admin taps Assign all.
+   */
+  useEffect(() => {
+    if (!uncoveredShown || uncoveredShown.length === 0 || past) return;
+    let cancelled = false;
+    autoAssign(schoolId, date, { dryRun: true })
+      .then((next) => {
+        if (!cancelled) setPlanFor({ date, plan: next });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // uncoveredShown is replaced on every reload, which is exactly when the plan goes stale.
+  }, [schoolId, date, past, uncoveredShown]);
+
+  const suggestionFor = (entry: UncoveredPeriod) =>
+    plan?.items.find((i) => i.sectionId === entry.sectionId && i.periodNumber === entry.periodNumber) ?? null;
+
+  const assignAll = async () => {
+    setAutoAssigning(true);
+    setError(null);
+    try {
+      const done = await autoAssign(schoolId, date);
+      showToast(t('timetable.subs.autoAssignDone', { assigned: done.assigned, unassigned: done.unassigned }), 'success');
+      await refresh();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setAutoAssigning(false);
+    }
+  };
   const overridesShown = fresh.day ? overrides : null;
-  const teacherDayShown = fresh.teacher ? teacherDay : null;
   const locked = busy || loading;
 
   const coverFromUncovered = (entry: UncoveredPeriod): CoverTarget => {
@@ -235,25 +272,40 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
       sectionLabel: sectionLabel(entry),
       periodNumber: entry.periodNumber,
       subjectName: entry.subjectName,
+      subjectId: entry.subjectId,
       overrideId: uncoveredAction(entry) === 'edit' ? entry.overrideId : null,
       override: existing,
       kind: existing?.kind ?? 'SUBSTITUTE',
     };
   };
 
-  const coverFromSlot = (slot: TimetableSlot): CoverTarget => ({
-    sectionId: slot.sectionId,
-    sectionLabel: sectionLabel(slot),
-    periodNumber: slot.periodNumber,
-    subjectName: slot.subjectName,
-    overrideId: null,
-    override: null,
-    kind: 'SUBSTITUTE',
+
+  /** Change the substitute on a cover already made - the row's "Change" button. */
+  const coverFromOverride = (o: TimetableOverride): CoverTarget => ({
+    sectionId: o.sectionId,
+    sectionLabel: sectionLabel(o),
+    periodNumber: o.periodNumber,
+    subjectName: o.subjectName,
+    subjectId: o.subjectId ?? o.originalSubjectId ?? null,
+    overrideId: o.id,
+    override: o,
+    kind: o.kind,
   });
 
-  const groups = groupUncoveredByTeacher(uncoveredShown ?? []);
-  const teacherSlots = [...(teacherDayShown?.slots ?? [])].sort((a, b) => a.periodNumber - b.periodNumber);
-  const teacherPeriodStart = (n: number) => teacherDayShown?.periods.find((p) => p.periodNumber === n)?.startTime ?? null;
+  const groups = groupUncoveredByPeriod(uncoveredShown ?? []);
+  // Covers already made, kept under their period greyed out, so "period 1 is handled" is something the
+  // admin can see rather than infer, and a wrong pick is one tap from undo.
+  const coveredByPeriod = new Map<number, TimetableOverride[]>();
+  for (const o of overridesShown ?? []) {
+    if (o.kind === 'SUBSTITUTE') coveredByPeriod.set(o.periodNumber, [...(coveredByPeriod.get(o.periodNumber) ?? []), o]);
+  }
+  const periodRows = [...new Set([...groups.map((g) => g.periodNumber), ...coveredByPeriod.keys()])]
+    .sort((a, b) => a - b)
+    .map((periodNumber) => {
+      const group = groups.find((g) => g.periodNumber === periodNumber) ?? null;
+      const covered = coveredByPeriod.get(periodNumber) ?? [];
+      return { periodNumber, group, covered, startTime: group?.startTime ?? covered[0]?.startTime ?? null, endTime: group?.endTime ?? covered[0]?.endTime ?? null };
+    });
 
   return (
     <View style={styles.root}>
@@ -268,37 +320,72 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
         {/* Needs a substitute */}
         <Text style={styles.sectionTitle}>{t('timetable.subs.needsCover')}</Text>
         <Text style={styles.hint}>{t('timetable.subs.leaveHint')}</Text>
+        <Text style={styles.hint}>{t('timetable.subs.autoHint')}</Text>
         {date === today && (
           <Pressable onPress={() => navigation.navigate('StaffAttendance')} accessibilityRole="link">
             <Text style={styles.link}>{t('timetable.subs.markLeave')}</Text>
           </Pressable>
         )}
-        {uncoveredShown !== null && groups.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
-        {groups.map((group) => (
-          <View key={group.teacherId} style={styles.card}>
+        {uncoveredShown !== null && periodRows.length === 0 && <Text style={styles.empty}>{t('timetable.subs.noneUncovered')}</Text>}
+        {!past && plan && plan.assigned > 0 && (
+          <View style={styles.card}>
+            <ActionButton
+              label={t('timetable.subs.assignNow', { count: plan.assigned })}
+              primary
+              disabled={locked || autoAssigning}
+              onPress={assignAll}
+            />
+            <Text style={styles.hint}>{t('timetable.subs.assignNowHint')}</Text>
+          </View>
+        )}
+        {periodRows.map((row) => (
+          <View key={row.periodNumber} style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{group.teacherName}</Text>
-              <StatusChip
-                label={group.attendanceStatus === 'ABSENT' ? t('timetable.subs.absent') : t('timetable.subs.halfDay')}
-                variant={group.attendanceStatus === 'ABSENT' ? 'error' : 'warning'}
-              />
+              <Text style={styles.cardTitle}>
+                {periodLabel(row.periodNumber, row.startTime)}
+                {row.endTime ? `–${row.endTime}` : ''}
+              </Text>
+              {row.group ? (
+                <StatusChip label={t('timetable.subs.stillToCover', { count: row.group.entries.length })} variant="neutral" />
+              ) : (
+                <StatusChip label={t('timetable.subs.allCovered')} variant="neutral" />
+              )}
             </View>
-            {group.periods.map((entry) => {
+            {(row.group?.entries ?? []).map((entry) => {
               // A change whose substitute is now away: a substitution or an extra class.
               const kind = uncoveredOverrideKind(entry, overridesShown);
               return (
                 <View key={`${entry.sectionId}-${entry.periodNumber}`} style={styles.periodRow}>
                   <Text style={styles.periodTitle}>
-                    {periodLabel(entry.periodNumber, entry.startTime)} · {sectionLabel(entry)}
+                    {sectionLabel(entry)}
+                    {entry.subjectName ? ` · ${entry.subjectName}` : ''}
                   </Text>
-                  <Text style={styles.periodMeta}>
-                    {[entry.subjectName, entry.roomName ? t('timetable.room', { name: entry.roomName }) : null].filter(Boolean).join(' · ')}
-                  </Text>
-                  {kind && (
-                    <View style={styles.chipRow}>
-                      <StatusChip label={t(`timetable.subs.kind.${kind}`)} variant={overrideKindVariant(kind)} />
-                    </View>
-                  )}
+                  <View style={styles.chipRow}>
+                    <Text style={styles.periodMeta}>{t('timetable.subs.away', { name: entry.teacherName })}</Text>
+                    <StatusChip
+                      label={entry.attendanceStatus === 'ABSENT' ? t('timetable.subs.absent') : t('timetable.subs.halfDay')}
+                      variant="neutral"
+                    />
+                    {kind && <StatusChip label={t('timetable.subs.coverLost')} variant={overrideKindVariant(kind)} />}
+                  </View>
+                  {entry.roomName ? <Text style={styles.periodMeta}>{t('timetable.room', { name: entry.roomName })}</Text> : null}
+                  {!past && (() => {
+                    const suggestion = suggestionFor(entry);
+                    if (!plan) return null;
+                    return suggestion?.substituteTeacherName ? (
+                      <Text style={styles.suggestion}>
+                        {suggestion.fallback
+                          ? t('timetable.subs.suggestedFallback', { name: suggestion.substituteTeacherName, subject: entry.subjectName ?? '' })
+                          : `${t('timetable.subs.suggested', { name: suggestion.substituteTeacherName })}${
+                              suggestion.match
+                                ? ` · ${t(`timetable.subs.match.${suggestion.match}`, { subject: entry.subjectName ?? '', section: sectionLabel(entry) })}`
+                                : ''
+                            }`}
+                      </Text>
+                    ) : (
+                      <Text style={[styles.periodMeta, styles.warn]}>{t('timetable.subs.noTeacherFree')}</Text>
+                    );
+                  })()}
                   {!past && (
                     <View style={styles.actions}>
                       <ActionButton
@@ -319,86 +406,29 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
                 </View>
               );
             })}
+            {row.covered.map((o) => (
+              <View key={o.id ?? `${o.sectionId}-${o.periodNumber}`} style={[styles.periodRow, styles.coveredRow]}>
+                <Text style={styles.periodTitle}>
+                  {sectionLabel(o)}
+                  {o.subjectName ? ` · ${o.subjectName}` : ''}
+                </Text>
+                <View style={styles.chipRow}>
+                  <Text style={styles.periodMeta}>{t('timetable.subs.coveredBy', { name: o.substituteTeacherName ?? '' })}</Text>
+                  {o.autoAssigned && <StatusChip label={t('timetable.subs.autoAssignedChip')} variant="neutral" />}
+                  {o.autoAssignedFallback && (
+                    <StatusChip label={t('timetable.subs.fallbackChip', { subject: o.subjectName ?? '' })} variant="warning" />
+                  )}
+                </View>
+                {!past && (
+                  <View style={styles.actions}>
+                    <ActionButton label={t('timetable.subs.change')} disabled={locked} onPress={() => setTarget(coverFromOverride(o))} />
+                    <ActionButton label={t('timetable.subs.undo')} danger disabled={locked} onPress={() => o.id && confirmUndo(o.id)} />
+                  </View>
+                )}
+              </View>
+            ))}
           </View>
         ))}
-
-        {/* Another teacher's periods */}
-        <Text style={styles.sectionTitle}>{t('timetable.subs.anyTeacher')}</Text>
-        <Text style={styles.hint}>{t('timetable.subs.anyTeacherHint')}</Text>
-        <EmployeePicker
-          schoolId={schoolId}
-          selectedId={teacher?.id ?? null}
-          filter={isTeaching}
-          onSelect={(employee) => {
-            setTeacherDay(null);
-            setTeacher(employee);
-          }}
-        />
-        {teacher && teacherDayShown && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{teacher.name}</Text>
-            {teacherDayShown.schoolDay === false ? (
-              <Text style={styles.empty}>
-                {t('timetable.date.noSchool', { date: dateLabel })}
-                {teacherDayShown.holidayName ? ` ${t('timetable.date.holiday', { name: teacherDayShown.holidayName })}` : ''}
-              </Text>
-            ) : teacherSlots.length === 0 ? (
-              <Text style={styles.empty}>{t('timetable.my.nothingToday')}</Text>
-            ) : (
-              teacherSlots.map((slot) => {
-                const badge = slotBadge(slot, teacher.id, { thirdPerson: true });
-                return (
-                  <View key={`${slot.sectionId}-${slot.periodNumber}-${slot.overrideId ?? 'regular'}`} style={styles.periodRow}>
-                    <Text style={styles.periodTitle}>
-                      {periodLabel(slot.periodNumber, teacherPeriodStart(slot.periodNumber))} · {sectionLabel(slot)}
-                    </Text>
-                    <Text style={styles.periodMeta}>
-                      {[slot.subjectName, slot.roomName ? t('timetable.room', { name: slot.roomName }) : null].filter(Boolean).join(' · ')}
-                    </Text>
-                    {badge && (
-                      <View style={styles.chipRow}>
-                        <StatusChip
-                          label={
-                            badge.kind === 'cancelled' || badge.kind === 'extra'
-                              ? t(`timetable.badge.${badge.kind}`)
-                              : t(`timetable.badge.${badge.kind}`, { teacher: badge.teacher })
-                          }
-                          variant={badge.kind === 'cancelled' ? 'error' : 'warning'}
-                        />
-                      </View>
-                    )}
-                    {!past && (
-                      <View style={styles.actions}>
-                        {slot.overrideId ? (
-                          <ActionButton
-                            label={t('timetable.subs.undo')}
-                            danger
-                            disabled={locked}
-                            onPress={() => slot.overrideId && confirmUndo(slot.overrideId)}
-                          />
-                        ) : (
-                          <>
-                            <ActionButton
-                              label={t('timetable.subs.findSubstitute')}
-                              disabled={locked}
-                              onPress={() => setTarget(coverFromSlot(slot))}
-                            />
-                            <ActionButton
-                              label={t('timetable.subs.cancelPeriod')}
-                              danger
-                              disabled={locked}
-                              onPress={() => confirmCancel(slot.sectionId, sectionLabel(slot), slot.periodNumber)}
-                            />
-                          </>
-                        )}
-                      </View>
-                    )}
-                  </View>
-                );
-              })
-            )}
-          </View>
-        )}
 
         {/* Changes on this day */}
         <Text style={styles.sectionTitle}>{t('timetable.subs.changes')}</Text>
@@ -456,15 +486,29 @@ export function SubstitutionsScreen({ route, navigation }: Props) {
   );
 }
 
-function ActionButton({ label, onPress, danger, disabled }: { label: string; onPress: () => void; danger?: boolean; disabled?: boolean }) {
+function ActionButton({
+  label,
+  onPress,
+  danger,
+  primary,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  /** Destructive: plain text, no fill - the confirmation dialog carries the weight. */
+  danger?: boolean;
+  /** The one filled button on the screen. */
+  primary?: boolean;
+  disabled?: boolean;
+}) {
   return (
     <Pressable
-      style={[styles.actionButton, danger && styles.actionDanger, disabled && styles.disabled]}
+      style={[styles.actionButton, danger && styles.actionDanger, primary && styles.actionPrimary, disabled && styles.disabled]}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
     >
-      <Text style={[styles.actionText, danger && styles.actionDangerText]}>{label}</Text>
+      <Text style={[styles.actionText, danger && styles.actionDangerText, primary && styles.actionPrimaryText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -488,22 +532,26 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
   const { t } = useTranslation();
   const sheetBottom = useBottomInset(spacing.lg);
   const [teachers, setTeachers] = useState<FreeTeacher[] | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  // Editing a cover starts on the person who holds it, so Save with no change keeps them.
+  const [selected, setSelected] = useState<string | null>(
+    target.override?.kind === 'SUBSTITUTE' ? (target.override.substituteTeacherId ?? null) : null
+  );
   const [roomId, setRoomId] = useState<string | null>(target.override?.roomId ?? null);
-  const [reason, setReason] = useState(target.override?.reason ?? '');
+  // An auto-assigned cover's reason is the marker that makes it auto; an edit starts blank so saving makes it the admin's own.
+  const [reason, setReason] = useState(target.override?.autoAssigned ? '' : (target.override?.reason ?? ''));
   const [error, setError] = useState<string | null>(null);
   const [clashes, setClashes] = useState<TimetableClash[]>([]);
   const [saving, setSaving] = useState(false);
 
   const loadTeachers = useCallback(() => {
     setTeachers(null);
-    getFreeTeachers(schoolId, date, target.periodNumber, target.sectionId)
-      .then((rows) => setTeachers(sortFreeTeachers(rows)))
+    getFreeTeachers(schoolId, date, target.periodNumber, target.sectionId, target.subjectId, true)
+      .then((rows) => setTeachers(sortFreeTeachersByMatch(rows)))
       .catch((e) => {
         setTeachers([]);
         setError(getErrorMessage(e));
       });
-  }, [schoolId, date, target.periodNumber, target.sectionId]);
+  }, [schoolId, date, target.periodNumber, target.sectionId, target.subjectId]);
 
   useEffect(loadTeachers, [loadTeachers]);
 
@@ -556,6 +604,27 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
     if (!saving) onClose();
   };
 
+  // Editing a cover: free-teachers leaves out whoever holds the period now - that is the substitute
+  // being changed - so offer them first, pre-selected. Then the admin can keep the person and change
+  // only the room or reason, and "no other X teacher is free" is a true statement rather than a wall.
+  const current = target.override?.kind === 'SUBSTITUTE' && target.override.substituteTeacherId && target.override.substituteTeacherName
+    ? { id: target.override.substituteTeacherId, name: target.override.substituteTeacherName }
+    : null;
+  const options = [
+    ...(current && !(teachers ?? []).some((x) => x.teacherId === current.id)
+      ? [{ value: current.id, label: `${current.name} — ${t('timetable.subs.currentSubstitute')}` }]
+      : []),
+    ...(teachers ?? []).map((teacher) => ({
+      value: teacher.teacherId,
+      label: [
+        teacher.name,
+        `${t(`timetable.subs.match.${teacher.match ?? 'FREE'}`, { subject: target.subjectName ?? '', section: target.sectionLabel })} · ${t('timetable.subs.periodsThatDay', { count: teacher.periodsThatDay })}${
+          teacher.attendanceStatus === 'HALF_DAY' ? ` · ${t('timetable.subs.halfDay')}` : ''
+        }`,
+      ].join(' — '),
+    })),
+  ];
+
   return (
     <Modal visible transparent animationType="slide" onRequestClose={close}>
       <Pressable style={styles.backdrop} onPress={close}>
@@ -568,33 +637,26 @@ function CoverSheet({ schoolId, date, dateLabel, target, rooms, onClose, onSaved
                 .join(' · ')}
             </Text>
 
-            <Text style={styles.fieldLabel}>{t('timetable.subs.freeTeachers', { n: target.periodNumber })}</Text>
             {teachers === null && <ActivityIndicator color={colors.primary} style={styles.loading} />}
-            {teachers?.length === 0 && !error && <Text style={styles.empty}>{t('timetable.subs.noFreeTeachers')}</Text>}
-            {teachers?.map((teacher) => {
-              const active = selected === teacher.teacherId;
-              return (
-                <Pressable
-                  key={teacher.teacherId}
-                  style={[styles.option, active && styles.optionSelected]}
-                  onPress={() => setSelected(teacher.teacherId)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: active }}
-                >
-                  <Text style={styles.optionTitle}>
-                    {teacher.name}
-                    {teacher.designation ? ` (${teacher.designation})` : ''}
-                  </Text>
-                  <Text style={styles.optionDetail}>{t('timetable.subs.periodsThatDay', { count: teacher.periodsThatDay })}</Text>
-                  {(teacher.teachesSection || teacher.attendanceStatus === 'HALF_DAY') && (
-                    <View style={styles.chipRow}>
-                      {teacher.teachesSection && <StatusChip label={t('timetable.subs.teachesClass')} variant="success" />}
-                      {teacher.attendanceStatus === 'HALF_DAY' && <StatusChip label={t('timetable.subs.halfDay')} variant="warning" />}
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
+            {teachers?.length === 0 && !error && !current && (
+              <Text style={styles.empty}>{t('timetable.subs.noSubjectTeacherFree', { subject: target.subjectName ?? '' })}</Text>
+            )}
+            {teachers?.length === 0 && !error && current && (
+              <Text style={styles.empty}>{t('timetable.subs.noOtherSubjectTeacherFree', { subject: target.subjectName ?? '' })}</Text>
+            )}
+            {teachers && teachers.length > 0 && target.subjectId && teachers.every((x) => !x.teachesSubject) && (
+              <Text style={styles.hint}>{t('timetable.subs.fallbackPickerHint', { subject: target.subjectName ?? '' })}</Text>
+            )}
+            {teachers && options.length > 0 && (
+              <Dropdown
+                label={t('timetable.subs.substitute')}
+                value={selected ?? ''}
+                placeholder={t('timetable.subs.pickSubstitute')}
+                required
+                onSelect={setSelected}
+                options={options}
+              />
+            )}
 
             <Text style={[styles.fieldLabel, styles.spaced]}>{t('timetable.editor.room')}</Text>
             <RoomPicker
@@ -644,18 +706,25 @@ const styles = StyleSheet.create({
   periodRow: { paddingTop: spacing.sm, marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   periodTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
   periodMeta: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  warn: { color: colors.textSecondary, fontStyle: 'italic' },
+  coveredRow: { opacity: 0.6 },
+  suggestion: { fontSize: 13, color: colors.textPrimary, fontWeight: '600', marginTop: 2 },
   reason: { fontSize: 13, color: colors.textMuted, marginTop: 2, fontStyle: 'italic' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   actionButton: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  actionText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  actionDanger: { backgroundColor: '#FDECEC' },
-  actionDangerText: { color: colors.error },
+  actionText: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  actionDanger: { borderColor: 'transparent', backgroundColor: 'transparent' },
+  actionDangerText: { color: colors.textSecondary },
+  actionPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
+  actionPrimaryText: { color: colors.white },
   disabled: { opacity: 0.5 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   sheet: {

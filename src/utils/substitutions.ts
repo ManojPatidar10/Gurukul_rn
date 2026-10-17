@@ -2,6 +2,7 @@ import { ApiError } from '../api/client';
 import {
   overrideExistsFromError,
   type FreeTeacher,
+  type FreeTeacherMatch,
   type OverrideKind,
   type OverrideUpdateRequest,
   type TimetableOverride,
@@ -162,4 +163,55 @@ export function freshLists(loaded: LoadedFor | null, date: string, teacherId: st
  */
 export function reloadAfterFailedWrite(e: unknown): boolean {
   return overrideExistsFromError(e) !== null || (e instanceof ApiError && e.status === 404);
+}
+
+/** One period of the day and every class in it that still needs a substitute, in class order. */
+export interface UncoveredPeriodGroup {
+  periodNumber: number;
+  startTime: string | null;
+  endTime: string | null;
+  entries: UncoveredPeriod[];
+}
+
+/**
+ * The "Needs a substitute" list pivoted the way the morning is lived: period 1 first, because that
+ * is the bell about to ring, and under each period every class that has nobody for it. Classes are
+ * ordered by name then section so two admins looking at the same day see the same list.
+ */
+export function groupUncoveredByPeriod(uncovered: UncoveredPeriod[]): UncoveredPeriodGroup[] {
+  const groups = new Map<number, UncoveredPeriodGroup>();
+  for (const entry of uncovered) {
+    const group = groups.get(entry.periodNumber);
+    if (group) {
+      group.entries.push(entry);
+    } else {
+      groups.set(entry.periodNumber, {
+        periodNumber: entry.periodNumber,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        entries: [entry],
+      });
+    }
+  }
+  return [...groups.values()]
+    .map((g) => ({
+      ...g,
+      entries: [...g.entries].sort(
+        (a, b) => byName(a.className, b.className) || byName(a.section, b.section) || a.sectionId.localeCompare(b.sectionId)
+      ),
+    }))
+    .sort((a, b) => a.periodNumber - b.periodNumber);
+}
+
+/** The tiers the server ranks free teachers in, best first; the sort key the phone re-applies. */
+const MATCH_RANK: Record<FreeTeacherMatch, number> = { SUBJECT_AND_SECTION: 0, SUBJECT: 1, SECTION: 2, FREE: 3 };
+
+/** Server order: match tier, then fewest periods that day, then name. Re-applied after local edits. */
+export function sortFreeTeachersByMatch(teachers: FreeTeacher[]): FreeTeacher[] {
+  return [...teachers].sort(
+    (a, b) =>
+      MATCH_RANK[a.match ?? 'FREE'] - MATCH_RANK[b.match ?? 'FREE'] ||
+      a.periodsThatDay - b.periodsThatDay ||
+      byName(a.name, b.name)
+  );
 }
