@@ -2310,8 +2310,8 @@
       "noneUncovered": "Every period of absent teachers is covered.",
       "markLeave": "Mark who is on leave today",
       "leaveHint": "Teachers marked Absent or Half day in staff attendance show here.",
-      "anyTeacher": "Another teacher's periods",
-      "anyTeacherHint": "Pick a teacher to see their periods on this day.",
+      "anyTeacher": "Open a teacher's day",
+      "anyTeacherHint": "For a planned absence - leave can't be marked in staff attendance ahead of time - pick the teacher and cover their periods here.",
       "findSubstitute": "Find substitute",
       "cancelPeriod": "Cancel this period",
       "cancelTitle": "Cancel this period?",
@@ -2340,7 +2340,7 @@
       "saved": "Saved. The teachers and students have been told.",
       "pastDate": "Past days can't be changed.",
       "autoAssign": "Auto-assign substitutes",
-      "autoAssignHint": "Gives every uncovered period its best free teacher, one period at a time. You see the plan before anything is saved.",
+      "autoAssignHint": "Each period below shows who the school can give it to - a teacher of that subject who is free then. Assign them all in one tap, or change any one first.",
       "autoAssignPreviewTitle_one": "Assign {{count}} substitute?",
       "autoAssignPreviewTitle_other": "Assign {{count}} substitutes?",
       "autoAssignPreviewBody": "Each teacher and class below gets a push when you confirm.",
@@ -2361,7 +2361,13 @@
         "SUBJECT": "teaches {{subject}} elsewhere",
         "SECTION": "teaches {{section}}",
         "FREE": "free"
-      }
+      },
+      "pickTeacher": "Choose a teacher",
+      "suggested": "Suggested: {{name}}",
+      "assignAllSuggested_one": "Assign {{count}} suggested substitute",
+      "assignAllSuggested_other": "Assign all {{count}} suggested substitutes",
+      "noSubjectTeacherFree": "No {{subject}} teacher is free in this period",
+      "change": "Change"
     }
   },
   "reportCardPdf": {
