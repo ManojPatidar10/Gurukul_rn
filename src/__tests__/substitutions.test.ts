@@ -64,6 +64,7 @@ const override = (extra: Partial<TimetableOverride>): TimetableOverride => ({
   startTime: '09:20',
   endTime: '10:00',
   kind: 'SUBSTITUTE',
+  autoAssigned: false,
   originalTeacherId: 'sunita',
   originalTeacherName: 'Sunita',
   originalSubjectId: 'maths',

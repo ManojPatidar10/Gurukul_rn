@@ -2367,7 +2367,12 @@
       "assignAllSuggested_one": "{{count}} सुझाया विकल्प शिक्षक लगाएँ",
       "assignAllSuggested_other": "सभी {{count}} सुझाए विकल्प शिक्षक लगाएँ",
       "noSubjectTeacherFree": "इस पीरियड में {{subject}} का कोई शिक्षक खाली नहीं है",
-      "change": "बदलें"
+      "change": "बदलें",
+      "autoHint": "शिक्षक को अनुपस्थित दर्ज करते ही विकल्प शिक्षक लग जाते हैं - उसी विषय का कोई खाली शिक्षक - और उन्हें सूचना जाती है। नीचे किसी को भी बदलें या हटाएँ।",
+      "assignNow_one": "{{count}} पीरियड अभी लगाएँ",
+      "assignNow_other": "{{count}} पीरियड अभी लगाएँ",
+      "assignNowHint": "ये अपने आप नहीं भरे थे। अब हर एक के लिए विषय का खाली शिक्षक है।",
+      "autoAssignedChip": "स्वतः लगाया"
     }
   },
   "reportCardPdf": {

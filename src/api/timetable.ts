@@ -160,6 +160,8 @@ export interface TimetableOverride {
   roomName: string | null;
   /** Only admins and the two teachers get it; null for students and parents. */
   reason: string | null;
+  /** Made by auto-assign when the teacher was marked away, and not edited since. */
+  autoAssigned: boolean;
   createdAt: string | null;
   updatedAt: string | null;
   dryRun?: boolean;
